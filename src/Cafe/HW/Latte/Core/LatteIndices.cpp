@@ -26,7 +26,7 @@ struct
 		uint32 outputCount;
 		Renderer::IndexAllocation indexAllocation;
 	};
-	std::array<CacheEntry, 8> entry;
+	std::array<CacheEntry, 1> entry;
 	uint64 currentUsageCounter{0};
 }LatteIndexCache{};
 
