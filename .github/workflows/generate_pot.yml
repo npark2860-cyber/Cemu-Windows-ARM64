@@ -1,18 +1,7 @@
 name: Generate translation template
 
 on:
-  pull_request:
-    paths-ignore:
-      - "*.md"
-    types:
-      - opened
-      - synchronize
-      - reopened
-  push:
-    paths-ignore:
-      - "*.md"
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   generate-pot:
@@ -28,7 +17,7 @@ jobs:
 
       - name: "Generate POT file using xgettext"
         run: >
-          find src -name *.cpp -o -name *.hpp -o -name *.h | 
+          find src -name *.cpp -o -name *.hpp -o -name *.h |
           xargs xgettext --from-code=utf-8 -w 100
           --keyword="_" --keyword="wxTRANSLATE" --keyword="wxPLURAL:1,2"
           --keyword="_tr" --keyword="TR_NOOP"
