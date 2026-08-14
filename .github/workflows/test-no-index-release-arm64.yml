@@ -1,0 +1,96 @@
+name: Test no index reservation release ARM64
+
+on:
+  push:
+    branches:
+      - test-no-index-release-arm64
+
+concurrency:
+  group: test-no-index-release-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Disable individual index reservation release
+        shell: pwsh
+        run: |
+          $path = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp'
+          $content = [IO.File]::ReadAllText($path)
+          $old = 'memoryManager->GetIndexAllocator().FreeReservation((VKRSynchronizedHeapAllocator::AllocatorReservation*)allocation.rendererInternal);'
+          $new = '(void)allocation; // diagnostic: keep index heap reservations alive; do not recycle them'
+          if (-not $content.Contains($old)) { throw "Expected index release call not found" }
+          $content = $content.Replace($old, $new)
+          [IO.File]::WriteAllText($path, $content, [Text.UTF8Encoding]::new($false))
+          if ([IO.File]::ReadAllText($path).Contains($old)) { throw 'Index release call still present' }
+          Write-Host 'Diagnostic patch applied: indexData_releaseIndexMemory is now a no-op.'
+
+      - name: Setup release mode parameters
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        run: cmake --build build
+
+      - name: Prepare artifact
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-no-index-release-test
+          path: ./bin/Cemu.exe
