@@ -1,0 +1,106 @@
+name: Test no wait-time index invalidation ARM64
+
+on:
+  push:
+    branches:
+      - test-no-wait-index-invalidate-arm64
+
+concurrency:
+  group: test-no-wait-index-invalidate-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Disable only wait-time index cache invalidation
+        shell: pwsh
+        run: |
+          $path = 'src/Cafe/HW/Latte/Core/LatteCommandProcessor.cpp'
+          $content = [IO.File]::ReadAllText($path)
+          $pattern = '(?s)(void\s+LatteCP_signalEnterWait\(\)\s*\{.*?)(LatteIndices_invalidateAll\(\);)(\s*\})'
+          $rx = [regex]::new($pattern)
+          $matches = $rx.Matches($content)
+          if ($matches.Count -ne 1) {
+            throw "Expected exactly one LatteCP_signalEnterWait invalidation call, found $($matches.Count)"
+          }
+          $replacement = '$1// diagnostic: disable #1443 wait-time index cache invalidation$3'
+          $content = $rx.Replace($content, $replacement, 1)
+          [IO.File]::WriteAllText($path, $content, [Text.UTF8Encoding]::new($false))
+
+          $patched = [IO.File]::ReadAllText($path)
+          $check = [regex]::Match($patched, '(?s)void\s+LatteCP_signalEnterWait\(\)\s*\{(.*?)\}')
+          if (-not $check.Success) { throw 'Patched LatteCP_signalEnterWait not found' }
+          if ($check.Groups[1].Value -match 'LatteIndices_invalidateAll\(\);') {
+            throw 'Wait-time invalidation is still active'
+          }
+          Write-Host 'Diagnostic patch applied: only LatteCP_signalEnterWait index invalidation disabled.'
+
+      - name: Setup release mode parameters
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        run: cmake --build build
+
+      - name: Prepare artifact
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-no-wait-index-invalidate-test
+          path: ./bin/Cemu.exe
