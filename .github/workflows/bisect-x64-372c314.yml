@@ -1,0 +1,52 @@
+name: Bisect x64 372c314
+
+on:
+  push:
+    branches:
+      - bisect-x64-372c314
+
+concurrency:
+  group: bisect-x64-372c314
+  cancel-in-progress: true
+
+jobs:
+  build-windows-x64:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout historical source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Use current vcpkg tooling
+        shell: pwsh
+        run: |
+          git -C dependencies/vcpkg fetch origin 9849e070ad4c3383890fb1c80ae0c54325e2484a --depth=1
+          git -C dependencies/vcpkg checkout 9849e070ad4c3383890fb1c80ae0c54325e2484a
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=release -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --config release
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cemu-x64-bisect-372c314
+          path: ./bin/Cemu.exe
