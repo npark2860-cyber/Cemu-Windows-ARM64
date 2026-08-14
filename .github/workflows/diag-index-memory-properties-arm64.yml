@@ -28,49 +28,35 @@ jobs:
         run: |
           $path = 'src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp'
           $content = [IO.File]::ReadAllText($path)
-          $old = @'
-	if (vkBindBufferMemory(m_vkr->GetLogicalDevice(), buffer, bufferMemory, 0) != VK_SUCCESS)
-	{
-		vkDestroyBuffer(m_vkr->GetLogicalDevice(), buffer, nullptr);
-		cemuLog_log(LogType::Force, "Failed to bind buffer (CreateBuffer)");
-		return false;
-	}
-	return true;
-}
-'@
-          $new = @'
-	if (vkBindBufferMemory(m_vkr->GetLogicalDevice(), buffer, bufferMemory, 0) != VK_SUCCESS)
-	{
-		vkDestroyBuffer(m_vkr->GetLogicalDevice(), buffer, nullptr);
-		cemuLog_log(LogType::Force, "Failed to bind buffer (CreateBuffer)");
-		return false;
-	}
-
-	static bool s_loggedIndexMemoryProperties = false;
-	if (!s_loggedIndexMemoryProperties && (usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT) != 0)
-	{
-		s_loggedIndexMemoryProperties = true;
-		VkPhysicalDeviceMemoryProperties memoryProperties{};
-		vkGetPhysicalDeviceMemoryProperties(m_vkr->GetPhysicalDevice(), &memoryProperties);
-		const VkMemoryPropertyFlags actualFlags = memoryProperties.memoryTypes[allocInfo.memoryTypeIndex].propertyFlags;
-		VkPhysicalDeviceProperties deviceProperties{};
-		vkGetPhysicalDeviceProperties(m_vkr->GetPhysicalDevice(), &deviceProperties);
-		cemuLog_log(LogType::Force,
-			"Vulkan INDEX MEMORY: type={} flags={:#x} HOST_VISIBLE={} HOST_COHERENT={} DEVICE_LOCAL={} nonCoherentAtomSize={} requested={:#x}",
-			allocInfo.memoryTypeIndex,
-			(uint32)actualFlags,
-			HAS_FLAG(actualFlags, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
-			HAS_FLAG(actualFlags, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
-			HAS_FLAG(actualFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
-			(uint64)deviceProperties.limits.nonCoherentAtomSize,
-			(uint32)properties);
-	}
-	return true;
-}
-'@
-          $count = ([regex]::Matches($content, [regex]::Escape($old))).Count
-          if ($count -ne 1) { throw "Expected one CreateBuffer tail block, found $count" }
-          $content = $content.Replace($old, $new)
+          $needle = "`treturn true;`n}`n`nbool VKRMemoryManager::CreateBufferFromHostMemory"
+          $insert = @(
+            "`tstatic bool s_loggedIndexMemoryProperties = false;",
+            "`tif (!s_loggedIndexMemoryProperties && (usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT) != 0)",
+            "`t{",
+            "`t`ts_loggedIndexMemoryProperties = true;",
+            "`t`tVkPhysicalDeviceMemoryProperties memoryProperties{};",
+            "`t`tvkGetPhysicalDeviceMemoryProperties(m_vkr->GetPhysicalDevice(), &memoryProperties);",
+            "`t`tconst VkMemoryPropertyFlags actualFlags = memoryProperties.memoryTypes[allocInfo.memoryTypeIndex].propertyFlags;",
+            "`t`tVkPhysicalDeviceProperties deviceProperties{};",
+            "`t`tvkGetPhysicalDeviceProperties(m_vkr->GetPhysicalDevice(), &deviceProperties);",
+            "`t`tcemuLog_log(LogType::Force,",
+            "`t`t`t`"Vulkan INDEX MEMORY: type={} flags={:#x} HOST_VISIBLE={} HOST_COHERENT={} DEVICE_LOCAL={} nonCoherentAtomSize={} requested={:#x}`",",
+            "`t`t`tallocInfo.memoryTypeIndex,",
+            "`t`t`t(uint32)actualFlags,",
+            "`t`t`tHAS_FLAG(actualFlags, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),",
+            "`t`t`tHAS_FLAG(actualFlags, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),",
+            "`t`t`tHAS_FLAG(actualFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),",
+            "`t`t`t(uint64)deviceProperties.limits.nonCoherentAtomSize,",
+            "`t`t`t(uint32)properties);",
+            "`t}",
+            "`treturn true;",
+            "}",
+            "",
+            "bool VKRMemoryManager::CreateBufferFromHostMemory"
+          ) -join "`n"
+          $count = ([regex]::Matches($content, [regex]::Escape($needle))).Count
+          if ($count -ne 1) { throw "Expected one CreateBuffer return boundary, found $count" }
+          $content = $content.Replace($needle, $insert)
           [IO.File]::WriteAllText($path, $content, [Text.UTF8Encoding]::new($false))
           Write-Host 'Diagnostic patch applied: first successful Vulkan index buffer allocation will log actual memory properties.'
           git diff --check
