@@ -25,7 +25,16 @@ jobs:
 
       - name: Configure
         shell: pwsh
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=release -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=release -DVCPKG_INSTALL_OPTIONS="--clean-after-build" 2>&1 | Tee-Object -FilePath configure.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload configure log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bisect-x64-configure-log
+          path: configure.log
 
       - name: Build Cemu
         shell: pwsh
