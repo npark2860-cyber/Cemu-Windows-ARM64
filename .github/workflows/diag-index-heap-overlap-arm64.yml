@@ -1,0 +1,193 @@
+name: Diagnose index heap overlap ARM64
+
+on:
+  push:
+    branches:
+      - diag-index-heap-overlap-arm64
+
+concurrency:
+  group: diag-index-heap-overlap-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Add index heap overlap diagnostics
+        shell: pwsh
+        run: |
+          function Replace-Exact([string]$Path, [string]$Old, [string]$New) {
+            $content = [IO.File]::ReadAllText($Path).Replace("`r`n", "`n")
+            $count = ([regex]::Matches($content, [regex]::Escape($Old))).Count
+            if ($count -ne 1) { throw "Expected exactly one match in $Path, found $count" }
+            $content = $content.Replace($Old, $New)
+            [IO.File]::WriteAllText($Path, $content, [Text.UTF8Encoding]::new($false))
+          }
+
+          $path = 'src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp'
+
+          $marker = "/* VKRSynchronizedHeapAllocator */`n`n"
+          $diagnosticTypes = @'
+/* VKRSynchronizedHeapAllocator */
+
+namespace
+{
+struct IndexHeapDebugRange
+{
+	uint32 chunkIndex;
+	uint32 offset;
+	uint32 size;
+};
+
+std::vector<IndexHeapDebugRange> s_indexHeapDebugRanges;
+uint64 s_indexHeapDebugAllocationCount = 0;
+}
+
+'@
+          Replace-Exact $path $marker $diagnosticTypes
+
+          $oldAlloc = @'
+VKRSynchronizedHeapAllocator::AllocatorReservation* VKRSynchronizedHeapAllocator::AllocateBufferMemory(uint32 size, uint32 alignment)
+{
+	CHAddr addr = m_chunkedHeap.alloc(size, alignment);
+	m_activeAllocations.emplace_back(addr);
+	AllocatorReservation* res = m_poolAllocatorReservation.allocObj();
+	res->bufferIndex = addr.chunkIndex;
+	res->bufferOffset = addr.offset;
+	res->size = size;
+	res->memPtr = m_chunkedHeap.GetChunkPtr(addr.chunkIndex) + addr.offset;
+	m_chunkedHeap.GetChunkVkMemInfo(addr.chunkIndex, res->vkBuffer, res->vkMem);
+	return res;
+}
+'@
+          $newAlloc = @'
+VKRSynchronizedHeapAllocator::AllocatorReservation* VKRSynchronizedHeapAllocator::AllocateBufferMemory(uint32 size, uint32 alignment)
+{
+	CHAddr addr = m_chunkedHeap.alloc(size, alignment);
+	const uint32 trackedSize = size == 0 ? 32u : ((size + 31u) & ~31u);
+	if (s_indexHeapDebugAllocationCount++ == 0)
+		cemuLog_log(LogType::Force, "INDEX HEAP TRACKING: enabled");
+	if (!addr.isValid())
+		cemuLog_log(LogType::Force, "INDEX HEAP INVALID ALLOCATION: requestedSize={} alignment={}", size, alignment);
+	else
+	{
+		if (alignment != 0 && (addr.offset % alignment) != 0)
+			cemuLog_log(LogType::Force, "INDEX HEAP BAD ALIGNMENT: chunk={} offset={} requestedSize={} trackedSize={} alignment={}", addr.chunkIndex, addr.offset, size, trackedSize, alignment);
+		for (const auto& live : s_indexHeapDebugRanges)
+		{
+			if (live.chunkIndex != addr.chunkIndex)
+				continue;
+			if (live.offset < (addr.offset + trackedSize) && (live.offset + live.size) > addr.offset)
+			{
+				cemuLog_log(LogType::Force,
+					"INDEX HEAP OVERLAP: new chunk={} offset={} size={} requested={} overlaps live offset={} size={}",
+					addr.chunkIndex, addr.offset, trackedSize, size, live.offset, live.size);
+			}
+		}
+		s_indexHeapDebugRanges.push_back({addr.chunkIndex, addr.offset, trackedSize});
+	}
+	m_activeAllocations.emplace_back(addr);
+	AllocatorReservation* res = m_poolAllocatorReservation.allocObj();
+	res->bufferIndex = addr.chunkIndex;
+	res->bufferOffset = addr.offset;
+	res->size = size;
+	res->memPtr = m_chunkedHeap.GetChunkPtr(addr.chunkIndex) + addr.offset;
+	m_chunkedHeap.GetChunkVkMemInfo(addr.chunkIndex, res->vkBuffer, res->vkMem);
+	return res;
+}
+'@
+          Replace-Exact $path $oldAlloc $newAlloc
+
+          $oldCleanup = @'
+			// release allocations
+			for(auto& addr : it->second)
+				m_chunkedHeap.free(addr);
+'@
+          $newCleanup = @'
+			// release allocations
+			for(auto& addr : it->second)
+			{
+				auto dbgIt = std::find_if(s_indexHeapDebugRanges.begin(), s_indexHeapDebugRanges.end(), [&addr](const IndexHeapDebugRange& range) {
+					return range.chunkIndex == addr.chunkIndex && range.offset == addr.offset;
+				});
+				if (dbgIt == s_indexHeapDebugRanges.end())
+					cemuLog_log(LogType::Force, "INDEX HEAP UNKNOWN FREE: chunk={} offset={}", addr.chunkIndex, addr.offset);
+				else
+					s_indexHeapDebugRanges.erase(dbgIt);
+				m_chunkedHeap.free(addr);
+			}
+'@
+          Replace-Exact $path $oldCleanup $newCleanup
+
+          Write-Host 'Index heap overlap diagnostic patch applied.'
+          git diff --check
+          git diff -- src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp
+
+      - name: Setup release mode parameters
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        run: cmake --build build
+
+      - name: Prepare artifact
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-index-heap-overlap-diag
+          path: ./bin/Cemu.exe
