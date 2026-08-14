@@ -1,0 +1,110 @@
+name: Test legacy index allocator ARM64
+
+on:
+  push:
+    branches:
+      - test-legacy-index-arm64
+
+concurrency:
+  group: test-legacy-index-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Apply legacy index allocator diagnostic patch
+        shell: pwsh
+        run: |
+          function Replace-Exact([string]$Path, [string]$Old, [string]$New) {
+            $content = [IO.File]::ReadAllText($Path)
+            if (-not $content.Contains($Old)) { throw "Pattern not found in $Path`: $Old" }
+            $content = $content.Replace($Old, $New)
+            [IO.File]::WriteAllText($Path, $content, [Text.UTF8Encoding]::new($false))
+          }
+
+          $mem = 'src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.h'
+          Replace-Exact $mem 'm_indexBuffer(this, VKR_BUFFER_TYPE::INDEX, 4u * 1024 * 1024),' 'm_indexBuffer(renderer, this, VKR_BUFFER_TYPE::INDEX, 4u * 1024 * 1024),'
+          Replace-Exact $mem 'VKRSynchronizedHeapAllocator& GetIndexAllocator() { return m_indexBuffer; };' 'VKRSynchronizedRingAllocator& GetIndexAllocator() { return m_indexBuffer; };'
+          Replace-Exact $mem 'VKRSynchronizedHeapAllocator m_indexBuffer;' 'VKRSynchronizedRingAllocator m_indexBuffer;'
+
+          $core = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp'
+          Replace-Exact $core 'VKRSynchronizedHeapAllocator::AllocatorReservation* resv = memoryManager->GetIndexAllocator().AllocateBufferMemory(size, 32);' "auto resv = memoryManager->GetIndexAllocator().AllocateBufferMemory(size, 32);`n`t auto* resvCopy = new VKRSynchronizedRingAllocator::AllocatorReservation_t(resv);"
+          Replace-Exact $core 'return { resv->memPtr, resv };' 'return { resvCopy->memPtr, resvCopy };'
+          Replace-Exact $core 'memoryManager->GetIndexAllocator().FreeReservation((VKRSynchronizedHeapAllocator::AllocatorReservation*)allocation.rendererInternal);' 'delete (VKRSynchronizedRingAllocator::AllocatorReservation_t*)allocation.rendererInternal; allocation.rendererInternal = nullptr;'
+          Replace-Exact $core 'memoryManager->GetIndexAllocator().FlushReservation((VKRSynchronizedHeapAllocator::AllocatorReservation*)allocation.rendererInternal);' 'memoryManager->GetIndexAllocator().FlushReservation(*(VKRSynchronizedRingAllocator::AllocatorReservation_t*)allocation.rendererInternal);'
+          Replace-Exact $core 'VKRSynchronizedHeapAllocator::AllocatorReservation* indexReservation = (VKRSynchronizedHeapAllocator::AllocatorReservation*)indexAllocation.rendererInternal;' 'VKRSynchronizedRingAllocator::AllocatorReservation_t* indexReservation = (VKRSynchronizedRingAllocator::AllocatorReservation_t*)indexAllocation.rendererInternal;'
+
+          $indices = 'src/Cafe/HW/Latte/Core/LatteIndices.cpp'
+          Replace-Exact $indices 'std::array<CacheEntry, 8> entry;' 'std::array<CacheEntry, 1> entry;'
+
+          Write-Host 'Legacy index allocator diagnostic patch applied.'
+
+      - name: Setup release mode parameters
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        run: cmake --build build
+
+      - name: Prepare artifact
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-legacy-index-test
+          path: ./bin/Cemu.exe
