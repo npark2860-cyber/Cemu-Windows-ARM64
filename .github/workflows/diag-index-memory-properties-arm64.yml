@@ -28,6 +28,7 @@ jobs:
         run: |
           $path = 'src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp'
           $content = [IO.File]::ReadAllText($path)
+          $content = $content.Replace("`r`n", "`n")
           $needle = "`treturn true;`n}`n`nbool VKRMemoryManager::CreateBufferFromHostMemory"
           $insert = @(
             "`tstatic bool s_loggedIndexMemoryProperties = false;",
