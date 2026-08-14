@@ -9,10 +9,6 @@ concurrency:
   group: bisect-x64-0a590850
   cancel-in-progress: true
 
-env:
-  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
-  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
-
 jobs:
   build-windows-x64:
     runs-on: windows-2022
@@ -22,11 +18,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup release mode parameters
+      - name: Use current vcpkg tooling
         shell: pwsh
         run: |
-          "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
-          "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          git -C dependencies/vcpkg fetch origin 9849e070ad4c3383890fb1c80ae0c54325e2484a --depth=1
+          git -C dependencies/vcpkg checkout 9849e070ad4c3383890fb1c80ae0c54325e2484a
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
@@ -37,27 +33,13 @@ jobs:
         shell: pwsh
         run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
 
-      - name: Setup NuGet Credentials for vcpkg
-        shell: bash
-        run: |
-          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
-          sources add \
-          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
-          -storepasswordincleartext \
-          -name "GitHub" \
-          -username "${{ github.repository_owner }}" \
-          -password "${{ secrets.GITHUB_TOKEN }}"
-          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
-          setapikey "${{ secrets.GITHUB_TOKEN }}" \
-          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
-
       - name: Configure
         shell: pwsh
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=release -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
 
       - name: Build Cemu
         shell: pwsh
-        run: cmake --build build --config ${{ env.BUILD_MODE }}
+        run: cmake --build build --config release
 
       - name: Prepare artifact
         shell: pwsh
