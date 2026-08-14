@@ -1,0 +1,136 @@
+name: Diagnose index memory properties ARM64
+
+on:
+  push:
+    branches:
+      - diag-index-memory-properties-arm64
+
+concurrency:
+  group: diag-index-memory-properties-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Add index memory diagnostics
+        shell: pwsh
+        run: |
+          $path = 'src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp'
+          $content = [IO.File]::ReadAllText($path)
+          $old = @'
+	if (vkBindBufferMemory(m_vkr->GetLogicalDevice(), buffer, bufferMemory, 0) != VK_SUCCESS)
+	{
+		vkDestroyBuffer(m_vkr->GetLogicalDevice(), buffer, nullptr);
+		cemuLog_log(LogType::Force, "Failed to bind buffer (CreateBuffer)");
+		return false;
+	}
+	return true;
+}
+'@
+          $new = @'
+	if (vkBindBufferMemory(m_vkr->GetLogicalDevice(), buffer, bufferMemory, 0) != VK_SUCCESS)
+	{
+		vkDestroyBuffer(m_vkr->GetLogicalDevice(), buffer, nullptr);
+		cemuLog_log(LogType::Force, "Failed to bind buffer (CreateBuffer)");
+		return false;
+	}
+
+	static bool s_loggedIndexMemoryProperties = false;
+	if (!s_loggedIndexMemoryProperties && (usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT) != 0)
+	{
+		s_loggedIndexMemoryProperties = true;
+		VkPhysicalDeviceMemoryProperties memoryProperties{};
+		vkGetPhysicalDeviceMemoryProperties(m_vkr->GetPhysicalDevice(), &memoryProperties);
+		const VkMemoryPropertyFlags actualFlags = memoryProperties.memoryTypes[allocInfo.memoryTypeIndex].propertyFlags;
+		VkPhysicalDeviceProperties deviceProperties{};
+		vkGetPhysicalDeviceProperties(m_vkr->GetPhysicalDevice(), &deviceProperties);
+		cemuLog_log(LogType::Force,
+			"Vulkan INDEX MEMORY: type={} flags={:#x} HOST_VISIBLE={} HOST_COHERENT={} DEVICE_LOCAL={} nonCoherentAtomSize={} requested={:#x}",
+			allocInfo.memoryTypeIndex,
+			(uint32)actualFlags,
+			HAS_FLAG(actualFlags, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
+			HAS_FLAG(actualFlags, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
+			HAS_FLAG(actualFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+			(uint64)deviceProperties.limits.nonCoherentAtomSize,
+			(uint32)properties);
+	}
+	return true;
+}
+'@
+          $count = ([regex]::Matches($content, [regex]::Escape($old))).Count
+          if ($count -ne 1) { throw "Expected one CreateBuffer tail block, found $count" }
+          $content = $content.Replace($old, $new)
+          [IO.File]::WriteAllText($path, $content, [Text.UTF8Encoding]::new($false))
+          Write-Host 'Diagnostic patch applied: first successful Vulkan index buffer allocation will log actual memory properties.'
+          git diff --check
+          git diff -- src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp
+
+      - name: Setup release mode parameters
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        run: cmake --build build
+
+      - name: Prepare artifact
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-index-memory-diag
+          path: ./bin/Cemu.exe
