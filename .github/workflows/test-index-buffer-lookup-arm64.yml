@@ -35,25 +35,8 @@ jobs:
           }
 
           $mem = 'src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.h'
-          $oldDecl = @'
-	void FlushReservation(AllocatorReservation* uploadReservation);
-
-	void CleanupBuffer(uint64 latestFinishedCommandBufferId);
-'@
-          $newDecl = @'
-	void FlushReservation(AllocatorReservation* uploadReservation);
-
-	// Diagnostic: resolve the VkBuffer from bufferIndex at bind time, like the pre-#1443 path.
-	VkBuffer GetBufferByIndex(uint32 index)
-	{
-		VkBuffer buffer = VK_NULL_HANDLE;
-		VkDeviceMemory memory = VK_NULL_HANDLE;
-		m_chunkedHeap.GetChunkVkMemInfo(index, buffer, memory);
-		return buffer;
-	}
-
-	void CleanupBuffer(uint64 latestFinishedCommandBufferId);
-'@
+          $oldDecl = "`tvoid FlushReservation(AllocatorReservation* uploadReservation);"
+          $newDecl = "`tvoid FlushReservation(AllocatorReservation* uploadReservation);`n`n`t// Diagnostic: resolve VkBuffer from bufferIndex at bind time, like pre-#1443.`n`tVkBuffer GetBufferByIndex(uint32 index)`n`t{`n`t`tVkBuffer buffer = VK_NULL_HANDLE;`n`t`tVkDeviceMemory memory = VK_NULL_HANDLE;`n`t`tm_chunkedHeap.GetChunkVkMemInfo(index, buffer, memory);`n`t`treturn buffer;`n`t}"
           Replace-ExactCount $mem $oldDecl $newDecl 1
 
           $core = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp'
@@ -61,9 +44,8 @@ jobs:
           $newBind = 'vkCmdBindIndexBuffer(m_state.currentCommandBuffer, memoryManager->GetIndexAllocator().GetBufferByIndex(indexBufferIndex), indexBufferOffset, vkType);'
           Replace-ExactCount $core $oldBind $newBind 2
 
-          Write-Host 'Index buffer lookup diagnostic patch applied.'
+          Write-Host 'Diagnostic patch applied: index VkBuffer is resolved via bufferIndex at bind time.'
           git diff --check
-          git diff -- src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.h src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp
 
       - name: Setup release mode parameters
         run: |
