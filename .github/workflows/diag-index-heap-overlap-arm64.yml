@@ -38,95 +38,95 @@ jobs:
 
           $marker = "/* VKRSynchronizedHeapAllocator */`n`n"
           $diagnosticTypes = @'
-/* VKRSynchronizedHeapAllocator */
+          /* VKRSynchronizedHeapAllocator */
 
-namespace
-{
-struct IndexHeapDebugRange
-{
-	uint32 chunkIndex;
-	uint32 offset;
-	uint32 size;
-};
+          namespace
+          {
+          struct IndexHeapDebugRange
+          {
+          	uint32 chunkIndex;
+          	uint32 offset;
+          	uint32 size;
+          };
 
-std::vector<IndexHeapDebugRange> s_indexHeapDebugRanges;
-uint64 s_indexHeapDebugAllocationCount = 0;
-}
+          std::vector<IndexHeapDebugRange> s_indexHeapDebugRanges;
+          uint64 s_indexHeapDebugAllocationCount = 0;
+          }
 
-'@
+          '@
           Replace-Exact $path $marker $diagnosticTypes
 
           $oldAlloc = @'
-VKRSynchronizedHeapAllocator::AllocatorReservation* VKRSynchronizedHeapAllocator::AllocateBufferMemory(uint32 size, uint32 alignment)
-{
-	CHAddr addr = m_chunkedHeap.alloc(size, alignment);
-	m_activeAllocations.emplace_back(addr);
-	AllocatorReservation* res = m_poolAllocatorReservation.allocObj();
-	res->bufferIndex = addr.chunkIndex;
-	res->bufferOffset = addr.offset;
-	res->size = size;
-	res->memPtr = m_chunkedHeap.GetChunkPtr(addr.chunkIndex) + addr.offset;
-	m_chunkedHeap.GetChunkVkMemInfo(addr.chunkIndex, res->vkBuffer, res->vkMem);
-	return res;
-}
-'@
+          VKRSynchronizedHeapAllocator::AllocatorReservation* VKRSynchronizedHeapAllocator::AllocateBufferMemory(uint32 size, uint32 alignment)
+          {
+          	CHAddr addr = m_chunkedHeap.alloc(size, alignment);
+          	m_activeAllocations.emplace_back(addr);
+          	AllocatorReservation* res = m_poolAllocatorReservation.allocObj();
+          	res->bufferIndex = addr.chunkIndex;
+          	res->bufferOffset = addr.offset;
+          	res->size = size;
+          	res->memPtr = m_chunkedHeap.GetChunkPtr(addr.chunkIndex) + addr.offset;
+          	m_chunkedHeap.GetChunkVkMemInfo(addr.chunkIndex, res->vkBuffer, res->vkMem);
+          	return res;
+          }
+          '@
           $newAlloc = @'
-VKRSynchronizedHeapAllocator::AllocatorReservation* VKRSynchronizedHeapAllocator::AllocateBufferMemory(uint32 size, uint32 alignment)
-{
-	CHAddr addr = m_chunkedHeap.alloc(size, alignment);
-	const uint32 trackedSize = size == 0 ? 32u : ((size + 31u) & ~31u);
-	if (s_indexHeapDebugAllocationCount++ == 0)
-		cemuLog_log(LogType::Force, "INDEX HEAP TRACKING: enabled");
-	if (!addr.isValid())
-		cemuLog_log(LogType::Force, "INDEX HEAP INVALID ALLOCATION: requestedSize={} alignment={}", size, alignment);
-	else
-	{
-		if (alignment != 0 && (addr.offset % alignment) != 0)
-			cemuLog_log(LogType::Force, "INDEX HEAP BAD ALIGNMENT: chunk={} offset={} requestedSize={} trackedSize={} alignment={}", addr.chunkIndex, addr.offset, size, trackedSize, alignment);
-		for (const auto& live : s_indexHeapDebugRanges)
-		{
-			if (live.chunkIndex != addr.chunkIndex)
-				continue;
-			if (live.offset < (addr.offset + trackedSize) && (live.offset + live.size) > addr.offset)
-			{
-				cemuLog_log(LogType::Force,
-					"INDEX HEAP OVERLAP: new chunk={} offset={} size={} requested={} overlaps live offset={} size={}",
-					addr.chunkIndex, addr.offset, trackedSize, size, live.offset, live.size);
-			}
-		}
-		s_indexHeapDebugRanges.push_back({addr.chunkIndex, addr.offset, trackedSize});
-	}
-	m_activeAllocations.emplace_back(addr);
-	AllocatorReservation* res = m_poolAllocatorReservation.allocObj();
-	res->bufferIndex = addr.chunkIndex;
-	res->bufferOffset = addr.offset;
-	res->size = size;
-	res->memPtr = m_chunkedHeap.GetChunkPtr(addr.chunkIndex) + addr.offset;
-	m_chunkedHeap.GetChunkVkMemInfo(addr.chunkIndex, res->vkBuffer, res->vkMem);
-	return res;
-}
-'@
+          VKRSynchronizedHeapAllocator::AllocatorReservation* VKRSynchronizedHeapAllocator::AllocateBufferMemory(uint32 size, uint32 alignment)
+          {
+          	CHAddr addr = m_chunkedHeap.alloc(size, alignment);
+          	const uint32 trackedSize = size == 0 ? 32u : ((size + 31u) & ~31u);
+          	if (s_indexHeapDebugAllocationCount++ == 0)
+          		cemuLog_log(LogType::Force, "INDEX HEAP TRACKING: enabled");
+          	if (!addr.isValid())
+          		cemuLog_log(LogType::Force, "INDEX HEAP INVALID ALLOCATION: requestedSize={} alignment={}", size, alignment);
+          	else
+          	{
+          		if (alignment != 0 && (addr.offset % alignment) != 0)
+          			cemuLog_log(LogType::Force, "INDEX HEAP BAD ALIGNMENT: chunk={} offset={} requestedSize={} trackedSize={} alignment={}", addr.chunkIndex, addr.offset, size, trackedSize, alignment);
+          		for (const auto& live : s_indexHeapDebugRanges)
+          		{
+          			if (live.chunkIndex != addr.chunkIndex)
+          				continue;
+          			if (live.offset < (addr.offset + trackedSize) && (live.offset + live.size) > addr.offset)
+          			{
+          				cemuLog_log(LogType::Force,
+          					"INDEX HEAP OVERLAP: new chunk={} offset={} size={} requested={} overlaps live offset={} size={}",
+          					addr.chunkIndex, addr.offset, trackedSize, size, live.offset, live.size);
+          			}
+          		}
+          		s_indexHeapDebugRanges.push_back({addr.chunkIndex, addr.offset, trackedSize});
+          	}
+          	m_activeAllocations.emplace_back(addr);
+          	AllocatorReservation* res = m_poolAllocatorReservation.allocObj();
+          	res->bufferIndex = addr.chunkIndex;
+          	res->bufferOffset = addr.offset;
+          	res->size = size;
+          	res->memPtr = m_chunkedHeap.GetChunkPtr(addr.chunkIndex) + addr.offset;
+          	m_chunkedHeap.GetChunkVkMemInfo(addr.chunkIndex, res->vkBuffer, res->vkMem);
+          	return res;
+          }
+          '@
           Replace-Exact $path $oldAlloc $newAlloc
 
           $oldCleanup = @'
-			// release allocations
-			for(auto& addr : it->second)
-				m_chunkedHeap.free(addr);
-'@
+          			// release allocations
+          			for(auto& addr : it->second)
+          				m_chunkedHeap.free(addr);
+          '@
           $newCleanup = @'
-			// release allocations
-			for(auto& addr : it->second)
-			{
-				auto dbgIt = std::find_if(s_indexHeapDebugRanges.begin(), s_indexHeapDebugRanges.end(), [&addr](const IndexHeapDebugRange& range) {
-					return range.chunkIndex == addr.chunkIndex && range.offset == addr.offset;
-				});
-				if (dbgIt == s_indexHeapDebugRanges.end())
-					cemuLog_log(LogType::Force, "INDEX HEAP UNKNOWN FREE: chunk={} offset={}", addr.chunkIndex, addr.offset);
-				else
-					s_indexHeapDebugRanges.erase(dbgIt);
-				m_chunkedHeap.free(addr);
-			}
-'@
+          			// release allocations
+          			for(auto& addr : it->second)
+          			{
+          				auto dbgIt = std::find_if(s_indexHeapDebugRanges.begin(), s_indexHeapDebugRanges.end(), [&addr](const IndexHeapDebugRange& range) {
+          					return range.chunkIndex == addr.chunkIndex && range.offset == addr.offset;
+          				});
+          				if (dbgIt == s_indexHeapDebugRanges.end())
+          					cemuLog_log(LogType::Force, "INDEX HEAP UNKNOWN FREE: chunk={} offset={}", addr.chunkIndex, addr.offset);
+          				else
+          					s_indexHeapDebugRanges.erase(dbgIt);
+          				m_chunkedHeap.free(addr);
+          			}
+          '@
           Replace-Exact $path $oldCleanup $newCleanup
 
           Write-Host 'Index heap overlap diagnostic patch applied.'
