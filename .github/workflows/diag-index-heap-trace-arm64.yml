@@ -1,0 +1,121 @@
+name: Diagnose index heap trace ARM64
+
+on:
+  push:
+    branches:
+      - diag-index-heap-overlap-arm64-v2
+
+concurrency:
+  group: diag-index-heap-overlap-arm64-v2
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Add index heap trace diagnostics
+        shell: pwsh
+        run: |
+          $path = 'src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp'
+          $content = [IO.File]::ReadAllText($path).Replace("`r`n", "`n")
+
+          $allocOld = "`tCHAddr addr = m_chunkedHeap.alloc(size, alignment);"
+          $allocNew = @(
+            "`tCHAddr addr = m_chunkedHeap.alloc(size, alignment);",
+            "`tstatic uint64 s_diagIndexAllocSerial = 0;",
+            "`tconst uint64 diagSerial = s_diagIndexAllocSerial++;",
+            "`tconst uint32 diagAlignedSize = size == 0 ? 32u : ((size + 31u) & ~31u);",
+            "`tcemuLog_log(LogType::Force, `"INDEX HEAP ALLOC: serial={} chunk={} offset={} requested={} aligned={} alignment={}`", diagSerial, addr.chunkIndex, addr.offset, size, diagAlignedSize, alignment);"
+          ) -join "`n"
+          $allocCount = ([regex]::Matches($content, [regex]::Escape($allocOld))).Count
+          if ($allocCount -ne 1) { throw "Expected one index heap allocation line, found $allocCount" }
+          $content = $content.Replace($allocOld, $allocNew)
+
+          $freeOld = @(
+            "`t`t`tfor(auto& addr : it->second)",
+            "`t`t`t`tm_chunkedHeap.free(addr);"
+          ) -join "`n"
+          $freeNew = @(
+            "`t`t`tfor(auto& addr : it->second)",
+            "`t`t`t{",
+            "`t`t`t`tcemuLog_log(LogType::Force, `"INDEX HEAP FREE: chunk={} offset={}`", addr.chunkIndex, addr.offset);",
+            "`t`t`t`tm_chunkedHeap.free(addr);",
+            "`t`t`t}"
+          ) -join "`n"
+          $freeCount = ([regex]::Matches($content, [regex]::Escape($freeOld))).Count
+          if ($freeCount -ne 1) { throw "Expected one index heap free loop, found $freeCount" }
+          $content = $content.Replace($freeOld, $freeNew)
+
+          [IO.File]::WriteAllText($path, $content, [Text.UTF8Encoding]::new($false))
+          Write-Host 'Index heap trace diagnostic patch applied.'
+          git diff --check
+          git diff -- src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp
+
+      - name: Setup release mode parameters
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        run: cmake --build build
+
+      - name: Prepare artifact
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-index-heap-trace-diag
+          path: ./bin/Cemu.exe
