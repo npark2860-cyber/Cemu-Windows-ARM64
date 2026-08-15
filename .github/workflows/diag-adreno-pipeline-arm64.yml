@@ -1,12 +1,12 @@
-name: Adreno missing-draw diagnostic ARM64
+name: Adreno PS input diagnostic ARM64
 
 on:
   push:
     branches:
-      - diag-adreno-pipeline-arm64
+      - diag-ps-input-arm64
 
 concurrency:
-  group: diag-adreno-pipeline-arm64
+  group: diag-ps-input-arm64
   cancel-in-progress: true
 
 env:
@@ -31,11 +31,15 @@ jobs:
         shell: bash
         run: python .github/scripts/diag_adreno_patch.py
 
+      - name: Capture PS input control values
+        shell: bash
+        run: python .github/scripts/diag_ps_input_values_patch.py
+
       - name: Show patch summary
         shell: bash
         run: |
           git diff --stat
-          git diff -- src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.h src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp
+          git diff -- src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompiler.h src/Cafe/HW/Latte/Core/LatteShader.cpp src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.h src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp
 
       - name: Setup release mode parameters
         run: |
@@ -92,5 +96,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-adreno-pipeline-diag
+          name: cemu-arm64-adreno-ps-input-diag
           path: ./bin/Cemu.exe
