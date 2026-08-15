@@ -1,0 +1,71 @@
+name: Test v2.6 ClearColorbuffer-only revert x64
+
+on:
+  push:
+    branches:
+      - test-v26-clearcolorbuffer-only-x64
+
+concurrency:
+  group: test-v26-clearcolorbuffer-only-x64
+  cancel-in-progress: true
+
+jobs:
+  build-windows-x64:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout v2.6 source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Revert only e834 backbuffer clear path
+        shell: pwsh
+        run: |
+          $path = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp'
+          $text = Get-Content $path -Raw
+          $text = $text -replace "`r`n", "`n"
+
+          $old1 = "`tLatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`n`tdraw_endRenderPass();`n`n`t// barrier for input texture"
+          $new1 = "`tLatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`n`tdraw_endRenderPass();`n`n`tif (clearBackground)`n`t`tClearColorbuffer(padView);`n`n`t// barrier for input texture"
+          if (-not $text.Contains($old1)) { throw 'Expected DrawBackbufferQuad insertion point not found' }
+          $text = $text.Replace($old1, $new1)
+
+          $old2 = "`n`tif (clearBackground)`n`t{`n`t`tVkClearAttachment clearAttachment{};`n`t`tclearAttachment.clearValue = {0,0,0,0};`n`t`tclearAttachment.colorAttachment = 0;`n`t`tclearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;`n`t`tVkClearRect clearExtent = {{{0,0},chainInfo.m_actualExtent}, 0, 1};`n`t`tvkCmdClearAttachments(m_state.currentCommandBuffer, 1, &clearAttachment, 1, &clearExtent);`n`t}`n"
+          if (-not $text.Contains($old2)) { throw 'Expected vkCmdClearAttachments block not found' }
+          $text = $text.Replace($old2, "`n")
+
+          [System.IO.File]::WriteAllText($path, $text)
+          git diff -- $path
+
+      - name: Use current vcpkg tooling
+        shell: pwsh
+        run: |
+          git -C dependencies/vcpkg fetch origin 9849e070ad4c3383890fb1c80ae0c54325e2484a --depth=1
+          git -C dependencies/vcpkg checkout 9849e070ad4c3383890fb1c80ae0c54325e2484a
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=release -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --config release
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cemu-x64-v26-clearcolorbuffer-only-test
+          path: ./bin/Cemu.exe
