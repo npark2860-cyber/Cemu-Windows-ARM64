@@ -8,7 +8,7 @@ if idx < 0:
     raise RuntimeError('Diagnostic tail marker not found')
 
 prefix = s[:idx]
-tail = r'''# Persist the compatibility changes made in VulkanRenderer.cpp.
+tail = r"""# Persist the compatibility changes made in VulkanRenderer.cpp.
 write(vr, v)
 
 # Both regular draw paths live in VulkanRendererCore.cpp, not VulkanRenderer.cpp.
@@ -35,7 +35,7 @@ c = c.replace(null_head, diag_head)
 write(core, c)
 
 print("Diagnostic patch applied successfully")
-'''
+"""
 
 path.write_text(prefix + tail, encoding='utf-8', newline='\n')
 print('Diagnostic script tail corrected')
