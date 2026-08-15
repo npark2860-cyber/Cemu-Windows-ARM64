@@ -36,7 +36,6 @@ jobs:
 
           $vr = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp'
           $v = Get-Content $vr -Raw
-
           $oldFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;'
           $newFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;'
           $flagCount = ([regex]::Matches($v, [regex]::Escape($oldFlag))).Count
@@ -57,69 +56,32 @@ jobs:
           if (-not [regex]::IsMatch($v, $clearPattern)) { throw 'vkCmdClearAttachments block not found' }
           $v = [regex]::Replace($v, $clearPattern, "`n`tvkCmdBindPipeline", 1)
           Set-Content -Path $vr -Value $v -NoNewline
-
           git diff -- $swap $vr
 
       - name: Apply PS semantic 0xFE default-value fix
-        shell: pwsh
+        shell: python
         run: |
-          $file = 'src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp'
-          $src = Get-Content $file -Raw
+          from pathlib import Path
 
-          $oldNormal = @'
-			if (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
-				continue;
-			src->addFmt("layout(location = {}) ", i);
-'@
-          $newNormal = @'
-			if (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
-				continue;
-			// Semantic 0xFE has no matching VS export. Latte supplies SPI_PS_INPUT_CNTL.DEFAULT_VAL instead.
-			if (psInputTable->import[i].semanticId == 0xFE)
-			{
-				uint32 defaultValue = (shaderContext->contextRegisters[mmSPI_PS_INPUT_CNTL_0 + i] >> 8) & 3;
-				switch (defaultValue)
-				{
-				case 0: src->addFmt("const vec4 passParameterSem{} = vec4(0.0);" _CRLF, psInputTable->import[i].semanticId); break;
-				case 1: src->addFmt("const vec4 passParameterSem{} = vec4(0.0, 0.0, 0.0, 1.0);" _CRLF, psInputTable->import[i].semanticId); break;
-				case 2: src->addFmt("const vec4 passParameterSem{} = vec4(1.0, 1.0, 1.0, 0.0);" _CRLF, psInputTable->import[i].semanticId); break;
-				case 3: src->addFmt("const vec4 passParameterSem{} = vec4(1.0);" _CRLF, psInputTable->import[i].semanticId); break;
-				}
-				continue;
-			}
-			src->addFmt("layout(location = {}) ", i);
-'@
-          if (-not $src.Contains($oldNormal)) { throw 'Normal PS import anchor not found' }
-          $src = $src.Replace($oldNormal, $newNormal)
+          path = Path('src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp')
+          src = path.read_text(encoding='utf-8')
 
-          $oldGs = @'
-					if (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
-						continue;
-					uint32 location = psInputTable->import[i].semanticId & 0x7F; // todo - the range above 128 has special meaning?
-'@
-          $newGs = @'
-					if (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
-						continue;
-					uint32 location = psInputTable->import[i].semanticId & 0x7F; // todo - the range above 128 has special meaning?
-					// Semantic 0xFE uses the fixed default value instead of a GS-to-PS varying.
-					if (psInputTable->import[i].semanticId == 0xFE)
-					{
-						uint32 defaultValue = (decompilerContext->contextRegisters[mmSPI_PS_INPUT_CNTL_0 + i] >> 8) & 3;
-						switch (defaultValue)
-						{
-						case 0: src->addFmt("const vec4 passG2PParameter{} = vec4(0.0);" _CRLF, location); break;
-						case 1: src->addFmt("const vec4 passG2PParameter{} = vec4(0.0, 0.0, 0.0, 1.0);" _CRLF, location); break;
-						case 2: src->addFmt("const vec4 passG2PParameter{} = vec4(1.0, 1.0, 1.0, 0.0);" _CRLF, location); break;
-						case 3: src->addFmt("const vec4 passG2PParameter{} = vec4(1.0);" _CRLF, location); break;
-						}
-						continue;
-					}
-'@
-          if (-not $src.Contains($oldGs)) { throw 'GS-to-PS import anchor not found' }
-          $src = $src.Replace($oldGs, $newGs)
+          old_normal = """\t\t\tif (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)\n\t\t\t\tcontinue;\n\t\t\tsrc->addFmt(\"layout(location = {}) \", i);\n"""
+          new_normal = """\t\t\tif (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)\n\t\t\t\tcontinue;\n\t\t\t// Semantic 0xFE has no matching VS export. Latte supplies SPI_PS_INPUT_CNTL.DEFAULT_VAL instead.\n\t\t\tif (psInputTable->import[i].semanticId == 0xFE)\n\t\t\t{\n\t\t\t\tuint32 defaultValue = (shaderContext->contextRegisters[mmSPI_PS_INPUT_CNTL_0 + i] >> 8) & 3;\n\t\t\t\tswitch (defaultValue)\n\t\t\t\t{\n\t\t\t\tcase 0: src->addFmt(\"const vec4 passParameterSem{} = vec4(0.0);\" _CRLF, psInputTable->import[i].semanticId); break;\n\t\t\t\tcase 1: src->addFmt(\"const vec4 passParameterSem{} = vec4(0.0, 0.0, 0.0, 1.0);\" _CRLF, psInputTable->import[i].semanticId); break;\n\t\t\t\tcase 2: src->addFmt(\"const vec4 passParameterSem{} = vec4(1.0, 1.0, 1.0, 0.0);\" _CRLF, psInputTable->import[i].semanticId); break;\n\t\t\t\tcase 3: src->addFmt(\"const vec4 passParameterSem{} = vec4(1.0);\" _CRLF, psInputTable->import[i].semanticId); break;\n\t\t\t\t}\n\t\t\t\tcontinue;\n\t\t\t}\n\t\t\tsrc->addFmt(\"layout(location = {}) \", i);\n"""
+          if src.count(old_normal) != 1:
+              raise RuntimeError(f'normal PS import anchor count={src.count(old_normal)}')
+          src = src.replace(old_normal, new_normal, 1)
 
-          Set-Content -Path $file -Value $src -NoNewline
-          git diff -- $file
+          old_gs = """\t\t\t\t\tif (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\tuint32 location = psInputTable->import[i].semanticId & 0x7F; // todo - the range above 128 has special meaning?\n"""
+          new_gs = """\t\t\t\t\tif (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\tuint32 location = psInputTable->import[i].semanticId & 0x7F; // todo - the range above 128 has special meaning?\n\t\t\t\t\t// Semantic 0xFE uses the fixed default value instead of a GS-to-PS varying.\n\t\t\t\t\tif (psInputTable->import[i].semanticId == 0xFE)\n\t\t\t\t\t{\n\t\t\t\t\t\tuint32 defaultValue = (decompilerContext->contextRegisters[mmSPI_PS_INPUT_CNTL_0 + i] >> 8) & 3;\n\t\t\t\t\t\tswitch (defaultValue)\n\t\t\t\t\t\t{\n\t\t\t\t\t\tcase 0: src->addFmt(\"const vec4 passG2PParameter{} = vec4(0.0);\" _CRLF, location); break;\n\t\t\t\t\t\tcase 1: src->addFmt(\"const vec4 passG2PParameter{} = vec4(0.0, 0.0, 0.0, 1.0);\" _CRLF, location); break;\n\t\t\t\t\t\tcase 2: src->addFmt(\"const vec4 passG2PParameter{} = vec4(1.0, 1.0, 1.0, 0.0);\" _CRLF, location); break;\n\t\t\t\t\t\tcase 3: src->addFmt(\"const vec4 passG2PParameter{} = vec4(1.0);\" _CRLF, location); break;\n\t\t\t\t\t\t}\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\t}\n"""
+          if src.count(old_gs) != 1:
+              raise RuntimeError(f'GS-to-PS import anchor count={src.count(old_gs)}')
+          src = src.replace(old_gs, new_gs, 1)
+          path.write_text(src, encoding='utf-8', newline='')
+
+      - name: Show source diff
+        shell: pwsh
+        run: git diff -- src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp
 
       - name: Setup release mode parameters
         run: |
