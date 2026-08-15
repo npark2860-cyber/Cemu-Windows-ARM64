@@ -1,0 +1,91 @@
+name: Test v2.6 e834 runtime revert x64
+
+on:
+  push:
+    branches:
+      - test-v26-e834-runtime-revert-x64
+
+concurrency:
+  group: test-v26-e834-runtime-revert-x64
+  cancel-in-progress: true
+
+jobs:
+  build-windows-x64:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout v2.6 source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Revert e834 runtime rendering changes as one group
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+
+          swap = Path('src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp')
+          s = swap.read_text(encoding='utf-8').replace('\r\n', '\n')
+          old = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;'
+          new = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;'
+          if s.count(old) != 1:
+              raise SystemExit(f'expected one swapchain DONT_CARE loadOp, found {s.count(old)}')
+          swap.write_text(s.replace(old, new), encoding='utf-8', newline='\n')
+
+          vr = Path('src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp')
+          s = vr.read_text(encoding='utf-8').replace('\r\n', '\n')
+
+          old_flag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;'
+          new_flag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;'
+          if s.count(old_flag) != 2:
+              raise SystemExit(f'expected two ONE_TIME_SUBMIT flags, found {s.count(old_flag)}')
+          s = s.replace(old_flag, new_flag)
+
+          anchor = '\tLatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;\n\tdraw_endRenderPass();\n'
+          replacement = anchor + '\n\tif (clearBackground)\n\t\tClearColorbuffer(padView);\n'
+          if s.count(anchor) != 1:
+              raise SystemExit(f'expected one DrawBackbufferQuad anchor, found {s.count(anchor)}')
+          s = s.replace(anchor, replacement, 1)
+
+          clear_block = '''\n\tif (clearBackground)\n\t{\n\t\tVkClearAttachment clearAttachment{};\n\t\tclearAttachment.clearValue = {0,0,0,0};\n\t\tclearAttachment.colorAttachment = 0;\n\t\tclearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;\n\t\tVkClearRect clearExtent = {{{0,0},chainInfo.m_actualExtent}, 0, 1};\n\t\tvkCmdClearAttachments(m_state.currentCommandBuffer, 1, &clearAttachment, 1, &clearExtent);\n\t}\n'''
+          if s.count(clear_block) != 1:
+              raise SystemExit(f'expected one vkCmdClearAttachments block, found {s.count(clear_block)}')
+          s = s.replace(clear_block, '\n', 1)
+
+          vr.write_text(s, encoding='utf-8', newline='\n')
+          '@ | python -
+
+          git diff -- src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+
+      - name: Use current vcpkg tooling
+        shell: pwsh
+        run: |
+          git -C dependencies/vcpkg fetch origin 9849e070ad4c3383890fb1c80ae0c54325e2484a --depth=1
+          git -C dependencies/vcpkg checkout 9849e070ad4c3383890fb1c80ae0c54325e2484a
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=release -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --config release
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cemu-x64-v26-e834-runtime-revert-test
+          path: ./bin/Cemu.exe
