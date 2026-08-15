@@ -1,0 +1,64 @@
+name: Test x64 4f9 memory-type subset
+
+on:
+  push:
+    branches:
+      - test-4f9-memorytype-subset-x64
+
+concurrency:
+  group: test-4f9-memorytype-subset-x64
+  cancel-in-progress: true
+
+jobs:
+  build-windows-x64:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout historical source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Apply isolated memory-type compatibility patch
+        shell: pwsh
+        run: |
+          $path = 'src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp'
+          $text = Get-Content $path -Raw
+          $old = 'if (typeFilter & (1 << i) && memProperties.memoryTypes[i].propertyFlags == properties)'
+          $new = 'if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)'
+          if (-not $text.Contains($old)) { throw 'Expected FindMemoryType2 exact-match line not found' }
+          $text = $text.Replace($old, $new)
+          Set-Content -Path $path -Value $text -NoNewline
+          git diff -- $path
+
+      - name: Use current vcpkg tooling
+        shell: pwsh
+        run: |
+          git -C dependencies/vcpkg fetch origin 9849e070ad4c3383890fb1c80ae0c54325e2484a --depth=1
+          git -C dependencies/vcpkg checkout 9849e070ad4c3383890fb1c80ae0c54325e2484a
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=release -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --config release
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cemu-x64-4f9-memorytype-subset-test
+          path: ./bin/Cemu.exe
