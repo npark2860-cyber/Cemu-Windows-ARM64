@@ -1,0 +1,80 @@
+name: Test x64 4f9 memory-type + all-commands barrier
+
+on:
+  push:
+    branches:
+      - test-4f9-memorytype-allcommands-x64
+
+concurrency:
+  group: test-4f9-memorytype-allcommands-x64
+  cancel-in-progress: true
+
+jobs:
+  build-windows-x64:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout historical source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Apply isolated compatibility and barrier patches
+        shell: pwsh
+        run: |
+          $memPath = 'src/Cafe/HW/Latte/Renderer/Vulkan/VKRMemoryManager.cpp'
+          $memText = Get-Content $memPath -Raw
+          $memOld = 'if (typeFilter & (1 << i) && memProperties.memoryTypes[i].propertyFlags == properties)'
+          $memNew = 'if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)'
+          if (-not $memText.Contains($memOld)) { throw 'Expected FindMemoryType2 exact-match line not found' }
+          $memText = $memText.Replace($memOld, $memNew)
+          Set-Content -Path $memPath -Value $memText -NoNewline
+
+          $rendererPath = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h'
+          $rendererText = Get-Content $rendererPath -Raw
+          $barrierOld = 'VkPipelineStageFlags dstStages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;'
+          $barrierNew = 'VkPipelineStageFlags dstStages = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;'
+          $needle = "void barrier_sequentializeTransfer()"
+          $start = $rendererText.IndexOf($needle)
+          if ($start -lt 0) { throw 'barrier_sequentializeTransfer not found' }
+          $end = $rendererText.IndexOf('void barrier_sequentializeCommand()', $start)
+          if ($end -lt 0) { throw 'barrier_sequentializeCommand boundary not found' }
+          $section = $rendererText.Substring($start, $end - $start)
+          if (-not $section.Contains($barrierOld)) { throw 'Expected TOP_OF_PIPE transfer barrier line not found' }
+          $section = $section.Replace($barrierOld, $barrierNew)
+          $rendererText = $rendererText.Substring(0, $start) + $section + $rendererText.Substring($end)
+          Set-Content -Path $rendererPath -Value $rendererText -NoNewline
+
+          git diff -- $memPath $rendererPath
+
+      - name: Use current vcpkg tooling
+        shell: pwsh
+        run: |
+          git -C dependencies/vcpkg fetch origin 9849e070ad4c3383890fb1c80ae0c54325e2484a --depth=1
+          git -C dependencies/vcpkg checkout 9849e070ad4c3383890fb1c80ae0c54325e2484a
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=release -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --config release
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cemu-x64-4f9-memorytype-allcommands-test
+          path: ./bin/Cemu.exe
