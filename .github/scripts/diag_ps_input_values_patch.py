@@ -30,21 +30,28 @@ write(hdr, h)
 
 src = "src/Cafe/HW/Latte/Core/LatteShader.cpp"
 s = read(src)
-s_anchor = "\tshader->baseHash = baseHash;"
-if s.count(s_anchor) != 1:
-    raise RuntimeError(f"CreateShader baseHash anchor count={s.count(s_anchor)}")
-s = s.replace(
-    s_anchor,
-    s_anchor
-    + "\n\tif (decompilerOutput.shaderType == LatteConst::ShaderType::Pixel && contextRegister)"
-    + "\n\t{"
-    + "\n\t\tconst uint32 diagCount = std::min<uint32>(contextRegister[mmSPI_PS_IN_CONTROL_0] & 0x3F, 32u);"
-    + "\n\t\tshader->diagPSInputCount = (uint8)diagCount;"
-    + "\n\t\tfor (uint32 i = 0; i < diagCount; ++i)"
-    + "\n\t\t\tshader->diagPSInputControl[i] = contextRegister[mmSPI_PS_INPUT_CNTL_0 + i];"
-    + "\n\t}",
-    1,
+func_marker = "LatteDecompilerShader* LatteShader_CreateShaderFromDecompilerOutput"
+func_pos = s.find(func_marker)
+if func_pos < 0:
+    raise RuntimeError("CreateShader function marker not found")
+assign = "\tshader->baseHash = baseHash;"
+assign_pos = s.find(assign, func_pos)
+if assign_pos < 0:
+    raise RuntimeError("CreateShader baseHash assignment not found inside function")
+next_func = s.find("\nvoid LatteShader_GetDecompilerOptions", func_pos)
+if next_func < 0 or assign_pos > next_func:
+    raise RuntimeError("CreateShader baseHash assignment resolved outside target function")
+insert_pos = assign_pos + len(assign)
+insert = (
+    "\n\tif (decompilerOutput.shaderType == LatteConst::ShaderType::Pixel && contextRegister)"
+    "\n\t{"
+    "\n\t\tconst uint32 diagCount = std::min<uint32>(contextRegister[mmSPI_PS_IN_CONTROL_0] & 0x3F, 32u);"
+    "\n\t\tshader->diagPSInputCount = (uint8)diagCount;"
+    "\n\t\tfor (uint32 i = 0; i < diagCount; ++i)"
+    "\n\t\t\tshader->diagPSInputControl[i] = contextRegister[mmSPI_PS_INPUT_CNTL_0 + i];"
+    "\n\t}"
 )
+s = s[:insert_pos] + insert + s[insert_pos:]
 write(src, s)
 
 # diag_adreno_patch.py + fix_diag_tail.py have already rewritten the failure
