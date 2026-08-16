@@ -1,0 +1,188 @@
+name: ARM64 JIT perf A-B
+
+on:
+  push:
+    branches:
+      - perf-arm64-jit-ab
+  workflow_dispatch:
+
+concurrency:
+  group: perf-arm64-jit-ab
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64-experiments:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      # Keep the exact known-good compatibility behavior used by the successful
+      # PS default linkage ARM64 build. Performance experiments must not alter it.
+      - name: Apply known-good pre-e834 runtime behavior
+        shell: pwsh
+        run: |
+          $swap = 'src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp'
+          $s = Get-Content $swap -Raw
+          $oldLoad = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;'
+          $newLoad = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;'
+          if (-not $s.Contains($oldLoad)) { throw 'Swapchain loadOp pattern not found' }
+          $s = $s.Replace($oldLoad, $newLoad)
+          Set-Content -Path $swap -Value $s -NoNewline
+
+          $vr = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp'
+          $v = Get-Content $vr -Raw
+          $oldFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;'
+          $newFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;'
+          $flagCount = ([regex]::Matches($v, [regex]::Escape($oldFlag))).Count
+          if ($flagCount -ne 2) { throw "Expected 2 ONE_TIME_SUBMIT flags, found $flagCount" }
+          $v = $v.Replace($oldFlag, $newFlag)
+
+          $anchorLF = "LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`n`tdraw_endRenderPass();`n"
+          $anchorCRLF = "LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`r`n`tdraw_endRenderPass();`r`n"
+          if ($v.Contains($anchorCRLF)) {
+            $v = $v.Replace($anchorCRLF, $anchorCRLF + "`r`n`tif (clearBackground)`r`n`t`tClearColorbuffer(padView);`r`n")
+          } elseif ($v.Contains($anchorLF)) {
+            $v = $v.Replace($anchorLF, $anchorLF + "`n`tif (clearBackground)`n`t`tClearColorbuffer(padView);`n")
+          } else {
+            throw 'DrawBackbufferQuad anchor not found'
+          }
+
+          $clearPattern = '(?ms)\r?\n\tif \(clearBackground\)\r?\n\t\{\r?\n\t\tVkClearAttachment clearAttachment\{\};.*?\r?\n\t\}\r?\n\r?\n\tvkCmdBindPipeline'
+          if (-not [regex]::IsMatch($v, $clearPattern)) { throw 'vkCmdClearAttachments block not found' }
+          $v = [regex]::Replace($v, $clearPattern, "`n`tvkCmdBindPipeline", 1)
+          Set-Content -Path $vr -Value $v -NoNewline
+
+      - name: Apply PS default linkage fix
+        shell: pwsh
+        run: python .github/scripts/fix_ps_default_linkage_patch.py
+
+      - name: Setup release mode parameters
+        shell: pwsh
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset is installed
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure once
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      # Experiment A: fuse integer compare + conditional branch on AArch64.
+      - name: Apply experiment A - compare branch fusion
+        shell: pwsh
+        run: python .github/scripts/arm64_perf_branch_fusion_patch.py
+
+      - name: Build experiment A
+        shell: pwsh
+        run: cmake --build build
+
+      - name: Stage experiment A
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/A | Out-Null
+          Copy-Item bin/Cemu_release.exe artifacts/A/Cemu.exe
+          Set-Content artifacts/A/VARIANT.txt "A - ARM64 compare/conditional-branch fusion"
+
+      # Restore only the JIT source files touched by A. Compatibility patches remain intact.
+      - name: Restore JIT source baseline
+        shell: pwsh
+        run: |
+          git checkout -- src/Cafe/HW/Espresso/Recompiler/IML/IMLOptimizer.cpp
+          git checkout -- src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp
+
+      # Experiment B: remove provably redundant jump-table zero-base materialization.
+      - name: Apply experiment B - direct dispatch
+        shell: pwsh
+        run: python .github/scripts/arm64_perf_dispatch_patch.py
+
+      - name: Build experiment B
+        shell: pwsh
+        run: cmake --build build
+
+      - name: Stage experiment B
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/B | Out-Null
+          Copy-Item bin/Cemu_release.exe artifacts/B/Cemu.exe
+          Set-Content artifacts/B/VARIANT.txt "B - ARM64 direct jump-table zero-offset simplification"
+
+      # Experiment A+B: B is still applied; layer A over it.
+      - name: Apply experiment A on B
+        shell: pwsh
+        run: python .github/scripts/arm64_perf_branch_fusion_patch.py
+
+      - name: Build experiment A+B
+        shell: pwsh
+        run: cmake --build build
+
+      - name: Stage experiment A+B
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/AB | Out-Null
+          Copy-Item bin/Cemu_release.exe artifacts/AB/Cemu.exe
+          Set-Content artifacts/AB/VARIANT.txt "A+B - ARM64 branch fusion plus direct dispatch"
+
+      - name: Upload experiment A
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-jit-A-branch-fusion
+          path: artifacts/A
+
+      - name: Upload experiment B
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-jit-B-dispatch
+          path: artifacts/B
+
+      - name: Upload experiment A+B
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-jit-AB-combined
+          path: artifacts/AB
