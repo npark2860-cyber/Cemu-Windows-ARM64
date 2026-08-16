@@ -53,7 +53,7 @@ replace_once(
 \t\tpsInputTable->import[f].defaultValue = defaultValue;''',
 )
 
-helpers = r'''
+helpers = '''
 namespace LatteDecompiler
 {
 \tstatic bool _isPSInputWrittenByVS(LatteDecompilerShaderContext* shaderContext, sint32 psInputIndex)
