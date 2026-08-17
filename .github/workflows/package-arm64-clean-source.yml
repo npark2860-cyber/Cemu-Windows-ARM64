@@ -1,0 +1,110 @@
+name: Package clean ARM64 source
+
+on:
+  push:
+    branches:
+      - package-arm64-clean-source
+
+jobs:
+  package-source:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout stable ARM64 source
+        uses: actions/checkout@v6
+        with:
+          ref: fix-ps-default-linkage-arm64
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Apply known-good pre-e834 runtime behavior
+        shell: pwsh
+        run: |
+          $swap = 'src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp'
+          $s = Get-Content $swap -Raw
+          $oldLoad = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;'
+          $newLoad = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;'
+          if (-not $s.Contains($oldLoad)) { throw 'Swapchain loadOp pattern not found' }
+          $s = $s.Replace($oldLoad, $newLoad)
+          Set-Content -Path $swap -Value $s -NoNewline
+
+          $vr = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp'
+          $v = Get-Content $vr -Raw
+          $oldFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;'
+          $newFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;'
+          $flagCount = ([regex]::Matches($v, [regex]::Escape($oldFlag))).Count
+          if ($flagCount -ne 2) { throw "Expected 2 ONE_TIME_SUBMIT flags, found $flagCount" }
+          $v = $v.Replace($oldFlag, $newFlag)
+
+          $anchorLF = "LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`n`tdraw_endRenderPass();`n"
+          $anchorCRLF = "LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`r`n`tdraw_endRenderPass();`r`n"
+          if ($v.Contains($anchorCRLF)) {
+            $v = $v.Replace($anchorCRLF, $anchorCRLF + "`r`n`tif (clearBackground)`r`n`t`tClearColorbuffer(padView);`r`n")
+          } elseif ($v.Contains($anchorLF)) {
+            $v = $v.Replace($anchorLF, $anchorLF + "`n`tif (clearBackground)`n`t`tClearColorbuffer(padView);`n")
+          } else {
+            throw 'DrawBackbufferQuad anchor not found'
+          }
+
+          $clearPattern = '(?ms)\r?\n\tif \(clearBackground\)\r?\n\t\{\r?\n\t\tVkClearAttachment clearAttachment\{\};.*?\r?\n\t\}\r?\n\r?\n\tvkCmdBindPipeline'
+          if (-not [regex]::IsMatch($v, $clearPattern)) { throw 'vkCmdClearAttachments block not found' }
+          $v = [regex]::Replace($v, $clearPattern, "`n`tvkCmdBindPipeline", 1)
+          Set-Content -Path $vr -Value $v -NoNewline
+
+      - name: Apply generalized PS default linkage fix
+        shell: pwsh
+        run: python .github/scripts/fix_ps_default_linkage_patch.py
+
+      - name: Verify consolidated source changes
+        shell: pwsh
+        run: |
+          git diff --check
+          git diff --stat
+
+      - name: Stage clean source tree
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP 'Cemu-Windows-ARM64-clean-source'
+          if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+          New-Item -ItemType Directory -Path $stage | Out-Null
+
+          robocopy . $stage /E /XD .git .github build bin /XF .git | Out-Host
+          if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
+
+          $info = @'
+          Cemu Windows ARM64 - Clean Consolidated Source
+          ==================================================
+          Stable source basis:
+            branch: fix-ps-default-linkage-arm64
+            commit: 4782479d58f0cd92bbcc0359ca941ed474782b46
+
+          This archive has the currently used ARM64 compatibility fixes baked directly
+          into the source tree. Build-time patch scripts/workflows are intentionally
+          excluded from the archive.
+
+          Baked compatibility changes:
+          1. Known-good pre-e834 Vulkan runtime behavior used by the stable ARM64 build.
+          2. Generalized producer-side PS DEFAULT_VAL linkage fallback.
+
+          Intentionally excluded:
+          - perf-arm64-jit-ab A/B optimization experiments
+          - GitHub Actions workflows and patch helper scripts
+          - .git metadata
+          - build/bin outputs and caches
+
+          Recursive submodule contents are included so dependency directories are not empty.
+          ==================================================
+          '@
+          $info = ($info -replace '^          ', '')
+          Set-Content -Path (Join-Path $stage 'ARM64_SOURCE_INFO.txt') -Value $info -Encoding utf8
+
+          $zip = Join-Path $env:RUNNER_TEMP 'Cemu-Windows-ARM64-clean-source.zip'
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path $stage -DestinationPath $zip -CompressionLevel Optimal
+          Get-Item $zip | Format-List Name,Length,FullName
+
+      - name: Upload clean ARM64 source ZIP
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-windows-arm64-clean-source
+          path: ${{ runner.temp }}/Cemu-Windows-ARM64-clean-source.zip
+          compression-level: 0
