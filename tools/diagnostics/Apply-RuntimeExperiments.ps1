@@ -75,7 +75,9 @@ inline bool DepthClipFeatureEnabled()
 Write-Host '[runtime-experiments] Patching PPCTimer experiments'
 $timerPath = 'src/Cafe/HW/Espresso/PPCTimer.cpp'
 $t = Get-Content $timerPath -Raw
-$t = Replace-Required $t '#include "Common/cpu_features.h"' "#include \"Common/cpu_features.h\"`n#include \"diagnostics/RuntimeExperiments.h\"" 'PPCTimer include anchor'
+$timerIncludeOld = '#include "Common/cpu_features.h"'
+$timerIncludeNew = $timerIncludeOld + "`n" + '#include "diagnostics/RuntimeExperiments.h"'
+$t = Replace-Required $t $timerIncludeOld $timerIncludeNew 'PPCTimer include anchor'
 
 $timerPattern = '(?ms)// thread safe\r?\nuint64 PPCTimer_getFromRDTSC\(\)\r?\n\{.*?\r?\n\}\s*$'
 if (-not [regex]::IsMatch($t, $timerPattern))
@@ -215,8 +217,17 @@ Set-Content -Path $timerPath -Value $t -NoNewline
 Write-Host '[runtime-experiments] Patching Vulkan device feature experiment'
 $rendererPath = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp'
 $v = Get-Content $rendererPath -Raw
-$v = Replace-Required $v '#include "Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.h"' "#include \"Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.h\"`n#include \"diagnostics/RuntimeExperiments.h\"" 'VulkanRenderer include anchor'
-$v = Replace-Required $v "`tGetDeviceFeatures();" "`tGetDeviceFeatures();`n`tif (!RuntimeExperiments::Raw().empty())`n`t`t cemuLog_log(LogType::Force, \"[EXPERIMENT] Active: {}\", RuntimeExperiments::Raw());" 'experiment startup log anchor'
+$rendererIncludeOld = '#include "Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.h"'
+$rendererIncludeNew = $rendererIncludeOld + "`n" + '#include "diagnostics/RuntimeExperiments.h"'
+$v = Replace-Required $v $rendererIncludeOld $rendererIncludeNew 'VulkanRenderer include anchor'
+
+$startupOld = "`tGetDeviceFeatures();"
+$startupNew = @'
+	GetDeviceFeatures();
+	if (!RuntimeExperiments::Raw().empty())
+		cemuLog_log(LogType::Force, "[EXPERIMENT] Active: {}", RuntimeExperiments::Raw());
+'@
+$v = Replace-Required $v $startupOld $startupNew 'experiment startup log anchor'
 
 $deviceAnchor = "`tvoid* deviceExtensionFeatures = nullptr;"
 $deviceBlock = @'
@@ -252,11 +263,13 @@ Set-Content -Path $rendererPath -Value $v -NoNewline
 Write-Host '[runtime-experiments] Patching Vulkan pipeline switches'
 $pipelinePath = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp'
 $p = Get-Content $pipelinePath -Raw
-$p = Replace-Required $p '#include "Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.h"' "#include \"Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.h\"`n#include \"diagnostics/RuntimeExperiments.h\"" 'PipelineCompiler include anchor'
+$pipelineIncludeOld = '#include "Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.h"'
+$pipelineIncludeNew = $pipelineIncludeOld + "`n" + '#include "diagnostics/RuntimeExperiments.h"'
+$p = Replace-Required $p $pipelineIncludeOld $pipelineIncludeNew 'PipelineCompiler include anchor'
 
-$oldRasterPNext = "`trasterizer.pNext = VulkanRenderer::GetInstance()->m_featureControl.deviceExtensions.depth_clip_enable ? &rasterizerExt : nullptr;"
+$oldRasterPNext = 'rasterizer.pNext = VulkanRenderer::GetInstance()->m_featureControl.deviceExtensions.depth_clip_enable ? &rasterizerExt : nullptr;'
 $newRasterPNext = @'
-	bool useDepthClipPNext = VulkanRenderer::GetInstance()->m_featureControl.deviceExtensions.depth_clip_enable;
+bool useDepthClipPNext = VulkanRenderer::GetInstance()->m_featureControl.deviceExtensions.depth_clip_enable;
 	if (RuntimeExperiments::Enabled("depthclip-feature"))
 		useDepthClipPNext = RuntimeExperiments::DepthClipFeatureEnabled();
 	if (RuntimeExperiments::Enabled("depthclip-off") || RuntimeExperiments::Enabled("raster-pnext-off"))
@@ -264,7 +277,7 @@ $newRasterPNext = @'
 	rasterizer.pNext = useDepthClipPNext ? &rasterizerExt : nullptr;
 '@
 $p = Replace-Required $p $oldRasterPNext $newRasterPNext 'rasterizer pNext anchor'
-$p = Replace-Required $p "`trasterizer.depthClampEnable = VK_TRUE; // depth clamping is always enabled" "`trasterizer.depthClampEnable = RuntimeExperiments::Enabled(\"depthclamp-off\") ? VK_FALSE : VK_TRUE; // experiment switch, default unchanged" 'depth clamp anchor'
+$p = Replace-Required $p 'rasterizer.depthClampEnable = VK_TRUE; // depth clamping is always enabled' 'rasterizer.depthClampEnable = RuntimeExperiments::Enabled("depthclamp-off") ? VK_FALSE : VK_TRUE; // experiment switch, default unchanged' 'depth clamp anchor'
 
 $feedbackOld = 'if (vkRenderer->m_featureControl.deviceExtensions.pipeline_feedback)'
 $feedbackCount = ([regex]::Matches($p, [regex]::Escape($feedbackOld))).Count
@@ -273,7 +286,7 @@ if ($feedbackCount -ne 2)
     throw "Runtime experiment patch failed: expected 2 pipeline_feedback anchors, found $feedbackCount"
 }
 $p = $p.Replace($feedbackOld, 'if (vkRenderer->m_featureControl.deviceExtensions.pipeline_feedback && !RuntimeExperiments::Enabled("pipeline-feedback-off"))')
-$p = Replace-Required $p "`tpipelineInfo.pNext = prevStruct;" "`tpipelineInfo.pNext = RuntimeExperiments::Enabled(\"pipeline-pnext-off\") ? nullptr : prevStruct;" 'graphics pipeline pNext anchor'
+$p = Replace-Required $p 'pipelineInfo.pNext = prevStruct;' 'pipelineInfo.pNext = RuntimeExperiments::Enabled("pipeline-pnext-off") ? nullptr : prevStruct;' 'graphics pipeline pNext anchor'
 Set-Content -Path $pipelinePath -Value $p -NoNewline
 
 Write-Host '[runtime-experiments] Patch summary'
