@@ -63,6 +63,9 @@ jobs:
         shell: pwsh
         run: ./tools/diagnostics/Apply-RuntimeExperiments.ps1
 
+      - name: Add runtime-gated pipeline failure diagnostics
+        run: python ./tools/diagnostics/Add-PipelineDiagnostics.py
+
       - name: Setup release mode parameters
         run: |
           echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
@@ -120,13 +123,14 @@ jobs:
           Copy-Item tools/diagnostics/README.md artifact/experiments/README.md
 
           $launchers = @{
-            'A_depthclip_feature.cmd' = 'depthclip-feature'
-            'B_depthclip_off.cmd' = 'depthclip-off'
-            'C_pipeline_feedback_off.cmd' = 'pipeline-feedback-off'
-            'D_both_pnext_off.cmd' = 'depthclip-off,pipeline-feedback-off'
-            'E_depthclamp_off.cmd' = 'depthclip-off,pipeline-feedback-off,depthclamp-off'
-            'FULL_pipeline_pnext_off.cmd' = 'pipeline-pnext-off'
-            'FULL_raster_pnext_off.cmd' = 'raster-pnext-off'
+            'A_depthclip_feature.cmd' = 'depthclip-feature,pipeline-diag'
+            'B_depthclip_off.cmd' = 'depthclip-off,pipeline-diag'
+            'C_pipeline_feedback_off.cmd' = 'pipeline-feedback-off,pipeline-diag'
+            'D_both_pnext_off.cmd' = 'depthclip-off,pipeline-feedback-off,pipeline-diag'
+            'E_depthclamp_off.cmd' = 'depthclip-off,pipeline-feedback-off,depthclamp-off,pipeline-diag'
+            'DIAG_pipeline_only.cmd' = 'pipeline-diag'
+            'FULL_pipeline_pnext_off.cmd' = 'pipeline-pnext-off,pipeline-diag'
+            'FULL_raster_pnext_off.cmd' = 'raster-pnext-off,pipeline-diag'
             'PERF_1_timer_stats.cmd' = 'timer-stats'
             'PERF_2_udiv64_stats.cmd' = 'timer-udiv64,timer-stats'
             'PERF_3_udiv64_no_fence_stats.cmd' = 'timer-udiv64,timer-no-extra-fence,timer-stats'

@@ -2,14 +2,14 @@
 
 This folder contains a reusable runtime experiment harness for compatibility diagnostics and performance A/B tests.
 
-The build is patched by `Apply-RuntimeExperiments.ps1`. With no environment variable set, the experimental binary keeps the existing runtime behavior.
+The build is patched by `Apply-RuntimeExperiments.ps1` and `Add-PipelineDiagnostics.py`. With no environment variable set, the experimental binary keeps the existing runtime behavior.
 
 ## Usage
 
 Set `CEMU_EXPERIMENTS` before launching Cemu. Multiple switches can be combined with commas.
 
 ```bat
-set CEMU_EXPERIMENTS=depthclip-feature
+set CEMU_EXPERIMENTS=depthclip-feature,pipeline-diag
 Cemu_release.exe
 ```
 
@@ -23,24 +23,34 @@ set CEMU_EXPERIMENTS=
 
 | Preset | `CEMU_EXPERIMENTS` | Purpose |
 |---|---|---|
-| A | `depthclip-feature` | Query and enable `VkPhysicalDeviceDepthClipEnableFeaturesEXT`, then use the raster depth-clip pNext only when the feature is actually enabled |
-| B | `depthclip-off` | Disable the raster depth-clip pNext path |
-| C | `pipeline-feedback-off` | Disable `VkPipelineCreationFeedbackCreateInfoEXT` in the graphics pipeline pNext chain |
-| D | `depthclip-off,pipeline-feedback-off` | Disable both suspected pNext paths |
-| E | `depthclip-off,pipeline-feedback-off,depthclamp-off` | D plus disable depth clamp; diagnostic only, not intended as a final fix |
-| Full pipeline pNext off | `pipeline-pnext-off` | Remove the graphics pipeline pNext chain entirely; useful for future driver diagnostics |
-| Full raster pNext off | `raster-pnext-off` | Remove the current rasterization pNext path |
+| A | `depthclip-feature,pipeline-diag` | Query and enable `VkPhysicalDeviceDepthClipEnableFeaturesEXT`, then use the raster depth-clip pNext only when the feature is actually enabled |
+| B | `depthclip-off,pipeline-diag` | Disable the raster depth-clip pNext path |
+| C | `pipeline-feedback-off,pipeline-diag` | Disable `VkPipelineCreationFeedbackCreateInfoEXT` in the graphics pipeline pNext chain |
+| D | `depthclip-off,pipeline-feedback-off,pipeline-diag` | Disable both suspected pNext paths |
+| E | `depthclip-off,pipeline-feedback-off,depthclamp-off,pipeline-diag` | D plus disable depth clamp; diagnostic only, not intended as a final fix |
+| Full pipeline pNext off | `pipeline-pnext-off,pipeline-diag` | Remove the graphics pipeline pNext chain entirely |
+| Full raster pNext off | `raster-pnext-off,pipeline-diag` | Remove the current rasterization pNext path |
+| Diagnostic only | `pipeline-diag` | Keep normal behavior but emit detailed state when `vkCreateGraphicsPipelines` fails |
 
 Cemu logs the active list as:
 
 ```text
-[EXPERIMENT] Active: depthclip-feature
+[EXPERIMENT] Active: depthclip-feature,pipeline-diag
 ```
 
 Preset A also logs whether the driver exposes the actual feature:
 
 ```text
 [EXPERIMENT] depthClipEnable feature: supported/enabled
+```
+
+When `pipeline-diag` is enabled, pipeline creation failures include the same high-value fields used during the Adreno investigation:
+
+```text
+[ADRENO_DIAG] PIPELINE_FAIL ... depthClamp=... pnext=... rasterPnext=...
+[ADRENO_DIAG] RT_FORMATS ...
+[ADRENO_DIAG] ATTR ...
+[ADRENO_DIAG] BLEND ...
 ```
 
 ## PPCTimer performance experiments
@@ -79,6 +89,7 @@ Example stats line:
 ## Design rules
 
 - No experiment is active by default.
-- Each switch changes one narrow behavior so results remain attributable.
+- Each behavior switch is narrow so results remain attributable.
+- Diagnostic logging is runtime-gated and only becomes verbose on actual pipeline failures.
 - Switches can be combined without rebuilding.
 - New driver or CPU experiments should be added here instead of creating one-off binaries whenever practical.
