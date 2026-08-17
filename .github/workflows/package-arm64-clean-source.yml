@@ -63,43 +63,51 @@ jobs:
       - name: Stage clean source tree
         shell: pwsh
         run: |
-          $stage = Join-Path $env:RUNNER_TEMP 'Cemu-Windows-ARM64-clean-source'
+          $stageName = 'Cemu-Windows-ARM64-clean-source'
+          $stage = Join-Path $env:RUNNER_TEMP $stageName
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
           New-Item -ItemType Directory -Path $stage | Out-Null
 
           robocopy . $stage /E /XD .git .github build bin /XF .git | Out-Host
-          if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
+          $rc = $LASTEXITCODE
+          if ($rc -ge 8) { throw "robocopy failed with exit code $rc" }
 
-          $info = @'
-          Cemu Windows ARM64 - Clean Consolidated Source
-          ==================================================
-          Stable source basis:
-            branch: fix-ps-default-linkage-arm64
-            commit: 4782479d58f0cd92bbcc0359ca941ed474782b46
-
-          This archive has the currently used ARM64 compatibility fixes baked directly
-          into the source tree. Build-time patch scripts/workflows are intentionally
-          excluded from the archive.
-
-          Baked compatibility changes:
-          1. Known-good pre-e834 Vulkan runtime behavior used by the stable ARM64 build.
-          2. Generalized producer-side PS DEFAULT_VAL linkage fallback.
-
-          Intentionally excluded:
-          - perf-arm64-jit-ab A/B optimization experiments
-          - GitHub Actions workflows and patch helper scripts
-          - .git metadata
-          - build/bin outputs and caches
-
-          Recursive submodule contents are included so dependency directories are not empty.
-          ==================================================
-          '@
-          $info = ($info -replace '^          ', '')
-          Set-Content -Path (Join-Path $stage 'ARM64_SOURCE_INFO.txt') -Value $info -Encoding utf8
+          $infoLines = @(
+            'Cemu Windows ARM64 - Clean Consolidated Source',
+            '==================================================',
+            'Stable source basis:',
+            '  branch: fix-ps-default-linkage-arm64',
+            '  commit: 4782479d58f0cd92bbcc0359ca941ed474782b46',
+            '',
+            'This archive has the currently used ARM64 compatibility fixes baked directly',
+            'into the source tree. Build-time patch scripts/workflows are intentionally',
+            'excluded from the archive.',
+            '',
+            'Baked compatibility changes:',
+            '1. Known-good pre-e834 Vulkan runtime behavior used by the stable ARM64 build.',
+            '2. Generalized producer-side PS DEFAULT_VAL linkage fallback.',
+            '',
+            'Intentionally excluded:',
+            '- perf-arm64-jit-ab A/B optimization experiments',
+            '- GitHub Actions workflows and patch helper scripts',
+            '- .git metadata',
+            '- build/bin outputs and caches',
+            '',
+            'Recursive submodule contents are included so dependency directories are not empty.',
+            '=================================================='
+          )
+          Set-Content -Path (Join-Path $stage 'ARM64_SOURCE_INFO.txt') -Value $infoLines -Encoding utf8
 
           $zip = Join-Path $env:RUNNER_TEMP 'Cemu-Windows-ARM64-clean-source.zip'
           if (Test-Path $zip) { Remove-Item $zip -Force }
-          Compress-Archive -Path $stage -DestinationPath $zip -CompressionLevel Optimal
+          Push-Location $env:RUNNER_TEMP
+          try {
+            tar.exe -a -c -f $zip $stageName
+            if ($LASTEXITCODE -ne 0) { throw "tar failed with exit code $LASTEXITCODE" }
+          }
+          finally {
+            Pop-Location
+          }
           Get-Item $zip | Format-List Name,Length,FullName
 
       - name: Upload clean ARM64 source ZIP
