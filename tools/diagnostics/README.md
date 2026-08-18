@@ -1,50 +1,50 @@
 # Cemu ARM64 Runtime Experiments
 
-This folder contains a reusable runtime experiment harness for compatibility diagnostics and performance A/B tests.
+Reusable runtime experiment harness for compatibility diagnostics and performance A/B tests.
 
-The build is patched by `Apply-RuntimeExperiments.ps1` and `Add-PipelineDiagnostics.py`. With no environment variable set, the experimental binary keeps the existing runtime behavior.
+The experimental build accepts two environment variables:
 
-## Usage
+- `CEMU_EXPERIMENTS`: comma-separated runtime switches.
+- `CEMU_EXPERIMENT_LOG`: log filename created directly by Cemu in its normal user-data directory.
 
-Set `CEMU_EXPERIMENTS` before launching Cemu. Multiple switches can be combined with commas.
-
-```bat
-set CEMU_EXPERIMENTS=depthclip-feature,pipeline-diag
-Cemu_release.exe
-```
-
-Clear the variable to return to the default behavior:
+Example:
 
 ```bat
-set CEMU_EXPERIMENTS=
+set CEMU_EXPERIMENTS=timer-udiv64,timer-stats
+set CEMU_EXPERIMENT_LOG=log_PERF2_UDiv64.txt
+Cemu_PERF2_UDiv64.exe
 ```
 
-## Bayonetta 2 / Adreno pipeline presets
+The supplied BAT files automatically create a clearly named executable copy from the single master `Cemu_release.exe`, set both variables, and launch that named executable. The build itself still occurs only once.
 
-| Preset | `CEMU_EXPERIMENTS` | Purpose |
-|---|---|---|
-| A | `depthclip-feature,pipeline-diag` | Query and enable `VkPhysicalDeviceDepthClipEnableFeaturesEXT`, then use the raster depth-clip pNext only when the feature is actually enabled |
-| B | `depthclip-off,pipeline-diag` | Disable the raster depth-clip pNext path |
-| C | `pipeline-feedback-off,pipeline-diag` | Disable `VkPipelineCreationFeedbackCreateInfoEXT` in the graphics pipeline pNext chain |
-| D | `depthclip-off,pipeline-feedback-off,pipeline-diag` | Disable both suspected pNext paths |
-| E | `depthclip-off,pipeline-feedback-off,depthclamp-off,pipeline-diag` | D plus disable depth clamp; diagnostic only, not intended as a final fix |
-| Full pipeline pNext off | `pipeline-pnext-off,pipeline-diag` | Remove the graphics pipeline pNext chain entirely |
-| Full raster pNext off | `raster-pnext-off,pipeline-diag` | Remove the current rasterization pNext path |
-| Diagnostic only | `pipeline-diag` | Keep normal behavior but emit detailed state when `vkCreateGraphicsPipelines` fails |
+## Named logs
 
-Cemu logs the active list as:
+Each preset writes directly to its own file from process startup. There is no post-run copy/rename step.
 
-```text
-[EXPERIMENT] Active: depthclip-feature,pipeline-diag
-```
+- `00_Normal.bat` -> `Cemu_00_Normal.exe` -> `log_00_Normal.txt`
+- `A_DepthClip_Feature.bat` -> `Cemu_A_DepthClipFeature.exe` -> `log_A_DepthClipFeature.txt`
+- `B_DepthClip_Off.bat` -> `Cemu_B_DepthClipOff.exe` -> `log_B_DepthClipOff.txt`
+- `C_Pipeline_Feedback_Off.bat` -> `Cemu_C_PipelineFeedbackOff.exe` -> `log_C_PipelineFeedbackOff.txt`
+- `D_Both_PNext_Off.bat` -> `Cemu_D_BothPNextOff.exe` -> `log_D_BothPNextOff.txt`
+- `E_DepthClamp_Off.bat` -> `Cemu_E_DepthClampOff.exe` -> `log_E_DepthClampOff.txt`
+- `PERF_1_Timer_Stats.bat` -> `Cemu_PERF1_TimerStats.exe` -> `log_PERF1_TimerStats.txt`
+- `PERF_2_UDiv64_Stats.bat` -> `Cemu_PERF2_UDiv64.exe` -> `log_PERF2_UDiv64.txt`
+- `PERF_3_UDiv64_NoFence_Stats.bat` -> `Cemu_PERF3_UDiv64_NoFence.exe` -> `log_PERF3_UDiv64_NoFence.txt`
+- `PERF_4_UDiv64_ARM64_ISB_Stats.bat` -> `Cemu_PERF4_UDiv64_ARM64_ISB.exe` -> `log_PERF4_UDiv64_ARM64_ISB.txt`
 
-Preset A also logs whether the driver exposes the actual feature:
+## Bayonetta 2 / Adreno switches
 
-```text
-[EXPERIMENT] depthClipEnable feature: supported/enabled
-```
+| Switch | Purpose |
+|---|---|
+| `depthclip-feature` | Query and enable `VkPhysicalDeviceDepthClipEnableFeaturesEXT`; use raster depth-clip pNext only when actually enabled |
+| `depthclip-off` | Disable raster depth-clip pNext |
+| `pipeline-feedback-off` | Disable `VkPipelineCreationFeedbackCreateInfoEXT` |
+| `pipeline-pnext-off` | Remove graphics pipeline pNext entirely |
+| `raster-pnext-off` | Remove rasterization pNext entirely |
+| `depthclamp-off` | Disable depth clamp for diagnosis |
+| `pipeline-diag` | Emit detailed pipeline failure state |
 
-When `pipeline-diag` is enabled, pipeline creation failures include the same high-value fields used during the Adreno investigation:
+Pipeline diagnostics include:
 
 ```text
 [ADRENO_DIAG] PIPELINE_FAIL ... depthClamp=... pnext=... rasterPnext=...
@@ -53,30 +53,14 @@ When `pipeline-diag` is enabled, pipeline creation failures include the same hig
 [ADRENO_DIAG] BLEND ...
 ```
 
-## PPCTimer performance experiments
+## PPCTimer switches
 
 | Switch | Purpose |
 |---|---|
-| `timer-udiv64` | If `_rdtscAcc.high == 0`, use exact 64/64 division and remainder instead of `_udiv128` |
+| `timer-udiv64` | When `_rdtscAcc.high == 0`, use exact 64/64 division/remainder instead of `_udiv128` |
 | `timer-no-extra-fence` | Skip the extra `_mm_mfence()` inside `PPCTimer_getFromRDTSC()` |
-| `timer-arm64-serialize` | On AArch64, use `isb` before the virtual counter read instead of the existing extra fence |
-| `timer-stats` | Measure PPCTimer calls, `high == 0` ratio, slow/fast division counts, and spinlock contention; logs every 5,000,000 calls |
-
-Recommended first measurements:
-
-```bat
-set CEMU_EXPERIMENTS=timer-stats
-Cemu_release.exe
-
-set CEMU_EXPERIMENTS=timer-udiv64,timer-stats
-Cemu_release.exe
-
-set CEMU_EXPERIMENTS=timer-udiv64,timer-no-extra-fence,timer-stats
-Cemu_release.exe
-
-set CEMU_EXPERIMENTS=timer-udiv64,timer-arm64-serialize,timer-stats
-Cemu_release.exe
-```
+| `timer-arm64-serialize` | On AArch64, use `isb` before the virtual counter read |
+| `timer-stats` | Measure calls, high==0 ratio, slow/fast division counts, and spinlock contention |
 
 Example stats line:
 
@@ -84,12 +68,12 @@ Example stats line:
 [PERF] PPCTimer calls=5000000 high0=4999990 highNZ=10 contended=1234 fast64=4999990 slow128=10
 ```
 
-`timer-stats` intentionally adds instrumentation overhead. Use it to understand the hot path, not as a benchmark result itself.
+`timer-stats` adds instrumentation overhead, so use it for path analysis rather than absolute performance measurement.
 
 ## Design rules
 
-- No experiment is active by default.
-- Each behavior switch is narrow so results remain attributable.
-- Diagnostic logging is runtime-gated and only becomes verbose on actual pipeline failures.
-- Switches can be combined without rebuilding.
-- New driver or CPU experiments should be added here instead of creating one-off binaries whenever practical.
+- No behavior experiment is active unless requested.
+- Each preset has a distinct process name and distinct log filename.
+- Logs are separated at creation time, not copied after shutdown.
+- Switches remain composable without rebuilding.
+- New driver/CPU experiments should extend this harness rather than creating one-off binaries when practical.
