@@ -62,6 +62,9 @@ jobs:
       - name: Apply permanent PS DEFAULT_VAL linkage compatibility fix
         run: python ./tools/compat/Apply-PSDefaultLinkageFix.py
 
+      - name: Apply upstream AArch64 generated-code cache flush fix
+        run: python ./tools/compat/Apply-AArch64ReadyRECacheFix.py
+
       - name: Add experimental FidelityFX FSR 1 EASU + RCAS
         run: |
           python ./tools/graphics/Apply-FidelityFXFSRExperiment.py
@@ -71,6 +74,9 @@ jobs:
         shell: pwsh
         run: ./tools/diagnostics/Apply-RuntimeExperiments.ps1
 
+      - name: Apply VS auxHash pipeline experiments
+        run: python ./tools/diagnostics/Apply-VSAuxPipelineExperiment.py
+
       - name: Apply RT/performance experiments
         run: python ./tools/diagnostics/Apply-RTPerfExperiments.py
 
@@ -79,7 +85,7 @@ jobs:
 
       - name: Show experiment source diff
         shell: pwsh
-        run: git diff -- src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp src/Cafe/HW/Latte/Renderer/RendererOuputShader.h src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp src/Cafe/HW/Latte/Core/LatteShader.h src/Cafe/HW/Latte/Core/LatteShader.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/diagnostics/RuntimeExperiments.h
+        run: git diff -- src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp src/Cafe/HW/Latte/Renderer/RendererOuputShader.h src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp src/Cafe/HW/Latte/Core/LatteShader.h src/Cafe/HW/Latte/Core/LatteShader.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/diagnostics/RuntimeExperiments.h
 
       - name: Setup release mode parameters
         run: |
@@ -146,6 +152,8 @@ jobs:
             'DIAG_pipeline_only.cmd' = 'pipeline-diag'
             'FULL_pipeline_pnext_off.cmd' = 'pipeline-pnext-off,pipeline-diag'
             'FULL_raster_pnext_off.cmd' = 'raster-pnext-off,pipeline-diag'
+            'PIPE_AUX_DIAG.cmd' = 'pipeline-vs-aux-diag'
+            'PIPE_AUX_KEY.cmd' = 'pipeline-vs-aux-key,pipeline-vs-aux-diag'
             'RT_DIAG_stats_only.cmd' = 'rt-stats,pipeline-diag'
             'RT_1_force_sync.cmd' = 'rt-force-sync,rt-stats,pipeline-diag'
             'RT_2_selfdep_split.cmd' = 'rt-selfdep-split,rt-stats,pipeline-diag'
