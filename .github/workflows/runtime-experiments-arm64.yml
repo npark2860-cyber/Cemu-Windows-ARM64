@@ -66,6 +66,9 @@ jobs:
       - name: Add runtime-gated pipeline failure diagnostics
         run: python ./tools/diagnostics/Add-PipelineDiagnostics.py
 
+      - name: Add per-experiment log filenames
+        run: python ./tools/diagnostics/Add-ExperimentLogNames.py
+
       - name: Setup release mode parameters
         run: |
           echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
@@ -115,31 +118,53 @@ jobs:
       - name: Build Cemu once
         run: cmake --build build
 
-      - name: Collect executable and experiment launchers
+      - name: Collect executable and named experiment launchers
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifact/experiments | Out-Null
           Copy-Item bin/Cemu_release.exe artifact/Cemu_release.exe
           Copy-Item tools/diagnostics/README.md artifact/experiments/README.md
 
-          $launchers = @{
-            'A_depthclip_feature.cmd' = 'depthclip-feature,pipeline-diag'
-            'B_depthclip_off.cmd' = 'depthclip-off,pipeline-diag'
-            'C_pipeline_feedback_off.cmd' = 'pipeline-feedback-off,pipeline-diag'
-            'D_both_pnext_off.cmd' = 'depthclip-off,pipeline-feedback-off,pipeline-diag'
-            'E_depthclamp_off.cmd' = 'depthclip-off,pipeline-feedback-off,depthclamp-off,pipeline-diag'
-            'DIAG_pipeline_only.cmd' = 'pipeline-diag'
-            'FULL_pipeline_pnext_off.cmd' = 'pipeline-pnext-off,pipeline-diag'
-            'FULL_raster_pnext_off.cmd' = 'raster-pnext-off,pipeline-diag'
-            'PERF_1_timer_stats.cmd' = 'timer-stats'
-            'PERF_2_udiv64_stats.cmd' = 'timer-udiv64,timer-stats'
-            'PERF_3_udiv64_no_fence_stats.cmd' = 'timer-udiv64,timer-no-extra-fence,timer-stats'
-            'PERF_4_udiv64_arm64_serialize_stats.cmd' = 'timer-udiv64,timer-arm64-serialize,timer-stats'
-          }
+          $launchers = @(
+            @{ Bat='00_Normal.bat'; Exe='Cemu_00_Normal.exe'; Exp=''; Log='log_00_Normal.txt' },
+            @{ Bat='A_DepthClip_Feature.bat'; Exe='Cemu_A_DepthClipFeature.exe'; Exp='depthclip-feature,pipeline-diag'; Log='log_A_DepthClipFeature.txt' },
+            @{ Bat='B_DepthClip_Off.bat'; Exe='Cemu_B_DepthClipOff.exe'; Exp='depthclip-off,pipeline-diag'; Log='log_B_DepthClipOff.txt' },
+            @{ Bat='C_Pipeline_Feedback_Off.bat'; Exe='Cemu_C_PipelineFeedbackOff.exe'; Exp='pipeline-feedback-off,pipeline-diag'; Log='log_C_PipelineFeedbackOff.txt' },
+            @{ Bat='D_Both_PNext_Off.bat'; Exe='Cemu_D_BothPNextOff.exe'; Exp='depthclip-off,pipeline-feedback-off,pipeline-diag'; Log='log_D_BothPNextOff.txt' },
+            @{ Bat='E_DepthClamp_Off.bat'; Exe='Cemu_E_DepthClampOff.exe'; Exp='depthclip-off,pipeline-feedback-off,depthclamp-off,pipeline-diag'; Log='log_E_DepthClampOff.txt' },
+            @{ Bat='DIAG_Pipeline_Only.bat'; Exe='Cemu_DIAG_PipelineOnly.exe'; Exp='pipeline-diag'; Log='log_DIAG_PipelineOnly.txt' },
+            @{ Bat='FULL_Pipeline_PNext_Off.bat'; Exe='Cemu_FULL_PipelinePNextOff.exe'; Exp='pipeline-pnext-off,pipeline-diag'; Log='log_FULL_PipelinePNextOff.txt' },
+            @{ Bat='FULL_Raster_PNext_Off.bat'; Exe='Cemu_FULL_RasterPNextOff.exe'; Exp='raster-pnext-off,pipeline-diag'; Log='log_FULL_RasterPNextOff.txt' },
+            @{ Bat='PERF_1_Timer_Stats.bat'; Exe='Cemu_PERF1_TimerStats.exe'; Exp='timer-stats'; Log='log_PERF1_TimerStats.txt' },
+            @{ Bat='PERF_2_UDiv64_Stats.bat'; Exe='Cemu_PERF2_UDiv64.exe'; Exp='timer-udiv64,timer-stats'; Log='log_PERF2_UDiv64.txt' },
+            @{ Bat='PERF_3_UDiv64_NoFence_Stats.bat'; Exe='Cemu_PERF3_UDiv64_NoFence.exe'; Exp='timer-udiv64,timer-no-extra-fence,timer-stats'; Log='log_PERF3_UDiv64_NoFence.txt' },
+            @{ Bat='PERF_4_UDiv64_ARM64_ISB_Stats.bat'; Exe='Cemu_PERF4_UDiv64_ARM64_ISB.exe'; Exp='timer-udiv64,timer-arm64-serialize,timer-stats'; Log='log_PERF4_UDiv64_ARM64_ISB.txt' }
+          )
 
-          foreach ($entry in $launchers.GetEnumerator()) {
-            $body = "@echo off`r`nset CEMU_EXPERIMENTS=$($entry.Value)`r`nstart `"`" `"%~dp0..\Cemu_release.exe`"`r`n"
-            Set-Content -Path (Join-Path 'artifact/experiments' $entry.Key) -Value $body -NoNewline -Encoding ascii
+          foreach ($entry in $launchers) {
+            $body = @"
+          @echo off
+          setlocal EnableExtensions
+          set "CEMU_EXPERIMENTS=$($entry.Exp)"
+          set "CEMU_EXPERIMENT_LOG=$($entry.Log)"
+          set "BASE_EXE=%~dp0..\Cemu_release.exe"
+          set "NAMED_EXE=%~dp0..\$($entry.Exe)"
+          if not exist "%BASE_EXE%" (
+              echo [ERROR] Cemu_release.exe not found.
+              pause
+              exit /b 1
+          )
+          copy /Y "%BASE_EXE%" "%NAMED_EXE%" ^>NUL
+          echo EXE=$($entry.Exe)
+          echo CEMU_EXPERIMENTS=$($entry.Exp)
+          echo CEMU_EXPERIMENT_LOG=$($entry.Log)
+          pushd "%~dp0.."
+          "$($entry.Exe)"
+          set "RET=%ERRORLEVEL%"
+          popd
+          exit /b %RET%
+          "@
+            Set-Content -Path (Join-Path 'artifact/experiments' $entry.Bat) -Value $body -NoNewline -Encoding ascii
           }
 
       - name: Upload runtime experiment artifact
