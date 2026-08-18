@@ -62,6 +62,9 @@ jobs:
       - name: Apply permanent PS DEFAULT_VAL linkage compatibility fix
         run: python ./tools/compat/Apply-PSDefaultLinkageFix.py
 
+      - name: Add experimental FidelityFX FSR EASU upscale filter
+        run: python ./tools/graphics/Apply-FidelityFXFSRExperiment.py
+
       - name: Apply reusable runtime experiment harness
         shell: pwsh
         run: ./tools/diagnostics/Apply-RuntimeExperiments.ps1
@@ -74,7 +77,7 @@ jobs:
 
       - name: Show experiment source diff
         shell: pwsh
-        run: git diff -- src/Cafe/HW/Latte/Core/LatteShader.h src/Cafe/HW/Latte/Core/LatteShader.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/diagnostics/RuntimeExperiments.h
+        run: git diff -- src/config/CemuConfig.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp src/Cafe/HW/Latte/Renderer/RendererOuputShader.h src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp src/Cafe/HW/Latte/Core/LatteShader.h src/Cafe/HW/Latte/Core/LatteShader.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/diagnostics/RuntimeExperiments.h
 
       - name: Setup release mode parameters
         run: |
