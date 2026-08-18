@@ -59,11 +59,14 @@ jobs:
           $v = [regex]::Replace($v, $clearPattern, "`n`tvkCmdBindPipeline", 1)
           Set-Content -Path $vr -Value $v -NoNewline
 
+      - name: Apply permanent PS DEFAULT_VAL linkage compatibility fix
+        run: python ./tools/compat/Apply-PSDefaultLinkageFix.py
+
       - name: Apply reusable runtime experiment harness
         shell: pwsh
         run: ./tools/diagnostics/Apply-RuntimeExperiments.ps1
 
-      - name: Apply RT/performance experiments and Sem254 fix
+      - name: Apply RT/performance experiments
         run: python ./tools/diagnostics/Apply-RTPerfExperiments.py
 
       - name: Add runtime-gated pipeline failure diagnostics
@@ -71,7 +74,7 @@ jobs:
 
       - name: Show experiment source diff
         shell: pwsh
-        run: git diff -- src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/diagnostics/RuntimeExperiments.h
+        run: git diff -- src/Cafe/HW/Latte/Core/LatteShader.h src/Cafe/HW/Latte/Core/LatteShader.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/diagnostics/RuntimeExperiments.h
 
       - name: Setup release mode parameters
         run: |
