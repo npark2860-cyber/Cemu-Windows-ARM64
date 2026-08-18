@@ -8,20 +8,6 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
-print('[rt-perf-experiments] Applying Zelda PS semantic 0xFE DEFAULT_VAL fix')
-shader_path = Path('src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp')
-src = shader_path.read_text(encoding='utf-8')
-
-old_normal = """\t\t\tif (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)\n\t\t\t\tcontinue;\n\t\t\tsrc->addFmt(\"layout(location = {}) \", i);\n"""
-new_normal = """\t\t\tif (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)\n\t\t\t\tcontinue;\n\t\t\t// Semantic 0xFE has no matching VS export. Latte supplies SPI_PS_INPUT_CNTL.DEFAULT_VAL instead.\n\t\t\tif (psInputTable->import[i].semanticId == 0xFE)\n\t\t\t{\n\t\t\t\tuint32 defaultValue = (shaderContext->contextRegisters[mmSPI_PS_INPUT_CNTL_0 + i] >> 8) & 3;\n\t\t\t\tswitch (defaultValue)\n\t\t\t\t{\n\t\t\t\tcase 0: src->addFmt(\"const vec4 passParameterSem{} = vec4(0.0);\" _CRLF, psInputTable->import[i].semanticId); break;\n\t\t\t\tcase 1: src->addFmt(\"const vec4 passParameterSem{} = vec4(0.0, 0.0, 0.0, 1.0);\" _CRLF, psInputTable->import[i].semanticId); break;\n\t\t\t\tcase 2: src->addFmt(\"const vec4 passParameterSem{} = vec4(1.0, 1.0, 1.0, 0.0);\" _CRLF, psInputTable->import[i].semanticId); break;\n\t\t\t\tcase 3: src->addFmt(\"const vec4 passParameterSem{} = vec4(1.0);\" _CRLF, psInputTable->import[i].semanticId); break;\n\t\t\t\t}\n\t\t\t\tcontinue;\n\t\t\t}\n\t\t\tsrc->addFmt(\"layout(location = {}) \", i);\n"""
-src = replace_once(src, old_normal, new_normal, 'normal PS semantic anchor')
-
-old_gs = """\t\t\t\t\tif (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\tuint32 location = psInputTable->import[i].semanticId & 0x7F; // todo - the range above 128 has special meaning?\n"""
-new_gs = """\t\t\t\t\tif (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\tuint32 location = psInputTable->import[i].semanticId & 0x7F; // todo - the range above 128 has special meaning?\n\t\t\t\t\t// Semantic 0xFE uses the fixed default value instead of a GS-to-PS varying.\n\t\t\t\t\tif (psInputTable->import[i].semanticId == 0xFE)\n\t\t\t\t\t{\n\t\t\t\t\t\tuint32 defaultValue = (decompilerContext->contextRegisters[mmSPI_PS_INPUT_CNTL_0 + i] >> 8) & 3;\n\t\t\t\t\t\tswitch (defaultValue)\n\t\t\t\t\t\t{\n\t\t\t\t\t\tcase 0: src->addFmt(\"const vec4 passG2PParameter{} = vec4(0.0);\" _CRLF, location); break;\n\t\t\t\t\t\tcase 1: src->addFmt(\"const vec4 passG2PParameter{} = vec4(0.0, 0.0, 0.0, 1.0);\" _CRLF, location); break;\n\t\t\t\t\t\tcase 2: src->addFmt(\"const vec4 passG2PParameter{} = vec4(1.0, 1.0, 1.0, 0.0);\" _CRLF, location); break;\n\t\t\t\t\t\tcase 3: src->addFmt(\"const vec4 passG2PParameter{} = vec4(1.0);\" _CRLF, location); break;\n\t\t\t\t\t\t}\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\t}\n"""
-src = replace_once(src, old_gs, new_gs, 'GS-to-PS semantic anchor')
-shader_path.write_text(src, encoding='utf-8', newline='')
-
-
 print('[rt-perf-experiments] Patching Vulkan render-target/synchronization experiments')
 core_path = Path('src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp')
 core = core_path.read_text(encoding='utf-8')
@@ -107,7 +93,6 @@ core = replace_once(core, draw_old, draw_new, 'draw stats anchor')
 core_path.write_text(core, encoding='utf-8', newline='')
 
 print('[rt-perf-experiments] Patch summary')
-print('  - Sem254 DEFAULT_VAL fix restored')
 print('  - rt-force-sync')
 print('  - rt-selfdep-split')
 print('  - rt-strong-barrier')
