@@ -63,8 +63,15 @@ jobs:
         shell: pwsh
         run: ./tools/diagnostics/Apply-RuntimeExperiments.ps1
 
+      - name: Apply RT/performance experiments and Sem254 fix
+        run: python ./tools/diagnostics/Apply-RTPerfExperiments.py
+
       - name: Add runtime-gated pipeline failure diagnostics
         run: python ./tools/diagnostics/Add-PipelineDiagnostics.py
+
+      - name: Show experiment source diff
+        shell: pwsh
+        run: git diff -- src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/diagnostics/RuntimeExperiments.h
 
       - name: Setup release mode parameters
         run: |
@@ -131,10 +138,20 @@ jobs:
             'DIAG_pipeline_only.cmd' = 'pipeline-diag'
             'FULL_pipeline_pnext_off.cmd' = 'pipeline-pnext-off,pipeline-diag'
             'FULL_raster_pnext_off.cmd' = 'raster-pnext-off,pipeline-diag'
+            'RT_DIAG_stats_only.cmd' = 'rt-stats,pipeline-diag'
+            'RT_1_force_sync.cmd' = 'rt-force-sync,rt-stats,pipeline-diag'
+            'RT_2_selfdep_split.cmd' = 'rt-selfdep-split,rt-stats,pipeline-diag'
+            'RT_3_strong_barrier.cmd' = 'rt-strong-barrier,rt-stats,pipeline-diag'
+            'RT_4_prebegin_barrier.cmd' = 'rt-prebegin-barrier,rt-stats,pipeline-diag'
+            'RT_5_safe_all.cmd' = 'rt-safe-all,rt-stats,pipeline-diag'
             'PERF_1_timer_stats.cmd' = 'timer-stats'
             'PERF_2_udiv64_stats.cmd' = 'timer-udiv64,timer-stats'
             'PERF_3_udiv64_no_fence_stats.cmd' = 'timer-udiv64,timer-no-extra-fence,timer-stats'
             'PERF_4_udiv64_arm64_serialize_stats.cmd' = 'timer-udiv64,timer-arm64-serialize,timer-stats'
+            'PERF_5_known_best_rt_stats.cmd' = 'timer-udiv64,timer-arm64-serialize,timer-stats,rt-stats'
+            'PERF_6_skip_waw_barrier.cmd' = 'timer-udiv64,timer-arm64-serialize,timer-stats,perf-skip-waw-barrier,rt-stats'
+            'PERF_7_skip_rt_load_barrier.cmd' = 'timer-udiv64,timer-arm64-serialize,timer-stats,perf-skip-rt-load-barrier,rt-stats'
+            'PERF_8_force_pass_reuse.cmd' = 'timer-udiv64,timer-arm64-serialize,timer-stats,perf-force-pass-reuse,rt-stats'
           }
 
           foreach ($entry in $launchers.GetEnumerator()) {
