@@ -27,9 +27,80 @@ enum class Flag : uint16_t
 inline constexpr size_t kFlagCount = static_cast<size_t>(Flag::Count);
 inline std::array<std::atomic_bool, kFlagCount> g_flags{};
 inline std::atomic_uint32_t g_hitchThresholdMs{50};
-inline bool Enabled(Flag flag){ return g_flags[static_cast<size_t>(flag)].load(std::memory_order_relaxed); }
-inline void SetEnabled(Flag flag, bool enabled){ g_flags[static_cast<size_t>(flag)].store(enabled, std::memory_order_relaxed); }
-inline void SetAll(bool enabled){ for (auto& flag : g_flags) flag.store(enabled, std::memory_order_relaxed); }
+
+// Keep the UI honest: a flag is selectable only when the diagnostic edition
+// has a real runtime consumer for it. New probes must be wired before adding
+// their flag here.
+inline bool IsImplemented(Flag flag)
+{
+    switch (flag)
+    {
+    case Flag::JitBlockLifecycle:
+    case Flag::GuestHostMapping:
+    case Flag::BranchPatching:
+    case Flag::ReadyReICache:
+    case Flag::JitExecutionEntry:
+    case Flag::JitPerformance:
+    case Flag::QueueSubmit:
+    case Flag::PipelineFailure:
+    case Flag::PipelineStateSnapshot:
+    case Flag::ShaderHashAssociation:
+    case Flag::PipelineCacheMismatch:
+    case Flag::ShaderVS:
+    case Flag::ShaderPS:
+    case Flag::ShaderGS:
+    case Flag::ShaderAuxHash:
+    case Flag::ShaderInterface:
+    case Flag::RenderPassBeginEnd:
+    case Flag::FBOChanges:
+    case Flag::AttachmentUsage:
+    case Flag::LoadStoreBehavior:
+    case Flag::RenderTargetAliasing:
+    case Flag::PipelineBarriers:
+    case Flag::RAWDependency:
+    case Flag::WAWDependency:
+    case Flag::SelfDependency:
+    case Flag::RenderPassSplit:
+    case Flag::SynchronizationSummary:
+    case Flag::FeedbackUse:
+    case Flag::FeedbackFallback:
+    case Flag::FeedbackPassSplit:
+    case Flag::FrameTiming:
+    case Flag::DrawCallCount:
+    case Flag::PipelineCompileTime:
+    case Flag::BarrierCount:
+    case Flag::RenderPassCount:
+    case Flag::QueueSubmitCount:
+    case Flag::PresentTiming:
+    case Flag::GpuTimestamp:
+    case Flag::CpuWaitBreakdown:
+    case Flag::DescriptorStats:
+    case Flag::MemoryUploadStats:
+    case Flag::HitchTrigger:
+    case Flag::DiagnosticOverhead:
+    case Flag::SummaryOnExit:
+        return true;
+    default:
+        return false;
+    }
+}
+
+inline bool Enabled(Flag flag)
+{
+    return IsImplemented(flag) && g_flags[static_cast<size_t>(flag)].load(std::memory_order_relaxed);
+}
+inline void SetEnabled(Flag flag, bool enabled)
+{
+    g_flags[static_cast<size_t>(flag)].store(IsImplemented(flag) ? enabled : false, std::memory_order_relaxed);
+}
+inline void SetAll(bool enabled)
+{
+    for (size_t i = 0; i < kFlagCount; ++i)
+    {
+        const auto flag = static_cast<Flag>(i);
+        g_flags[i].store(IsImplemented(flag) ? enabled : false, std::memory_order_relaxed);
+    }
+}
 inline bool AnyEnabled(){ for (const auto& flag : g_flags) if (flag.load(std::memory_order_relaxed)) return true; return false; }
 inline uint64_t NowNs(){ return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()); }
 
@@ -62,7 +133,7 @@ inline bool LegacyBridgeEnabled(std::string_view name)
 {
     if(name=="pipeline-diag") return Enabled(Flag::PipelineFailure)||Enabled(Flag::PipelineStateSnapshot)||Enabled(Flag::ShaderHashAssociation)||Enabled(Flag::PipelineCacheMismatch);
     if(name=="pipeline-vs-aux-diag") return Enabled(Flag::ShaderAuxHash)||Enabled(Flag::ShaderInterface)||Enabled(Flag::ShaderVS)||Enabled(Flag::ShaderPS)||Enabled(Flag::ShaderGS);
-    if(name=="rt-stats") return Enabled(Flag::RenderPassBeginEnd)||Enabled(Flag::FBOChanges)||Enabled(Flag::AttachmentUsage)||Enabled(Flag::LoadStoreBehavior)||Enabled(Flag::RenderTargetAliasing)||Enabled(Flag::PipelineBarriers)||Enabled(Flag::RAWDependency)||Enabled(Flag::WAWDependency)||Enabled(Flag::SelfDependency)||Enabled(Flag::RenderPassSplit)||Enabled(Flag::SynchronizationSummary)||Enabled(Flag::FeedbackUse)||Enabled(Flag::FeedbackFallback)||Enabled(Flag::FeedbackPassSplit);
+    if(name=="rt-stats") return Enabled(Flag::RenderPassBeginEnd)||Enabled(Flag::FBOChanges)||Enabled(Flag::AttachmentUsage)||Enabled(Flag::LoadStoreBehavior)||Enabled(Flag::RenderTargetAliasing)||Enabled(Flag::PipelineBarriers)||Enabled(Flag::RAWDependency)||Enabled(Flag::WAWDependency)||Enabled(Flag::SelfDependency)||Enabled(Flag::RenderPassSplit)||Enabled(Flag::SynchronizationSummary)||Enabled(Flag::FeedbackUse)||Enabled(Flag::FeedbackFallback)||Enabled(Flag::FeedbackPassSplit)||Enabled(Flag::BarrierCount)||Enabled(Flag::RenderPassCount);
     return false;
 }
 }
