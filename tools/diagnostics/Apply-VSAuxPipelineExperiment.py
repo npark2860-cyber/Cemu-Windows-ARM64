@@ -20,7 +20,7 @@ if 'RuntimeExperiments::Enabled("pipeline-vs-aux-key")' not in text:
     text = text.replace(hash_old, hash_new, 1)
 
 cache_old = "\tconst auto innerit = it->second.find(stateHash);\n\tif (innerit == it->second.cend())\n\t\treturn nullptr;\n\n\treturn innerit->second;"
-cache_new = r'''\tconst auto innerit = it->second.find(stateHash);
+cache_new = '''\tconst auto innerit = it->second.find(stateHash);
 \tif (innerit == it->second.cend())
 \t{
 \t\tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::PipelineCache))
