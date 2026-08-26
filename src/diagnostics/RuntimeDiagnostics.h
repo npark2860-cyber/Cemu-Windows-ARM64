@@ -27,10 +27,87 @@ enum class Flag : uint16_t
 inline constexpr size_t kFlagCount = static_cast<size_t>(Flag::Count);
 inline std::array<std::atomic_bool, kFlagCount> g_flags{};
 inline std::atomic_uint32_t g_hitchThresholdMs{50};
-inline bool Enabled(Flag flag){ return g_flags[static_cast<size_t>(flag)].load(std::memory_order_relaxed); }
-inline void SetEnabled(Flag flag, bool enabled){ g_flags[static_cast<size_t>(flag)].store(enabled, std::memory_order_relaxed); }
-inline void SetAll(bool enabled){ for (auto& flag : g_flags) flag.store(enabled, std::memory_order_relaxed); }
-inline bool AnyEnabled(){ for (const auto& flag : g_flags) if (flag.load(std::memory_order_relaxed)) return true; return false; }
+
+// A checkbox is selectable only when this diagnostic edition has a concrete
+// non-UI runtime consumer for it. This prevents visually checked controls from
+// silently collapsing into unrelated legacy experiment switches.
+inline bool IsImplemented(Flag flag)
+{
+    switch (flag)
+    {
+    // ARM64 / JIT
+    case Flag::JitBlockLifecycle:
+    case Flag::GuestHostMapping:
+    case Flag::BranchPatching:
+    case Flag::ReadyReICache:
+    case Flag::JitExecutionEntry:
+    case Flag::Arm64ExceptionContext:
+    case Flag::GuestMemoryAccess:
+    case Flag::JitPerformance:
+
+    // Vulkan / pipeline diagnostics
+    case Flag::QueueSubmit:
+    case Flag::PipelineCache:
+    case Flag::PipelineCreation:
+    case Flag::PipelineFailure:
+    case Flag::PipelineStateSnapshot:
+    case Flag::ShaderHashAssociation:
+    case Flag::ShaderVS:
+    case Flag::ShaderPS:
+    case Flag::ShaderGS:
+    case Flag::ShaderAuxHash:
+
+    // Render-target / synchronization diagnostics
+    case Flag::RenderPassBeginEnd:
+    case Flag::PipelineBarriers:
+    case Flag::RAWDependency:
+    case Flag::WAWDependency:
+    case Flag::SelfDependency:
+    case Flag::RenderPassSplit:
+    case Flag::SynchronizationSummary:
+
+    // Performance diagnostics
+    case Flag::FrameTiming:
+    case Flag::DrawCallCount:
+    case Flag::PipelineCompileTime:
+    case Flag::QueueSubmitCount:
+    case Flag::PresentTiming:
+    case Flag::GpuTimestamp:
+    case Flag::CpuWaitBreakdown:
+    case Flag::DescriptorStats:
+    case Flag::MemoryUploadStats:
+    case Flag::HitchTrigger:
+    case Flag::DiagnosticOverhead:
+    case Flag::SummaryOnExit:
+        return true;
+    default:
+        return false;
+    }
+}
+
+inline bool Enabled(Flag flag)
+{
+    return IsImplemented(flag) && g_flags[static_cast<size_t>(flag)].load(std::memory_order_relaxed);
+}
+inline void SetEnabled(Flag flag, bool enabled)
+{
+    g_flags[static_cast<size_t>(flag)].store(IsImplemented(flag) ? enabled : false, std::memory_order_relaxed);
+}
+inline void SetAll(bool enabled)
+{
+    for (size_t i = 0; i < kFlagCount; ++i)
+    {
+        const auto flag = static_cast<Flag>(i);
+        g_flags[i].store(IsImplemented(flag) ? enabled : false, std::memory_order_relaxed);
+    }
+}
+inline bool AnyEnabled()
+{
+    for (size_t i = 0; i < kFlagCount; ++i)
+        if (Enabled(static_cast<Flag>(i)))
+            return true;
+    return false;
+}
 inline uint64_t NowNs(){ return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()); }
 
 struct AccumStat { std::atomic_uint64_t count{0}; std::atomic_uint64_t totalNs{0}; std::atomic_uint64_t maxNs{0}; };
@@ -58,11 +135,11 @@ inline void ResetCounters(){ for(auto& stat:g_waitStats) ResetAccum(stat); Reset
 class ScopedPipelineCompile { public: ScopedPipelineCompile():m_active(Enabled(Flag::PipelineCompileTime)),m_start(m_active?NowNs():0){} ~ScopedPipelineCompile(){if(m_active)AddAccum(g_pipelineCompileTiming,NowNs()-m_start);} private:bool m_active;uint64_t m_start;};
 class ScopedJitCompile { public: ScopedJitCompile():m_active(Enabled(Flag::JitPerformance)||Enabled(Flag::JitBlockLifecycle)),m_start(m_active?NowNs():0){} ~ScopedJitCompile(){if(m_active)AddAccum(g_jitCompileTiming,NowNs()-m_start);} private:bool m_active;uint64_t m_start;};
 
-inline bool LegacyBridgeEnabled(std::string_view name)
+// UI diagnostics no longer fan out through the old coarse experiment names.
+// Environment-variable experiments still work because RuntimeExperiments::Enabled()
+// falls through to parsing CEMU_EXPERIMENTS when this returns false.
+inline bool LegacyBridgeEnabled(std::string_view)
 {
-    if(name=="pipeline-diag") return Enabled(Flag::PipelineFailure)||Enabled(Flag::PipelineStateSnapshot)||Enabled(Flag::ShaderHashAssociation)||Enabled(Flag::PipelineCacheMismatch);
-    if(name=="pipeline-vs-aux-diag") return Enabled(Flag::ShaderAuxHash)||Enabled(Flag::ShaderInterface)||Enabled(Flag::ShaderVS)||Enabled(Flag::ShaderPS)||Enabled(Flag::ShaderGS);
-    if(name=="rt-stats") return Enabled(Flag::RenderPassBeginEnd)||Enabled(Flag::FBOChanges)||Enabled(Flag::AttachmentUsage)||Enabled(Flag::LoadStoreBehavior)||Enabled(Flag::RenderTargetAliasing)||Enabled(Flag::PipelineBarriers)||Enabled(Flag::RAWDependency)||Enabled(Flag::WAWDependency)||Enabled(Flag::SelfDependency)||Enabled(Flag::RenderPassSplit)||Enabled(Flag::SynchronizationSummary)||Enabled(Flag::FeedbackUse)||Enabled(Flag::FeedbackFallback)||Enabled(Flag::FeedbackPassSplit);
     return false;
 }
 }
