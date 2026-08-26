@@ -48,7 +48,7 @@ t = replace_once(
 
 # Keep branch patching and readyRE anchors independent. Apply-DiagnosticPerformance
 # intentionally inserts counters immediately after readyRE(), so a combined
-# multi-line anchor is brittle and caused Run #13 to fail before compilation.
+# multi-line anchor is brittle.
 branch_block = '''\tif (!aarch64GenContext.processAllJumps())
 \t{
 \t\tcemuLog_log(LogType::Recompiler, "PPCRecompiler_generateAArch64Code(): some jumps exceeded the +/-128MB offset.");
@@ -198,8 +198,9 @@ p.write_text(t, encoding="utf-8", newline="\n")
 
 
 # -----------------------------------------------------------------------------
-# UI activation logging. This also proves whether a checkbox/preset was really
-# active when the user sends log.txt.
+# UI activation logging + implementation gating. A visible checkbox must map to
+# a concrete runtime probe; otherwise it is disabled and cannot report a fake
+# ON state. Presets and the master switch are filtered by IsImplemented().
 # -----------------------------------------------------------------------------
 p = Path("src/gui/wxgui/MainWindow.cpp")
 t = p.read_text(encoding="utf-8")
@@ -219,15 +220,26 @@ t = replace_once(
 )
 t = replace_once(
     t,
-    'cb->Bind(wxEVT_CHECKBOX, [flag=item.flag](wxCommandEvent& e){ RuntimeDiagnostics::SetEnabled(flag, e.IsChecked()); });',
-    'cb->Bind(wxEVT_CHECKBOX, [flag=item.flag,label=item.label](wxCommandEvent& e){ RuntimeDiagnostics::SetEnabled(flag, e.IsChecked()); cemuLog_log(LogType::Force, "[CEMU_DIAG] Toggle {}={}", label, e.IsChecked() ? "ON" : "OFF"); });',
-    "diagnostic checkbox activation log",
+    'cb->SetValue(RuntimeDiagnostics::Enabled(item.flag));\n            cb->Bind(wxEVT_CHECKBOX, [flag=item.flag](wxCommandEvent& e){ RuntimeDiagnostics::SetEnabled(flag, e.IsChecked()); });',
+    '''cb->SetValue(RuntimeDiagnostics::Enabled(item.flag));
+            if (!RuntimeDiagnostics::IsImplemented(item.flag))
+            {
+                cb->Enable(false);
+                cb->SetToolTip(_("Not wired to a runtime probe in this build"));
+            }
+            cb->Bind(wxEVT_CHECKBOX, [cb,flag=item.flag,label=item.label](wxCommandEvent& e){
+                RuntimeDiagnostics::SetEnabled(flag, e.IsChecked());
+                const bool active = RuntimeDiagnostics::Enabled(flag);
+                cb->SetValue(active);
+                cemuLog_log(LogType::Force, "[CEMU_DIAG] Toggle {}={}", label, active ? "ON" : "OFF");
+            });''',
+    "diagnostic checkbox implementation gate",
 )
 t = replace_once(
     t,
     'm_master->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e){ RuntimeDiagnostics::SetAll(e.IsChecked()); for (auto& entry : m_boxes) entry.first->SetValue(e.IsChecked()); });',
-    'm_master->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e){ RuntimeDiagnostics::SetAll(e.IsChecked()); for (auto& entry : m_boxes) entry.first->SetValue(e.IsChecked()); cemuLog_log(LogType::Force, "[CEMU_DIAG] Master={}", e.IsChecked() ? "ON" : "OFF"); });',
-    "diagnostic master activation log",
+    'm_master->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e){ RuntimeDiagnostics::SetAll(e.IsChecked()); for (auto& entry : m_boxes) entry.first->SetValue(RuntimeDiagnostics::Enabled(entry.second)); m_master->SetValue(RuntimeDiagnostics::AnyEnabled()); cemuLog_log(LogType::Force, "[CEMU_DIAG] Master={}", RuntimeDiagnostics::AnyEnabled() ? "ON" : "OFF"); });',
+    "diagnostic master implementation gate",
 )
 t = replace_once(
     t,
@@ -237,4 +249,4 @@ t = replace_once(
 )
 p.write_text(t, encoding="utf-8", newline="\n")
 
-print("[diagnostics-arm64] concrete ARM64/JIT hooks installed")
+print("[diagnostics-arm64] concrete ARM64/JIT hooks and honest UI gating installed")
