@@ -51,7 +51,9 @@ HOOKS = {
     # Performance
     "FrameTiming": [("src/diagnostics/RuntimeDiagnostics.h", "Enabled(Flag::FrameTiming)"), ("src/Cafe/HW/Latte/Core/LattePerformanceMonitor.cpp", "RuntimeDiagnostics::BeginFrame")],
     "DrawCallCount": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "Flag::DrawCallCount")],
-    "PipelineCompileTime": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp", "Flag::PipelineCompileTime")],
+    # PipelineCompileTime is consumed inside ScopedPipelineCompile in the shared
+    # diagnostics header; the compile site intentionally only instantiates the scope.
+    "PipelineCompileTime": [("src/diagnostics/RuntimeDiagnostics.h", "Enabled(Flag::PipelineCompileTime)"), ("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp", "ScopedPipelineCompile diagPipelineCompile")],
     "QueueSubmitCount": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp", "Flag::QueueSubmitCount")],
     "PresentTiming": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp", "Flag::PresentTiming")],
     "GpuTimestamp": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp", "Flag::GpuTimestamp")],
