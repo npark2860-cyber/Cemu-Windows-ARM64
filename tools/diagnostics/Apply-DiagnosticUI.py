@@ -61,7 +61,15 @@ public:
         {
             auto* cb = new wxCheckBox(scroll, wxID_ANY, wxString::FromUTF8(item.label));
             cb->SetValue(RuntimeDiagnostics::Enabled(item.flag));
-            cb->Bind(wxEVT_CHECKBOX, [flag=item.flag](wxCommandEvent& e){ RuntimeDiagnostics::SetEnabled(flag, e.IsChecked()); });
+            if (!RuntimeDiagnostics::IsImplemented(item.flag))
+            {
+                cb->Enable(false);
+                cb->SetToolTip(_("Not wired to a runtime probe in this build"));
+            }
+            cb->Bind(wxEVT_CHECKBOX, [cb,flag=item.flag](wxCommandEvent& e){
+                RuntimeDiagnostics::SetEnabled(flag, e.IsChecked());
+                cb->SetValue(RuntimeDiagnostics::Enabled(flag));
+            });
             m_boxes.push_back({cb,item.flag});
             grid->Add(cb, 0, wxALL, 2);
         }
@@ -79,7 +87,7 @@ public:
         reset->Bind(wxEVT_BUTTON, [](wxCommandEvent&){ RuntimeDiagnostics::ResetCounters(); });
         hitch->AddStretchSpacer(); hitch->Add(reset, 0, wxALL, 5); root->Add(hitch, 0, wxEXPAND);
 
-        m_master->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e){ RuntimeDiagnostics::SetAll(e.IsChecked()); for (auto& entry : m_boxes) entry.first->SetValue(e.IsChecked()); });
+        m_master->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e){ RuntimeDiagnostics::SetAll(e.IsChecked()); for (auto& entry : m_boxes) entry.first->SetValue(RuntimeDiagnostics::Enabled(entry.second)); });
         preset->Bind(wxEVT_CHOICE, [this,preset](wxCommandEvent&){
             const int p=preset->GetSelection(); RuntimeDiagnostics::SetAll(false);
             if(p==1){ RuntimeDiagnostics::SetEnabled(DiagFlag::FrameTiming,true); RuntimeDiagnostics::SetEnabled(DiagFlag::QueueSubmit,true); RuntimeDiagnostics::SetEnabled(DiagFlag::CpuWaitBreakdown,true); RuntimeDiagnostics::SetEnabled(DiagFlag::HitchTrigger,true); }
