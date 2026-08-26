@@ -118,8 +118,8 @@ new_fail = '''\telse
 \t\t\tif (legacyPipelineDiag || RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::PipelineStateSnapshot))
 \t\t\t{
 \t\t\t\tcemuLog_log(LogType::Force,
-\t\t\t\t\t"[ADRENO_DIAG] PIPELINE_STATE state={:016x} min={:016x} prim={} topology={} stages={} attrs={} bindings={} cull={} front={} polygon={} depthClamp={} depthTest={} depthWrite={} depthCompare={} blendAttachments={} samples={} robust={} pnext={} rasterPnext={}",
-\t\t\t\t\tm_diagPipelineInfo->stateHash, m_diagPipelineInfo->minimalStateHash, (uint32)m_diagPipelineInfo->primitiveMode, (uint32)inputAssembly.topology,
+\t\t\t\t\t"[ADRENO_DIAG] PIPELINE_STATE state={:016x} prim={} topology={} stages={} attrs={} bindings={} cull={} front={} polygon={} depthClamp={} depthTest={} depthWrite={} depthCompare={} blendAttachments={} samples={} robust={} pnext={} rasterPnext={}",
+\t\t\t\t\tm_diagPipelineInfo->stateHash, (uint32)m_diagPipelineInfo->primitiveMode, (uint32)inputAssembly.topology,
 \t\t\t\t\tshaderStages.size(), vertexInputAttributeDescription.size(), vertexInputBindingDescription.size(),
 \t\t\t\t\t(uint32)rasterizer.cullMode, (uint32)rasterizer.frontFace, (uint32)rasterizer.polygonMode, (uint32)rasterizer.depthClampEnable,
 \t\t\t\t\t(uint32)depthStencilState.depthTestEnable, (uint32)depthStencilState.depthWriteEnable, (uint32)depthStencilState.depthCompareOp,
