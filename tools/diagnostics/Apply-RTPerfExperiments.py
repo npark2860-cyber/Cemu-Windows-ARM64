@@ -17,7 +17,7 @@ include_new = include_old + '#include "diagnostics/RuntimeExperiments.h"\n#inclu
 core = replace_once(core, include_old, include_new, 'VulkanRendererCore include anchor')
 
 stats_old = 'extern bool hasValidFramebufferAttached;\n'
-stats_new = r'''extern bool hasValidFramebufferAttached;
+stats_new = '''extern bool hasValidFramebufferAttached;
 
 // Render-target/synchronization counters are collected only while at least one
 // concrete RT diagnostic checkbox (or the legacy rt-stats env switch) is active.
