@@ -91,6 +91,8 @@ for script in (
     "tools/diagnostics/Apply-DiagnosticUI.py",
     "tools/diagnostics/Apply-DiagnosticPerformance.py",
     "tools/diagnostics/Apply-DiagnosticVulkan.py",
+    "tools/diagnostics/Apply-DiagnosticArm64.py",
+    "tools/diagnostics/Verify-DiagnosticCoverage.py",
 ):
     print(f"[diagnostic-edition] applying {script}")
     subprocess.run(["python", script], check=True)
