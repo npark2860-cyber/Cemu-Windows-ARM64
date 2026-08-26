@@ -46,13 +46,15 @@ t = replace_once(
     "JIT compile-begin hook",
 )
 
+# Keep branch patching and readyRE anchors independent. Apply-DiagnosticPerformance
+# intentionally inserts counters immediately after readyRE(), so a combined
+# multi-line anchor is brittle and caused Run #13 to fail before compilation.
 branch_block = '''\tif (!aarch64GenContext.processAllJumps())
 \t{
 \t\tcemuLog_log(LogType::Recompiler, "PPCRecompiler_generateAArch64Code(): some jumps exceeded the +/-128MB offset.");
 \t\treturn false;
 \t}
-
-\taarch64GenContext.readyRE();'''
+'''
 branch_replacement = '''\tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::BranchPatching))
 \t\tcemuLog_log(LogType::Force, "[ARM64_JIT] BRANCH_PATCH_BEGIN guest=0x{:08x} jumps={}", PPCRecFunction->ppcAddress, aarch64GenContext.jumps.size());
 \tif (!aarch64GenContext.processAllJumps())
@@ -64,13 +66,20 @@ branch_replacement = '''\tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Fl
 \t}
 \tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::BranchPatching))
 \t\tcemuLog_log(LogType::Force, "[ARM64_JIT] BRANCH_PATCH_OK guest=0x{:08x} jumps={}", PPCRecFunction->ppcAddress, aarch64GenContext.jumps.size());
+'''
+t = replace_once(t, branch_block, branch_replacement, "branch patch diagnostics")
 
-\tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::ReadyReICache))
+t = replace_once(
+    t,
+    '\taarch64GenContext.readyRE();\n',
+    '''\tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::ReadyReICache))
 \t\tcemuLog_log(LogType::Force, "[ARM64_JIT] READY_RE_BEGIN guest=0x{:08x} generatedBytes={}", PPCRecFunction->ppcAddress, aarch64GenContext.getSize());
 \taarch64GenContext.readyRE();
 \tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::ReadyReICache))
-\t\tcemuLog_log(LogType::Force, "[ARM64_JIT] READY_RE_END guest=0x{:08x} host={}", PPCRecFunction->ppcAddress, aarch64GenContext.getCode<void*>());'''
-t = replace_once(t, branch_block, branch_replacement, "branch/readyRE diagnostics")
+\t\tcemuLog_log(LogType::Force, "[ARM64_JIT] READY_RE_END guest=0x{:08x} host={}", PPCRecFunction->ppcAddress, aarch64GenContext.getCode<void*>());
+''',
+    "readyRE diagnostics",
+)
 
 t = replace_once(
     t,
@@ -194,6 +203,20 @@ p.write_text(t, encoding="utf-8", newline="\n")
 # -----------------------------------------------------------------------------
 p = Path("src/gui/wxgui/MainWindow.cpp")
 t = p.read_text(encoding="utf-8")
+t = replace_once(
+    t,
+    'explicit RuntimeDiagnosticsDialog(wxWindow* parent)\n        : wxDialog(parent, wxID_ANY, _("ARM64 Diagnostics"), wxDefaultPosition, wxSize(720, 760), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)\n    {\n',
+    '''explicit RuntimeDiagnosticsDialog(wxWindow* parent)
+        : wxDialog(parent, wxID_ANY, _("ARM64 Diagnostics"), wxDefaultPosition, wxSize(720, 760), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+    {
+#if defined(__aarch64__)
+        cemuLog_log(LogType::Force, "[CEMU_DIAG] UI_OPEN Architecture=ARM64");
+#else
+        cemuLog_log(LogType::Force, "[CEMU_DIAG] UI_OPEN Architecture=non-ARM64");
+#endif
+''',
+    "diagnostic UI-open identity log",
+)
 t = replace_once(
     t,
     'cb->Bind(wxEVT_CHECKBOX, [flag=item.flag](wxCommandEvent& e){ RuntimeDiagnostics::SetEnabled(flag, e.IsChecked()); });',
