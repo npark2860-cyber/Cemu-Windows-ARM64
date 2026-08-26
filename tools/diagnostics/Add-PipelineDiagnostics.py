@@ -41,7 +41,7 @@ p = p.replace(assign_anchor, assign_anchor + "\n\tm_diagPipelineInfo = pipelineI
 compile_anchor = 'bool PipelineCompiler::Compile(bool forceCompile, bool isRenderThread, bool showInOverlay)\n{\n'
 if p.count(compile_anchor) != 1:
     raise RuntimeError(f"Pipeline compile anchor count={p.count(compile_anchor)}")
-compile_preamble = r'''bool PipelineCompiler::Compile(bool forceCompile, bool isRenderThread, bool showInOverlay)
+compile_preamble = '''bool PipelineCompiler::Compile(bool forceCompile, bool isRenderThread, bool showInOverlay)
 {
 \tuint64_t diagPipelineSeq = 0;
 \tbool diagPipelineSample = false;
@@ -92,7 +92,7 @@ old_fail = '''\telse
 if p.count(old_fail) != 1:
     raise RuntimeError(f"Pipeline failure block count={p.count(old_fail)}")
 
-new_fail = r'''\telse
+new_fail = '''\telse
 \t{
 \t\tconst bool legacyPipelineDiag = RuntimeExperiments::Enabled("pipeline-diag");
 \t\tif (m_diagPipelineInfo)
