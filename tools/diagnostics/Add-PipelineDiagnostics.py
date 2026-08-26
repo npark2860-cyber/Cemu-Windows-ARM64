@@ -84,3 +84,13 @@ new_fail = '''\telse
 p = p.replace(old_fail, new_fail, 1)
 write(cpp_path, p)
 print("Runtime-gated pipeline diagnostics installed")
+
+# Generic ARM64 Diagnostic Edition: UI-controlled observation-only extensions.
+import subprocess
+for script in (
+    "tools/diagnostics/Apply-DiagnosticUI.py",
+    "tools/diagnostics/Apply-DiagnosticPerformance.py",
+    "tools/diagnostics/Apply-DiagnosticVulkan.py",
+):
+    print(f"[diagnostic-edition] applying {script}")
+    subprocess.run(["python", script], check=True)
