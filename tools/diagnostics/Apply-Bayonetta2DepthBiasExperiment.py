@@ -1,7 +1,7 @@
 from pathlib import Path
 import re
 
-path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp")
+path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp")
 text = path.read_text(encoding="utf-8")
 
 pattern = re.compile(
@@ -57,7 +57,7 @@ if count != 1:
     raise SystemExit(f"Expected exactly one depth-bias block match, found {count}")
 
 path.write_text(new_text, encoding="utf-8")
-print("[bayo2-depth-bias] patched VulkanRenderer.cpp")
+print("[bayo2-depth-bias] patched VulkanRendererCore.cpp")
 print("[bayo2-depth-bias] Bayonetta 2 only: force Vulkan depthBiasClamp to 0.0")
 print("[bayo2-depth-bias] OpenGL parity A/B; offset and slope remain unchanged")
 print("[bayo2-depth-bias] log marker: [BAYO2_DEPTH_BIAS]")
