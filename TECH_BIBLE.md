@@ -1,127 +1,241 @@
 # Cemu Windows ARM64 / Adreno TECH BIBLE
 
-> 이 문서는 프로젝트의 **확정된 사실, 구조, 원칙**만 기록한다. 실험별 세부 결과는 `DEBUG_HISTORY.md`, 현재 이어서 할 일은 `CURRENT_HANDOFF.md`를 본다.
+> 이 문서는 프로젝트의 **확정된 사실, 구조, 원칙, 되돌리면 안 되는 기준점**만 기록한다. 실험별 세부 결과는 `DEBUG_HISTORY.md`, 현재 이어서 할 일은 `CURRENT_HANDOFF.md`를 본다.
 
 ## 1. Project scope
 
 - Target: **Cemu on Windows ARM64**
-- Primary hardware: **Snapdragon X Elite / Adreno X1-85**
+- Primary hardware: **Snapdragon X Elite / Qualcomm Adreno X1-85**
 - Primary graphics API: **Vulkan**
 - Repository: `npark2860-cyber/Cemu-Windows-ARM64`
-- Active debug branch: `runtime-experiments-arm64`
-- 모든 신규 진단/실험 기능은 가능한 한 **UI의 checkbox 또는 동등한 런타임 제어 방식**으로 개별 ON/OFF 가능해야 한다.
+- Main debug branch: `runtime-experiments-arm64`
+- correctness / compatibility가 performance optimization보다 우선한다.
+- 모든 신규 진단/실험은 가능한 한 UI checkbox 또는 동등한 runtime control로 개별 ON/OFF 가능해야 한다.
+- GitHub Actions 비용을 줄이기 위해 **source/static verification → minimal A/B → CI 1회** 순서를 우선한다.
 
-## 2. Build architecture
+## 2. Protected baselines
 
-Windows ARM64 CI의 핵심 구성:
+### Clean Windows ARM64
+
+`windows-arm64`
+
+- clean baseline SHA: `6129066e8bfa3ad89556756712c11d003e0ad31f`
+- 실험용으로 수정하지 않는다.
+
+### Known-good Adreno compatibility
+
+`final-adreno-compat-arm64`
+
+- commit: `e14b764b55bf6a5d6f561e7bf1bde8dc17d1b600`
+- successful Actions run: `31864755800`
+- artifact: `cemu-arm64-final-adreno-compat`
+
+### Current generic diagnostic/code baseline
+
+`runtime-experiments-arm64`
+
+- last verified code-changing baseline: `fa17d834bfebd9a41c598b1b1b702000d0ff4618`
+- commit: `diagnostics: require complete 77-item coverage`
+- 문서-only commit이 이후 붙을 수 있으므로 branch HEAD와 code-changing baseline을 구분한다.
+
+## 3. Build architecture
+
+Windows ARM64 CI 핵심 구성:
 
 - Runner: `windows-11-arm`
 - MSVC ARM64 environment
 - Compiler: `clang-cl`
 - Generator: Ninja
-- CMake: 3.29.x 계열
-- Dependency manager: vcpkg
-- Build command: `cmake --build build`
+- CMake 3.29.x 계열
+- vcpkg
+- build: `cmake --build build`
 
-따라서 Configure가 성공하고 `Build Cemu` 단계에서 실패하면 우선순위는 **C++ 소스/헤더/심볼/링크 오류**이며, vcpkg 또는 ARM64 툴체인을 먼저 의심하지 않는다.
+Configure가 성공하고 `Build Cemu`에서 실패하면 우선 C++ source/header/symbol/link 오류를 본다. runner/vcpkg/toolchain부터 추측하지 않는다.
 
-## 3. Confirmed ARM64 / Adreno facts
+## 4. Do-not-rollback fixes
 
-### 3.1 Shader key / VS default value issue
+### 4.1 VS → PS `DEFAULT_VAL` producer-side synthesize
 
-2026-08-16에 Vertex Shader의 missing/default input에 대해 **DEFAULT_VAL synthesize**를 도입하여 shader key 불안정 문제를 해결했다.
+Adreno에서 producer가 PS가 요구하는 varying을 실제로 export하지 않는 경우 Vulkan interface/pipeline 문제가 발생했다.
+
+확정된 해결 방향:
+
+- PS input을 무조건 상수로 치환하지 않는다.
+- matching producer export가 존재하면 실제 varying을 유지한다.
+- matching producer export가 없을 때 producer-side synthetic output을 만들고 해당 `DEFAULT_VAL`을 제공한다.
 
 확인된 결과:
 
-- Adreno X1-85에서 BOTW 렌더 정상화
+- BOTW 렌더 정상화
 - Tekken Tag Tournament 2 렌더 정상화
-- 기존 `VK_ERROR_UNKNOWN (-13)` 경로 해소
-- 이 수정은 확정된 기반 수정으로 취급하며 임의로 되돌리지 않는다.
-- GS 관련 경로는 별도 검증 대상이다.
+- 관련 `VK_ERROR_UNKNOWN (-13)` 해소
+- shader/interface 안정화
 
-### 3.2 Wii U decrypt
+이 수정은 프로젝트의 영구 호환성 기준이다. **임의 rollback 금지.**
 
-- Wii U decrypt는 Windows ARM64에서 동작 확인됨.
+GS 경로는 VS→PS/no-GS 경로와 동일하다고 가정하지 않는다.
 
-### 3.3 Game-level observations
+### 4.2 AArch64 generated-code cache / ReadyRE coherency
 
-- BOTW: ARM64에서 정상 구동 가능한 기준 빌드가 존재한다.
-- Bayonetta 2: x64 Cemu 2.5/2.6 계열에서는 그래픽 문제가 있어도 실행되지만, 일부 ARM64 빌드에서는 강제 종료가 발생했다.
-- Tekken 관련 과거 그래픽/셰이더 문제와 이후 1P/2P 문제는 서로 다른 이슈로 취급한다.
+ARM64 JIT generated code 실행 전 instruction-cache coherency를 보장하는 수정은 안정성 기준으로 유지한다.
 
-## 4. Vulkan / Adreno debugging principles
+### 4.3 pre-e834 Vulkan visual compatibility behavior
 
-1. **한 번에 한 변수**를 바꾼다.
-2. 이미 배제된 원인을 동일 조건으로 반복 실험하지 않는다.
-3. 성공한 빌드/commit/artifact를 반드시 기준점으로 보존한다.
-4. 로그에서 최초 오류를 우선한다. 후속 오류는 cascade일 수 있다.
-5. Vulkan 진단 기능은 전역 강제 변경보다 **UI에서 개별 toggle** 가능하도록 한다.
-6. Adreno workaround는 GPU vendor/feature 조건과 결합해 범위를 최소화한다.
-7. 일반화 가능한 수정과 진단 전용 코드는 분리한다.
-8. CI 비용 절감을 위해 소스/문법/호출부 정적 검증 후 필요한 경우에만 Actions를 실행한다.
+Adreno에서 거대 triangle / horizontal band 류 시각 회귀를 해결한 known-good 조합:
 
-## 5. Diagnostic UI policy
+1. swapchain attachment loadOp `DONT_CARE → LOAD`
+2. Vulkan command-buffer usage `ONE_TIME_SUBMIT → SIMULTANEOUS_USE` 2곳
+3. `DrawBackbufferQuad`에서 pre-renderpass `ClearColorbuffer(padView)` 복원
+4. renderpass 내부 `vkCmdClearAttachments()` 제거
 
-진단판의 항목은 세 상태로 구분한다.
+이 조합은 검증된 compatibility baseline이다. 근본 책임을 Qualcomm driver 단독 문제로 단정하지 않는다.
 
-- 활성화 가능: 실제 프로브/로그 경로까지 연결됨
-- 회색/비활성: UI 항목은 있으나 실제 진단 프로브가 아직 미연결 또는 현재 빌드에서 미지원
-- 숨김: 아직 구현 전이며 UI에도 노출하지 않음
+## 5. Runtime Diagnostics architecture
 
-회색 항목은 "원인이 배제됨"을 뜻하지 않는다. 단지 **현재 빌드에서 해당 진단을 켤 수 없다는 뜻**이다.
+`fa17d83` 기준 Diagnostics는 **77/77 구현 coverage를 강제**한다.
 
-대표 진단 대상:
+핵심 규칙:
 
-- Semaphore flow
-- Command-buffer lifecycle
-- Fence lifecycle
-- Shader interface
-- SPIR-V compile failure
-- Attachment usage
-- Feedback-loop use
-- Descriptor / resource lifetime
+- `RuntimeDiagnostics::Enabled(flag)` = master enabled + implemented + per-flag enabled
+- UI selectable 여부 = `RuntimeDiagnostics::IsImplemented(flag)`
+- verifier가 UI `kDiagItems[]`와 implemented set의 정확한 일치를 검사
+- 예전의 다수 회색/미구현 checkbox 상태는 현재 기준으로 폐기한다.
 
-## 6. Known generalized Vulkan patch direction
+따라서 새 Diagnostics Edition을 습관적으로 만들지 않는다. 기존 77/77 진단판과 source-level A/B를 우선한다.
 
-과거 진단 과정에서 검토/적용된 일반화 방향:
+주요 진단 범위:
 
-- Swapchain attachment의 `VK_ATTACHMENT_LOAD_OP_DONT_CARE` 사용 재검토
-- command-buffer usage flags 재검토
-- `DrawBackbufferQuad` clear 타이밍을 renderpass 외부로 이동하는 방식 검토
-- renderpass 내부 `vkCmdClearAttachments` 의존 제거 방향
+- ARM64/JIT lifecycle, mapping, branch patch, ReadyRE
+- command buffer / fence / semaphore / submit completion
+- pipeline cache/create/failure/state/hash
+- VS/PS/GS/shader interface/compile failure
+- renderpass / attachment / load-store / barriers / RAW / WAW / self-dependency
+- feedback-loop 관련 상태
+- texture/cache/surface 관련 상태
+- frame timing / GPU timestamp / CPU wait
+- descriptor / upload / hitch / overhead / summary
+- input/controller mapping
 
-이 항목들은 이미 적용 여부/정확한 commit을 `DEBUG_HISTORY.md`와 현재 소스에서 확인한 뒤 다룬다. 문서만 보고 중복 적용하지 않는다.
+## 6. Confirmed hardware/runtime environment
 
-## 7. Documentation protocol
+현재 대표 테스트 환경:
 
-### TECH_BIBLE.md
-- 확정된 사실
-- 구조
-- 프로젝트 원칙
+- Windows 11 Home 25H2
+- Qualcomm Adreno X1-85
+- Vulkan 1.3
+- driver build: `f22d572733`
+- driver date: 2026-05-22
+- compiler: `E031.50.36.00`
+- driver branch: `pp165`
+- RAM: 약 16 GB
+
+Wii U decrypt는 Windows ARM64에서 동작 확인됨.
+
+## 7. Bayonetta 2 graphics issue — confirmed scope
+
+현재 Bayonetta 2 주 타겟은 crash가 아니라:
+
+**멀리 있는 폴리곤이 거리에서 flicker하는 그래픽 문제**다.
+
+대표 테스트 타이틀:
+
+- Bayonetta 2 JP
+- Title ID: `00050000-1011B900`
+- v1
+
+### Ruled down / do not repeat without new evidence
+
+#### Position Invariance
+
+Metal backend의 Bayonetta/Bayonetta 2 Position Invariance 선례를 근거로 Vulkan VS 112개에 `invariant gl_Position;`을 적용한 graphics-pack A/B를 수행했다.
+
+사용자 관찰: **전혀 개선되지 않음.**
+
+현재 증상의 주원인 후보에서 크게 하향한다.
+
+#### Simple viewport depth-range clamp
+
+Bayonetta 2는 runtime에서 대량으로 `rawNear=-1`, `rawFar=1`, `halfZ=0`을 사용했다.
+
+Vulkan viewport depth를 out-of-range일 때 `0..1`로 clamp하는 A/B를 실제 대량 적용했으나 사용자 관찰은 **플리커링 그대로**였다.
+
+따라서 `VkViewport.minDepth/maxDepth`의 단순 `-1..1` handling은 현재 주원인에서 배제한다.
+
+### Depth-bias clamp fact
+
+Vulkan backend는 `vkCmdSetDepthBias(constant, clamp, slope)`에 Wii U clamp 값을 전달하지만 OpenGL backend와 동작 차이가 있다.
+
+Bayonetta 2 전용 `depthBiasClamp=0` 실험 빌드의 최신 로그 초반 128개 `[BAYO2_DEPTH_BIAS]` 기록에서는 모두:
+
+- `offset=0`
+- `slope=-0`
+- `rawClamp=0`
+- `appliedClamp=0`
+- `nonZeroClampCount=0`
+
+이었다.
+
+따라서 **적어도 기록된 구간에서는 패치가 실제 GPU state를 바꾸지 않았다.** 이 사실만으로 세션 전체에 non-zero clamp가 절대 없었다고 과잉 일반화하지 않는다.
+
+### Current higher-value candidates
+
+- depth format / actual depth precision / depth attachment state
+- depth test/write/compare + non-zero bias correlation
+- surface/texture reinterpretation and swizzle
+- LOD / graphics-pack interaction, 특히 `Force Maximum LOD`
+- `halfZ=0` 시 GLSL `(z+w)/2` 변환은 정상 clip-space 변환이므로 파괴적 전역 제거보다 위 후보를 먼저 본다.
+
+## 8. Tekken controller issue — separate track
+
+Tekken Tag Tournament 2의 현재 1P→2P 현상은 과거 shader/pipeline 문제와 별개다.
+
+확인된 로그 경계:
+
+- physical controller → Cemu player0
+- player0 → VPAD channel0
+- VPAD connected=1, player=0
+- KPAD 0–3 disconnected
+- 실제 게임에서는 1P로 지정한 컨트롤러가 2P side에서 동작
+- 테스트한 x64 Cemu에서도 같은 현상
+
+따라서 ARM64 InputManager player-index misassignment는 강하게 하향한다. 다음은 GamePad/VPAD0 vs Pro Controller/KPAD 경로와 Tekken join/side semantics를 본다.
+
+## 9. Debugging rules
+
+1. 한 번에 한 변수만 바꾼다.
+2. 이미 배제된 원인을 동일 조건으로 반복하지 않는다.
+3. 성공 build/commit/artifact를 기준점으로 보존한다.
+4. 로그 최초 오류를 우선한다. 뒤 오류는 cascade일 수 있다.
+5. 화면 관찰과 로그 fact를 분리한다.
+6. Adreno workaround 범위는 최소화한다.
+7. 일반화 가능한 수정과 진단/게임 전용 A/B를 분리한다.
+8. 새 build 전에 source/static verification을 끝낸다.
+9. 실패 실험을 다음 실험에 섞지 않는다.
+10. VS `DEFAULT_VAL` synthesize는 절대 되돌리지 않는다.
+
+## 10. Documentation protocol
+
+### `TECH_BIBLE.md`
+
+- 확정 사실
+- 구조/원칙
 - 되돌리면 안 되는 기반 수정
+- 반복하면 안 되는 명확한 배제 결과
 
-### DEBUG_HISTORY.md
+### `DEBUG_HISTORY.md`
+
 - 날짜별 실험
-- 성공/실패 빌드
+- build/run/branch
 - 로그/덤프
-- 배제된 원인
-- 새로 확인된 사실
+- 성공/실패
+- 배제된 가설
 
-### CURRENT_HANDOFF.md
-- 현재 저장소 / branch / code checkpoint
-- 마지막 정상 빌드
-- 현재 테스트 빌드
-- 옵션/checkbox 상태
+### `CURRENT_HANDOFF.md`
+
+- 현재 branch/code checkpoint
+- 현재 실험 build
+- 최신 로그
 - 살아 있는 가설
 - NEXT ACTION
 
-새 탭에서는 반드시 이 세 문서를 먼저 읽고, GitHub의 실제 branch/HEAD와 대조한다.
-
-## 8. Rules that must not be violated
-
-- 확정된 VS DEFAULT_VAL synthesize 수정 임의 제거 금지
-- 이미 배제된 실험의 무의미한 반복 금지
-- 서로 다른 emulator/project의 Run ID 혼용 금지
-- Eden/SnapRyu의 GitHub Actions Run ID를 Cemu 저장소 Run ID로 취급하지 말 것
-- UI 제어 요구를 무시한 하드코딩 실험 금지
-- 실패한 빌드 위에 원인 미확인 상태로 진단 기능을 계속 누적하지 말 것
+새 탭에서는 세 문서를 먼저 읽고 GitHub 실제 branch/HEAD와 대조한다.
