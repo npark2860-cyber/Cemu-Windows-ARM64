@@ -4,6 +4,13 @@ import re
 path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp")
 text = path.read_text(encoding="utf-8")
 
+include_anchor = '#include "Cafe/GameProfile/GameProfile.h"\n'
+include_line = '#include "Cafe/CafeSystem.h"\n'
+if include_line not in text:
+    if include_anchor not in text:
+        raise SystemExit("CafeSystem include anchor not found")
+    text = text.replace(include_anchor, include_anchor + include_line, 1)
+
 pattern = re.compile(
     r"\tfloat frontScale = LatteGPUState\.contextNew\.PA_SU_POLY_OFFSET_FRONT_SCALE\.get_SCALE\(\);\n"
     r"\tfloat frontOffset = LatteGPUState\.contextNew\.PA_SU_POLY_OFFSET_FRONT_OFFSET\.get_OFFSET\(\);\n"
@@ -58,6 +65,7 @@ if count != 1:
 
 path.write_text(new_text, encoding="utf-8")
 print("[bayo2-depth-bias] patched VulkanRendererCore.cpp")
+print("[bayo2-depth-bias] added CafeSystem include for title-id lookup")
 print("[bayo2-depth-bias] Bayonetta 2 only: force Vulkan depthBiasClamp to 0.0")
 print("[bayo2-depth-bias] OpenGL parity A/B; offset and slope remain unchanged")
 print("[bayo2-depth-bias] log marker: [BAYO2_DEPTH_BIAS]")
