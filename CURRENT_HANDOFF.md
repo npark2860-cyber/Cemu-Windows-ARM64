@@ -123,66 +123,129 @@ Successful Run:
 
 특히 **Force Maximum LOD OFF 테스트를 다시 요청하지 않는다.**
 
-## 5. 현재 로그에서 새로 확인된 유효 신호
+## 5. 현재 로그/source에서 확인된 유효 신호
 
-대표 최신 로그:
+대표 로그:
 `log(20260827-093536).txt`
 
-### A. 실제 depth attachment
+### A. main depth attachment
 
 Bayonetta 2 구간에서 반복적으로:
 - depth attachment address `f5442800`
-- GX2/Latte format `0x11`
+- GX2/Latte hardware format family `0x11`
 - stencil enabled
+- Vulkan pipeline depth format signal `129`
 
-이 확인된다.
+소스 매핑상 `129 = VK_FORMAT_D24_UNORM_S8_UINT`.
+현재 관찰 구간에서 main depth가 D32S8 fallback으로 바뀐 증거는 없다.
 
-소스 기준:
-- hardware format `0x11` = `HWFMT_8_24`
-- GX2 depth format `D24_S8_UNORM`은 이 hardware format family를 사용
-- 현재 Vulkan pipeline 로그의 depth format 값 `129`는 `VK_FORMAT_D24_UNORM_S8_UINT`
+### B. `f4c24000` multi-representation alias
 
-따라서 현재 관찰 구간에서는 **D24S8가 D32S8 fallback으로 잘못 바뀌는 증거는 없다.**
+같은 guest physical address `f4c24000`에 실제로 최소 세 representation이 관찰됨:
 
-이 사실은 "잘못된 depth format fallback" 후보를 약화하지만, depth precision/state 자체를 배제하지는 않는다.
+- 1280x720, hardware format `0x11`, `isDepth=0`
+- 1280x720, hardware format `0x1a`, `isDepth=0`
+- 640x360, hardware format `0x11`, `isDepth=1`
 
-### B. `f4c24000` surface reinterpretation / swizzle
+따라서 이 주소에서는:
+- format alias
+- depth/non-depth alias
 
-현재 로그에서 `f4c24000`에 대해 실제로:
+둘 다 실제로 발생한다.
 
-`[SUSPICIOUS_TEXTURE] reason=swizzle addr=f4c24000 current=000d0000 requested=00000000 lastRT=00000000 tile=4`
+또 `[SUSPICIOUS_TEXTURE] reason=swizzle addr=f4c24000 ...`가 반복된다.
 
-가 반복된다.
+### C. 중요한 texture-cache source 구조
 
-세션 texture lifecycle에는 같은 physical address `f4c24000`가 여러 representation으로 존재한다.
-확인된 hardware format family:
-- `0x11` = 8/24 계열
-- `0x1a` = 8/8/8/8 계열
+`LatteTexture_CanTextureBeRepresentedAsView()`:
+- depth/non-depth가 다르면 같은 base view로 합치지 않음
+- 같은 주소라도 format이 다르면 현재 구현상 동일 base view로 합치지 않음
+- 별도 base texture representation 생성 가능
 
-이것만으로 버그라고 단정하지 않는다. Cemu texture cache는 동일/겹치는 guest memory를 renderer view 또는 별도 compatible texture representation으로 취급할 수 있다.
+`LatteTexture_GatherTextureRelations()` / `LatteTexture_TrackTextureRelation()`:
+- 동일/겹치는 guest memory representation을 compatible relation으로 연결 가능
+- 동일 pitch/tile/texel-size/format-view compatibility가 relation 조건
 
-하지만 현재 증상과 직접 연결할 가치가 있는 **실제 runtime 신호**다.
+`LatteTexture_UpdateTextureFromDynamicChanges()`:
+- `lastDynamicUpdate`가 더 최신인 representation에서 stale representation으로 copy
+- source가 GPU updated면 destination의 `isUpdatedOnGPU`도 전달
 
-### C. swizzle mismatch 처리 소스
+`LatteTexture_CopySlice()`:
+- depth ↔ non-depth이면 `surfaceCopy_copySurfaceWithFormatConversion()`
+- 둘 다 depth 또는 둘 다 non-depth이면 `texture_copyImageSubData()`
 
-`LatteTextureLegacy.cpp`에서 texture bind 시:
+Vulkan `texture_copyImageSubData()`:
+- render pass 종료
+- src/dst image barrier
+- `vkCmdCopyImage`
+- post-copy barrier
 
-- macro-tiled texture의 swizzle을 guest physical address bits에서 계산
-- cached `baseTexture->swizzle`과 requested swizzle이 다르면 비교
-- requested swizzle이 `lastRenderTargetSwizzle`과 같으면 reload 없이 base swizzle 갱신
-- 그렇지 않으면 `swizzleChanged=true`로 두고 texture data를 reload
+### D. `R24_X8_UNORM` 특이점
 
-즉 현재 `[SUSPICIOUS_TEXTURE] reason=swizzle`은 단순 문자열 경고가 아니라 **실제 texture reload/validity 판단 경계**와 일치한다.
+Vulkan mapping:
+- `R24_X8_UNORM` → `VK_FORMAT_R32_SFLOAT`
 
-## 6. 현재 살아 있는 후보 우선순위
+RAM texture decoder:
+- `TextureDecoder_R24_X8::decode()`는 현재 output texel을 0으로 채우는 구현
 
-1. **surface/texture reinterpretation + swizzle/cache synchronization**
-   - 특히 `f4c24000` 계열
-2. **depth attachment state / precision과 해당 draw의 depth test-write-compare 상관관계**
-   - 현재 정상 draw별 fixed-function state correlation 로그는 부족함
-3. **feedback-loop / attachment dependency 중 아직 직접 증거가 없는 세부 경로**
-4. `halfZ=0` shader Z conversion
-   - 위 후보를 소진하기 전에 전역 제거하지 않는다.
+따라서 `f4c24000`의 `0x11` non-depth representation이 실제 유효 GPU 데이터를 가진다면 CPU/RAM decode만으로는 설명되지 않으며 GPU-side relation/synchronization 경로 확인 가치가 높다.
+
+이 사실만으로 flicker 원인이라고 단정하지 않는다.
+
+## 6. 현재 최소 관찰 진단
+
+전용 브랜치:
+`diag-bayo2-alias-sync`
+
+Base:
+`fa17d834bfebd9a41c598b1b1b702000d0ff4618`
+
+Diagnostic script commit:
+`4f1f56cc85fb645da17e9f95aaf8da2de0a74fd2`
+
+Workflow HEAD:
+`fd5f6376959d739cb50e5dfd79ef64716a40cb60`
+
+Workflow:
+`Cemu ARM64 Bayonetta2 Alias Sync Trace`
+
+Successful Run:
+- #1
+- ID `33119155975`
+- conclusion: **SUCCESS**
+
+Artifact:
+`cemu-arm64-bayo2-alias-sync-trace`
+
+### 동작 변경 여부
+
+**없음. observation-only logging.**
+
+추가 marker:
+- `[BAYO2_ALIAS_REL]`
+  - `f4c24000`가 포함된 relation attempt/result
+  - format/depth/size/pitch/tile/swizzle/GPU-updated state
+- `[BAYO2_ALIAS_COPY]`
+  - 실제 src → dst copy 방향
+  - `path=image-copy` 또는 `path=format-conversion`
+  - src/dst format/depth/size/pitch/tile/swizzle/GPU-updated state
+
+### accidental generic run
+
+실수로 `runtime-experiments-arm64`에 placeholder를 생성하면서 시작된 generic Run:
+- ID `33118909610`
+- conclusion: **CANCELLED**
+
+전용 workflow를 같은 concurrency group으로 시작해 중복 빌드를 중단시켰다.
+`runtime-experiments-arm64`의 accidental placeholder commits/files는 branch cleanup 대상이며 code baseline에는 포함하지 않는다.
+
+## 7. 현재 살아 있는 후보 우선순위
+
+1. **`f4c24000` surface alias synchronization 방향/경로**
+2. **format alias(`0x11 non-depth ↔ 0x1a`)와 depth/color alias 간 GPU data handoff**
+3. depth attachment state / precision + normal draw depth test/write/compare correlation
+4. feedback-loop / attachment dependency의 아직 직접 검증되지 않은 세부 경로
+5. `halfZ=0` shader Z conversion — 위 후보를 소진한 뒤에만 검토
 
 낮은 우선순위 / 반복 금지:
 - Position Invariance
@@ -193,20 +256,6 @@ Bayonetta 2 구간에서 반복적으로:
 - depthclip / pipeline pNext / VS auxHash key
 - startup pipeline `-13` 2건
 - 오래된 GLSL failure `78a2659662685d55_0000000000000079`
-
-## 7. 현재 source-level 핵심 구조
-
-`LatteTexture.cpp`:
-- overlapping guest-memory textures를 찾는다.
-- `LatteTexture_CanTextureBeRepresentedAsView()`로 existing texture/view 재사용 가능성을 판정한다.
-- format view compatibility와 texel-size compatibility를 별도로 판정한다.
-- incompatible representation이면 별도 data texture 생성 가능성이 열린다.
-
-`LatteTextureLegacy.cpp`:
-- shader texture bind 때 lookup/create mapping 수행
-- swizzle 변경 또는 mip physical address 변경 시 reload 여부 결정
-
-따라서 다음 분석은 **같은 guest address가 어떤 조건에서 0x11/0x1a representation으로 분기되고, GPU-updated data가 어느 representation으로 동기화되는지**를 추적한다.
 
 ## 8. Tekken 1P → 2P — 별도 트랙
 
@@ -231,17 +280,22 @@ Bayonetta graphics 분석과 섞지 않는다.
 
 # NEXT ACTION
 
-1. **새 빌드 없이** `LatteTexture_CanTextureBeRepresentedAsView()`와 `LatteTexture_CreateMapping()`의 format/isDepth/overlap 분기 전체를 추적한다.
-2. `f4c24000`의 `0x11 ↔ 0x1a` representation이:
-   - 하나의 renderer view인지
-   - 별도 base texture인지
-   - compatible relation + GPU copy synchronization 대상인지
-   를 source로 확정한다.
-3. render-target write 이후 `lastRenderTargetSwizzle`, `isUpdatedOnGPU`, compatible texture update 경로를 추적해 swizzle reload가 최신 GPU 데이터를 잃을 수 있는 경계가 있는지 확인한다.
-4. 기존 로그에서 `f4c24000`, `f57c8000`, main depth `f5442800`을 역할별로 분리한다.
-5. 이 정적 분석에서 의심 경계가 하나로 좁혀질 때만 **관찰 전용 최소 diagnostic**을 설계한다.
-6. CI는 그 diagnostic이 실제로 필요한 것이 확인되기 전에는 실행하지 않는다.
+1. `runtime-experiments-arm64`에서 accidental placeholder commits/files를 제거해 intended docs-only HEAD로 복구한다.
+2. Successful Run `33119155975` artifact `cemu-arm64-bayo2-alias-sync-trace`를 사용한다.
+3. Bayonetta 2 동일 flicker 장면을 실행한다.
+4. Runtime Diagnostics Master는 기존 테스트 기준대로 유지하고 로그를 수집한다.
+5. 결과 로그에서 다음 marker를 우선 판독한다:
+   - `[BAYO2_ALIAS_REL]`
+   - `[BAYO2_ALIAS_COPY]`
+6. 특히 `f4c24000`에 대해 실제 copy가 존재하는지, 존재한다면:
+   - `0x11 non-depth → 0x1a`
+   - `0x1a → 0x11 non-depth`
+   - depth → color
+   - color → depth
+   어느 방향인지 확정한다.
+7. copy 시점의 `srcGPU/dstGPU`, swizzle, size를 비교한다.
+8. 이 로그 결과 전에는 alias 동기화 동작을 변경하는 A/B를 만들지 않는다.
 
 ## New-tab startup prompt
 
-`Cemu ARM64 Bayonetta 2 원거리 폴리곤 플리커링 분석을 이어간다. GitHub의 CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 먼저 읽고 runtime-experiments-arm64 HEAD와 code-changing baseline fa17d83을 구분해라. 이미 끝난 Position Invariance, viewport depth-range, depthBiasClamp, Force Maximum LOD/LOD, RT barrier variants, forced split, depthclip, pipeline pNext, VS auxHash 실험을 반복하지 말고 NEXT ACTION의 f4c24000 surface reinterpretation/swizzle cache 경로부터 계속해.`
+`Cemu ARM64 Bayonetta 2 원거리 폴리곤 플리커링 분석을 이어간다. GitHub의 CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 먼저 읽고 runtime-experiments-arm64 문서 HEAD와 code-changing baseline fa17d83을 구분해라. 이미 끝난 Position Invariance, viewport depth-range, depthBiasClamp, Force Maximum LOD/LOD, RT barrier variants, forced split, depthclip, pipeline pNext, VS auxHash 실험을 반복하지 마. 현재 전용 branch diag-bayo2-alias-sync의 successful Run 33119155975 artifact로 f4c24000의 [BAYO2_ALIAS_REL]/[BAYO2_ALIAS_COPY]를 수집·분석하는 단계다.`
