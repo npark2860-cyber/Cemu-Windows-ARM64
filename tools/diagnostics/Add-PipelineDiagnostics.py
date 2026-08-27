@@ -169,6 +169,7 @@ for script in (
     "tools/diagnostics/Apply-SubmitLifetimeDiagnostics.py",
     "tools/diagnostics/Apply-ShaderFailureDiagnostics.py",
     "tools/diagnostics/Apply-RenderTargetFeedbackDiagnostics.py",
+    "tools/diagnostics/Apply-CompleteDiagnostics.py",
     "tools/diagnostics/Verify-DiagnosticCoverage.py",
 ):
     print(f"[diagnostic-edition] applying {script}")
