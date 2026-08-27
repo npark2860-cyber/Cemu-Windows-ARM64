@@ -276,19 +276,19 @@ Position Invariance test pack은 active list에 없음.
 - `appliedClamp=0`
 - `nonZeroClampCount=0`
 
-확인. 예시 구간에서도 `rawClamp=0`, `appliedClamp=0`, `nonZeroClampCount=0`이 반복된다.
+확인.
 
-### Interpretation
+### User visual result
 
-**기록된 첫 128회에서는 원래 clamp 값 자체가 0이므로 experiment가 GPU state를 바꾸지 않았다.**
+**플리커링 전혀 개선되지 않음.**
 
-logger가 128건에서 출력 제한되는 구조일 가능성이 있으므로 이 로그만으로 세션 전체에 non-zero clamp가 절대로 없었다고 단정하지 않는다.
+### Interpretation / conclusion
 
-### Visual result status
-
-이 문서 갱신 시점까지 `bdb644d` depth-bias build의 화면 결과는 사용자 발화로 확정 기록되지 않음.
-
-따라서 다음 탭에서 결과를 추측하지 않는다.
+- 기록된 첫 128회에서는 원래 clamp 값 자체가 0이므로 experiment가 GPU state를 바꾸지 않았다.
+- 사용자의 동일 장면 화면 판정도 **변화 없음**이었다.
+- 따라서 `depthBiasClamp` 단독 가설은 현재 주원인 후보에서 크게 하향한다.
+- logger 출력 제한 때문에 세션 전체에 non-zero clamp가 절대 없었다고 단정하지는 않는다.
+- 동일한 depth-bias clamp A/B를 반복하지 않는다.
 
 ---
 
@@ -296,16 +296,17 @@ logger가 128건에서 출력 제한되는 구조일 가능성이 있으므로 �
 
 Higher value:
 
-1. depth format / actual depth precision / depth attachment state
-2. depth test/write/compare + non-zero depth bias draw correlation
-3. surface/texture reinterpretation / swizzle correlation
-4. LOD / graphics-pack interaction, 특히 `Force Maximum LOD`
+1. LOD / graphics-pack interaction, 특히 `Force Maximum LOD`
+2. depth format / actual depth precision / depth attachment state
+3. depth test/write/compare + non-zero depth bias draw correlation
+4. surface/texture reinterpretation / swizzle correlation
 5. `halfZ=0` path의 shader Z transform은 정상적인 clip-space conversion이므로 위 후보 이후에 신중히 검토
 
 Lower priority:
 
 - Position Invariance
 - simple viewport depth-range clamp
+- depthBiasClamp 단독 처리
 - startup pipeline `-13` 2건
 - 기존 GLSL fail 1건
 - feedback-loop without direct evidence
