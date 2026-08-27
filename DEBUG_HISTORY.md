@@ -6,127 +6,340 @@
 
 ### Problem
 
-Adreno에서 일부 vertex input/default value 처리와 shader key 안정성이 깨지면서 Vulkan 오류 및 렌더 문제 발생.
+Adreno에서 producer가 PS가 요구하는 varying을 실제 export하지 않는 경우 Vulkan shader interface/pipeline 생성이 깨졌다.
 
 ### Change
 
-- VS DEFAULT_VAL synthesize 도입
-- 누락/default vertex input을 안정적으로 shader key에 반영
+producer-side `DEFAULT_VAL` fallback/synthesis 도입.
 
 ### Result
 
-- Adreno X1-85에서 BOTW 렌더 정상 확인
+- BOTW 렌더 정상 확인
 - Tekken Tag Tournament 2 렌더 정상 확인
-- `VK_ERROR_UNKNOWN (-13)` 해소 확인
+- 관련 `VK_ERROR_UNKNOWN (-13)` 해소
+- shader/interface 안정화
 
 ### Status
 
 - **확정 수정**
-- 임의 rollback 금지
-- GS 경로는 미검증
+- rollback 금지
+- GS path는 별도 검증 대상
 
 ---
 
-## 2026-08-24 ~ 2026-08-26 — 범용 Vulkan 진단/Adreno runtime experiments
+## 2026-08 — Adreno visual regression compatibility fix
+
+### Symptoms
+
+- giant distorted triangles/faces
+- horizontal bands
+- swapchain/backbuffer 계열 시각 이상
+
+### Known-good behavior restored
+
+- swapchain loadOp `DONT_CARE → LOAD`
+- command buffer usage `ONE_TIME_SUBMIT → SIMULTANEOUS_USE` 2곳
+- `DrawBackbufferQuad` pre-renderpass `ClearColorbuffer(padView)` 복원
+- renderpass 내부 `vkCmdClearAttachments()` 제거
+
+### Result
+
+Qualcomm 테스트 환경의 해당 시각 회귀 해결.
+
+### Status
+
+known-good compatibility baseline. 원인을 Qualcomm driver 단독으로 단정하지 않는다.
+
+---
+
+## 2026-08-24 ~ 2026-08-27 — Generic Runtime Diagnostics completion
 
 ### Goal
 
-게임별 임시 수정이 아니라 Windows ARM64 + Adreno에서 Vulkan runtime 문제를 범용적으로 진단할 수 있는 버전을 만든다.
+게임별 임시 패치가 아니라 Windows ARM64 + Adreno에서 Vulkan/JIT/input 문제를 재사용 가능한 로그로 진단할 수 있는 runtime diagnostics를 구축.
 
-### Principles established
+### Areas connected
 
-- 모든 실험/진단 기능은 UI에서 개별 ON/OFF 가능해야 함
-- 한 번에 한 변수만 바꿀 것
-- 이미 배제된 실험을 반복하지 않을 것
-- RenderDoc/WinDbg/내부 로그를 함께 사용하되, 로그의 최초 실패 지점을 우선할 것
+- ARM64/JIT lifecycle, mapping, branch patch, ReadyRE
+- command buffer / fence / semaphore / submit completion
+- pipeline cache/create/failure/state/hash
+- VS/PS/GS/interface/compile failure
+- renderpass / attachment / load-store / barrier / RAW / WAW / self-dependency
+- feedback-loop related signals
+- texture/cache/surface related signals
+- frame timing / GPU timestamp / CPU waits
+- descriptor / upload / hitch / overhead / summary
+- input/controller mapping
 
-### Diagnostic areas worked on
+### Final generic code checkpoint
 
-- Descriptor/resource lifetime
-- Semaphore flow
-- Command-buffer lifecycle
-- Fence lifecycle
-- Shader interface
-- SPIR-V compile failure
-- Attachment usage
-- Feedback-loop use
+Branch:
+`runtime-experiments-arm64`
 
-### UI observation
+Code-changing baseline:
+`fa17d834bfebd9a41c598b1b1b702000d0ff4618`
 
-진단 UI에서 회색 처리된 항목은 원인 배제 상태가 아니라 **아직 프로브가 연결되지 않았거나 현재 빌드에서 사용할 수 없는 항목**으로 취급한다.
+Commit:
+`diagnostics: require complete 77-item coverage`
 
----
+### Final architecture
 
-## 2026-08-26 — CI regression investigation
+- `RuntimeDiagnostics::Enabled(flag)` = master + implemented + per-flag enabled
+- UI availability = `RuntimeDiagnostics::IsImplemented(flag)`
+- verifier compares UI `kDiagItems[]` with implemented set
+- **77/77 exact coverage required**
 
-### Known historical checkpoint
+### Result
 
-동일 `runtime-experiments-arm64` 계열에서 한 시점까지 빌드 성공 후, 진단 기능 연결 커밋들이 연속으로 들어가면서 C++ 빌드 회귀가 발생했다.
+이전의 "다수 회색 checkbox = 미구현" 상태는 현재 generic diagnostic baseline 기준으로 폐기.
 
-조사 중 확인된 핵심:
-
-- Configure 단계는 통과
-- 실패는 `Build Cemu` 단계
-- 따라서 우선순위는 C++ compile/link 오류
-- ARM64 runner/vcpkg/CMake 자체 실패로 단정하지 않음
-
-### Important process lesson
-
-여러 진단 기능을 한 번에 추가하고 각 커밋의 빌드 완료 전에 다음 푸시를 이어가면 최초 회귀 commit을 찾기 어려워진다. 이후부터는 성공 checkpoint를 고정하고, 정적 검증 후 빌드를 실행한다.
+새 Diagnostics Edition을 반복 생성하기보다 현재 77/77 baseline과 source A/B를 우선한다.
 
 ---
 
-## 2026-08-27 — Current diagnostic build recovered
+## 2026-08-27 — Tekken 1P → 2P input boundary
 
-### Repository
+### Symptom
 
-- Repo: `npark2860-cyber/Cemu-Windows-ARM64`
-- Branch: `runtime-experiments-arm64`
+Tekken Tag Tournament 2에서 1P로 지정한 physical controller가 실제 게임에서 2P side로 동작.
 
-### Source checkpoint
+### Runtime log boundary
 
-- Last verified non-documentation code commit: `8bca12fa5119f12b34b73ba5482d2ffeea89f5a8`
-- Commit message: `Fix literal tab escapes in RT diagnostics`
+- physical controller → Cemu player0
+- player0 → VPAD channel0
+- VPAD connected=1, player=0
+- KPAD 0–3 disconnected
+- x64 Cemu에서도 동일 현상 관찰
 
-### GitHub Actions
+### Interpretation
 
-- Workflow: `Cemu ARM64 Diagnostic Edition`
-- Run number: `#24`
-- Run ID: `33017387410`
-- Result: **success**
-- Head SHA: `8bca12fa5119f12b34b73ba5482d2ffeea89f5a8`
-- Artifact: `cemu-arm64-diagnostic-edition`
-- Artifact ID: `9626115561`
-- Artifact SHA-256 digest: `9540922b3f7b0155148f6eadcf7469e4d1e4d58e9591bee53cbdb05429f040f3`
+ARM64 InputManager player-index misassignment는 강하게 하향.
 
-### Meaning
+### Next direction
 
-직전의 CI compile regression은 현재 source checkpoint에서는 해결되어 **진단판 포함 Windows ARM64 빌드가 다시 성공**한다.
+- GamePad/VPAD0 vs Pro Controller/KPAD
+- Tekken join/side semantics
 
-### Current runtime question
+Bayonetta graphics track과 섞지 않는다.
 
-진단 UI에서 일부 항목이 회색 비활성 상태다. 이는 해당 진단 기능의 UI shell은 있으나 실제 runtime probe가 미연결/미지원인 상태일 가능성이 높으므로, 다음 작업은 회색 항목 각각의 실제 연결 여부를 소스에서 확인하는 것이다.
+---
+
+## 2026-08-27 — Bayonetta 2 graphics target redefined
+
+### Correct symptom
+
+Bayonetta 2 현재 주 증상은 crash가 아니라:
+
+**멀리 있는 폴리곤이 거리에서 flicker하는 현상**.
+
+Test title:
+- JP `00050000-1011B900`
+- v1
+- Adreno X1-85 / Vulkan 1.3
+- driver build `f22d572733`
+
+Master diagnostics에서 device loss/submit failure 없이 장시간 실행됨.
+
+기존 startup signal:
+- `PIPELINE_FAIL` 2
+- `GLSL_FAIL` 1
+- suspicious swizzle events
+
+이들은 원거리 flicker와 직접 상관이 증명되지 않았으므로 별도 신호로 유지.
+
+---
+
+## 2026-08-27 — Bayonetta 2 Position Invariance A/B
+
+### Why tested
+
+Cemu Metal backend에 Bayonetta/Bayonetta 2 Position Invariance workaround 선례가 있고 Vulkan GLSL path에는 `invariant gl_Position`이 없어서 강한 후보로 평가.
+
+### Method
+
+- 기존 `DumpEveryShader` Bayonetta 2 capture에서 unique VS 113개 확인
+- all-zero internal/generic VS 1개 제외
+- 112개 VS graphics-pack replacement 생성
+- 각 shader에 `invariant gl_Position;`만 추가
+- Cemu 본체 rebuild 없이 pack OFF/ON 비교
+
+### Validation
+
+replacement shader가 실제 compile되었고 SPIR-V byte size 변화도 확인되어 A/B 자체는 유효.
+
+### User visual result
+
+**플리커링 전혀 개선되지 않음.**
+
+### Conclusion
+
+Position Invariance는 현재 distant-polygon flicker의 주원인 후보에서 크게 하향.
+동일 조건 재실험 금지.
+
+---
+
+## 2026-08-27 — Bayonetta 2 viewport depth-range clamp A/B
+
+### Hypothesis
+
+Vulkan `VkViewport.minDepth/maxDepth` handling과 Wii U `-1..1` depth-range 의미 차이 가능성.
+
+### Experiment
+
+Bayonetta 2 전용 build에서 out-of-range viewport depth만 Vulkan legal `0..1`로 clamp하고 raw/applied 값을 기록.
+
+### Runtime evidence
+
+대량의 runtime call에서:
+
+- `rawNear=-1`
+- `rawFar=1`
+- `halfZ=0`
+- applied `0..1`
+
+이 확인됨.
+
+이전 집계에서는 약 888k call 수준으로 거의 세션 전반에 적용되었음.
+
+### User visual result
+
+**플리커링 그대로.**
+
+### Conclusion
+
+단순 `VkViewport.minDepth/maxDepth` `-1..1 → 0..1` handling은 현재 주원인에서 배제.
+이 실험을 후속 build에 섞지 않는다.
+
+---
+
+## 2026-08-27 — Bayonetta 2 Vulkan depthBiasClamp A/B
+
+### Source motivation
+
+Vulkan backend:
+
+`vkCmdSetDepthBias(constant, clamp, slope)`
+
+를 통해 Wii U `PA_SU_POLY_OFFSET_CLAMP`를 전달.
+
+OpenGL backend와 clamp 사용 방식에 차이가 있어 Bayonetta 2의 distant flicker 후보로 검토.
+
+### Dedicated branch
+
+`exp/bayo2-depth-bias-clamp`
+
+Successful experiment HEAD:
+`bdb644d89d8963ab7a39d8a586f6d73ac3d73f92`
+
+Commit:
+`fix: include CafeSystem for Bayonetta depth-bias experiment`
+
+Workflow:
+`Cemu ARM64 Bayonetta2 Depth Bias Experiment`
+
+Successful Run:
+- run #4
+- ID `33056046387`
+- result: **SUCCESS**
+
+### Experiment behavior
+
+Bayonetta 2 title IDs에만 Vulkan `depthBiasClamp=0.0f`를 적용하고 original values를 `[BAYO2_DEPTH_BIAS]`로 기록.
+
+### Latest runtime log
+
+`log(20260827-093536).txt`
+
+Runtime confirms:
+- Cemu short hash `bdb644d`
+- Bayonetta 2 JP `00050000-1011B900`, v1
+- Qualcomm Adreno X1-85
+- Master diagnostics ON
+
+Active packs:
+- Contrasty
+- Graphics 2560x1440 / High / 16x
+- 60 FPS Cutscenes
+- **Force Maximum LOD**
+- Dynamic Shadows (Vulkan)
+- Portal
+
+Position Invariance test pack은 active list에 없음.
+
+### `[BAYO2_DEPTH_BIAS]` observed records
+
+현재 latest log의 기록된 128개 line (`n=0..127`)에서 모두:
+
+- `offset=0`
+- `slope=-0`
+- `rawClamp=0`
+- `appliedClamp=0`
+- `nonZeroClampCount=0`
+
+확인. 예시 구간에서도 `rawClamp=0`, `appliedClamp=0`, `nonZeroClampCount=0`이 반복된다.
+
+### Interpretation
+
+**기록된 첫 128회에서는 원래 clamp 값 자체가 0이므로 experiment가 GPU state를 바꾸지 않았다.**
+
+logger가 128건에서 출력 제한되는 구조일 가능성이 있으므로 이 로그만으로 세션 전체에 non-zero clamp가 절대로 없었다고 단정하지 않는다.
+
+### Visual result status
+
+이 문서 갱신 시점까지 `bdb644d` depth-bias build의 화면 결과는 사용자 발화로 확정 기록되지 않음.
+
+따라서 다음 탭에서 결과를 추측하지 않는다.
+
+---
+
+## Current Bayonetta candidate ranking after A/Bs
+
+Higher value:
+
+1. depth format / actual depth precision / depth attachment state
+2. depth test/write/compare + non-zero depth bias draw correlation
+3. surface/texture reinterpretation / swizzle correlation
+4. LOD / graphics-pack interaction, 특히 `Force Maximum LOD`
+5. `halfZ=0` path의 shader Z transform은 정상적인 clip-space conversion이므로 위 후보 이후에 신중히 검토
+
+Lower priority:
+
+- Position Invariance
+- simple viewport depth-range clamp
+- startup pipeline `-13` 2건
+- 기존 GLSL fail 1건
+- feedback-loop without direct evidence
+- RT alias where previous master logs showed none
+
+---
+
+## Process rules confirmed by experiments
+
+- 한 번에 한 변수만 변경
+- 실패한 실험을 후속 build에 섞지 않음
+- CI 전에 패치 적용 + source diff/static validation
+- 사용자 화면 관찰과 로그 fact를 분리
+- build 비용을 이유 없이 반복하지 않음
+- VS `DEFAULT_VAL` synthesize rollback 금지
 
 ---
 
 ## Logging template for future experiments
 
-각 실험은 아래 형식으로 추가한다.
-
 ```text
 ## YYYY-MM-DD — Experiment name
 
 Goal:
-Build/commit:
-Game:
+Branch/commit:
+Workflow/run:
+Game/title/version:
 GPU/driver:
-Checkbox/options:
+Graphic packs/options:
 Log/dump:
-Observed result:
+Runtime evidence:
+User visual result:
 Confirmed fact:
-Ruled out:
+Ruled out / downgraded:
 Still possible:
 Next action:
 ```
-
-완료되어 더 이상 현재 상태에 필요 없는 내용은 `CURRENT_HANDOFF.md`에서 제거하고 이 파일에 남긴다.
