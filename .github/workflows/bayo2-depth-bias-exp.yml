@@ -84,11 +84,11 @@ jobs:
       - name: Verify Bayonetta 2 depth-bias patch
         shell: pwsh
         run: |
-          $vr = Get-Content 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp' -Raw
+          $vr = Get-Content 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp' -Raw
           if (-not $vr.Contains('[BAYO2_DEPTH_BIAS]')) { throw 'BAYO2_DEPTH_BIAS marker missing' }
           if (-not $vr.Contains('appliedClamp = 0.0f;')) { throw 'Bayonetta 2 clamp override missing' }
           if (-not $vr.Contains('vkCmdSetDepthBias(m_state.currentCommandBuffer, frontOffset, appliedClamp, frontScale);')) { throw 'Applied clamp is not wired to vkCmdSetDepthBias' }
-          git diff -- src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+          git diff -- src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp
 
       - name: Setup release mode parameters
         run: |
