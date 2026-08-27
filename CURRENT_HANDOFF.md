@@ -95,23 +95,13 @@ A/B:
 - 단순 `VkViewport.minDepth/maxDepth` `-1..1` handling은 주원인에서 배제
 - 후속 build에 이 clamp를 섞지 않는다.
 
-## 5. 현재 최신 실험 — Vulkan depthBiasClamp
+### C. Vulkan depthBiasClamp — 주원인에서 크게 하향
 
-### 목적
-
-Vulkan backend는 Wii U `PA_SU_POLY_OFFSET_CLAMP`를 `vkCmdSetDepthBias()`의 clamp로 전달하고 OpenGL backend와 동작 차이가 있다.
-
-Bayonetta 2에서만 Vulkan `depthBiasClamp=0.0f`로 맞춰 A/B.
-
-### 전용 브랜치
-
+전용 브랜치:
 `exp/bayo2-depth-bias-clamp`
 
 Successful experiment HEAD:
 `bdb644d89d8963ab7a39d8a586f6d73ac3d73f92`
-
-Commit:
-`fix: include CafeSystem for Bayonetta depth-bias experiment`
 
 Workflow:
 `Cemu ARM64 Bayonetta2 Depth Bias Experiment`
@@ -121,17 +111,33 @@ Successful Run:
 - ID `33056046387`
 - result: **SUCCESS**
 
-### 최신 로그
+실험:
+- Bayonetta 2에서만 Vulkan `depthBiasClamp=0.0f`
+- offset/slope는 변경하지 않음
 
+최신 로그:
 `log(20260827-093536).txt`
 
-확인:
-- Cemu `bdb644d`
-- Bayonetta 2 JP `00050000-1011B900`, v1
-- Adreno X1-85
-- Diagnostics Master ON
+기록된 첫 128건 (`n=0..127`) 모두:
+- `offset=0`
+- `slope=-0`
+- `rawClamp=0`
+- `appliedClamp=0`
+- `nonZeroClampCount=0`
 
-Active packs:
+사용자 화면 판정:
+**플리커링 전혀 개선되지 않음.**
+
+결론:
+- 적어도 기록된 구간에서는 원래 clamp가 이미 0이라 패치가 GPU state를 바꾸지 않음
+- 화면 결과도 변화 없음
+- `depthBiasClamp` 단독 가설은 크게 하향
+- 동일 A/B 반복 금지
+- 출력 제한 때문에 세션 전체에 non-zero clamp가 절대 없었다고 단정하지는 않음
+
+## 5. 현재 가장 값싼 다음 A/B — Force Maximum LOD
+
+최신 로그에서 활성 상태:
 - Contrasty
 - Graphics 2560x1440 / High / 16x
 - 60 FPS Cutscenes
@@ -139,52 +145,47 @@ Active packs:
 - Dynamic Shadows (Vulkan)
 - Portal
 
-Position Invariance Test pack은 active list에 없음.
+공식 Cemu graphic pack 기준 `Force Maximum LOD`는 Bayonetta 2의 high-LOD culling distance를:
 
-### `[BAYO2_DEPTH_BIAS]` 판독
+- 기본 `100.0`
+- → `200.0`
 
-기록된 128건 (`n=0..127`) 모두:
+으로 직접 변경한다.
 
-- `offset=0`
-- `slope=-0`
-- `rawClamp=0`
-- `appliedClamp=0`
-- `nonZeroClampCount=0`
+즉 원거리 모델/폴리곤 표시 거리를 바꾸는 변수다.
+현재 증상이 원거리에서 발생하므로 build 없이 검증 가능한 최우선 A/B다.
 
-해석:
-- **기록된 첫 128회에서는 원래 clamp가 0이므로 패치가 실제 state를 바꾸지 않았다.**
-- 출력 제한 이후 세션 전체까지 non-zero clamp가 절대 없었다고 단정하지 않는다.
+### 다음 테스트 고정 조건
 
-### 아직 필요한 사용자 화면 판정
+**`Force Maximum LOD`만 OFF**
 
-이 handoff 갱신 시점까지 `bdb644d` depth-bias build에서 실제 플리커링이:
+나머지는 그대로 유지:
+- Contrasty ON
+- Graphics 2560x1440 / High / 16x
+- 60 FPS Cutscenes ON
+- Dynamic Shadows (Vulkan) ON
+- Portal ON
+- Position Invariance Test OFF
+- depth-range clamp build 사용 금지
 
-- 개선
-- 동일
-- 악화
+같은 장면 / 같은 카메라 거리에서 플리커링을 비교한다.
 
-중 무엇이었는지는 명시적으로 확정 기록되지 않았다.
+## 6. LOD 다음 살아 있는 Bayonetta 후보
 
-새 탭에서 이 결과를 추측하지 않는다.
+LOD A/B가 동일일 때 순서:
 
-## 6. 현재 살아 있는 Bayonetta 후보
-
-우선순위:
-
-1. **LOD / graphics-pack 영향**
-   - 현재 최신 로그에서도 `Force Maximum LOD` 활성
-   - 증상이 원거리에서 발생하므로 값싼 A/B 가치가 큼
-2. **Depth format / 실제 depth precision / depth attachment state**
-3. **Depth test/write/compare + non-zero offset/slope/bias draw correlation**
-4. **Surface/texture reinterpretation / swizzle**
+1. **Depth format / 실제 depth precision / depth attachment state**
+2. **Depth test/write/compare + non-zero offset/slope/bias draw correlation**
+3. **Surface/texture reinterpretation / swizzle**
    - 과거 `[SUSPICIOUS_TEXTURE] reason=swizzle` 반복
    - 예: `f4c24000` 등이 format `0x11` / `0x1a`로 재해석된 단서
-5. `halfZ=0`일 때 GLSL `gl_Position.z = (z+w)/2`
+4. `halfZ=0`일 때 GLSL `gl_Position.z = (z+w)/2`
    - Vulkan clip-space 변환 자체는 정상 목적이므로 전역 제거보다 위 후보 먼저
 
 낮은 우선순위:
 - Position Invariance
 - simple viewport depth-range clamp
+- depthBiasClamp 단독 처리
 - startup pipeline `-13` 2건
 - 기존 GLSL failure 1건
 - feedback-loop without direct evidence
@@ -212,6 +213,7 @@ Bayonetta graphics 분석과 섞지 않는다.
 - source/static verification → 최소 A/B → CI 1회
 - 한 build에 서로 다른 가설을 섞지 않는다.
 - 실패한 viewport clamp를 후속 실험에 포함하지 않는다.
+- 실패한 depthBiasClamp A/B를 반복하지 않는다.
 - Position Invariance pack OFF
 - 새 Diagnostics Edition을 이유 없이 만들지 않는다.
 - 화면 결과와 로그 사실을 구분한다.
@@ -219,20 +221,22 @@ Bayonetta graphics 분석과 섞지 않는다.
 
 # NEXT ACTION
 
-1. `bdb644d` depth-bias build의 **실제 화면 결과**를 먼저 확정 기록한다.
-2. 결과가 동일이면 clamp 가설은 더 하향한다. 기록된 첫 128회 `rawClamp=0`도 근거로 사용.
-3. 새 CI를 만들기 전에 가장 값싼 A/B:
-   - **`Force Maximum LOD`만 OFF**
-   - 나머지 graphics packs/settings 동일
-   - 동일 장면/카메라 비교
-4. LOD A/B도 동일하면 source/log 분석:
+1. **새 CI 없이 `Force Maximum LOD`만 OFF** 한다.
+2. 나머지 graphics packs/settings는 모두 동일하게 유지한다.
+3. 동일 장면/카메라에서 distant-polygon flicker가:
+   - 개선
+   - 동일
+   - 악화
+   중 무엇인지 판정한다.
+4. LOD A/B가 동일이면 새 build 전에 기존 로그/source로:
    - depth attachment format/precision
    - depth test/write/compare op
    - non-zero offset/slope bias draw correlation
    - suspicious swizzle / surface reinterpretation correlation
+   을 분석한다.
 5. 충분한 증거 전에는 `halfZ` 변환을 전역 제거하지 않는다.
 6. 다음 코드 A/B가 필요하면 `fa17d83` 일반 code baseline에서 새 실험 브랜치를 만든다.
 
 ## New-tab startup prompt
 
-`Cemu ARM64 Bayonetta 2 플리커링 분석을 이어간다. GitHub의 CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 먼저 읽고 runtime-experiments-arm64 실제 HEAD와 code-changing baseline을 구분한 뒤 NEXT ACTION부터 실행해. VS DEFAULT_VAL synthesize는 절대 롤백하지 말고, 이미 실패한 Position Invariance와 viewport depth-range 실험을 반복하지 마.`
+`Cemu ARM64 Bayonetta 2 플리커링 분석을 이어간다. GitHub의 CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 먼저 읽고 runtime-experiments-arm64 실제 HEAD와 code-changing baseline을 구분한 뒤 NEXT ACTION부터 실행해. VS DEFAULT_VAL synthesize는 절대 롤백하지 말고, 이미 실패한 Position Invariance, viewport depth-range, depthBiasClamp 실험을 반복하지 마.`
