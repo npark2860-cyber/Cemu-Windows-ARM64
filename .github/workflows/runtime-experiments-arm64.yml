@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - runtime-experiments-arm64
+      - exp/bayo2-depth-range-clamp
   workflow_dispatch:
 
 concurrency:
@@ -77,6 +78,9 @@ jobs:
 
       - name: Apply generic ARM64 Diagnostic Edition
         run: python ./tools/diagnostics/Add-PipelineDiagnostics.py
+
+      - name: Apply Bayonetta 2 depth-range A/B experiment
+        run: python ./tools/diagnostics/Apply-Bayonetta2DepthRangeExperiment.py
 
       - name: Show diagnostic source diff
         shell: pwsh
@@ -171,5 +175,5 @@ jobs:
       - name: Upload diagnostic artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-diagnostic-edition
+          name: cemu-arm64-bayo2-depth-range
           path: ./artifact/
