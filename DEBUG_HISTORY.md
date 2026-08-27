@@ -216,13 +216,8 @@ Bayonetta 2 전용 build에서 out-of-range viewport depth만 Vulkan legal `0..1
 
 ### Source motivation
 
-Vulkan backend:
-
-`vkCmdSetDepthBias(constant, clamp, slope)`
-
-를 통해 Wii U `PA_SU_POLY_OFFSET_CLAMP`를 전달.
-
-OpenGL backend와 clamp 사용 방식에 차이가 있어 Bayonetta 2의 distant flicker 후보로 검토.
+Vulkan backend는 `vkCmdSetDepthBias(constant, clamp, slope)`를 통해 Wii U `PA_SU_POLY_OFFSET_CLAMP`를 전달한다.
+OpenGL backend와 clamp 사용 방식에 차이가 있어 distant flicker 후보로 검토했다.
 
 ### Dedicated branch
 
@@ -230,9 +225,6 @@ OpenGL backend와 clamp 사용 방식에 차이가 있어 Bayonetta 2의 distant
 
 Successful experiment HEAD:
 `bdb644d89d8963ab7a39d8a586f6d73ac3d73f92`
-
-Commit:
-`fix: include CafeSystem for Bayonetta depth-bias experiment`
 
 Workflow:
 `Cemu ARM64 Bayonetta2 Depth Bias Experiment`
@@ -260,7 +252,7 @@ Active packs:
 - Contrasty
 - Graphics 2560x1440 / High / 16x
 - 60 FPS Cutscenes
-- **Force Maximum LOD**
+- Force Maximum LOD
 - Dynamic Shadows (Vulkan)
 - Portal
 
@@ -268,15 +260,13 @@ Position Invariance test pack은 active list에 없음.
 
 ### `[BAYO2_DEPTH_BIAS]` observed records
 
-현재 latest log의 기록된 128개 line (`n=0..127`)에서 모두:
+기록된 첫 128개 line (`n=0..127`)에서 모두:
 
 - `offset=0`
 - `slope=-0`
 - `rawClamp=0`
 - `appliedClamp=0`
 - `nonZeroClampCount=0`
-
-확인.
 
 ### User visual result
 
@@ -285,41 +275,121 @@ Position Invariance test pack은 active list에 없음.
 ### Interpretation / conclusion
 
 - 기록된 첫 128회에서는 원래 clamp 값 자체가 0이므로 experiment가 GPU state를 바꾸지 않았다.
-- 사용자의 동일 장면 화면 판정도 **변화 없음**이었다.
-- 따라서 `depthBiasClamp` 단독 가설은 현재 주원인 후보에서 크게 하향한다.
+- 사용자 화면 판정도 변화 없음.
+- `depthBiasClamp` 단독 가설은 주원인에서 크게 하향.
 - logger 출력 제한 때문에 세션 전체에 non-zero clamp가 절대 없었다고 단정하지는 않는다.
-- 동일한 depth-bias clamp A/B를 반복하지 않는다.
+- 동일 A/B 반복 금지.
 
 ---
 
-## Current Bayonetta candidate ranking after A/Bs
+## 2026-08-28 — Recovered prior Bayonetta exclusions
+
+이전 작업 기록을 다시 대조해 최신 handoff에서 누락됐던 완료 실험을 복구했다.
+
+이미 테스트되어 **배제 또는 약화**된 항목:
+
+- Force Maximum LOD / LOD 일반 설정
+- RT 단순 barrier
+- strong barrier
+- pre-begin barrier
+- forced render-pass split
+- depthclip
+- pipeline pNext
+- VS auxHash pipeline key
+
+### Status
+
+- 새 증거 없이 반복 금지.
+- 특히 Force Maximum LOD OFF A/B를 다시 사용자에게 요청하지 않는다.
+- 최신 handoff의 LOD pending 항목은 폐기했다.
+
+---
+
+## 2026-08-28 — Bayonetta depth/surface static re-analysis
+
+### Existing runtime evidence
+
+대표 로그 `log(20260827-093536).txt`에서:
+
+- 반복되는 depth attachment: `addr=f5442800`, format `0x11`, stencil enabled
+- pipeline format signal에서 depth `129`
+- `f4c24000`에 반복되는 `[SUSPICIOUS_TEXTURE] reason=swizzle`
+- 같은 physical address `f4c24000`가 texture lifecycle에서 hardware format family `0x11` 및 `0x1a` representation으로 존재
+
+### Source verification
+
+`LatteReg.h` / `LatteConst.h`:
+- `0x11` = `HWFMT_8_24`
+- `0x1a` = `HWFMT_8_8_8_8`
+- `D24_S8_UNORM`은 `HWFMT_8_24` family
+- `R8_G8_B8_A8_UNORM`은 `HWFMT_8_8_8_8` family
+
+Vulkan depth mapping:
+- `D24_S8_UNORM`은 지원 시 `VK_FORMAT_D24_UNORM_S8_UINT`
+- 현재 logged depth `129`와 일치
+
+따라서 현재 관찰 구간에서 D24S8가 D32S8 fallback으로 잘못 바뀐 증거는 없다.
+
+`LatteTextureLegacy.cpp`:
+- macro-tiled texture bind 시 guest physical address에서 swizzle을 추출
+- cached `baseTexture->swizzle`과 requested swizzle 비교
+- requested swizzle이 `lastRenderTargetSwizzle`과 같으면 reload 없이 base swizzle 갱신
+- 다르면 `swizzleChanged=true` 후 texture reload 경로로 들어감
+
+`LatteTexture.cpp`:
+- overlapping texture memory를 검색
+- `LatteTexture_CanTextureBeRepresentedAsView()`로 existing texture/view reuse 판정
+- view compatibility와 texel-size compatibility를 별도로 처리
+- incompatible representation이면 별도 texture representation 생성 가능
+
+### Interpretation
+
+`f4c24000`의 multi-format representation 자체는 Cemu texture cache 설계상 합법일 수 있어 버그로 단정하지 않는다.
+다만 swizzle mismatch가 실제 reload/validity 경계와 일치하므로 현재 distant flicker와 상관관계를 추적할 가치가 높은 실제 runtime 신호다.
+
+### Next direction
+
+- `f4c24000`의 `0x11 ↔ 0x1a` mapping이 view reuse인지 별도 base texture인지 확정
+- compatible relation / GPU-updated-data synchronization 추적
+- `lastRenderTargetSwizzle`, `isUpdatedOnGPU`, dynamic/compatible texture update 경계 추적
+- `f4c24000`, `f57c8000`, main depth `f5442800` 역할 분리
+- 이 정적 분석이 하나의 경계를 지목할 때만 최소 diagnostic 설계
+- 현재 단계에서 CI 실행 안 함
+
+---
+
+## Current Bayonetta candidate ranking after recovered history
 
 Higher value:
 
-1. LOD / graphics-pack interaction, 특히 `Force Maximum LOD`
-2. depth format / actual depth precision / depth attachment state
-3. depth test/write/compare + non-zero depth bias draw correlation
-4. surface/texture reinterpretation / swizzle correlation
-5. `halfZ=0` path의 shader Z transform은 정상적인 clip-space conversion이므로 위 후보 이후에 신중히 검토
+1. surface/texture reinterpretation + swizzle/cache synchronization
+2. depth attachment state / precision + normal draw depth test/write/compare correlation
+3. feedback-loop / attachment dependency의 아직 직접 검증되지 않은 세부 경로
+4. `halfZ=0` path shader Z transform — 위 후보 이후에만 검토
 
-Lower priority:
+Ruled down / do not repeat without new evidence:
 
 - Position Invariance
 - simple viewport depth-range clamp
-- depthBiasClamp 단독 처리
+- depthBiasClamp
+- Force Maximum LOD / LOD general settings
+- RT simple/strong/pre-begin barriers
+- forced render-pass split
+- depthclip
+- pipeline pNext
+- VS auxHash pipeline key
 - startup pipeline `-13` 2건
-- 기존 GLSL fail 1건
-- feedback-loop without direct evidence
-- RT alias where previous master logs showed none
+- 기존 GLSL fail 1건은 Qualcomm/ARM64 전용 원인으로 취급하지 않음
 
 ---
 
 ## Process rules confirmed by experiments
 
 - 한 번에 한 변수만 변경
+- 이미 끝난 실험을 반복하지 않음
 - 실패한 실험을 후속 build에 섞지 않음
-- CI 전에 패치 적용 + source diff/static validation
-- 사용자 화면 관찰과 로그 fact를 분리
+- CI 전에 source/static validation 완료
+- 사용자 화면 관찰과 로그 fact 분리
 - build 비용을 이유 없이 반복하지 않음
 - VS `DEFAULT_VAL` synthesize rollback 금지
 
