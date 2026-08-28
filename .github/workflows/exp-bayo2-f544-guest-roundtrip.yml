@@ -80,6 +80,7 @@ jobs:
 
       - name: Apply Bayonetta 2 f544 guest-memory roundtrip
         run: |
+          python -c "from pathlib import Path; p=Path('src/Cafe/HW/Latte/Core/LatteTextureReadback.cpp'); b=p.read_bytes(); p.write_bytes(b if b.endswith(b'\n') else b+b'\n')"
           python ./tools/diagnostics/Apply-Bayonetta2F544GuestRoundtripExperiment.py
           python ./tools/diagnostics/Apply-Bayonetta2F544NativeRoundtripGuard.py
 
