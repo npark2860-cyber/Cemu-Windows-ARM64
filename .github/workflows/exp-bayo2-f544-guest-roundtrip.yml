@@ -108,7 +108,7 @@ jobs:
           if (-not $rb.Contains('(depthPlane[i] & 0x00FFFFFFu) | ((uint32)stencilPlane[i] << 24)')) { throw 'GX2 D24/S8 repack missing' }
           if (-not $ldr.Contains('HWFMT_8_24')) { throw 'tiled D24 guest writeback missing' }
           if (-not $vr.Contains('bayo2F544PackedD24Upload')) { throw 'roundtrip-only D24 upload split missing' }
-          if (-not $vr.Contains('bayo2F544GuestRoundtripUpload ? compressedImageSize : 0u')) { throw 'stencil plane upload offset missing' }
+          if (-not $vr.Contains('bayo2F544PackedD24Upload ? compressedImageSize : 0u')) { throw 'stencil plane upload offset missing' }
 
           git diff --check
           git diff -- src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp src/Cafe/HW/Latte/Core/LatteTextureReadback.cpp src/Cafe/HW/Latte/Core/LatteTextureLoader.cpp src/Cafe/HW/Latte/Renderer/Vulkan/TextureReadbackVk.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
