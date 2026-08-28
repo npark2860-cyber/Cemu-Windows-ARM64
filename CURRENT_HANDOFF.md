@@ -160,7 +160,7 @@ User runtime log:
 
 이번 실제 copy는 전부 두 번째 경로였다.
 
-## 6. shader clip-space Z / halfZ — 살아 있는 별도 후보
+## 6. shader clip-space Z / halfZ — 현재 A/B 진행 중
 
 Vulkan GLSL emitter는 `PA_CL_CLIP_CNTL.DX_CLIP_SPACE_DEF == 0`일 때:
 
@@ -176,13 +176,73 @@ OpenGL path는 이 shader-side Z 변환을 하지 않는다.
 이 후보는 이미 실패한 **VkViewport minDepth/maxDepth clamp와 다른 단계**다.
 viewport A/B는 rasterizer viewport state를 바꿨고, 이쪽은 clip-space vertex Z 자체를 shader에서 변환한다.
 
-현재 fork와 최신 upstream Cemu 모두 같은 Vulkan `SET_POSITION` 변환을 사용한다.
+현재 capture 세션에서 game geometry shader 생성/사용 신호는 0이었다.
+VS base hash에는 `DX_CLIP_SPACE_DEF`가 이미 포함되어 있어 VS shader-cache state 혼선은 아니다.
 
-주의:
-- 단순히 이 변환을 삭제하면 Vulkan의 기본 0..w clip volume 의미와 맞지 않을 수 있다.
-- `VK_EXT_depth_clip_control` / `negativeOneToOne` 같은 의미 보존 대체 경로의 device 지원 여부를 확인하기 전에는 blind removal 금지.
+### 의미 보존형 native A/B
 
-## 7. upstream generic Bayonetta 2 flicker evidence
+Blind하게 `(z+w)/2`를 삭제하지 않는다.
+`VK_EXT_depth_clip_control`의 `negativeOneToOne=VK_TRUE`를 사용할 수 있을 때만 Vulkan native `[-1,1]` NDC semantics로 대체한다.
+
+수학적 목표 depth mapping은 기존 경로와 동일하고, 비교 변수는 **shader-side Z FP remap을 제거하고 native viewport clip control로 옮기는 것**이다.
+
+## 7. native negativeOneToOne 실험 — 현재 상태
+
+전용 브랜치:
+`exp/vk-native-negative-one-to-one`
+
+Base:
+`fa17d834bfebd9a41c598b1b1b702000d0ff4618`
+
+Patch script commit:
+`601eac82108db1626254c025aaff1efc83a0ccc5`
+
+Workflow HEAD:
+`66ab7c76af02f7bff76747ea6dcbb6f28b6a6c13`
+
+Workflow:
+`Cemu ARM64 Bayonetta2 Native Depth Clip Control`
+
+Run:
+- ID `33131685028`
+- 현재 상태: **IN PROGRESS**
+- patch 적용 step: **SUCCESS**
+- patch verify / `git diff --check`: **SUCCESS**
+- generic 77/77 diagnostics와 함께 적용되는 단계까지 충돌 없음
+- 현재 기록 시점에는 CMake configure/build가 아직 완료되지 않음
+
+### 정확한 적용 범위
+
+동작 변경은 다음 조건을 모두 만족할 때만 허용:
+
+- Vulkan
+- Bayonetta 2 USA/EUR/JPN title ID
+- Vertex shader
+- game GS 없음
+- `RECTS` 아님 (내부 rect-emulation GS 경로도 제외)
+- `DX_CLIP_SPACE_DEF=0`
+- `VK_EXT_depth_clip_control` extension 지원
+- `VkPhysicalDeviceDepthClipControlFeaturesEXT.depthClipControl == VK_TRUE`
+
+지원하지 않으면 기존 shader `(z+w)/2` 경로를 그대로 유지한다.
+
+### Runtime markers
+
+지원 판정:
+
+`[BAYO2_NATIVE_DEPTH_CLIP] VK_EXT_depth_clip_control: supported`
+
+또는:
+- `unsupported`
+- `unavailable in Vulkan headers`
+
+실제 A/B 활성화:
+
+`[BAYO2_NATIVE_DEPTH_CLIP] negativeOneToOne=1 shaderZRemap=0`
+
+두 번째 marker가 없으면 native A/B가 실제 draw에 적용됐다고 판정하지 않는다.
+
+## 8. upstream generic Bayonetta 2 flicker evidence
 
 `cemu-project/Cemu` Issue #1348:
 - title: `[Bayonetta 2] images rendering erros`
@@ -198,10 +258,10 @@ viewport A/B는 rasterizer viewport state를 바꿨고, 이쪽은 clip-space ver
 - ARM64 단독 원인 전제 금지
 - Adreno-only workaround를 먼저 만들지 않는다.
 
-## 8. 현재 후보 우선순위
+## 9. 현재 후보 우선순위
 
-1. **Cemu 공통 Bayonetta 2 flicker path의 clip-space/depth semantics**
-   - shader-side `SET_POSITION` Z conversion / halfZ 포함
+1. **Cemu 공통 Bayonetta 2 clip-space/depth semantics**
+   - 현재 native `negativeOneToOne` A/B 진행 중
 2. **정상 gameplay draw의 depth test/write/compare + attachment precision/state correlation**
 3. **upstream #1348과 현재 사용자 장면의 공통 render path 식별**
 4. `f4c24000`의 active same-format `0x1a 640x368 -> 640x360` sync
@@ -216,7 +276,7 @@ viewport A/B는 rasterizer viewport state를 바꿨고, 이쪽은 clip-space ver
 - LOD
 - 이전 barrier/split/depthclip/pNext/auxHash A/B
 
-## 9. Tekken 1P -> 2P — 별도 트랙
+## 10. Tekken 1P -> 2P — 별도 트랙
 
 확인:
 - physical controller -> Cemu player0 -> VPAD channel0
@@ -228,7 +288,7 @@ viewport A/B는 rasterizer viewport state를 바꿨고, 이쪽은 clip-space ver
 ARM64 InputManager player-index misassignment는 강하게 하향.
 Bayonetta graphics 분석과 섞지 않는다.
 
-## 10. 작업 원칙
+## 11. 작업 원칙
 
 - source/static verification -> 최소 A/B -> 필요한 경우에만 CI 1회
 - 이미 끝난 실험 반복 금지
@@ -239,17 +299,21 @@ Bayonetta graphics 분석과 섞지 않는다.
 
 # NEXT ACTION
 
-1. **새 CI 없이** upstream Cemu의 Bayonetta 2 flicker 관련 issue/history와 현재 source의 clip/depth path를 더 추적한다.
-2. `SET_POSITION` shader Z conversion이 어떤 `DX_CLIP_SPACE_DEF` 상태에서 Bayonetta gameplay shader들에 적용되는지 기존 shader dumps/log에서 확인한다.
-3. Vulkan에서 shader-side `(z+w)/2` 없이도 Wii U `-w..w` semantics를 보존할 수 있는 `VK_EXT_depth_clip_control`/`negativeOneToOne` 경로를 현재 Adreno device가 지원하는지 확인 가능한 기존 device-extension log/source를 먼저 찾는다.
-4. extension 지원이 확인되면, **Bayonetta 2 전용이 아닌 의미 보존형 Vulkan A/B** 설계를 검토한다:
-   - native negative-one-to-one clip control
-   - shader-side Z remap 생략
-   - 다른 동작 변경은 금지
-5. extension 미지원이면 blind Z-remap removal을 하지 않고 정상 draw depth state correlation으로 이동한다.
-6. `f4c24000` alias conversion 가설은 새 증거가 생기기 전까지 반복하지 않는다.
-7. CI는 위 정적 조건이 하나의 검증 가능한 A/B로 좁혀질 때만 실행한다.
+1. Run `33131685028`의 최종 build 결과를 확인한다.
+2. 실패하면 완료 job log에서 정확한 compile/configure 오류만 수정하고 다른 가설을 섞지 않는다.
+3. 성공하면 artifact `cemu-arm64-bayo2-native-depth-clip-control`을 사용한다.
+4. Bayonetta 2 JP의 **동일 flicker 장면 / 동일 camera distance / 동일 graphics-pack 조건**으로 테스트한다.
+5. 로그에서 먼저 다음을 확인한다:
+   - extension/feature가 `supported`인지
+   - `negativeOneToOne=1 shaderZRemap=0` marker가 실제 발생했는지
+6. 실제 activation marker가 있는 경우에만 화면 A/B를 유효 판정한다:
+   - flicker 개선
+   - 동일
+   - 악화
+7. extension/feature 미지원이면 이 build는 동작상 기존 경로와 같으므로 negative 결과로 기록하지 않는다. 바로 normal gameplay draw depth-state correlation으로 이동한다.
+8. activation됐는데 화면이 동일이면 shader-side `(z+w)/2` FP remap을 주원인에서 크게 하향하고 normal gameplay draw depth-state correlation으로 이동한다.
+9. `f4c24000` alias conversion 추적은 새 직접 증거 전까지 반복하지 않는다.
 
 ## New-tab startup prompt
 
-`Cemu ARM64 Bayonetta 2 flicker 분석을 이어간다. GitHub의 CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 먼저 읽고 runtime-experiments-arm64 문서 HEAD와 code-changing baseline fa17d83을 구분해라. 이미 끝난 Position Invariance, viewport clamp, depthBiasClamp, Force Maximum LOD/LOD, RT barrier variants, forced split, depthclip, pipeline pNext, VS auxHash, f4c24000 0x11/0x1a alias-conversion 추적을 반복하지 마. alias trace log(20260828-002909).txt에서 actual copy 1024/1024가 0x1a 640x368->640x360 image-copy였고 format-conversion은 0회였다. upstream Cemu Issue #1348의 NVIDIA에서도 재현되는 unresolved Bayonetta 2 flicker와 clip-space/depth semantics를 NEXT ACTION부터 계속 추적해.`
+`Cemu ARM64 Bayonetta 2 flicker 분석을 이어간다. GitHub의 CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 먼저 읽고 runtime-experiments-arm64 문서 HEAD와 code-changing baseline fa17d83을 구분해라. 이미 끝난 Position Invariance, viewport clamp, depthBiasClamp, Force Maximum LOD/LOD, RT barrier variants, forced split, depthclip, pipeline pNext, VS auxHash, f4c24000 0x11/0x1a alias-conversion 추적을 반복하지 마. alias trace log(20260828-002909).txt에서 actual copy 1024/1024가 0x1a 640x368->640x360 image-copy였고 format-conversion은 0회였다. 현재 exp/vk-native-negative-one-to-one branch, workflow HEAD 66ab7c7, Run 33131685028에서 VK_EXT_depth_clip_control negativeOneToOne을 이용해 shader (z+w)/2 remap을 의미 보존형으로 대체하는 단일 A/B를 진행 중이다. CURRENT_HANDOFF의 NEXT ACTION부터 계속해.`
