@@ -1,0 +1,200 @@
+name: Cemu ARM64 Bayonetta2 F544 Guest Roundtrip
+
+on:
+  push:
+    branches:
+      - exp/bayo2-f544-guest-roundtrip
+  workflow_dispatch:
+
+concurrency:
+  group: runtime-experiments-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Apply known-good pre-e834 runtime behavior
+        shell: pwsh
+        run: |
+          $swap = 'src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp'
+          $s = Get-Content $swap -Raw
+          $oldLoad = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;'
+          $newLoad = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;'
+          if (-not $s.Contains($oldLoad)) { throw 'Swapchain loadOp pattern not found' }
+          $s = $s.Replace($oldLoad, $newLoad)
+          Set-Content -Path $swap -Value $s -NoNewline
+
+          $vr = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp'
+          $v = Get-Content $vr -Raw
+          $oldFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;'
+          $newFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;'
+          $flagCount = ([regex]::Matches($v, [regex]::Escape($oldFlag))).Count
+          if ($flagCount -ne 2) { throw "Expected 2 ONE_TIME_SUBMIT flags, found $flagCount" }
+          $v = $v.Replace($oldFlag, $newFlag)
+          $anchorLF = "LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`n`tdraw_endRenderPass();`n"
+          $anchorCRLF = "LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`r`n`tdraw_endRenderPass();`r`n"
+          if ($v.Contains($anchorCRLF)) {
+            $v = $v.Replace($anchorCRLF, $anchorCRLF + "`r`n`tif (clearBackground)`r`n`t`tClearColorbuffer(padView);`r`n")
+          } elseif ($v.Contains($anchorLF)) {
+            $v = $v.Replace($anchorLF, $anchorLF + "`n`tif (clearBackground)`n`t`tClearColorbuffer(padView);`n")
+          } else { throw 'DrawBackbufferQuad anchor not found' }
+          $clearPattern = '(?ms)\r?\n\tif \(clearBackground\)\r?\n\t\{\r?\n\t\tVkClearAttachment clearAttachment\{\};.*?\r?\n\t\}\r?\n\r?\n\tvkCmdBindPipeline'
+          if (-not [regex]::IsMatch($v, $clearPattern)) { throw 'vkCmdClearAttachments block not found' }
+          $v = [regex]::Replace($v, $clearPattern, "`n`tvkCmdBindPipeline", 1)
+          Set-Content -Path $vr -Value $v -NoNewline
+
+      - name: Apply permanent PS DEFAULT_VAL linkage compatibility fix
+        run: python ./tools/compat/Apply-PSDefaultLinkageFix.py
+
+      - name: Apply upstream AArch64 generated-code cache flush fix
+        run: python ./tools/compat/Apply-AArch64ReadyRECacheFix.py
+
+      - name: Apply official AMD FidelityFX FSR 1 EASU + RCAS
+        run: |
+          python ./tools/graphics/Apply-FidelityFXFSRExperiment.py
+          python ./tools/graphics/Apply-FidelityFXFSRFullExperiment.py
+
+      - name: Apply reusable runtime experiment harness
+        shell: pwsh
+        run: ./tools/diagnostics/Apply-RuntimeExperiments.ps1
+
+      - name: Apply VS auxHash pipeline experiments
+        run: python ./tools/diagnostics/Apply-VSAuxPipelineExperiment.py
+
+      - name: Apply RT/performance experiments
+        run: python ./tools/diagnostics/Apply-RTPerfExperiments.py
+
+      - name: Apply generic ARM64 Diagnostic Edition
+        run: python ./tools/diagnostics/Add-PipelineDiagnostics.py
+
+      - name: Apply Bayonetta 2 f544 guest-memory roundtrip
+        run: |
+          python ./tools/diagnostics/Apply-Bayonetta2F544GuestRoundtripExperiment.py
+          python ./tools/diagnostics/Apply-Bayonetta2F544NativeRoundtripGuard.py
+
+      - name: Verify f544 roundtrip scope and transfer semantics
+        shell: pwsh
+        run: |
+          $rt = Get-Content 'src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp' -Raw
+          $rb = Get-Content 'src/Cafe/HW/Latte/Core/LatteTextureReadback.cpp' -Raw
+          $rbvk = Get-Content 'src/Cafe/HW/Latte/Renderer/Vulkan/TextureReadbackVk.cpp' -Raw
+          $ldr = Get-Content 'src/Cafe/HW/Latte/Core/LatteTextureLoader.cpp' -Raw
+          $vr = Get-Content 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp' -Raw
+
+          foreach ($m in @('phase=begin','phase=alias-to-guest','phase=main-reload','phase=skip-resized','[BAYO2_F544_ROUNDTRIP_UPLOAD]')) {
+            if (-not ($rt.Contains($m) -or $vr.Contains($m))) { throw "Missing experiment marker $m" }
+          }
+          if (-not $rt.Contains('CafeSystem::GetForegroundTitleId() == 0x000500001011B900ULL')) { throw 'Bayonetta 2 JP gate missing' }
+          if (-not $rt.Contains('mainTexture->physAddress != 0xF5442800u')) { throw 'f544 address gate missing' }
+          if (-not $rt.Contains('mainTexture->width != 1280 || mainTexture->height != 720 || mainTexture->pitch != 1280')) { throw 'main-depth shape gate missing' }
+          if (-not $rt.Contains('nativeEffectiveSize')) { throw 'native-size guard missing' }
+          if (-not $rt.Contains('mainTexture->overwriteInfo.hasResolutionOverwrite = false; // safe only because effective size == guest size above')) { throw 'same-size overwrite guard missing' }
+
+          if (-not $rbvk.Contains('return baseTexture->width * baseTexture->height * 5;')) { throw 'D24 split-plane allocation missing' }
+          if (-not $rbvk.Contains('VK_IMAGE_ASPECT_DEPTH_BIT')) { throw 'D24 depth readback plane missing' }
+          if (-not $rbvk.Contains('VK_IMAGE_ASPECT_STENCIL_BIT')) { throw 'D24 stencil readback plane missing' }
+          if (-not $rb.Contains('(depthPlane[i] & 0x00FFFFFFu) | ((uint32)stencilPlane[i] << 24)')) { throw 'GX2 D24/S8 repack missing' }
+          if (-not $ldr.Contains('HWFMT_8_24')) { throw 'tiled D24 guest writeback missing' }
+          if (-not $vr.Contains('bayo2F544PackedD24Upload')) { throw 'roundtrip-only D24 upload split missing' }
+          if (-not $vr.Contains('bayo2F544GuestRoundtripUpload ? compressedImageSize : 0u')) { throw 'stencil plane upload offset missing' }
+
+          git diff --check
+          git diff -- src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp src/Cafe/HW/Latte/Core/LatteTextureReadback.cpp src/Cafe/HW/Latte/Core/LatteTextureLoader.cpp src/Cafe/HW/Latte/Renderer/Vulkan/TextureReadbackVk.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+
+      - name: Setup release mode parameters
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset is installed
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu once
+        run: cmake --build build
+
+      - name: Collect executable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu_release.exe
+          @"
+          Bayonetta 2 F544 Guest-Memory Roundtrip Experiment
+          Base: fa17d834bfebd9a41c598b1b1b702000d0ff4618
+          Target: Bayonetta 2 JP 00050000-1011B900, f5442800 D24/S8 only
+
+          Purpose:
+          Test causality of the confirmed multi-pitch depth-alias coherence gap.
+
+          Behavior when ACTIVE:
+          1) Read back newer 256x256 and 64x64 D24/S8 aliases in event order.
+          2) Repack Vulkan X8_D24 + S8 planes into GX2 D24|S8<<24.
+          3) Write each alias through its own guest pitch/tile mapping into f5442800 RAM.
+          4) Reload the 1280x720 main depth from that canonical guest memory.
+          5) Correctly split stencil only for this experiment-driven main reload.
+
+          IMPORTANT TEST CONDITION:
+          The roundtrip is active only when the main depth effective size is 1280x720.
+          If a graphics pack resizes it to 2560x1440, the experiment intentionally does nothing and logs:
+            [BAYO2_F544_ROUNDTRIP] phase=skip-resized
+          An active test must show:
+            [BAYO2_F544_ROUNDTRIP] phase=begin
+            [BAYO2_F544_ROUNDTRIP] phase=alias-to-guest
+            [BAYO2_F544_ROUNDTRIP] phase=main-reload
+
+          Compare the same scene against the previous baseline/trace build at native-effective 1280x720.
+          "@ | Set-Content artifact/README_BAYO2_F544_GUEST_ROUNDTRIP.txt
+
+      - name: Upload experiment artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-bayo2-f544-guest-roundtrip
+          path: ./artifact/
