@@ -6,12 +6,12 @@
 
 ## 1. 현재 최우선 목표
 
-**Bayonetta 2 (JP) Vulkan 원거리 폴리곤 플리커링 원인 규명**
+**Bayonetta 2 (JP) Vulkan 원거리/배경 폴리곤 플리커링 원인 규명**
 
-증상:
+사용자 증상:
 - 멀리 있는 폴리곤/오브젝트가 거리에서 깜빡인다.
 - 가까워지면 상대적으로 안정된다.
-- 현재 Bayonetta 2의 주 타겟은 crash가 아니다.
+- 현재 주 타겟은 crash가 아니다.
 
 테스트 환경:
 - Windows 11 ARM64
@@ -22,21 +22,30 @@
 - compiler `E031.50.36.00`
 - driver branch `pp165`
 
+### 중요한 범위 재정의
+
+upstream `cemu-project/Cemu` Issue #1348에 Bayonetta 2 Chapter VIII image flickering이 공개되어 있다.
+해당 보고 환경은 Windows 10 + GeForce RTX 3060 Ti이며, reporter는 graphic packs를 모두 꺼도 첫 번째 flicker가 항상 발생한다고 재확인했다.
+2026-04-22 기준 첫 flicker는 여전히 unresolved로 보고되어 있다.
+
+따라서 현재 사용자 증상을 **ARM64/Adreno 전용 버그라고 전제하지 않는다.**
+정확히 같은 장면/근본원인인지 아직 증명되지는 않았지만, Cemu 공통 Bayonetta 2 rendering bug일 가능성을 우선 고려한다.
+
 ## 2. 저장소 / 보호 기준점
 
 Repository:
 `npark2860-cyber/Cemu-Windows-ARM64`
 
-주 작업 브랜치:
+주 문서/진단 브랜치:
 `runtime-experiments-arm64`
 
-현재 일반 진단/호환성 code-changing baseline:
+일반 진단/호환성 code-changing baseline:
 `fa17d834bfebd9a41c598b1b1b702000d0ff4618`
 
 Commit:
 `diagnostics: require complete 77-item coverage`
 
-문서-only `[skip ci]` commit은 이 뒤에 붙을 수 있으므로 branch HEAD와 code baseline을 구분한다.
+문서-only `[skip ci]` commit은 이 뒤에 붙으므로 branch HEAD와 code baseline을 구분한다.
 
 ### 절대 되돌리지 말 것
 
@@ -45,75 +54,18 @@ Commit:
 - known-good pre-e834 Vulkan compatibility behavior
 - 77/77 Runtime Diagnostics 구조
 
-## 3. Runtime Diagnostics 상태
-
-`fa17d83` 기준 **77/77 exact coverage**.
-
-- `RuntimeDiagnostics::Enabled(flag)` = master + implemented + per-flag enabled
-- UI selectable 여부 = `RuntimeDiagnostics::IsImplemented(flag)`
-- verifier가 UI `kDiagItems[]`와 implemented set의 정확한 일치를 검사
-
-새 Diagnostics Edition을 이유 없이 다시 만들지 않는다.
-
-## 4. Bayonetta 2 — 이미 끝난 실험 / 반복 금지
+## 3. 이미 끝난 Bayonetta 2 실험 — 반복 금지
 
 ### 확정 negative A/B
 
-#### Position Invariance
+- Position Invariance (`invariant gl_Position`): **개선 0**
+- Vulkan viewport depth-range `-1..1 -> 0..1` clamp: **개선 0**
+- Vulkan `depthBiasClamp=0`: **개선 0**
+- Force Maximum LOD / LOD 일반 설정: 이미 테스트, 유의미한 개선 없음
 
-- captured VS 113개 중 내부 all-zero shader 1개 제외
-- 112개 replacement VS에 `invariant gl_Position;` 적용
-- shader compile/SPIR-V 변화로 적용 확인
-- 사용자 화면 결과: **플리커링 전혀 개선되지 않음**
+### 이전 기록에서 이미 배제/약화
 
-결론: 주원인에서 크게 하향. 동일 조건 반복 금지.
-
-#### Vulkan viewport depth range clamp
-
-runtime에서 대량:
-- `rawNear=-1`
-- `rawFar=1`
-- `halfZ=0`
-
-Bayonetta 2 전용으로 Vulkan viewport depth를 `0..1`로 clamp했고 실제 대량 적용을 확인했다.
-
-사용자 화면 결과: **플리커링 그대로**
-
-결론: 단순 `VkViewport.minDepth/maxDepth` 처리 가설은 배제. 후속 build에 섞지 않는다.
-
-#### Vulkan depthBiasClamp
-
-전용 브랜치:
-`exp/bayo2-depth-bias-clamp`
-
-Successful HEAD:
-`bdb644d89d8963ab7a39d8a586f6d73ac3d73f92`
-
-Successful Run:
-- #4
-- ID `33056046387`
-
-실험:
-- Bayonetta 2에서만 Vulkan `depthBiasClamp=0.0f`
-- offset/slope는 변경하지 않음
-
-`log(20260827-093536).txt`의 첫 128개 `[BAYO2_DEPTH_BIAS]` 모두:
-- `offset=0`
-- `slope=-0`
-- `rawClamp=0`
-- `appliedClamp=0`
-- `nonZeroClampCount=0`
-
-사용자 화면 결과: **플리커링 전혀 개선되지 않음**
-
-결론: depthBiasClamp 단독 가설 크게 하향. 동일 A/B 반복 금지.
-
-### 이전 작업 기록에서 이미 배제/약화된 후보
-
-다음은 이전 분석에서 이미 테스트되어 **배제 또는 약화**된 항목이다. 새 증거 없이 반복하지 않는다.
-
-- `Force Maximum LOD` / LOD 일반 설정
-- RT 단순 barrier
+- RT simple barrier
 - strong barrier
 - pre-begin barrier
 - forced render-pass split
@@ -121,78 +73,9 @@ Successful Run:
 - pipeline pNext
 - VS auxHash pipeline key
 
-특히 **Force Maximum LOD OFF 테스트를 다시 요청하지 않는다.**
+새 증거 없이 반복하지 않는다.
 
-## 5. 현재 로그/source에서 확인된 유효 신호
-
-대표 로그:
-`log(20260827-093536).txt`
-
-### A. main depth attachment
-
-Bayonetta 2 구간에서 반복적으로:
-- depth attachment address `f5442800`
-- GX2/Latte hardware format family `0x11`
-- stencil enabled
-- Vulkan pipeline depth format signal `129`
-
-소스 매핑상 `129 = VK_FORMAT_D24_UNORM_S8_UINT`.
-현재 관찰 구간에서 main depth가 D32S8 fallback으로 바뀐 증거는 없다.
-
-### B. `f4c24000` multi-representation alias
-
-같은 guest physical address `f4c24000`에 실제로 최소 세 representation이 관찰됨:
-
-- 1280x720, hardware format `0x11`, `isDepth=0`
-- 1280x720, hardware format `0x1a`, `isDepth=0`
-- 640x360, hardware format `0x11`, `isDepth=1`
-
-따라서 이 주소에서는:
-- format alias
-- depth/non-depth alias
-
-둘 다 실제로 발생한다.
-
-또 `[SUSPICIOUS_TEXTURE] reason=swizzle addr=f4c24000 ...`가 반복된다.
-
-### C. 중요한 texture-cache source 구조
-
-`LatteTexture_CanTextureBeRepresentedAsView()`:
-- depth/non-depth가 다르면 같은 base view로 합치지 않음
-- 같은 주소라도 format이 다르면 현재 구현상 동일 base view로 합치지 않음
-- 별도 base texture representation 생성 가능
-
-`LatteTexture_GatherTextureRelations()` / `LatteTexture_TrackTextureRelation()`:
-- 동일/겹치는 guest memory representation을 compatible relation으로 연결 가능
-- 동일 pitch/tile/texel-size/format-view compatibility가 relation 조건
-
-`LatteTexture_UpdateTextureFromDynamicChanges()`:
-- `lastDynamicUpdate`가 더 최신인 representation에서 stale representation으로 copy
-- source가 GPU updated면 destination의 `isUpdatedOnGPU`도 전달
-
-`LatteTexture_CopySlice()`:
-- depth ↔ non-depth이면 `surfaceCopy_copySurfaceWithFormatConversion()`
-- 둘 다 depth 또는 둘 다 non-depth이면 `texture_copyImageSubData()`
-
-Vulkan `texture_copyImageSubData()`:
-- render pass 종료
-- src/dst image barrier
-- `vkCmdCopyImage`
-- post-copy barrier
-
-### D. `R24_X8_UNORM` 특이점
-
-Vulkan mapping:
-- `R24_X8_UNORM` → `VK_FORMAT_R32_SFLOAT`
-
-RAM texture decoder:
-- `TextureDecoder_R24_X8::decode()`는 현재 output texel을 0으로 채우는 구현
-
-따라서 `f4c24000`의 `0x11` non-depth representation이 실제 유효 GPU 데이터를 가진다면 CPU/RAM decode만으로는 설명되지 않으며 GPU-side relation/synchronization 경로 확인 가치가 높다.
-
-이 사실만으로 flicker 원인이라고 단정하지 않는다.
-
-## 6. 현재 최소 관찰 진단
+## 4. Bayonetta 2 alias-sync trace — 완료
 
 전용 브랜치:
 `diag-bayo2-alias-sync`
@@ -209,93 +92,164 @@ Workflow HEAD:
 Workflow:
 `Cemu ARM64 Bayonetta2 Alias Sync Trace`
 
-Successful Run:
-- #1
+Run:
 - ID `33119155975`
-- conclusion: **SUCCESS**
+- **SUCCESS**
 
-Artifact:
-`cemu-arm64-bayo2-alias-sync-trace`
+User runtime log:
+`log(20260828-002909).txt`
 
-### 동작 변경 여부
+### Trace counts
 
-**없음. observation-only logging.**
+- `[BAYO2_ALIAS_REL]`: 10 lines
+- `[BAYO2_ALIAS_COPY]`: 1024 logged lines
 
-추가 marker:
-- `[BAYO2_ALIAS_REL]`
-  - `f4c24000`가 포함된 relation attempt/result
-  - format/depth/size/pitch/tile/swizzle/GPU-updated state
-- `[BAYO2_ALIAS_COPY]`
-  - 실제 src → dst copy 방향
-  - `path=image-copy` 또는 `path=format-conversion`
-  - src/dst format/depth/size/pitch/tile/swizzle/GPU-updated state
+### Relation facts
 
-### accidental generic run
+`f4c24000`에서 다음 compatible relation은 실제 생성됨.
 
-실수로 `runtime-experiments-arm64`에 placeholder를 생성하면서 시작된 generic Run:
-- ID `33118909610`
-- conclusion: **CANCELLED**
+1. 1280x720:
+   - `fmt=0x1a`, non-depth, swizzle `000d0000`, GPU=false
+   - ↔ `fmt=0x11`, non-depth, swizzle `00000000`, GPU=true
 
-전용 workflow를 같은 concurrency group으로 시작해 중복 빌드를 중단시켰다.
-`runtime-experiments-arm64`의 accidental placeholder commits/files는 branch cleanup 대상이며 code baseline에는 포함하지 않는다.
+2. 640x360/368 계열:
+   - `0x1a` color ↔ `0x11` depth relation 생성
+   - `0x1a 640x360` ↔ `0x1a 640x368` relation 생성
 
-## 7. 현재 살아 있는 후보 우선순위
+### Actual copy facts
 
-1. **`f4c24000` surface alias synchronization 방향/경로**
-2. **format alias(`0x11 non-depth ↔ 0x1a`)와 depth/color alias 간 GPU data handoff**
-3. depth attachment state / precision + normal draw depth test/write/compare correlation
-4. feedback-loop / attachment dependency의 아직 직접 검증되지 않은 세부 경로
-5. `halfZ=0` shader Z conversion — 위 후보를 소진한 뒤에만 검토
+로그된 **1024/1024 copy가 모두 동일 계열**:
 
-낮은 우선순위 / 반복 금지:
+- path: `image-copy`
+- src: `f4c24000`, `fmt=0x1a`, non-depth, `640x368`, pitch 640, tile 4, swizzle 0, GPU=true
+- dst: `f4c24000`, `fmt=0x1a`, non-depth, `640x360`, pitch 640, tile 4, swizzle 0
+- copy: `640x360`
+
+첫 copy에서 dstGPU=false, 이후 기록에서는 dstGPU=true.
+
+### 관찰되지 않은 것
+
+- `0x11 -> 0x1a` actual copy: **0회**
+- `0x1a -> 0x11` actual copy: **0회**
+- depth -> color copy: **0회**
+- color -> depth copy: **0회**
+- `path=format-conversion`: **0회**
+
+### 결론
+
+`f4c24000` multi-representation relation 자체는 실제다.
+그러나 이번 flicker 세션에서 의심했던 `R24_X8/D24 <-> RGBA8` 또는 depth/color format-conversion handoff는 실행되지 않았다.
+
+따라서 **0x11/0x1a alias conversion을 flicker 직접 원인으로 보는 가설은 크게 하향**한다.
+
+반면 `0x1a 640x368 -> 640x360` same-format copy가 지속적으로 발생한 것은 fact로 유지한다. 이것이 버그/중복 copy인지, 정상 동기화인지 아직 단정하지 않는다.
+
+## 5. texture-cache source fact
+
+`LatteTexture_UpdateTextureFromDynamicChanges()`에는:
+
+> 한 slice/mip에 여러 overlapping texture가 동시에 updated인 경우 현재 구현은 한 source를 가정하며, 최신 timestamp를 개별 merge해야 한다는 취지의 TODO
+
+가 있다.
+
+하지만 현재 trace만으로 이 TODO가 실제 flicker를 일으킨다고 증명되지 않았다.
+
+`LatteTexture_CopySlice()`:
+- depth/non-depth mismatch -> `surfaceCopy_copySurfaceWithFormatConversion()`
+- 동일 depth class -> `texture_copyImageSubData()`
+
+이번 실제 copy는 전부 두 번째 경로였다.
+
+## 6. shader clip-space Z / halfZ — 살아 있는 별도 후보
+
+Vulkan GLSL emitter는 `PA_CL_CLIP_CNTL.DX_CLIP_SPACE_DEF == 0`일 때:
+
+```text
+gl_Position = _v;
+gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0
+```
+
+을 VS/GS output에 삽입한다.
+
+OpenGL path는 이 shader-side Z 변환을 하지 않는다.
+
+이 후보는 이미 실패한 **VkViewport minDepth/maxDepth clamp와 다른 단계**다.
+viewport A/B는 rasterizer viewport state를 바꿨고, 이쪽은 clip-space vertex Z 자체를 shader에서 변환한다.
+
+현재 fork와 최신 upstream Cemu 모두 같은 Vulkan `SET_POSITION` 변환을 사용한다.
+
+주의:
+- 단순히 이 변환을 삭제하면 Vulkan의 기본 0..w clip volume 의미와 맞지 않을 수 있다.
+- `VK_EXT_depth_clip_control` / `negativeOneToOne` 같은 의미 보존 대체 경로의 device 지원 여부를 확인하기 전에는 blind removal 금지.
+
+## 7. upstream generic Bayonetta 2 flicker evidence
+
+`cemu-project/Cemu` Issue #1348:
+- title: `[Bayonetta 2] images rendering erros`
+- open
+- Chapter VIII image flickering
+- Windows 10 + GeForce RTX 3060 Ti
+- reporter 재확인: graphic packs 설정과 무관하게 첫 flicker 항상 발생
+- 별도의 Chapter IX cutscene bug는 60 FPS Cutscenes와 연관되어 이후 해결됨
+- 첫 flicker는 별개이며 이후에도 unresolved라고 보고
+
+이 증거 때문에:
+- Qualcomm driver 단독 원인 전제 금지
+- ARM64 단독 원인 전제 금지
+- Adreno-only workaround를 먼저 만들지 않는다.
+
+## 8. 현재 후보 우선순위
+
+1. **Cemu 공통 Bayonetta 2 flicker path의 clip-space/depth semantics**
+   - shader-side `SET_POSITION` Z conversion / halfZ 포함
+2. **정상 gameplay draw의 depth test/write/compare + attachment precision/state correlation**
+3. **upstream #1348과 현재 사용자 장면의 공통 render path 식별**
+4. `f4c24000`의 active same-format `0x1a 640x368 -> 640x360` sync
+   - direct correlation이 생길 때만 재상승
+
+크게 하향:
+- `0x11 <-> 0x1a` actual alias conversion
+- depth/color format-conversion at `f4c24000`
 - Position Invariance
-- viewport depth-range clamp
+- simple viewport clamp
 - depthBiasClamp
-- LOD 일반 설정 / Force Maximum LOD
-- RT barrier variants / forced split
-- depthclip / pipeline pNext / VS auxHash key
-- startup pipeline `-13` 2건
-- 오래된 GLSL failure `78a2659662685d55_0000000000000079`
+- LOD
+- 이전 barrier/split/depthclip/pNext/auxHash A/B
 
-## 8. Tekken 1P → 2P — 별도 트랙
+## 9. Tekken 1P -> 2P — 별도 트랙
 
 확인:
-- physical controller → Cemu player0 → VPAD channel0
+- physical controller -> Cemu player0 -> VPAD channel0
 - VPAD connected=1, player=0
-- KPAD 0–3 disconnected
+- KPAD 0-3 disconnected
 - 게임에서는 2P side로 동작
 - 테스트한 x64 Cemu에서도 동일
 
 ARM64 InputManager player-index misassignment는 강하게 하향.
 Bayonetta graphics 분석과 섞지 않는다.
 
-## 9. 작업 원칙
+## 10. 작업 원칙
 
-- source/static verification → 최소 A/B → 필요한 경우에만 CI 1회
+- source/static verification -> 최소 A/B -> 필요한 경우에만 CI 1회
 - 이미 끝난 실험 반복 금지
 - 한 build에 다른 가설 혼합 금지
 - 화면 관찰과 로그 fact 분리
+- generic upstream bug 가능성이 있으면 Adreno-specific hack보다 공통 원인을 우선
 - VS `DEFAULT_VAL` synthesize rollback 금지
-- 충분한 증거 전 `halfZ` 전역 변경 금지
 
 # NEXT ACTION
 
-1. `runtime-experiments-arm64`에서 accidental placeholder commits/files를 제거해 intended docs-only HEAD로 복구한다.
-2. Successful Run `33119155975` artifact `cemu-arm64-bayo2-alias-sync-trace`를 사용한다.
-3. Bayonetta 2 동일 flicker 장면을 실행한다.
-4. Runtime Diagnostics Master는 기존 테스트 기준대로 유지하고 로그를 수집한다.
-5. 결과 로그에서 다음 marker를 우선 판독한다:
-   - `[BAYO2_ALIAS_REL]`
-   - `[BAYO2_ALIAS_COPY]`
-6. 특히 `f4c24000`에 대해 실제 copy가 존재하는지, 존재한다면:
-   - `0x11 non-depth → 0x1a`
-   - `0x1a → 0x11 non-depth`
-   - depth → color
-   - color → depth
-   어느 방향인지 확정한다.
-7. copy 시점의 `srcGPU/dstGPU`, swizzle, size를 비교한다.
-8. 이 로그 결과 전에는 alias 동기화 동작을 변경하는 A/B를 만들지 않는다.
+1. **새 CI 없이** upstream Cemu의 Bayonetta 2 flicker 관련 issue/history와 현재 source의 clip/depth path를 더 추적한다.
+2. `SET_POSITION` shader Z conversion이 어떤 `DX_CLIP_SPACE_DEF` 상태에서 Bayonetta gameplay shader들에 적용되는지 기존 shader dumps/log에서 확인한다.
+3. Vulkan에서 shader-side `(z+w)/2` 없이도 Wii U `-w..w` semantics를 보존할 수 있는 `VK_EXT_depth_clip_control`/`negativeOneToOne` 경로를 현재 Adreno device가 지원하는지 확인 가능한 기존 device-extension log/source를 먼저 찾는다.
+4. extension 지원이 확인되면, **Bayonetta 2 전용이 아닌 의미 보존형 Vulkan A/B** 설계를 검토한다:
+   - native negative-one-to-one clip control
+   - shader-side Z remap 생략
+   - 다른 동작 변경은 금지
+5. extension 미지원이면 blind Z-remap removal을 하지 않고 정상 draw depth state correlation으로 이동한다.
+6. `f4c24000` alias conversion 가설은 새 증거가 생기기 전까지 반복하지 않는다.
+7. CI는 위 정적 조건이 하나의 검증 가능한 A/B로 좁혀질 때만 실행한다.
 
 ## New-tab startup prompt
 
-`Cemu ARM64 Bayonetta 2 원거리 폴리곤 플리커링 분석을 이어간다. GitHub의 CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 먼저 읽고 runtime-experiments-arm64 문서 HEAD와 code-changing baseline fa17d83을 구분해라. 이미 끝난 Position Invariance, viewport depth-range, depthBiasClamp, Force Maximum LOD/LOD, RT barrier variants, forced split, depthclip, pipeline pNext, VS auxHash 실험을 반복하지 마. 현재 전용 branch diag-bayo2-alias-sync의 successful Run 33119155975 artifact로 f4c24000의 [BAYO2_ALIAS_REL]/[BAYO2_ALIAS_COPY]를 수집·분석하는 단계다.`
+`Cemu ARM64 Bayonetta 2 flicker 분석을 이어간다. GitHub의 CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 먼저 읽고 runtime-experiments-arm64 문서 HEAD와 code-changing baseline fa17d83을 구분해라. 이미 끝난 Position Invariance, viewport clamp, depthBiasClamp, Force Maximum LOD/LOD, RT barrier variants, forced split, depthclip, pipeline pNext, VS auxHash, f4c24000 0x11/0x1a alias-conversion 추적을 반복하지 마. alias trace log(20260828-002909).txt에서 actual copy 1024/1024가 0x1a 640x368->640x360 image-copy였고 format-conversion은 0회였다. upstream Cemu Issue #1348의 NVIDIA에서도 재현되는 unresolved Bayonetta 2 flicker와 clip-space/depth semantics를 NEXT ACTION부터 계속 추적해.`
