@@ -347,27 +347,193 @@ Vulkan depth mapping:
 `f4c24000`의 multi-format representation 자체는 Cemu texture cache 설계상 합법일 수 있어 버그로 단정하지 않는다.
 다만 swizzle mismatch가 실제 reload/validity 경계와 일치하므로 현재 distant flicker와 상관관계를 추적할 가치가 높은 실제 runtime 신호다.
 
-### Next direction
+### Next direction at that point
 
-- `f4c24000`의 `0x11 ↔ 0x1a` mapping이 view reuse인지 별도 base texture인지 확정
-- compatible relation / GPU-updated-data synchronization 추적
-- `lastRenderTargetSwizzle`, `isUpdatedOnGPU`, dynamic/compatible texture update 경계 추적
-- `f4c24000`, `f57c8000`, main depth `f5442800` 역할 분리
-- 이 정적 분석이 하나의 경계를 지목할 때만 최소 diagnostic 설계
-- 현재 단계에서 CI 실행 안 함
+- `f4c24000` mapping/relation/copy를 observation-only trace로 확인
+- 실제 copy path를 확인한 뒤에만 동작 A/B 검토
 
 ---
 
-## Current Bayonetta candidate ranking after recovered history
+## 2026-08-28 — Bayonetta 2 alias synchronization trace
+
+### Goal
+
+`f4c24000`의 multi-format/depth representation이 실제 gameplay에서 어느 방향으로 동기화되는지 확인한다.
+
+### Branch / build
+
+Branch:
+`diag-bayo2-alias-sync`
+
+Base:
+`fa17d834bfebd9a41c598b1b1b702000d0ff4618`
+
+Diagnostic script commit:
+`4f1f56cc85fb645da17e9f95aaf8da2de0a74fd2`
+
+Workflow HEAD:
+`fd5f6376959d739cb50e5dfd79ef64716a40cb60`
+
+Workflow:
+`Cemu ARM64 Bayonetta2 Alias Sync Trace`
+
+Run:
+- ID `33119155975`
+- result: **SUCCESS**
+
+Diagnostic behavior:
+- observation only
+- `[BAYO2_ALIAS_REL]`
+- `[BAYO2_ALIAS_COPY]`
+- target guest address `f4c24000`
+
+### User log
+
+`log(20260828-002909).txt`
+
+Runtime:
+- Cemu `fd5f637`
+- Bayonetta 2 JP `00050000-1011B900`, v1
+- Adreno X1-85 / Vulkan 1.3
+- driver `f22d572733`
+- Master diagnostics ON
+- Full sync at GX2DrawDone: true
+
+### Counts
+
+- `[BAYO2_ALIAS_REL]` = 10
+- `[BAYO2_ALIAS_COPY]` = 1024 logged records
+
+### Relation results
+
+1280x720 relation:
+- `0x1a`, non-depth, swizzle `000d0000`, GPU=false
+- ↔ `0x11`, non-depth, swizzle `00000000`, GPU=true
+- result: success, then duplicate
+
+640-class relations:
+- `0x1a 640x368` non-depth ↔ `0x11 640x360` depth
+- `0x1a 640x360` non-depth ↔ `0x11 640x360` depth
+- `0x1a 640x360` non-depth ↔ `0x1a 640x368` non-depth
+- all relevant relation attempts succeeded
+
+### Actual copy result
+
+**1024/1024 logged copy records were the same class:**
+
+Source:
+- addr `f4c24000`
+- fmt `0x1a`
+- non-depth
+- 640x368
+- pitch 640
+- tile 4
+- swizzle 0
+- GPU=true
+
+Destination:
+- addr `f4c24000`
+- fmt `0x1a`
+- non-depth
+- 640x360
+- pitch 640
+- tile 4
+- swizzle 0
+
+Copy:
+- `640x360`
+- path `image-copy`
+
+First logged copy had dstGPU=false; subsequent records were dstGPU=true.
+
+### Not observed
+
+- actual `0x11 -> 0x1a` copy: 0
+- actual `0x1a -> 0x11` copy: 0
+- depth -> color copy: 0
+- color -> depth copy: 0
+- `format-conversion` copy: 0
+
+### Conclusion
+
+- `f4c24000` multi-representation relations are real.
+- But the suspected R24_X8/D24 ↔ RGBA8 or depth/color conversion handoff did **not** execute in the captured flicker session.
+- therefore the `0x11/0x1a alias conversion` hypothesis is strongly downgraded as the direct flicker cause.
+- same-format `0x1a 640x368 -> 640x360` synchronization is real and frequent, but no direct flicker correlation is proven. Do not call it a bug yet.
+
+---
+
+## 2026-08-28 — Upstream generic Bayonetta 2 flicker boundary
+
+### Upstream evidence
+
+`cemu-project/Cemu` Issue #1348:
+`[Bayonetta 2] images rendering erros`
+
+Reported:
+- Chapter VIII image flickering
+- Windows 10
+- GeForce RTX 3060 Ti
+- problem existed across previous Cemu versions
+
+Exzap asked whether graphic packs affected it.
+Reporter reconfirmed:
+- first Chapter VIII flicker occurs regardless of graphic-pack/default settings
+- separate Chapter IX cutscene issue was related to 60 FPS Cutscenes and later solved
+- first flicker remained unresolved
+
+Issue remained open and a 2026 comment still states the first flicker is unresolved.
+
+### Interpretation
+
+This is strong evidence that at least a very similar Bayonetta 2 flicker exists on non-ARM64 / non-Adreno hardware.
+
+Do **not** claim the user's exact distant-polygon scene and #1348 are proven identical yet.
+Do **not** assume Qualcomm/ARM64 exclusivity.
+
+### Scope change
+
+Primary investigation now treats the symptom as potentially **generic Cemu Bayonetta 2 rendering behavior**, with Adreno as the current test platform rather than presumed root cause.
+
+---
+
+## 2026-08-28 — Vulkan shader clip-space Z path identified
+
+### Source
+
+Current fork and current upstream Cemu both generate Vulkan `SET_POSITION` as:
+
+- if `DX_CLIP_SPACE_DEF=1`: `gl_Position = _v`
+- if `DX_CLIP_SPACE_DEF=0`: `gl_Position = _v; gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0`
+
+OpenGL path does not use this shader-side Z remap.
+
+### Important distinction
+
+This is **not the same experiment** as the already-failed viewport depth-range clamp.
+
+- previous A/B changed `VkViewport.minDepth/maxDepth`
+- this path changes clip-space vertex Z in shader output before rasterization
+
+Therefore `halfZ` / shader clip-space semantics remains alive.
+
+### Safety constraint
+
+Blindly deleting `(z+w)/2` is not valid evidence-based testing because Vulkan's default clip volume expects 0..w Z.
+A semantics-preserving alternative such as Vulkan negative-one-to-one depth clip control must be checked first.
+
+---
+
+## Current Bayonetta candidate ranking
 
 Higher value:
 
-1. surface/texture reinterpretation + swizzle/cache synchronization
-2. depth attachment state / precision + normal draw depth test/write/compare correlation
-3. feedback-loop / attachment dependency의 아직 직접 검증되지 않은 세부 경로
-4. `halfZ=0` path shader Z transform — 위 후보 이후에만 검토
+1. generic Cemu Bayonetta 2 clip-space/depth semantics
+2. normal gameplay draw depth test/write/compare + depth attachment precision/state correlation
+3. upstream #1348 common render path correlation
+4. same-format `0x1a 640x368 -> 640x360` sync only if new direct evidence appears
 
-Ruled down / do not repeat without new evidence:
+Strongly downgraded / do not repeat without new evidence:
 
 - Position Invariance
 - simple viewport depth-range clamp
@@ -378,8 +544,10 @@ Ruled down / do not repeat without new evidence:
 - depthclip
 - pipeline pNext
 - VS auxHash pipeline key
+- `f4c24000` 0x11/0x1a actual conversion
+- `f4c24000` depth/color format conversion
 - startup pipeline `-13` 2건
-- 기존 GLSL fail 1건은 Qualcomm/ARM64 전용 원인으로 취급하지 않음
+- old GLSL failure as an ARM64-specific explanation
 
 ---
 
@@ -391,6 +559,7 @@ Ruled down / do not repeat without new evidence:
 - CI 전에 source/static validation 완료
 - 사용자 화면 관찰과 로그 fact 분리
 - build 비용을 이유 없이 반복하지 않음
+- generic upstream bug evidence가 있으면 platform-specific hack보다 공통 원인을 우선
 - VS `DEFAULT_VAL` synthesize rollback 금지
 
 ---
