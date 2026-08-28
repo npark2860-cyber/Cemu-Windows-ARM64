@@ -22,7 +22,7 @@
 - compiler `E031.50.36.00`
 - driver branch `pp165`
 
-upstream `cemu-project/Cemu` Issue #1348에는 RTX 3060 Ti에서도 유사한 Bayonetta 2 flicker가 남아 있다. 사용자 exact scene과 동일 근본원인은 미확정이지만 ARM64/Adreno 전용이라고 전제하지 않는다.
+upstream `cemu-project/Cemu` Issue #1348에는 RTX 3060 Ti/x64에서도 유사한 Bayonetta 2 flicker가 있다. 사용자 exact scene과 동일 근본원인은 미확정이므로 ARM64/Adreno 전용이라고 전제하지 않는다.
 
 ## 2. 저장소 / 보호 기준점
 
@@ -61,64 +61,28 @@ Repository:
 **재실험 금지 — invalid behavior A/B:**
 - `f5442800` guest-RAM roundtrip (`256/64 GPU readback → same guest RAM → main 1280 reload`)
 
-## 4. 완료된 핵심 진단 요약
+## 4. `f5442800` multi-pitch D24 — confirmed runtime structure
 
-### f4c24000 alias sync
-Branch `diag-bayo2-alias-sync`, Run `33119155975`, SUCCESS.
-
-- actual 1024 copies 전부 `0x1a` non-depth `640x368 → 640x360`
-- `0x11↔0x1a` = 0
-- depth↔color = 0
-- format-conversion = 0
-
-R24/D24↔RGBA8/depth-color conversion direct-cause 가설은 강하게 하향.
-
-### native negativeOneToOne
-Branch `exp/vk-native-negative-one-to-one`, Run `33131685028`, SUCCESS.
-
-- `VK_EXT_depth_clip_control` supported
-- `negativeOneToOne=1 shaderZRemap=0`
-- 실제 VS GLSL에서 `(z+w)/2` 제거 확인
-- 사용자 화면: **개선 0**
-
-shader-side clip-space Z remap은 강하게 하향.
-
-### occlusion query
-Branch `diag-bayo2-occlusion-query`, Run `33137618598`, SUCCESS.
-
-최소 78,000 GX2 query BEGIN/END pair가 있었지만:
-- `NESTED_RESUME=0`
-- `ACTIVE_INSERT=0`
-- `ACTIVE_IN_FLIGHT=0`
-- `DUPLICATE_APPEND=0`
-
-의심했던 nested-live-query bookkeeping 경로는 문제 장면에서 실행되지 않았다.
-
-## 5. `f5442800` multi-pitch D24 runtime fact
-
-동일 guest physical start `f5442800`, 동일 D24/S8 (`0x11`), tile4에 서로 다른 세 base texture가 동시에 존재하고 실제 depth attachment로 사용된다:
+동일 guest physical start `f5442800`, 동일 D24/S8 (`0x11`), tile4에 서로 다른 세 base texture가 실제 depth attachment로 존재하고 GPU write를 받는다:
 
 - `1280x720`, pitch `1280`
 - `256x256`, pitch `256`
 - `64x64`, pitch `64`
 
-세 representation 모두 GPU write를 받는다.
-
-Source 구조:
+Static source:
 - zero-offset + same-subIndex인데 pitch가 다르면 compatible relation 생성 안 됨
-- 같은 경우 `TrackDataOverlap()`에도 내려가지 않음
-- GPU dynamic sync는 `list_compatibleRelations`만 순회
-- depth clear만 same physical address/smaller-pitch representation에 별도 전파
+- 이 zero-offset incompatible case는 `TrackDataOverlap()`에도 내려가지 않음
+- normal GPU dynamic sync는 `list_compatibleRelations`만 순회
+- depth clear는 별도 경로로 same physical address depth texture 전부를 순회해 clear를 전파함
 
-## 6. f544 observation trace — 완료
+Clear가 pitch와 무관하게 전파되는 것은 uniform clear value라 layout 변환이 필요 없기 때문이다. Normal draw 결과는 cross-pitch/tiled remapping이 필요하므로 같은 단순 전파를 하지 않는다.
+
+## 5. f544 alias observation trace — completed
 
 Branch:
 `diag-bayo2-f544-depth-alias`
 
-Trace HEAD:
-`389e845649a8518b3a26f7d52263c346c5bb0f4b`
-
-Workflow/runtime HEAD:
+Runtime HEAD:
 `2334cb517180dc887221b7177ef1cc190f639fb3`
 
 Run:
@@ -127,126 +91,178 @@ Run:
 User log:
 `log(20260828-050332).txt`
 
-Runtime result:
+Runtime:
 - 세 pair 모두 `result=untracked-zero-offset-incompatible`
-- 원인은 runtime에서도 pitch mismatch 하나로 확인
-- main 1280 rebind 1462회에서 전부 `newerAlias=1`
+- runtime에서도 원인은 pitch mismatch 하나로 확인
+- main 1280 rebind 1462회 전부 `newerAlias=1`
 - 동시에 항상 `rels=0 / sameAddrOverlaps=0 / reloadDynamic=0`
-- 직전 newest other는 64x64 depth
+- newest other는 항상 64x64 depth
+- 1461/1462 stale-main rebind는 직전 256 + 64 write가 직접 확인됨
 
-확정 가능한 것:
-1. Cemu host texture-cache에는 same-address / multi-pitch D24 representation coherence gap이 실제 존재한다.
-2. small depth passes 뒤 main representation이 더 오래된 `lastDynamicUpdate` 상태로 다시 bind된다.
+확정:
+1. Cemu host texture-cache에는 same-address / multi-pitch D24 representation divergence가 실제 존재한다.
+2. small depth pass 뒤 main representation이 더 오래된 `lastDynamicUpdate` 상태로 다시 bind된다.
 
-**하지만 이것만으로 guest hardware가 반드시 그 small-surface 데이터를 main depth와 합성해야 한다고 단정하지 않는다.**
-
-## 7. `f544` guest-RAM roundtrip A/B — 실행됐지만 INVALID
+## 6. f544 guest-RAM roundtrip — INVALID / never repeat
 
 Branch:
 `exp/bayo2-f544-guest-roundtrip`
 
-Runtime build/HEAD:
+Runtime HEAD:
 `001df98b74e4d469ff69cd0b9c1010d7e1b07792`
 
-Workflow Run #3:
+Run:
 `33145985810` — SUCCESS
 
 User native-resolution log:
 `log(20260828-063425).txt`
 
-Native condition:
-- graphics resolution pack 미활성
-- guest/effective main depth `1280x720`
-- safety guard 통과
-
-Runtime counts:
+Runtime:
 - `phase=begin` = 1662
-- `phase=alias-to-guest` = 3324
-  - 매 cycle 256x256 1회
-  - 64x64 1회
-- `[BAYO2_F544_ROUNDTRIP_UPLOAD]` = 1662
-- `phase=main-reload` = 1662
-- `skip-resized` = 0
-- roundtrip failure marker = 0
-- `VK_ERROR_DEVICE_LOST` = 0
-- pipeline/SPIR-V/GLSL failure = 0 in captured log
-
-대략 27.7초 동안 1662 cycle이므로 사실상 60Hz로 매 frame roundtrip이 수행됐다.
+- 256 + 64 `alias-to-guest` = 3324
+- D24 main upload = 1662
+- main reload = 1662
+- failure/device-lost/pipeline failure = 0
 
 User visual result:
 - **화면이 어마어마하게 망가짐**
 
-### Correct interpretation
+Correct interpretation:
+- roundtrip path itself executed correctly according to its markers
+- but 256/64 differently pitched/tiled complete surfaces를 same guest RAM에 순차 canonicalize한 뒤 main 1280으로 재해석하는 의미가 Wii U hardware와 동일하다는 검증이 없음
+- therefore this is an **invalid causal A/B**, not root-cause confirmation
+- `001df98` 추가 테스트 금지
 
-이 결과를 `f544 coherence root cause confirmed`로 해석하면 안 된다.
+Static audit after failure:
+- Vulkan `D24_UNORM_S8_UINT` depth aspect는 `X8_D24_UNORM_PACK32`; depth low24 handling은 Vulkan packed-format rule과 일치
+- experimental writer는 `LatteTextureLoader_GetInput()`을 사용하므로 Cemu AddrLib tiled address calculation 자체는 재사용함
+- 따라서 현재까지 단순 D24 bit-order 또는 단순 linear-vs-tiled 실수는 확인되지 않음
+- 남은 강한 문제는 cross-pitch complete-surface canonicalization semantics 자체와 custom D24 transfer의 미검증 세부사항
 
-실험은:
-1. 256x256 host depth를 pitch256/tile4 layout으로 same guest RAM에 writeback
-2. 64x64 host depth를 pitch64/tile4 layout으로 같은 base RAM에 다시 writeback
-3. 그 RAM 전체를 main 1280x720 depth로 reload
+## 7. Main-depth first-draw observation — NEW decisive result
 
-한다.
-
-서로 다른 pitch surface의 guest-memory 의미를 이렇게 하나의 canonical RAM image로 순차 합성하는 것이 Wii U hardware 의미와 동일하다는 검증이 없었다. 화면의 대규모 파괴는 **이 강제 canonicalization/roundtrip 방식이 유효하지 않음을 증명**한다.
-
-따라서:
-- f544 same-address/multi-pitch cache fact는 유지
-- guest-RAM roundtrip 보정 방식은 폐기
-- flicker 인과성은 여전히 미확정
-- 해당 `001df98` build로 추가 테스트 금지
-
-## 8. D24 transfer 관련 별도 정적 사실
-
-roundtrip 설계 중 확인:
-- Cemu 기존 tiled readback writer는 `HWFMT_8_24`를 지원하지 않았다.
-- experimental path가 D24/S8 readback/writeback 및 Vulkan split depth/stencil plane 처리를 새로 추가했다.
-- 이 자체가 기존 Cemu에서 충분히 검증된 경로가 아니므로 permanent fix 근거로 사용하지 않는다.
-
-## 9. 현재 우선순위
-
-1. **main 1280x720 depth로 복귀한 첫 draw의 실제 depth state와 사용 방식 확인**
-2. 해당 first draw가 previous main depth를 읽는지, depth를 새로 덮는지 판정
-3. 그 뒤에만 f544 multi-pitch coherence가 실제 gameplay semantics에 필요한지 재평가
-4. upstream #1348 common render path correlation
-
-`f544`를 강제로 RAM canonicalization하는 behavior A/B는 반복하지 않는다.
-
-## 10. 다음 관찰 방향
-
-이미 준비된 branch:
+Branch:
 `diag-bayo2-main-depth-state`
 
-현재 branch HEAD는 아직 baseline `fa17d83`; source modification 없음.
+Trace script commits:
+- `bdcf57df8047ff9ede4f477c33a4c517fc7342b2`
+- `212a43668645cbc5342746787141dc7ebe66b2d1`
 
-Vulkan draw path에서는 정상 draw마다 `draw_getOrCreateGraphicsPipeline()` 후 `m_state.activePipelineInfo`가 정해지고, current `DB_DEPTH_CONTROL`은 pipeline hash에도 포함된다.
+Workflow/runtime HEAD:
+`ebb857a856a21b9e855c3af1f8cc72786216d4c8`
 
-다음 observation-only trace에서 main `f5442800 1280x720` depth attachment를 쓰는 draw에 대해 기록할 것:
-- draw sequence / first draw after main rebind
-- `Z_ENABLE`
-- `Z_WRITE_ENABLE`
-- `Z_FUNC`
-- stencil enable
-- depth-bias enable 여부
-- VS / PS / GS hash
-- pipeline hash
-- index count / primitive mode
-- main rebind 직전 small-depth pass 여부
+Workflow:
+`Cemu ARM64 Bayonetta2 Main Depth First Draw Trace`
 
-목표:
-- main return 첫 draw가 stale prior-main depth를 **실제로 depth-test input으로 읽는지** 확인
-- 또는 depth test off/write-all/clear-equivalent라서 previous contents가 사실상 irrelevant한지 확인
+Run:
+`33149747614` — **SUCCESS**
+
+Artifact:
+- ID `9678056157`
+- `cemu-arm64-bayo2-main-depth-first-draw-trace`
+- sha256 `115c1e2b66e74755f1bd3fe39c8fe721bdaf2e29118e6de82553af5f5bc68abd`
+
+User log:
+`log(20260828-081104).txt`
+
+Trace marker:
+`[BAYO2_MAIN_DEPTH_FIRST_DRAW]`
+
+### Runtime counts
+
+Markers: **1407**
+
+All 1407/1407:
+- current main depth = `f5442800`, 1280x720, pitch1280
+- newest alias = 64x64, pitch64
+- `newestAliasEvent > selfEvent`
+- `priorDepthAffects=1`
+- `zEnable=1`
+- `zWrite=1`
+- `zFunc=3`
+- `stencilEnable=0`
+- `backStencil=0`
+- `DB_DEPTH_CONTROL=0x0000001e`
+- primitive=3
+- instances=1
+- first draw sequence=1
+- GS=0
+- PS=`d4c548cae60718a8`, aux `0x79`
+
+`zFunc=3` enum mapping = **LEQUAL**.
+
+Event gap `newestAliasEvent - selfEvent`:
+- +13: 1394
+- +16: 13
+
+Stable pipeline families:
+- pipeline `7ff7d63e0f004b21`, VS `8eddd84f36abdb3e`: 1060
+- pipeline `511397ecc55e3522`, VS `472453acc0a35728`: 347
+
+No runtime regression:
+- pipeline fail 0
+- GLSL fail 0
+- SPIR-V fail 0
+- device lost 0
+- normal title stop
+
+### Render-pass semantic connection
+
+Baseline Vulkan render-pass creation uses:
+- depth `loadOp = VK_ATTACHMENT_LOAD_OP_LOAD`
+- depth `storeOp = VK_ATTACHMENT_STORE_OP_STORE`
+- stencil LOAD/STORE as applicable
+
+Therefore observed chain is now:
+
+1. small f544 depth representation receives newer GPU writes
+2. main 1280 host D24 remains older and no relation/overlap/reload sync occurs
+3. main render pass resumes and **LOADs the old main VkImage contents**
+4. first actual draw has depth test enabled
+5. compare is **LEQUAL** and previous depth therefore participates in pass/fail visibility
+6. draw also has depth write enabled
+
+### Correct conclusion
+
+This is stronger than a cache bookkeeping anomaly.
+
+**Confirmed:** the stale main f544 host depth reaches actual renderer-visible depth-test semantics and is consumed by gameplay draws.
+
+Still not fully confirmed:
+- Wii U hardware semantics require the 64/256 differently pitched render results to be transformed into the 1280 representation in exactly the way hypothesized
+- therefore original distant flicker root cause is not yet declared proven
+
+However f544 cross-pitch depth coherence is now the **strongest live correctness candidate**.
+
+## 8. Current candidate ranking
+
+1. **f5442800 cross-pitch D24 normal-write coherence / correct alias semantics**
+2. exact cross-pitch/tile mapping semantics needed between 64/256 and 1280 depth views
+3. upstream #1348 common Bayonetta render path correlation
+4. generic normal-draw depth state outside f544 only if f544 is later disproven
+
+## 9. Work rules
+
+- one hypothesis per build
+- source/static verification before CI
+- observation fact and visual result remain separate
+- no repeat of ruled-out experiments
+- no rollback of permanent fixes
+- no more guest-RAM full canonicalization roundtrip
+- do not use simple `vkCmdCopyImage` between differently scaled/pitched surfaces as a fake fix
+- do not claim Adreno-specific until generic path is excluded
 
 # NEXT ACTION
 
-**새 behavior fix 금지. 새 CI는 아직 돌리지 않는다.**
+**No new CI yet.**
 
-1. `diag-bayo2-main-depth-state`에 observation-only trace 설계.
-2. log 폭증 방지를 위해 main rebind 직후 첫 1~몇 draw 또는 state-change fingerprint만 기록.
-3. source behavior unchanged verifier를 먼저 만든다.
-4. 정적 검증 후 user `ㄱㄱ` 승인 시에만 dedicated ARM64 diagnostic CI 1회.
-5. 결과가 depth-test read 의존을 보이면 f544 coherence 후보를 다시 올린다.
-6. first draw가 previous depth contents를 사용하지 않으면 f544 coherence를 flicker root cause에서 크게 하향하고 다른 draw/depth-state correlation으로 이동한다.
+1. Continue static audit of `001df98` custom D24 readback/writeback to separate transfer implementation risk from alias-semantics risk.
+2. Verify `TextureDecoder_D24_S8` decode byte/endian behavior against experimental `HWFMT_8_24` writer; determine whether writer is an exact inverse for one identical surface.
+3. Do not test cross-pitch sync again until a **same-surface D24 self-roundtrip validation** or equivalent semantics-preserving proof exists.
+4. If identical-surface D24 transfer is statically or experimentally validated, design the next causal test to modify only the minimal physical overlap region rather than canonicalizing complete 256/64 surfaces into main RAM.
+5. If identical-surface D24 transfer is not inverse-correct, fix/validate that transfer independently; do not mix it with Bayonetta alias behavior.
+6. Append this first-draw result to `DEBUG_HISTORY.md` before the next behavior build.
 
 ## New-tab startup prompt
 
-`Cemu ARM64 Bayonetta 2 flicker 분석을 이어간다. GitHub CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 먼저 읽고 runtime-experiments-arm64 문서 HEAD와 code-changing baseline fa17d83을 구분해라. 끝난 Position Invariance, viewport clamp, depthBiasClamp, LOD, barrier variants, forced split, depthclip, pNext, VS auxHash, f4c24000 conversion, native negativeOneToOne, nested occlusion resume/duplicate를 반복하지 마. f544 observation trace에서는 same-address 1280x720/256x256/64x64 D24 reps가 pitch mismatch 때문에 relation 없이 사용되고 main rebind가 newerAlias=1임을 확인했다. 하지만 001df98 guest-RAM roundtrip A/B는 native 720p에서 1662회 완전 실행되며 화면을 대규모로 파괴했으므로 invalid causal A/B로 폐기한다. 이 결과를 root-cause confirmation으로 해석하지 마. NEXT ACTION은 behavior를 바꾸지 않고 main f544 1280 depth로 복귀한 첫 draw의 Z_ENABLE/Z_WRITE/Z_FUNC + shader/pipeline hash를 관찰해 previous main depth contents가 실제로 사용되는지 판정하는 것이다.`
+`Cemu ARM64 Bayonetta 2 flicker 분석을 이어간다. GitHub CURRENT_HANDOFF.md, TECH_BIBLE.md, DEBUG_HISTORY.md를 source of truth로 읽고 code baseline fa17d83을 유지해라. 끝난 Position Invariance, viewport clamp, depthBiasClamp, LOD, barrier variants, forced split, depthclip, pNext, VS auxHash, f4c24000 conversion, native negativeOneToOne, nested occlusion-query 실험을 반복하지 마. f5442800에는 1280x720/pitch1280, 256x256/pitch256, 64x64/pitch64 D24 reps가 있고 small writes 뒤 main은 relation 없이 stale로 재bind된다. guest-RAM full roundtrip 001df98은 1662회 실행되며 화면을 대규모 파괴해 invalid A/B로 폐기됐다. 최신 observation build ebb857a / Run 33149747614 / log(20260828-081104).txt에서는 main return first draw 1407/1407이 priorDepthAffects=1, Z_ENABLE=1, Z_WRITE=1, Z_FUNC=LEQUAL이었고 Vulkan depth loadOp도 LOAD라 stale main depth가 실제 visibility test에 사용됨이 확정됐다. NEXT ACTION은 새 CI 없이 D24 self-roundtrip inverse correctness와 cross-pitch alias semantics를 정적으로 분리 검증하는 것이다.`
