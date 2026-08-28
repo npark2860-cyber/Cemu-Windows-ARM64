@@ -1,9 +1,9 @@
-name: Cemu ARM64 Bayonetta2 F544 Guest Roundtrip
+name: Cemu ARM64 Bayonetta2 F544 Seeded Roundtrip
 
 on:
   push:
     branches:
-      - exp/bayo2-f544-guest-roundtrip
+      - exp/bayo2-f544-seeded-roundtrip
   workflow_dispatch:
 
 concurrency:
@@ -78,13 +78,20 @@ jobs:
       - name: Apply generic ARM64 Diagnostic Edition
         run: python ./tools/diagnostics/Add-PipelineDiagnostics.py
 
-      - name: Apply Bayonetta 2 f544 guest-memory roundtrip
+      - name: Validate seeded-roundtrip scripts
+        run: |
+          python -m py_compile ./tools/diagnostics/Apply-Bayonetta2F544GuestRoundtripExperiment.py
+          python -m py_compile ./tools/diagnostics/Apply-Bayonetta2F544NativeRoundtripGuard.py
+          python -m py_compile ./tools/diagnostics/Apply-Bayonetta2F544SeededRoundtrip.py
+
+      - name: Apply D24 transfer and seeded f544 roundtrip
         run: |
           python -c "from pathlib import Path; p=Path('src/Cafe/HW/Latte/Core/LatteTextureReadback.cpp'); b=p.read_bytes(); p.write_bytes(b if b.endswith(b'\n') else b+b'\n')"
           python ./tools/diagnostics/Apply-Bayonetta2F544GuestRoundtripExperiment.py
           python ./tools/diagnostics/Apply-Bayonetta2F544NativeRoundtripGuard.py
+          python ./tools/diagnostics/Apply-Bayonetta2F544SeededRoundtrip.py
 
-      - name: Verify f544 roundtrip scope and transfer semantics
+      - name: Verify seeded scope and D24 transfer semantics
         shell: pwsh
         run: |
           $rt = Get-Content 'src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp' -Raw
@@ -93,22 +100,29 @@ jobs:
           $ldr = Get-Content 'src/Cafe/HW/Latte/Core/LatteTextureLoader.cpp' -Raw
           $vr = Get-Content 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp' -Raw
 
-          foreach ($m in @('phase=begin','phase=alias-to-guest','phase=main-reload','phase=skip-resized','[BAYO2_F544_ROUNDTRIP_UPLOAD]')) {
-            if (-not ($rt.Contains($m) -or $vr.Contains($m))) { throw "Missing experiment marker $m" }
+          foreach ($m in @('[BAYO2_F544_SEEDED] phase=begin','[BAYO2_F544_SEEDED] phase=seed-main','[BAYO2_F544_SEEDED] phase=overlay','[BAYO2_F544_SEEDED] phase=main-reload','[BAYO2_F544_SEEDED] phase=skip-resized','[BAYO2_F544_ROUNDTRIP_UPLOAD]')) {
+            if (-not ($rt.Contains($m) -or $vr.Contains($m))) { throw "Missing seeded marker $m" }
           }
-          if (-not $rt.Contains('CafeSystem::GetForegroundTitleId() == 0x000500001011B900ULL')) { throw 'Bayonetta 2 JP gate missing' }
-          if (-not $rt.Contains('mainTexture->physAddress != 0xF5442800u')) { throw 'f544 address gate missing' }
-          if (-not $rt.Contains('mainTexture->width != 1280 || mainTexture->height != 720 || mainTexture->pitch != 1280')) { throw 'main-depth shape gate missing' }
-          if (-not $rt.Contains('nativeEffectiveSize')) { throw 'native-size guard missing' }
-          if (-not $rt.Contains('mainTexture->overwriteInfo.hasResolutionOverwrite = false; // safe only because effective size == guest size above')) { throw 'same-size overwrite guard missing' }
+          if ($rt.Contains('[BAYO2_F544_ROUNDTRIP] phase=begin')) { throw 'Old unseeded begin body survived' }
+          if ($rt.Contains('[BAYO2_F544_ROUNDTRIP] phase=main-reload')) { throw 'Old unseeded main-reload body survived' }
+          if (-not $rt.Contains('Bayo2F544WriteAliasToGuest(mainTexture)')) { throw 'Main host seed step missing' }
+          if (-not $rt.Contains('aliasInfo->lastDynamicUpdate > mainInfo->lastDynamicUpdate')) { throw 'Newer-alias event gate missing' }
+          if (-not $rt.Contains('std::sort(pending.begin(), pending.end()')) { throw 'Alias event ordering missing' }
+          if (-not $rt.Contains('effectiveWidth != 1280 || effectiveHeight != 720')) { throw 'Native effective-size guard missing' }
+          if (-not $rt.Contains('mainTexture->overwriteInfo.hasResolutionOverwrite = false;')) { throw 'Same-size reload overwrite bypass missing' }
+
+          $iSeed = $rt.IndexOf('[BAYO2_F544_SEEDED] phase=seed-main')
+          $iOverlay = $rt.IndexOf('[BAYO2_F544_SEEDED] phase=overlay')
+          $iReload = $rt.IndexOf('[BAYO2_F544_SEEDED] phase=main-reload')
+          if (-not ($iSeed -ge 0 -and $iOverlay -gt $iSeed -and $iReload -gt $iOverlay)) { throw 'Seed/overlay/reload source order invalid' }
 
           if (-not $rbvk.Contains('return baseTexture->width * baseTexture->height * 5;')) { throw 'D24 split-plane allocation missing' }
           if (-not $rbvk.Contains('VK_IMAGE_ASPECT_DEPTH_BIT')) { throw 'D24 depth readback plane missing' }
           if (-not $rbvk.Contains('VK_IMAGE_ASPECT_STENCIL_BIT')) { throw 'D24 stencil readback plane missing' }
           if (-not $rb.Contains('(depthPlane[i] & 0x00FFFFFFu) | ((uint32)stencilPlane[i] << 24)')) { throw 'GX2 D24/S8 repack missing' }
-          if (-not $ldr.Contains('HWFMT_8_24')) { throw 'tiled D24 guest writeback missing' }
-          if (-not $vr.Contains('bayo2F544PackedD24Upload')) { throw 'roundtrip-only D24 upload split missing' }
-          if (-not $vr.Contains('bayo2F544PackedD24Upload ? compressedImageSize : 0u')) { throw 'stencil plane upload offset missing' }
+          if (-not $ldr.Contains('HWFMT_8_24')) { throw 'Tiled D24 guest writeback missing' }
+          if (-not $vr.Contains('bayo2F544PackedD24Upload')) { throw 'D24 upload split missing' }
+          if (-not $vr.Contains('bayo2F544PackedD24Upload ? compressedImageSize : 0u')) { throw 'Stencil plane upload offset missing' }
 
           git diff --check
           git diff -- src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp src/Cafe/HW/Latte/Core/LatteTextureReadback.cpp src/Cafe/HW/Latte/Core/LatteTextureLoader.cpp src/Cafe/HW/Latte/Renderer/Vulkan/TextureReadbackVk.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
@@ -168,34 +182,35 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifact | Out-Null
           Copy-Item bin/Cemu_release.exe artifact/Cemu_release.exe
           @"
-          Bayonetta 2 F544 Guest-Memory Roundtrip Experiment
-          Base: fa17d834bfebd9a41c598b1b1b702000d0ff4618
+          Bayonetta 2 F544 Seeded Guest-Memory Roundtrip
+          Base code: fa17d834bfebd9a41c598b1b1b702000d0ff4618
           Target: Bayonetta 2 JP 00050000-1011B900, f5442800 D24/S8 only
 
-          Purpose:
-          Test causality of the confirmed multi-pitch depth-alias coherence gap.
+          This replaces the INVALID old roundtrip.
 
-          Behavior when ACTIVE:
-          1) Read back newer 256x256 and 64x64 D24/S8 aliases in event order.
-          2) Repack Vulkan X8_D24 + S8 planes into GX2 D24|S8<<24.
-          3) Write each alias through its own guest pitch/tile mapping into f5442800 RAM.
-          4) Reload the 1280x720 main depth from that canonical guest memory.
-          5) Correctly split stencil only for this experiment-driven main reload.
+          Corrected behavior when ACTIVE:
+          1) Read current main 1280x720 D24/S8 host image and seed guest RAM using pitch1280/tile4.
+          2) Find only 256x256/pitch256 and 64x64/pitch64 aliases newer than main.
+          3) Overlay those newer aliases in lastDynamicUpdate order using each alias' own GX2 pitch/tile mapping.
+          4) Reload main 1280x720 from the seeded+overlaid guest image.
 
-          IMPORTANT TEST CONDITION:
-          The roundtrip is active only when the main depth effective size is 1280x720.
-          If a graphics pack resizes it to 2560x1440, the experiment intentionally does nothing and logs:
-            [BAYO2_F544_ROUNDTRIP] phase=skip-resized
-          An active test must show:
-            [BAYO2_F544_ROUNDTRIP] phase=begin
-            [BAYO2_F544_ROUNDTRIP] phase=alias-to-guest
-            [BAYO2_F544_ROUNDTRIP] phase=main-reload
+          Why this differs from the failed build:
+          The failed build wrote only small aliases into stale guest RAM and then reloaded the entire main image. Untouched main regions could therefore come from stale RAM. This build preserves current main bytes first.
 
-          Compare the same scene against the previous baseline/trace build at native-effective 1280x720.
-          "@ | Set-Content artifact/README_BAYO2_F544_GUEST_ROUNDTRIP.txt
+          IMPORTANT:
+          - Test at native-effective 1280x720 only. Resolution graphics packs must be OFF.
+          - Blocking D24 readback is diagnostic and may be very slow. FPS is not the result.
+          - Compare only distant polygon/background flicker behavior.
+          - Active log sequence:
+              [BAYO2_F544_SEEDED] phase=begin
+              [BAYO2_F544_SEEDED] phase=seed-main
+              [BAYO2_F544_SEEDED] phase=overlay
+              [BAYO2_F544_SEEDED] phase=main-reload
+          - If resized, it intentionally does nothing and logs phase=skip-resized.
+          "@ | Set-Content artifact/README_BAYO2_F544_SEEDED_ROUNDTRIP.txt
 
       - name: Upload experiment artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-bayo2-f544-guest-roundtrip
+          name: cemu-arm64-bayo2-f544-seeded-roundtrip
           path: ./artifact/
