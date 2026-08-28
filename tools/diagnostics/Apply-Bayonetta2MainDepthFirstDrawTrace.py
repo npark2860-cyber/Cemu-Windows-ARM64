@@ -98,7 +98,7 @@ replacement = '''void VulkanRenderer::draw_execute(uint32 baseVertex, uint32 bas
 \t\t\t\t\t\tnewestOther->width, newestOther->height, newestOther->pitch,
 \t\t\t\t\t\tpriorDepthAffectsPass ? 1 : 0, zEnable ? 1 : 0, zWrite ? 1 : 0, (uint32)zFunc,
 \t\t\t\t\t\tstencilEnable ? 1 : 0, backStencilEnable ? 1 : 0, (uint32)stencilFuncF, (uint32)stencilFuncB,
-\t\t\t\t\t\tdepthControl.getRawValue(), raw[mmDB_STENCILREFMASK], raw[mmDB_STENCILREFMASK_BF],
+\t\t\t\t\t\traw[Latte::REGADDR::DB_DEPTH_CONTROL], raw[mmDB_STENCILREFMASK], raw[mmDB_STENCILREFMASK_BF],
 \t\t\t\t\t\t(uint32)LatteGPUState.contextNew.VGT_PRIMITIVE_TYPE.get_PRIMITIVE_MODE(), count, instanceCount,
 \t\t\t\t\t\tdrawcallContext.isFirst ? 1 : 0, (uint32)indexType, minimalHash, pipelineHash,
 \t\t\t\t\t\tvertexShader ? vertexShader->baseHash : 0ULL,
@@ -115,12 +115,12 @@ replacement = '''void VulkanRenderer::draw_execute(uint32 baseVertex, uint32 bas
 
 text = replace_once(text, anchor, replacement, "draw_execute observation hook")
 
-# Fail-fast checks: this experiment must stay observation-only.
 required = [
     "[BAYO2_MAIN_DEPTH_FIRST_DRAW]",
     "priorDepthAffectsPass",
     "LatteTC_LookupTexturesByPhysAddr",
     "CafeSystem::GetForegroundTitleId() == 0x000500001011B900ULL",
+    "raw[Latte::REGADDR::DB_DEPTH_CONTROL]",
 ]
 for marker in required:
     if marker not in text:
@@ -132,8 +132,8 @@ for forbidden in [
     "LatteTexture_SyncSlice(",
     "texture_copyImageSubData(",
     "vkCmdClearAttachments(",
+    "vkCmdCopyImage(",
 ]:
-    # These may exist elsewhere in the original file; only reject if the inserted block contains one.
     if forbidden in replacement:
         raise RuntimeError(f"behavior-changing call detected in inserted trace: {forbidden}")
 
