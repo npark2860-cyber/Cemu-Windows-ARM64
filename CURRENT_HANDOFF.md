@@ -57,6 +57,7 @@ Repository:
 - `f4c24000` `0x11↔0x1a` actual alias conversion
 - `f4c24000` depth↔color format conversion
 - nested/overlapping GX2 occlusion-query resume/duplicate 경로
+- **`f5442800` cross-pitch D24 stale-main coherence as primary flicker cause — seeded A/B 0 improvement**
 
 **재실험 금지 — invalid behavior A/B:**
 - old `f5442800` unseeded guest-RAM roundtrip (`256/64 GPU readback → stale guest RAM → main 1280 reload`)
@@ -105,7 +106,7 @@ Runtime:
 1. Cemu host texture-cache에는 same-address / multi-pitch D24 representation divergence가 실제 존재한다.
 2. small depth pass 뒤 main representation이 더 오래된 상태로 다시 bind된다.
 
-## 6. Main-depth first-draw observation — decisive
+## 6. Main-depth first-draw observation — decisive structure, not visual causality
 
 Branch:
 `diag-bayo2-main-depth-state`
@@ -142,7 +143,7 @@ Confirmed renderer chain:
 4. 첫 gameplay draw가 LEQUAL depth test로 그 prior depth를 실제 visibility 판정에 사용
 5. depth write도 enabled
 
-따라서 f544 divergence는 단순 bookkeeping이 아니라 **실제 visibility path까지 도달**한다.
+이 divergence가 **실제 visibility path까지 도달**하는 구조는 확정이다. 다만 Section 9 seeded A/B에서 visual improvement가 0이므로 현재 flicker의 주원인이라는 인과성은 강하게 하향한다.
 
 ## 7. D24 same-surface self-roundtrip — EXACT
 
@@ -194,7 +195,7 @@ Cemu texture가 GPU updated 상태이면 guest RAM이 최신 main host contents�
 
 이 설명은 D24 same-surface exact test와 일치한다.
 
-## 9. 현재 새 behavior A/B — SEEDED roundtrip
+## 9. SEEDED f544 roundtrip — VALID NEGATIVE A/B
 
 Branch:
 `exp/bayo2-f544-seeded-roundtrip`
@@ -205,19 +206,25 @@ Patch script:
 Script commit:
 `62906e5ea5029aee581700b80e2e7e5a8c0af775`
 
-Workflow HEAD:
+Workflow/runtime HEAD:
 `a2e4e70ccba4052890d8e06b06d227d41e019878`
 
 Workflow:
 `Cemu ARM64 Bayonetta2 F544 Seeded Roundtrip`
 
-Current Run:
-`33160442364`
+Run:
+`33160442364` — **SUCCESS**
 
 Job:
-`98813341024`
+`98813341024` — **SUCCESS**
 
-현재 진행 중.
+User log:
+`log(20260828-105448).txt`
+
+Test condition:
+- Bayonetta 2 JP
+- Graphics resolution pack OFF / native 1280x720
+- Cemu startup SHA `a2e4e70`
 
 ### Corrected behavior
 
@@ -228,29 +235,48 @@ main rebind에서 newer small alias가 있을 때:
 4. seeded + overlaid guest image에서 main 1280 reload
 5. main `lastDynamicUpdate`를 newest alias event로 갱신
 
-이 방식은 old A/B와 달리 **small aliases가 건드리지 않은 main 영역을 현재 main host 값으로 보존**한다.
+### Runtime validity
 
-### Safety gates
-- Bayonetta 2 JP only
-- `f5442800` D24/S8 only
-- main exactly 1280x720 / pitch1280
-- small only 256x256/pitch256 + 64x64/pitch64
-- effective resolution 1280x720 only
-- resized graphics pack이면 `phase=skip-resized`하고 behavior 0
-- D24 transfer implementation은 exact self-test에서 검증된 것과 동일
+실제 로그에서 약 15.7초 동안 **940 complete cycles** 실행:
+- `phase=begin` = 940
+- `phase=seed-main` = 940
+- `phase=overlay` = 1880
+  - 매 cycle 256x256 1회
+  - 매 cycle 64x64 1회
+- `phase=main-reload` = 940
+- `phase=skip-resized` = 0
+- D24 main upload = 940
+- device-lost / pipeline failure / GLSL failure = 0
 
-Expected active markers:
-- `[BAYO2_F544_SEEDED] phase=begin`
-- `phase=seed-main`
-- `phase=overlay`
-- `phase=main-reload`
+대표 순서는 반복적으로 정확히:
+`seed-main 1280 → overlay 256 → overlay 64 → main-reload 1280`
+
+### User visual result
+
+**플리커링 0 개선.**
+
+### Conclusion
+
+이 A/B는:
+- 올바른 seeded main 보존
+- exact-tested D24 transfer
+- 실제 940 cycle runtime execution
+- 새 corruption 없음
+
+을 만족한 **유효한 negative behavior A/B**다.
+
+따라서:
+- `f5442800` same-address/multi-pitch host coherence gap 자체는 실제 correctness gap으로 남는다.
+- stale main depth가 실제 LEQUAL visibility path에 들어가는 것도 사실이다.
+- 그러나 **현재 Bayonetta 2 distant/background flicker의 주원인으로 보는 가설은 강하게 하향**한다.
+- 새 직접 증거 없이는 f544 coherence 보정 실험을 반복하지 않는다.
 
 ## 10. 현재 후보 우선순위
 
-1. **f5442800 cross-pitch D24 normal-write coherence / exact guest-memory alias semantics**
-2. seeded main + newer alias overlay가 flicker에 미치는 visual effect
-3. upstream #1348 common Bayonetta render path correlation
-4. generic normal-depth path only if f544 is disproven
+1. **Bayonetta 2의 실제 visibility/occlusion decision path 자체** — nested/duplicate bookkeeping은 배제됐지만 query result correctness/consumption은 아직 별도 미검증
+2. upstream #1348과 공통인 generic Bayonetta render/visibility path
+3. normal gameplay draw의 다른 visibility 조건(cull/scissor/clip/primitive state) — observation-first
+4. f544 multi-pitch D24 coherence는 correctness issue로 보존하되 현재 flicker root-cause 우선순위에서는 크게 하향
 
 ## 11. 작업 원칙
 
@@ -258,20 +284,19 @@ Expected active markers:
 - source/static verifier before compile
 - observation fact와 user visual result 분리
 - old unseeded roundtrip 반복 금지
+- seeded f544 coherence A/B도 새 직접 증거 없이는 반복 금지
 - simple `vkCmdCopyImage` between different pitch/scale 금지
 - permanent fixes rollback 금지
 - Adreno-specific hack로 단정하지 않음
 
 # NEXT ACTION
 
-1. Run `33160442364`의 `Validate → Apply seeded → Verify seeded semantics` 단계를 먼저 확인.
-2. verifier가 통과한 경우에만 ARM64 build 완료까지 진행.
-3. artifact가 나오면 **Graphics resolution pack OFF / native 1280x720**로 같은 flicker scene 테스트.
-4. FPS는 blocking readback 때문에 판정 대상 아님.
-5. visual 판정은 세 가지로만 기록:
-   - flicker 크게 개선/소멸
-   - flicker 변화 없음
-   - 화면 corruption/새 artifact 발생
-6. runtime log에서 `seed-main → 256 overlay → 64 overlay → main-reload` 순서가 실제 반복되는지 확인.
-7. seeded A/B가 flicker를 명확히 개선하면 f544 cross-pitch coherence를 root-cause 수준으로 끌어올리고 permanent design을 GPU-side / generic texture-cache 방식으로 별도 설계한다.
-8. seeded A/B도 corruption이면 guest cross-pitch semantics 가정을 재검토하고 behavior fix를 더 이상 확대하지 않는다.
+**새 빌드/CI는 아직 시작하지 않는다.**
+
+다음 한 단계는 static analysis only:
+1. `LatteQuery`의 정상 occlusion query result 완료/누적/guest-visible 반환 경로를 끝까지 읽는다.
+2. 이미 배제된 nested resume / duplicate pointer anomaly는 다시 보지 않는다.
+3. Bayonetta 2에서 heavy query usage가 확인된 상태이므로, query result가 0/비0 visibility decision으로 소비되는 정확한 경계를 찾는다.
+4. 그 경계가 명확하면 **Bayonetta 2 only / query result force-visible** 단일 behavior A/B를 설계한다.
+5. 이 A/B는 query bookkeeping, depth, texture coherence, shader를 건드리지 않고 오직 최종 visibility result 하나만 바꾸도록 제한한다.
+6. 구현/새 workflow/CI는 사용자의 다음 명시적 `ㄱㄱ` 승인 후에만 진행한다.
