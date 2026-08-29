@@ -1,9 +1,9 @@
-name: Cemu ARM64 Bayo2 Query Frame Draw Correlation Trace
+name: Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace
 
 on:
   push:
     branches:
-      - diag-bayo2-query-frame-draw-correlation
+      - diag-bayo2-target-query-draw-fingerprint
   workflow_dispatch:
 
 concurrency:
@@ -195,6 +195,82 @@ jobs:
           git diff --check
           git diff -- $gx2Path $corePath $cpPath
 
+      - name: Validate Bayo2 targeted query/draw fingerprint trace script
+        run: python -m py_compile ./tools/diagnostics/Apply-Bayo2TargetQueryDrawFingerprintTrace.py
+
+      - name: Apply Bayo2 targeted query/draw fingerprint observation trace
+        run: python ./tools/diagnostics/Apply-Bayo2TargetQueryDrawFingerprintTrace.py
+
+      - name: Verify targeted fingerprint trace is observation-only
+        shell: pwsh
+        run: |
+          $gx2Path = 'src/Cafe/OS/libs/gx2/GX2_Query.cpp'
+          $corePath = 'src/Cafe/HW/Latte/Core/LatteQuery.cpp'
+          $cpPath = 'src/Cafe/HW/Latte/Core/LatteCommandProcessor.cpp'
+          $vkPath = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp'
+          $gx2 = Get-Content $gx2Path -Raw
+          $core = Get-Content $corePath -Raw
+          $cp = Get-Content $cpPath -Raw
+          $vk = Get-Content $vkPath -Raw
+
+          foreach ($marker in @(
+            '[BAYO2_TARGET] GET',
+            '[BAYO2_TARGET] DRAW'
+          )) {
+            if (-not ($core.Contains($marker) -or $vk.Contains($marker))) { throw "Missing target marker: $marker" }
+          }
+
+          foreach ($target in @(
+            '0x46a92ec8',
+            '0x46a936c8',
+            '0x46a93bc8',
+            '0x46a93a08',
+            '0x46a93708'
+          )) {
+            if (-not $core.Contains($target)) { throw "Missing target query pointer: $target" }
+          }
+
+          if (([regex]::Matches($vk, [regex]::Escape('Bayo2TargetTrace_LogDrawFingerprint(pipeline_info'))).Count -ne 2) {
+            throw 'Expected exactly two Vulkan target fingerprint call sites'
+          }
+
+          foreach ($token in @(
+            '*resultOut = endValue - startValue;',
+            '*(uint64*)(queryInfo->reg + 2) = 0x100000;'
+          )) {
+            if (-not $gx2.Contains($token)) { throw "GX2 baseline behavior missing: $token" }
+          }
+          foreach ($token in @(
+            '*(uint64*)(queryObjectData + 2) = gx2Query->sampleSum;',
+            'it->sampleSum += numSamplesPassed;'
+          )) {
+            if (-not $core.Contains($token)) { throw "Core baseline behavior missing: $token" }
+          }
+          foreach ($token in @(
+            'PipelineInfo* pipeline_info = draw_getOrCreateGraphicsPipeline(count);',
+            'vkCmdDrawIndexed(',
+            'vkCmdDraw('
+          )) {
+            if (-not $vk.Contains($token)) { throw "Vulkan baseline behavior missing: $token" }
+          }
+
+          $diff = git diff --unified=0 -- $gx2Path $corePath $cpPath $vkPath | Out-String
+          $added = (($diff -split "`r?`n") | Where-Object { $_.StartsWith('+') -and -not $_.StartsWith('+++') }) -join "`n"
+          foreach ($pattern in @(
+            '(?m)^\+\s*\*resultOut\s*=',
+            '(?m)^\+\s*it->sampleSum\s*\+=',
+            '(?m)^\+.*queryObjectData.*=',
+            '(?m)^\+\s*conditionalRenderActive\s*=',
+            '(?m)^\+\s*vkCmdDraw(?:Indexed)?\s*\(',
+            '(?m)^\+\s*LatteGPUState\..*=',
+            '(?m)^\+\s*ctx\[.*\]\s*='
+          )) {
+            if ([regex]::IsMatch($added, $pattern)) { throw "Behavior-changing targeted line detected: $pattern" }
+          }
+
+          git diff --check
+          git diff -- $corePath $vkPath
+
       - name: Setup release mode parameters
         run: |
           echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
@@ -250,17 +326,18 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifact | Out-Null
           Copy-Item bin/Cemu_release.exe artifact/Cemu_release.exe
           @"
-          Bayonetta 2 CPU Query Frame/Draw Correlation Observation Trace
-          Base query trace: a9e731b1761d12eff97916108b11b19100e3b43d
+          Bayonetta 2 Targeted CPU Query -> Draw Fingerprint Observation Trace
+          Parent runtime: 13c9705e99c23e30f476d3b46d21849b169b9212
           Target: Bayonetta 2 JP 00050000-1011B900 v1
-          Behavior: observation only; query values, return codes, culling, lifetime, renderer results, and draw execution are unchanged
-          Markers: [QUERY_COMPARE], [BAYO2_QUERY_CORR]
-          Correlation: query pointer generation, completed result, zero/nonzero transition, begin/end event, frame range, draw range, finish frame/draw
-          Reproduce the distant flicker with a mostly static camera and keep the full Cemu log.
-          "@ | Set-Content artifact/README_BAYO2_QUERY_CORR.txt
+          Behavior: observation only; query values, return codes, culling, lifetime, renderer results, pipeline state, and draw execution are unchanged
+          Target query slots: 46a92ec8, 46a936c8, 46a93bc8, 46a93a08, 46a93708
+          Markers: [QUERY_COMPARE], [BAYO2_QUERY_CORR], [BAYO2_TARGET]
+          Fingerprint: target pointer/generation + exact Vulkan pipeline/minimal hash + VS/GS/PS base/aux hashes + primitive/draw args + clip/raster/depth/color state + color0/depth attachment registers
+          Reproduce the same distant flicker with Graphic Packs off and a mostly static camera, then keep the full Cemu log.
+          "@ | Set-Content artifact/README_BAYO2_TARGET_QUERY_DRAW.txt
 
       - name: Upload diagnostic artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-bayo2-query-frame-draw-correlation
+          name: cemu-arm64-bayo2-target-query-draw-fingerprint
           path: ./artifact/
