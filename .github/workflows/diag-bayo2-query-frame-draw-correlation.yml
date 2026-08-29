@@ -1,0 +1,266 @@
+name: Cemu ARM64 Bayo2 Query Frame Draw Correlation Trace
+
+on:
+  push:
+    branches:
+      - diag-bayo2-query-frame-draw-correlation
+  workflow_dispatch:
+
+concurrency:
+  group: runtime-experiments-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Apply known-good pre-e834 runtime behavior
+        shell: pwsh
+        run: |
+          $swap = 'src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp'
+          $s = Get-Content $swap -Raw
+          $oldLoad = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;'
+          $newLoad = 'colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;'
+          if (-not $s.Contains($oldLoad)) { throw 'Swapchain loadOp pattern not found' }
+          $s = $s.Replace($oldLoad, $newLoad)
+          Set-Content -Path $swap -Value $s -NoNewline
+
+          $vr = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp'
+          $v = Get-Content $vr -Raw
+          $oldFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;'
+          $newFlag = 'beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;'
+          $flagCount = ([regex]::Matches($v, [regex]::Escape($oldFlag))).Count
+          if ($flagCount -ne 2) { throw "Expected 2 ONE_TIME_SUBMIT flags, found $flagCount" }
+          $v = $v.Replace($oldFlag, $newFlag)
+          $anchorLF = "LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`n`tdraw_endRenderPass();`n"
+          $anchorCRLF = "LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;`r`n`tdraw_endRenderPass();`r`n"
+          if ($v.Contains($anchorCRLF)) {
+            $v = $v.Replace($anchorCRLF, $anchorCRLF + "`r`n`tif (clearBackground)`r`n`t`tClearColorbuffer(padView);`r`n")
+          } elseif ($v.Contains($anchorLF)) {
+            $v = $v.Replace($anchorLF, $anchorLF + "`n`tif (clearBackground)`n`t`tClearColorbuffer(padView);`n")
+          } else { throw 'DrawBackbufferQuad anchor not found' }
+          $clearPattern = '(?ms)\r?\n\tif \(clearBackground\)\r?\n\t\{\r?\n\t\tVkClearAttachment clearAttachment\{\};.*?\r?\n\t\}\r?\n\r?\n\tvkCmdBindPipeline'
+          if (-not [regex]::IsMatch($v, $clearPattern)) { throw 'vkCmdClearAttachments block not found' }
+          $v = [regex]::Replace($v, $clearPattern, "`n`tvkCmdBindPipeline", 1)
+          Set-Content -Path $vr -Value $v -NoNewline
+
+      - name: Apply permanent PS DEFAULT_VAL linkage compatibility fix
+        run: python ./tools/compat/Apply-PSDefaultLinkageFix.py
+
+      - name: Apply upstream AArch64 generated-code cache flush fix
+        run: python ./tools/compat/Apply-AArch64ReadyRECacheFix.py
+
+      - name: Apply official AMD FidelityFX FSR 1 EASU + RCAS
+        run: |
+          python ./tools/graphics/Apply-FidelityFXFSRExperiment.py
+          python ./tools/graphics/Apply-FidelityFXFSRFullExperiment.py
+
+      - name: Apply reusable runtime experiment harness
+        shell: pwsh
+        run: ./tools/diagnostics/Apply-RuntimeExperiments.ps1
+
+      - name: Apply VS auxHash pipeline experiments
+        run: python ./tools/diagnostics/Apply-VSAuxPipelineExperiment.py
+
+      - name: Apply RT/performance experiments
+        run: python ./tools/diagnostics/Apply-RTPerfExperiments.py
+
+      - name: Apply generic ARM64 Diagnostic Edition
+        run: python ./tools/diagnostics/Add-PipelineDiagnostics.py
+
+      - name: Validate query-consumption trace script
+        run: python -m py_compile ./tools/diagnostics/Apply-Bayo2XCXQueryConsumptionTrace.py
+
+      - name: Apply Bayo2 XCX query-consumption observation trace
+        run: python ./tools/diagnostics/Apply-Bayo2XCXQueryConsumptionTrace.py
+
+      - name: Verify query-consumption trace is observation-only
+        shell: pwsh
+        run: |
+          $gx2Path = 'src/Cafe/OS/libs/gx2/GX2_Query.cpp'
+          $corePath = 'src/Cafe/HW/Latte/Core/LatteQuery.cpp'
+          $gx2 = Get-Content $gx2Path -Raw
+          $core = Get-Content $corePath -Raw
+
+          $markers = @(
+            '[QUERY_COMPARE] API_BEGIN',
+            '[QUERY_COMPARE] API_END',
+            '[QUERY_COMPARE] GET_NOT_READY',
+            '[QUERY_COMPARE] GET_READY_ZERO',
+            '[QUERY_COMPARE] GET_READY_NONZERO',
+            '[QUERY_COMPARE] CONDITIONAL_BEGIN',
+            '[QUERY_COMPARE] CONDITIONAL_END'
+          )
+          foreach ($m in $markers) {
+            if (-not $gx2.Contains($m)) { throw "Missing GX2 marker: $m" }
+          }
+          foreach ($m in @('[QUERY_COMPARE] FINISH_ZERO','[QUERY_COMPARE] FINISH_NONZERO')) {
+            if (-not $core.Contains($m)) { throw "Missing core marker: $m" }
+          }
+
+          foreach ($token in @(
+            '*resultOut = endValue - startValue;',
+            '*(uint64*)(queryInfo->reg + 2) = 0x100000;'
+          )) {
+            if (-not $gx2.Contains($token)) { throw "Baseline GX2 behavior missing: $token" }
+          }
+          foreach ($token in @(
+            '*(uint64*)(queryObjectData + 2) = gx2Query->sampleSum;',
+            'it->sampleSum += numSamplesPassed;'
+          )) {
+            if (-not $core.Contains($token)) { throw "Baseline core behavior missing: $token" }
+          }
+
+          git diff --check
+
+      - name: Validate Bayo2 query frame/draw correlation trace script
+        run: python -m py_compile ./tools/diagnostics/Apply-Bayo2QueryFrameDrawCorrelationTrace.py
+
+      - name: Apply Bayo2 query frame/draw correlation observation trace
+        run: python ./tools/diagnostics/Apply-Bayo2QueryFrameDrawCorrelationTrace.py
+
+      - name: Verify Bayo2 correlation trace is observation-only
+        shell: pwsh
+        run: |
+          $gx2Path = 'src/Cafe/OS/libs/gx2/GX2_Query.cpp'
+          $corePath = 'src/Cafe/HW/Latte/Core/LatteQuery.cpp'
+          $cpPath = 'src/Cafe/HW/Latte/Core/LatteCommandProcessor.cpp'
+          $gx2 = Get-Content $gx2Path -Raw
+          $core = Get-Content $corePath -Raw
+          $cp = Get-Content $cpPath -Raw
+
+          foreach ($marker in @(
+            '[BAYO2_QUERY_CORR] FRAME',
+            '[BAYO2_QUERY_CORR] GET n=',
+            '[BAYO2_QUERY_CORR] GET_NO_SNAPSHOT'
+          )) {
+            if (-not ($core.Contains($marker))) { throw "Missing correlation marker: $marker" }
+          }
+
+          foreach ($token in @(
+            'Bayo2QueryCorr_LogGet(MEMPTR<GX2Query>(query).GetMPTR(), bayo2QueryCorrResult);',
+            '*resultOut = endValue - startValue;',
+            '*(uint64*)(queryInfo->reg + 2) = 0x100000;'
+          )) {
+            if (-not $gx2.Contains($token)) { throw "GX2 observation/baseline token missing: $token" }
+          }
+
+          foreach ($token in @(
+            '*(uint64*)(queryObjectData + 0) = 0;',
+            '*(uint64*)(queryObjectData + 2) = gx2Query->sampleSum;',
+            '*(uint64*)(queryObjectData + 8) = 0;',
+            'it->sampleSum += numSamplesPassed;',
+            'list_queriesInFlight.emplace_back(queryObject);'
+          )) {
+            if (-not $core.Contains($token)) { throw "Core baseline token missing: $token" }
+          }
+
+          if (([regex]::Matches($cp, [regex]::Escape('++s_bayo2QueryCorrDrawSeq;'))).Count -ne 2) {
+            throw 'Expected exactly two draw cursor increments'
+          }
+          if (([regex]::Matches($cp, [regex]::Escape('++s_bayo2QueryCorrFrameSeq;'))).Count -ne 1) {
+            throw 'Expected exactly one frame cursor increment'
+          }
+          foreach ($token in @(
+            'LatteRenderTarget_itHLESwapScanBuffer();',
+            'g_renderer->draw_execute(baseVertex, baseInstance, numInstances, count, physIndices, indexType, m_drawcallContext);',
+            'g_renderer->draw_execute(baseVertex, baseInstance, numInstances, count, MPTR_NULL, Latte::LATTE_VGT_DMA_INDEX_TYPE::E_INDEX_TYPE::AUTO, m_drawcallContext);'
+          )) {
+            if (-not $cp.Contains($token)) { throw "Command processor baseline token missing: $token" }
+          }
+
+          $diff = git diff --unified=0 -- $gx2Path $corePath $cpPath | Out-String
+          $added = (($diff -split "`r?`n") | Where-Object { $_.StartsWith('+') -and -not $_.StartsWith('+++') }) -join "`n"
+          foreach ($pattern in @(
+            '(?m)^\+\s*\*resultOut\s*=',
+            '(?m)^\+\s*it->sampleSum\s*\+=',
+            '(?m)^\+.*queryObjectData.*=',
+            '(?m)^\+\s*conditionalRenderActive\s*=',
+            '(?m)^\+\s*g_renderer->draw_execute',
+            '(?m)^\+\s*LatteRenderTarget_itHLESwapScanBuffer\(\)'
+          )) {
+            if ([regex]::IsMatch($added, $pattern)) { throw "Behavior-changing added line detected: $pattern" }
+          }
+
+          git diff --check
+          git diff -- $gx2Path $corePath $cpPath
+
+      - name: Setup release mode parameters
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset is installed
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu once
+        run: cmake --build build
+
+      - name: Collect executable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu_release.exe
+          @"
+          Bayonetta 2 CPU Query Frame/Draw Correlation Observation Trace
+          Base query trace: a9e731b1761d12eff97916108b11b19100e3b43d
+          Target: Bayonetta 2 JP 00050000-1011B900 v1
+          Behavior: observation only; query values, return codes, culling, lifetime, renderer results, and draw execution are unchanged
+          Markers: [QUERY_COMPARE], [BAYO2_QUERY_CORR]
+          Correlation: query pointer generation, completed result, zero/nonzero transition, begin/end event, frame range, draw range, finish frame/draw
+          Reproduce the distant flicker with a mostly static camera and keep the full Cemu log.
+          "@ | Set-Content artifact/README_BAYO2_QUERY_CORR.txt
+
+      - name: Upload diagnostic artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: cemu-arm64-bayo2-query-frame-draw-correlation
+          path: ./artifact/
