@@ -1,7 +1,7 @@
 # CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
 
 > 갱신: 2026-08-29 KST  
-> 새 탭은 `TECH_BIBLE.md` → `DEBUG_HISTORY.md` → 이 문서 → `QUERY_COMPARE_ANALYSIS_20260829.md` 순서로 읽는다.  
+> 새 탭은 `TECH_BIBLE.md` → `DEBUG_HISTORY.md` → `DEBUG_HISTORY_20260829_QUERY_COMPARE.md` → 이 문서 → `QUERY_COMPARE_ANALYSIS_20260829.md` 순서로 읽는다.  
 > 이전 대화를 추측해서 복원하지 말고 GitHub 문서를 기준 상태로 삼는다.
 
 ## 1. 현재 최우선 목표
@@ -83,7 +83,7 @@ Therefore f544 coherence remains a real Cemu correctness issue but is strongly d
 
 Never repeat old destructive unseeded roundtrip `001df98...`.
 
-## 4. Latest query-comparison observation build
+## 4. Query-comparison observation baseline
 
 Branch:
 `diag-bayo2-xcx-query-consumption`
@@ -110,7 +110,7 @@ Detailed analysis:
 
 ## 5. XCX runtime result — GPU query path
 
-Input log:
+First query-comparison capture:
 `log(20260828-120900).txt`
 
 Title:
@@ -128,20 +128,93 @@ Not observed:
 - `GET_READY_NONZERO`
 - exported `GX2QueryBeginConditionalRender/EndConditionalRender` markers
 
-Interpretation:
-- XCX definitely emits huge GPU query traffic.
-- It does **not** consume these results through exported `GX2QueryGetOcclusionResult()` in this capture.
-- exported conditional-render API was also not observed.
-- query results may still be consumed through low-level PM4/display-list `IT_SET_PREDICATION` or direct guest-memory access; this boundary is uninstrumented.
+This established that XCX does not consume these query results through exported `GX2QueryGetOcclusionResult()` in that capture.
 
-Historical XCX source workaround:
-- GPU query begin preloads endValue `0x100000`
-- comment says default-zero query latency can hide objects and cause flicker
-- current log proves many queries also legitimately complete with `sampleSum=0`, so that workaround does not cover all zero outcomes.
+## 6. XCX low-level predication static finding
 
-Do not add the same workaround again; it already exists.
+At baseline source, `LatteCP_itSetPredication()`:
+- reads `physQueryInfo` and `flags`
+- decodes `queryTypeFlag` and `pixelsMustPassFlag`
+- toggles only `conditionalRenderActive`
+- does **not** read query memory/result
+- does **not** test zero/nonzero
+- does **not** invoke renderer predication/conditional rendering
+- `conditionalRenderActive` is not used to gate draw execution elsewhere in this source
 
-## 6. Bayonetta 2 runtime result — CPU query path
+Also:
+- GX2 producer encodes `dontWait` at bit 19
+- consumer local code computes `(flags >> 1) & 19`, which does not extract bit 19
+- that local value is unused, therefore this was not changed
+
+Static interpretation before runtime trace:
+- current Cemu low-level predication handler is effectively a packet/state stub, not an actual query-result consumer
+- raw `IT_SET_PREDICATION` traffic still had to be observed before deciding whether XCX used that path
+
+## 7. XCX `IT_SET_PREDICATION` runtime observation — CLOSED FOR CAPTURE
+
+Observation branch:
+`diag-xcx-predication-consumption`
+
+Base:
+`a9e731b1761d12eff97916108b11b19100e3b43d`
+
+Runtime HEAD:
+`e6fac132fff290ee3d54a58d4e8e7c03f391f25e`
+
+Workflow:
+`Cemu ARM64 XCX Predication Consumption Trace`
+
+Run:
+`33227559831` — **SUCCESS**
+
+Behavior:
+- observation only
+- existing `[QUERY_COMPARE]` trace retained
+- XCX `0x100000` workaround retained
+- no query values, lifetime, bookkeeping, renderer visibility, return behavior changed
+
+Input runtime log:
+- uploaded `log.zip` → `log.txt`
+- first line `Init Cemu e6fac13`
+- XCX JP `00050000-10116100`, v48
+- therefore correct observation binary usage confirmed
+
+Runtime marker result:
+- `[XCX_PREDICATION]` = **0**
+- `[QUERY_COMPARE] CONDITIONAL_BEGIN` = **0**
+- `[QUERY_COMPARE] CONDITIONAL_END` = **0**
+- `[QUERY_COMPARE] GET_*` = **0**
+
+At the same time query production remained extremely active:
+- sampled `API_BEGIN/API_END` reached at least `n=89000`
+- type = **2 only**
+- latest sampled point: `FINISH_ZERO n=61000 total=85597 nonzero=24597`
+- at that point ≈71.3% completed zero / 28.7% completed nonzero
+
+Important additional observation from first 128 complete FINISH records:
+- 16 contiguous query slots
+- first slot `27998b80`
+- exact `0x40` stride, matching `sizeof(GX2Query)==0x40`
+- 13/16 slots produced both zero and nonzero results during reuse
+
+Examples:
+- `27998bc0`: zero → nonzero `2449511` → zero
+- `27998f00`: zero → nonzero `2461251` → zero → nonzero
+- `27998e40`: zero → `52565` → zero → later nonzero
+
+Conclusion:
+- XCX GPU query slots are actively reused and their completed results genuinely oscillate zero/nonzero.
+- zero cannot be globally classified as merely uninitialized/default.
+- **No raw `IT_SET_PREDICATION` packet reached `LatteCP_itSetPredication()` in this capture**, including the instrumented top-level and indirect/display-list call sites.
+- Therefore the hypothesis `XCX bypasses exported API and consumes query through low-level IT_SET_PREDICATION` is **closed for this capture**.
+
+Remaining XCX possibilities:
+- direct guest-code reads of query memory/result fields
+- query traffic whose consumer is elsewhere/not visibility-driving in this captured path
+
+Do not implement predication or change the historical `0x100000` workaround based on this negative result.
+
+## 8. Bayonetta 2 runtime result — CPU query path
 
 Input log:
 `log(20260828-121022).txt`
@@ -168,17 +241,18 @@ Important interpretation:
 - CPU query initialization uses `OCPU` not-ready magic; GET returns FALSE while it remains.
 - no `GET_NOT_READY` was observed and sampled ready-zero values follow completed zero results.
 
-Therefore **do not globally force Bayo2 ready-zero to visible** yet. That would alter many apparently completed legitimate zero occlusion results.
+Therefore **do not globally force Bayo2 ready-zero to visible** yet.
 
-## 7. Key comparison conclusion
+## 9. Key comparison conclusion
 
 XCX and Bayonetta 2 do **not** use the same observed query-consumption path:
 
 XCX:
 - GPU query type2
-- >=75k query traffic
-- no exported CPU GET observed
-- no exported conditional API observed
+- >=89k query traffic in latest capture
+- no exported CPU GET
+- no exported conditional API
+- no raw `IT_SET_PREDICATION` observed
 
 Bayonetta 2:
 - CPU query type0
@@ -187,20 +261,19 @@ Bayonetta 2:
 - completed zero results dominate sampled reads
 
 Thus:
-- XCX is a useful control proving Cemu has historical query-related flicker mechanisms.
+- XCX remains useful as a control proving genuine zero/nonzero visibility-query dynamics and historical query-related flicker concerns.
 - current evidence does **not** justify transplanting the XCX workaround to Bayonetta 2.
-- the earlier provisional Bayo2 `late result -> default zero -> hidden object` theory is strongly weakened by the captured CPU-query ordering.
+- the earlier provisional Bayo2 `late result -> default zero -> hidden object` theory remains strongly weakened.
 
-## 8. Current live questions
+## 10. Current live questions
 
 ### XCX
-Where are GPU query results actually consumed?
+Where are GPU query results actually consumed, if at all, in the captured path?
 
-High-value missing boundary:
-- `LatteCP_itSetPredication()` / raw `IT_SET_PREDICATION`
-- query address and flags at predication time
-- whether XCX low-level display lists bypass exported conditional-render API
-- whether zero/nonzero completed results correlate with the visible character/object flicker
+Remaining plausible boundary:
+- direct guest-memory access to GX2Query result fields
+
+Do not immediately instrument the entire JIT memory-read path; that would be high-overhead and broad. XCX predication tracing is complete and should not be repeated.
 
 ### Bayonetta 2
 What do the many completed-zero CPU queries represent?
@@ -211,20 +284,31 @@ Need to determine whether they correspond to:
 - stable legitimate occlusion decisions
 - zero/nonzero oscillation for the same query/object slot around visible flicker
 
-## 9. NEXT ACTION
+## 11. NEXT ACTION
 
-**No behavior-changing A/B yet. No new global force-visible patch.**
+**No behavior-changing A/B yet. No global force-visible patch.**
 
-Next tab should begin by reading the two logs through `QUERY_COMPARE_ANALYSIS_20260829.md`, then perform observation-first narrowing:
+Next high-value experiment is Bayonetta 2 observation-only CPU-query correlation:
 
-1. Static-read `GX2_Query.cpp`, `LatteQuery.cpp`, `LatteCP_itSetPredication()` and preserve the distinction between API-level and PM4-level consumption.
-2. For XCX, design the smallest observation-only `IT_SET_PREDICATION` trace. Log query address, flags, queryTypeFlag, pixelsMustPass, dontWait and current query memory/result if safe.
-3. For Bayonetta 2, design observation that correlates CPU query pointer/result transitions with frame/draw timing. Do not repeat nested/duplicate bookkeeping trace.
-4. Only if one title shows a concrete wrong visibility decision should a single behavior A/B be proposed.
-5. Implementation/new workflow/CI requires a fresh user `ㄱㄱ` in the new tab.
+1. Create an actual command-stream frame sequence using the processed scanbuffer-swap boundary; do **not** use `LatteGPUState.flipCounter` as a generic Bayo frame counter.
+2. Create a monotonic draw sequence around `DrawPassContext::executeDraw()`.
+3. Track each query pointer with a reuse generation; pointer alone must not be treated as one permanent query lifetime.
+4. On GPU-side BEGIN/END/FINISH record pointer + generation + event range + begin/end frameSeq + begin/end drawSeq + `sampleSum`.
+5. On CPU GET record pointer + generation + result and classify completed transitions: `0→0`, `0→nonzero`, `nonzero→0`, `nonzero→nonzero`.
+6. Keep logging sampled/summary-oriented; do not dump every draw.
+7. Use this to determine whether stable query slots oscillate zero/nonzero across adjacent visible frames and whether their lifetimes span narrow draw ranges consistent with object visibility.
+8. Only after a concrete wrong visibility correlation should one behavior A/B be proposed.
 
-## 10. New-tab start prompt
+Do not repeat:
+- nested/duplicate occlusion bookkeeping experiment
+- f544 seeded/unseeded coherence experiments
+- XCX `IT_SET_PREDICATION` observation
+- Bayo2 global ready-zero force-visible
+
+**Implementation/new workflow/CI requires a fresh user `ㄱㄱ`.**
+
+## 12. New-tab start prompt
 
 Use exactly this context:
 
-> Cemu Windows ARM64 / Adreno 구동분석·디버그 작업을 이어간다. GitHub 저장소 `npark2860-cyber/Cemu-Windows-ARM64`의 `TECH_BIBLE.md`, `DEBUG_HISTORY.md`, `CURRENT_HANDOFF.md`, `QUERY_COMPARE_ANALYSIS_20260829.md`를 먼저 읽고, `CURRENT_HANDOFF.md`의 저장소/브랜치/HEAD와 현재 GitHub 상태를 확인해라. 이전 대화를 추측해서 복원하지 말고 이 문서들을 기준 상태로 삼아라. Bayonetta 2와 XCX의 query-consumption 로그 비교 결과를 그대로 유지하고, 이미 배제된 실험을 반복하지 마라. 특히 Bayo2 ready-zero를 premature-zero로 단정하거나 XCX workaround를 그대로 이식하지 마라. `CURRENT_HANDOFF.md`의 NEXT ACTION부터 즉시 계속해라. 코드 수정/새 workflow/CI는 내가 새로 `ㄱㄱ`하기 전에는 시작하지 마라.
+> Cemu Windows ARM64 / Adreno 구동분석·디버그 작업을 이어간다. GitHub 저장소 `npark2860-cyber/Cemu-Windows-ARM64`의 `TECH_BIBLE.md`, `DEBUG_HISTORY.md`, `DEBUG_HISTORY_20260829_QUERY_COMPARE.md`, `CURRENT_HANDOFF.md`, `QUERY_COMPARE_ANALYSIS_20260829.md`를 먼저 읽고, `CURRENT_HANDOFF.md`의 저장소/브랜치/HEAD와 현재 GitHub 상태를 확인해라. 이전 대화를 추측해서 복원하지 말고 이 문서들을 기준 상태로 삼아라. XCX raw `IT_SET_PREDICATION` observation 결과가 0건으로 끝났다는 최신 결론을 유지하고, 이미 배제된 실험을 반복하지 마라. Bayonetta 2 ready-zero를 premature-zero로 단정하거나 XCX workaround를 그대로 이식하지 마라. `CURRENT_HANDOFF.md`의 NEXT ACTION부터 즉시 계속해라. 코드 수정/새 workflow/CI는 내가 새로 `ㄱㄱ`하기 전에는 시작하지 마라.
