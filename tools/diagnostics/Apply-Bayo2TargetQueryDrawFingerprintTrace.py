@@ -238,3 +238,7 @@ vk = replace_count(
 vk_path.write_text(vk, encoding="utf-8", newline="\n")
 
 print("Bayonetta 2 targeted query/draw fingerprint observation trace installed; behavior unchanged")
+
+# Apply the approved next-stage observation trace in the same diagnostic build.
+downstream_path = Path("tools/diagnostics/Apply-Bayo2TargetTransitionDownstreamTrace.py")
+exec(compile(downstream_path.read_text(encoding="utf-8"), str(downstream_path), "exec"))
