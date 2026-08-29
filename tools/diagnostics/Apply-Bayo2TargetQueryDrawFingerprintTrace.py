@@ -216,13 +216,9 @@ static void Bayo2TargetTrace_LogDrawFingerprint(
 
 vk = replace_once(
     vk,
-    '''extern bool hasValidFramebufferAttached;
-
-// includes only states that may change during minimal drawcalls
+    '''// includes only states that may change during minimal drawcalls
 ''',
-    '''extern bool hasValidFramebufferAttached;
-
-''' + vk_helpers + '''// includes only states that may change during minimal drawcalls
+    vk_helpers + '''// includes only states that may change during minimal drawcalls
 ''',
     "Vulkan target helper insertion",
 )
