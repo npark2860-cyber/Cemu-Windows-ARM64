@@ -1,9 +1,9 @@
-name: Cemu ARM64 Bayo2 XCX Query Consumption Trace
+name: Cemu ARM64 XCX Predication Consumption Trace
 
 on:
   push:
     branches:
-      - diag-bayo2-xcx-query-consumption
+      - diag-xcx-predication-consumption
   workflow_dispatch:
 
 concurrency:
@@ -147,6 +147,59 @@ jobs:
           git diff --check
           git diff -- $gx2Path $corePath
 
+      - name: Validate XCX predication trace script
+        run: python -m py_compile ./tools/diagnostics/Apply-XCXPredicationTrace.py
+
+      - name: Apply XCX IT_SET_PREDICATION observation trace
+        run: python ./tools/diagnostics/Apply-XCXPredicationTrace.py
+
+      - name: Verify XCX predication trace is observation-only
+        shell: pwsh
+        run: |
+          $cpPath = 'src/Cafe/HW/Latte/Core/LatteCommandProcessor.cpp'
+          $cp = Get-Content $cpPath -Raw
+
+          foreach ($marker in @(
+            '[XCX_PREDICATION] ENABLE',
+            '[XCX_PREDICATION] DISABLE',
+            'source={} phys={:08x} virt={:08x}',
+            'LatteCP_itSetPredication(cmdData, nWords, "indirect");',
+            'LatteCP_itSetPredication(cmd, nWords, "toplevel");'
+          )) {
+            if (-not $cp.Contains($marker)) { throw "Missing predication marker/postcondition: $marker" }
+          }
+
+          foreach ($id in @(
+            '0x00050000101C4C00ULL',
+            '0x00050000101C4D00ULL',
+            '0x0005000010116100ULL'
+          )) {
+            if (-not $cp.Contains($id)) { throw "Missing XCX predication title gate: $id" }
+          }
+
+          foreach ($token in @(
+            'conditionalRenderActive = false;',
+            'conditionalRenderActive = true;',
+            'uint32 dontWaitFlag = (flags >> 1) & 19;'
+          )) {
+            if (-not $cp.Contains($token)) { throw "Baseline predication behavior missing: $token" }
+          }
+
+          $diff = git diff --unified=0 -- $cpPath | Out-String
+          $added = (($diff -split "`r?`n") | Where-Object { $_.StartsWith('+') -and -not $_.StartsWith('+++') }) -join "`n"
+          foreach ($pattern in @(
+            '(?m)^\+.*conditionalRenderActive\s*=',
+            '(?m)^\+.*memory_write',
+            '(?m)^\+.*memcpy',
+            '(?m)^\+.*memset',
+            '(?m)^\+.*\*queryMem\s*='
+          )) {
+            if ([regex]::IsMatch($added, $pattern)) { throw "Behavior-changing predication line detected: $pattern" }
+          }
+
+          git diff --check
+          git diff -- $cpPath
+
       - name: Setup release mode parameters
         run: |
           echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
@@ -202,21 +255,27 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifact | Out-Null
           Copy-Item bin/Cemu_release.exe artifact/Cemu_release.exe
           @"
-          Bayonetta 2 / Xenoblade Chronicles X Query Consumption Observation Trace
-          Base: fa17d834bfebd9a41c598b1b1b702000d0ff4618
-          Targets:
-            Bayonetta 2 JP 00050000-1011B900
+          Xenoblade Chronicles X IT_SET_PREDICATION Observation Trace
+          Base query-comparison build: a9e731b1761d12eff97916108b11b19100e3b43d
+          Target:
+            XCX JP 00050000-10116100
             XCX EU 00050000-101C4C00
             XCX US 00050000-101C4D00
-            XCX JP 00050000-10116100
-          Behavior: observation only; no query values, return codes, lifetime, ordering, or renderer results changed
-          Marker: [QUERY_COMPARE]
-          Compare: API query type, GET_NOT_READY, GET_READY_ZERO/NONZERO, FINISH_ZERO/NONZERO, conditional-render calls
-          Run each game separately and keep the full Cemu log.
-          "@ | Set-Content artifact/README_QUERY_COMPARE.txt
+          Behavior: observation only; no query values, return codes, predication state, draw behavior, or XCX 0x100000 workaround changed
+          Existing marker: [QUERY_COMPARE]
+          New marker: [XCX_PREDICATION]
+          Captures:
+            packet source (toplevel/indirect)
+            physical and translated virtual query address
+            raw flags/queryType/pixelsMustPass/dontWait bit19
+            legacy current dontWait decode for comparison
+            raw start/end/result/high-bit state
+            whether raw memory still contains the historical 0x100000 seed
+          Run XCX and keep the full Cemu log.
+          "@ | Set-Content artifact/README_XCX_PREDICATION.txt
 
       - name: Upload diagnostic artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-bayo2-xcx-query-consumption-trace
+          name: cemu-arm64-xcx-predication-consumption-trace
           path: ./artifact/
