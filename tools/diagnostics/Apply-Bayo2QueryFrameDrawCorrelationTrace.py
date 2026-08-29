@@ -124,7 +124,7 @@ state_anchor = '''LatteQueryObject* _currentlyActiveRendererQuery = {0};
 
 uint64 LatteQuery_getNextEventId()
 '''
-state_block = r'''LatteQueryObject* _currentlyActiveRendererQuery = {0};
+state_block = '''LatteQueryObject* _currentlyActiveRendererQuery = {0};
 
 uint64 Bayo2QueryCorr_GetFrameSeq();
 uint64 Bayo2QueryCorr_GetDrawSeq();
