@@ -23,7 +23,7 @@ def replace_count(text: str, old: str, new: str, expected: int, label: str) -> s
 core_path = Path("src/Cafe/HW/Latte/Core/LatteQuery.cpp")
 core = core_path.read_text(encoding="utf-8")
 
-target_helpers = r'''static sint32 Bayo2QueryTarget_GetIndex(MPTR queryMPTR)
+target_helpers = '''static sint32 Bayo2QueryTarget_GetIndex(MPTR queryMPTR)
 {
 \tswitch (queryMPTR)
 \t{
@@ -139,7 +139,7 @@ core_path.write_text(core, encoding="utf-8", newline="\n")
 vk_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp")
 vk = vk_path.read_text(encoding="utf-8")
 
-vk_helpers = r'''uint64 Bayo2QueryCorr_GetFrameSeq();
+vk_helpers = '''uint64 Bayo2QueryCorr_GetFrameSeq();
 uint64 Bayo2QueryCorr_GetDrawSeq();
 uint32 Bayo2QueryTarget_GetActiveTargets(MPTR* queryMPTRs, uint64* generations, sint32* targetIndices, uint32 capacity);
 
