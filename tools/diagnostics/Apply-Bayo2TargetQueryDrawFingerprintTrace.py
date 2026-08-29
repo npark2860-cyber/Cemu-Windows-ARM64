@@ -223,11 +223,9 @@ vk = replace_once(
     "Vulkan target helper insertion",
 )
 
-pipeline_anchor = '''\tPipelineInfo* pipeline_info = draw_getOrCreateGraphicsPipeline(count);
-\tm_state.activePipelineInfo = pipeline_info;
+pipeline_anchor = '''\tm_state.activePipelineInfo = pipeline_info;
 '''
-pipeline_replacement = '''\tPipelineInfo* pipeline_info = draw_getOrCreateGraphicsPipeline(count);
-\tm_state.activePipelineInfo = pipeline_info;
+pipeline_replacement = '''\tm_state.activePipelineInfo = pipeline_info;
 \tBayo2TargetTrace_LogDrawFingerprint(pipeline_info, baseVertex, baseInstance, instanceCount, count, indexDataMPTR, indexType);
 '''
 vk = replace_count(
