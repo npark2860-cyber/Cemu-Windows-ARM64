@@ -242,3 +242,7 @@ print("Bayonetta 2 targeted query/draw fingerprint observation trace installed; 
 # Apply the approved next-stage observation trace in the same diagnostic build.
 downstream_path = Path("tools/diagnostics/Apply-Bayo2TargetTransitionDownstreamTrace.py")
 exec(compile(downstream_path.read_text(encoding="utf-8"), str(downstream_path), "exec"))
+
+# Apply the approved target0 downstream vertex/uniform resource observation trace.
+resource_path = Path("tools/diagnostics/Apply-Bayo2Target0ResourceIdentityTrace.py")
+exec(compile(resource_path.read_text(encoding="utf-8"), str(resource_path), "exec"))
