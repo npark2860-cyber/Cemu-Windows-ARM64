@@ -1,175 +1,174 @@
 # CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
 
-> 이 파일은 **현재 상태만** 유지한다. 완료된 실험은 `DEBUG_HISTORY.md`로 이동한다. 새 탭은 이 파일의 `NEXT ACTION`부터 시작한다.
+> 이 파일은 **현재 상태만** 유지한다. 완료된 실험은 `DEBUG_HISTORY.md`로 이동한다. 새 탭은 실제 GitHub 상태와 이 문서를 대조한 뒤 `NEXT ACTION`부터 시작한다.
 
 ## 1. Current goal
 
-Windows ARM64 / Snapdragon X Elite / Adreno X1-85 환경에서 Cemu Vulkan의 멈춤/강종/저성능 원인을 범용 진단판으로 좁힌다.
+Bayonetta 2의 CPU occlusion query `type=0`에서 실제 완료·소비된 zero/nonzero 결과가 바뀔 때, **target0 query `0x46a92ec8` 직후의 동일 downstream pipeline family에서 guest resource identity/content가 달라지는지** 확인한다.
 
-현재 우선순위는 **진단 UI에서 회색 비활성 상태인 항목들이 왜 비활성인지 소스에서 확인하고, 실제 runtime probe가 빠진 항목을 한 그룹씩 연결하는 것**이다.
+현재 단계는 behavior fix가 아니라 **observation-only resource correlation**이다.
 
 ## 2. Repository state
 
 - Repository: `npark2860-cyber/Cemu-Windows-ARM64`
-- Active branch: `runtime-experiments-arm64`
-- Last verified **code-changing** HEAD: `8bca12fa5119f12b34b73ba5482d2ffeea89f5a8`
-- Commit: `Fix literal tab escapes in RT diagnostics`
+- Handoff branch: `diag-bayo2-target0-resource-identity`
+- Last code-changing checkpoint: `143d5631f48a3384c19e7366c39d9a1afb43ca5b`
+- Code commit: `diagnostics: fix target0 resource trace constness`
+- CI build branch: `diag-bayo2-target-query-draw-fingerprint`
+- CI build branch code HEAD: `143d5631f48a3384c19e7366c39d9a1afb43ca5b`
 
-주의: 이 handoff 체계를 만들면서 위 code checkpoint 뒤에 문서 전용 commit이 추가되었다. 다음 탭에서는 반드시 GitHub에서 실제 branch HEAD를 다시 읽고, `8bca12fa...` 이후 변경이 문서-only인지 코드 변경인지 확인한다. **소스 기준점은 `8bca12fa...`** 이다.
+`diag-bayo2-target0-resource-identity`는 `143d5631...`까지 fast-forward한 뒤 문서 전용 commit이 추가되어 있다. 따라서 **실험 코드 기준점은 `143d5631...`** 이며, 실제 branch HEAD는 시작 시 다시 확인한다.
 
-## 3. Last successful build / current test build
+`main`에는 이 실험 변경을 넣지 않는다.
 
-### Latest successful CI
+## 3. Build checkpoints
 
-- Workflow: `Cemu ARM64 Diagnostic Edition`
-- Run: `#24`
-- Run ID: `33017387410`
-- Head SHA: `8bca12fa5119f12b34b73ba5482d2ffeea89f5a8`
+### Last successful downstream build
+
+- Commit: `b1694fc46ba56de381fd5e9e6ec37bbb93ec3f48`
+- Message: `diagnostics: chain Bayo2 downstream trace`
+- Workflow: `Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
+- Run: `#7`
+- Run ID: `33247256523`
 - Result: **SUCCESS**
-- Artifact: `cemu-arm64-diagnostic-edition`
-- Artifact ID: `9626115561`
-- Artifact digest: `sha256:9540922b3f7b0155148f6eadcf7469e4d1e4d58e9591bee53cbdb05429f040f3`
 
-### Runtime state
+이 checkpoint로 target-transition downstream trace 자체는 compile 가능하다고 확정한다.
 
-- 위 diagnostic build는 실행되어 **ARM64 Diagnostics UI가 열리는 것까지 확인**됨.
-- 이 탭에서는 게임별 전체 runtime A/B를 새로 수행하지 않음.
-- 과거 gameplay 정상 기준: VS DEFAULT_VAL synthesize 적용 후 Adreno X1-85에서 BOTW/TTT2 렌더 정상 확인.
+### First target0 resource build
 
-## 4. Current Diagnostics UI state
+- Commit: `725aae2f63d6b3e766c37efe26c46341059dae83`
+- Run: `#8`
+- Run ID: `33286935862`
+- Result: **FAILURE**
+- trace apply/static verification은 통과.
+- `Build Cemu once`에서 실패.
 
-Reference screenshot: `스크린샷 2026-08-27 073356.png` (conversation attachment; repository file 아님)
+정적 대조에서 resource helper의 `const uint32*`가 기존 `getCurrentBufferStride(uint32*)` API와 맞지 않는 compile incompatibility를 확인했다.
 
-- `Diagnostics master`: **OFF / unchecked**
-- `Preset`: **Custom**
-- `Hitch threshold (ms)`: **50**
-- 화면에 보이는 모든 개별 checkbox: **unchecked**
+### Current validation build
 
-### Enabled/selectable but currently OFF
+- Commit: `143d5631f48a3384c19e7366c39d9a1afb43ca5b`
+- Run: `#9`
+- Run ID: `33349115978`
+- Current state at this handoff update: **IN PROGRESS**
+- 성공한 단계:
+  - known-good base patches 적용
+  - query-consumption trace validate/apply/observation-only verify
+  - frame/draw correlation trace validate/apply/verify
+  - targeted fingerprint + target0 resource trace validate/apply/verify
+  - ARM64 toolchain setup
+- 현재 확인된 진행 지점: `Configure`
 
-Left column:
+현재 build conclusion과 artifact는 아직 확정하지 않는다.
 
-- JIT block lifecycle
-- Branch patching
-- JIT execution entry
-- Guest memory access
-- Queue submit
-- Pipeline creation
-- Pipeline state snapshot
-- VS diagnostics
-- GS diagnostics
-- Pipeline barriers
-- WAW dependency
-- Render-pass split
+## 4. Confirmed runtime facts that must be preserved
 
-Right column:
+### Bayonetta 2
 
-- Guest/host JIT mapping
-- readonly / I-cache
-- ARM64 exception context
-- Pipeline cache
-- Pipeline failure
-- Shader hash association
-- PS diagnostics
-- Shader auxHash
-- Render-pass begin/end
-- RAW dependency
-- Self dependency
-- Synchronization summary
+- CPU occlusion query `type=0` 사용.
+- completed `GET_READY_ZERO`가 대량 존재.
+- 현재 캡처에서는 zero를 missing snapshot 또는 overwritten-unconsumed slot으로 설명할 근거가 없다.
+- 따라서 현재 관찰된 ready-zero는 실제 완료·소비된 query 결과로 취급한다.
 
-### Grey / disabled in current UI
+### Xenoblade Chronicles X
 
-Left column:
+- GPU occlusion query `type=2` 사용.
+- 캡처에서 exported `GX2QueryGetOcclusionResult()` 소비는 관찰되지 않았다.
 
-- Semaphore flow
-- Device-lost / submit errors
-- Pipeline-cache mismatch
-- Shader interface
-- SPIR-V compile failure
-- Dump every shader
-- FBO changes
-- Load/store behavior
-- Feedback-loop support
+### Comparison rule
 
-Right column:
+- Bayo2와 XCX의 query-consumption 경로를 동일하다고 가정하지 않는다.
+- XCX의 소비 모델을 Bayo2에 그대로 대입하지 않는다.
 
-- Command-buffer lifecycle
-- Fence lifecycle
-- Submit completion
-- Shader creation
-- GLSL compile failure
-- Dump failed shader
-- Attachment usage
-- Render-target aliasing
-- Feedback-loop use
+## 5. Current observation chain
 
-**Interpretation rule:** grey means “원인 배제”가 아니다. UI 항목은 존재하지만 backend/probe가 미연결이거나 현재 build 조건에서 지원되지 않는 상태로 취급한다.
+현재 code checkpoint는 다음 observation-only chain을 포함한다.
 
-## 5. Confirmed facts
+- `[BAYO2_QUERY_CORR]`
+- `[BAYO2_TARGET]`
+- `[BAYO2_DOWNSTREAM]`
+- `[BAYO2_RESOURCE]`
 
-- Windows ARM64 build toolchain 자체는 현재 동작한다.
-- Run #24가 성공했으므로 현재 source checkpoint `8bca12fa...`는 CI compile 가능하다.
-- 과거 compile regression은 Configure가 아니라 `Build Cemu` 단계에서 발생했으며 현재 checkpoint에서는 해결됨.
-- VS DEFAULT_VAL synthesize는 Adreno shader key 문제 해결에 효과가 있었고 확정 기반 수정이다.
-- Wii U decrypt는 ARM64에서 동작 확인됨.
-- Diagnostics UI의 회색 항목은 현재 선택할 수 없다.
+Target transition watch:
 
-## 6. Ruled out / do not repeat blindly
+- `0 -> nonzero`
+- `nonzero -> 0`
+- transition 직후 정확히 다음 3 frame을 관찰
 
-- “ARM64라서 CMake/vcpkg 자체가 근본적으로 빌드 불가” 가설은 현재 Run #24 성공으로 배제.
-- 과거의 `33006509619` 같은 다른 프로젝트/Eden 계열 Run ID를 Cemu Run으로 재사용하지 말 것.
-- VS DEFAULT_VAL synthesize를 제거하여 원점 회귀하는 실험 금지.
-- 빌드 실패 원인을 확인하지 않고 다음 진단 기능을 계속 누적하는 방식 금지.
+Target0 resource filter:
 
-## 7. Live hypotheses
+- query: `0x46a92ec8`
+- pipeline stateHash: `0x4addb8b25c8fc2bf`
+- VS baseHash: `0xdba0c5a2b50b7103`
+- PS baseHash: `0x2360006f2b86aae5`
 
-1. 회색 항목 중 일부는 UI 정의만 있고 실제 backend probe/flag 연결이 빠져 있다.
-2. 일부는 platform/build feature guard 때문에 Windows ARM64에서 의도치 않게 disable 되어 있을 수 있다.
-3. Vulkan 멈춤/강종의 핵심을 잡으려면 submit/synchronization/lifetime 계열의 미연결 진단이 특히 중요할 가능성이 높다.
-4. Command buffer / fence / semaphore / submit completion / device-lost 로그를 동시에 무조건 켜기보다 각각 독립 toggle로 연결해야 A/B가 가능하다.
+`[BAYO2_RESOURCE] DRAW` 비교 필드:
 
-## 8. Files changed in this handoff tab
+- `vbCount`, `vbIdentity`, `vbContent`, first VB address/size/stride
+- VS CB identity/content + uniform-var hash
+- PS CB identity/content + uniform-var hash
+- GS CB identity/content + uniform-var hash
+- transition/watch/frame/draw correlation
 
-Source code: **변경 없음**
+## 6. Current code change
 
-Documentation added at repository root:
+`tools/diagnostics/Apply-Bayo2Target0ResourceIdentityTrace.py`
 
-- `TECH_BIBLE.md`
-- `DEBUG_HISTORY.md`
-- `CURRENT_HANDOFF.md`
+`143d5631...`에서 수정한 것은 pointer constness 두 곳뿐이다.
 
-## 9. Latest log / dump references
+- vertex-buffer summary helper `ctx`: `const uint32*` -> `uint32*`
+- caller local `ctx`: `const uint32*` -> `uint32*`
 
-- 이 handoff 작성 탭에서 새 게임 runtime log/dump는 제공되지 않음.
-- 최신 UI 상태 근거: `스크린샷 2026-08-27 073356.png`
-- 새 로그/덤프가 들어오면 파일명을 이 섹션에 즉시 추가한다.
+query result, draw state, renderer behavior는 변경하지 않았다.
+
+## 7. Ruled out / do not repeat
+
+- Bayo2 ready-zero를 단순 NOT_READY로 취급하는 해석 반복 금지.
+- missing snapshot / overwritten-unconsumed 가설을 현재 동일 캡처 조건에서 반복 금지.
+- Bayo2와 XCX가 같은 exported consumption path를 사용한다고 가정 금지.
+- 이미 성공한 `b1694fc...` downstream trace를 원인 확인 없이 되돌리지 말 것.
+- build 실패 원인을 확인하지 않은 채 다음 instrumentation layer를 추가하지 말 것.
+
+## 8. Live question
+
+고정 pipeline family의 downstream draw에서 query transition 방향에 따라 다음 중 무엇이 달라지는가?
+
+1. vertex-buffer identity만 달라지는가
+2. vertex-buffer content만 달라지는가
+3. VS/PS/GS uniform-buffer identity 또는 content가 달라지는가
+4. uniform-variable data hash가 달라지는가
+5. 위 resource fingerprint가 동일한데 query result만 달라지는가
+
+이 질문에 runtime capture로 답하기 전에는 새로운 behavior workaround를 설계하지 않는다.
 
 # NEXT ACTION
 
-1. GitHub에서 `runtime-experiments-arm64`의 실제 HEAD를 확인한다.
-2. `8bca12fa...` 이후가 문서-only commit인지 검증한다.
-3. ARM64 Diagnostics UI를 구현한 파일과 backend diagnostic flag/probe 정의를 찾는다.
-4. 위 **grey/disabled 18개 항목 각각**에 대해 다음 중 어느 상태인지 표로 만든다.
-   - backend 구현 있음 + UI 연결 누락
-   - backend 일부 구현
-   - 완전 미구현
-   - platform/feature guard 때문에 disabled
-5. 첫 구현 대상은 submit/lifetime 그룹으로 한다:
-   - Command-buffer lifecycle
-   - Fence lifecycle
-   - Semaphore flow
-   - Submit completion
-   - Device-lost / submit errors
-6. 한 번에 한 그룹만 연결하고 정적 검증한다.
-7. 정적 검증 통과 후에만 CI를 실행한다.
-8. 새로 확인한 사실/실험 결과는 `DEBUG_HISTORY.md`에 누적하고 이 파일을 다시 최신화한다.
+1. GitHub Actions Run `33349115978`의 최종 conclusion을 확인한다.
+2. **실패 시**:
+   - `Build Cemu once`의 최초 compile/link 오류만 확인한다.
+   - `143d5631...` 이후 최소 수정만 적용한다.
+   - 다른 진단 기능을 추가하지 않는다.
+3. **성공 시**:
+   - artifact 이름/ID/digest를 기록한다.
+   - 해당 artifact를 Bayonetta 2에 실행한다.
+   - target0 `0 -> NZ`와 `NZ -> 0` transition이 포함되도록 로그를 캡처한다.
+4. `[BAYO2_RESOURCE] DRAW`를 transition 방향별로 묶어 다음을 비교한다.
+   - `vbIdentity` / `vbContent`
+   - `vsCbIdentity` / `vsCbContent` / `vsVarHash`
+   - `psCbIdentity` / `psCbContent` / `psVarHash`
+   - `gsCbIdentity` / `gsCbContent` / `gsVarHash`
+5. 이 runtime 결과가 나오기 전에는 instrumentation layer를 추가하지 않는다.
+6. 결과를 `DEBUG_HISTORY.md`에 누적하고 이 파일을 최신화한다.
 
 ## DO NOT ROLLBACK
 
 - VS DEFAULT_VAL synthesize 기반 수정
-- 현재 정상 CI checkpoint `8bca12fa...`의 코드 상태를 근거 없이 되돌리는 작업
-- UI에서 각 실험을 독립적으로 제어해야 한다는 원칙
+- permanent PS DEFAULT_VAL linkage compatibility
+- known-good pre-e834 runtime behavior
+- AArch64 generated-code cache flush fix
+- `b1694fc...`에서 compile 검증된 downstream transition trace
+- observation-only 원칙
 
 ## New-tab startup prompt
 
-`Cemu ARM64 디버그 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, CURRENT_HANDOFF.md를 읽고 실제 브랜치/HEAD까지 확인한 뒤, CURRENT_HANDOFF.md의 NEXT ACTION부터 바로 실행해. 이전 대화 추측 금지, 이미 배제된 실험 반복 금지, 완료 후 문서 갱신.`
+`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, CURRENT_HANDOFF.md를 먼저 읽고 실제 branch/HEAD/Actions 상태와 대조해. 현재 code checkpoint는 CURRENT_HANDOFF의 값을 기준으로 확인하고 NEXT ACTION부터 실행해. Bayo2/ XCX query-consumption 차이를 유지하고 이미 배제된 실험을 반복하지 마. main은 건드리지 마.`
