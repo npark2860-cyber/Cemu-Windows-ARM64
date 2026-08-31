@@ -104,7 +104,7 @@ struct Bayo2Target0UniformSummary
 
 static Bayo2Target0ResourceBindingSummary Bayo2Target0ResourceTrace_SummarizeVertexBuffers(
 \tconst PipelineInfo* pipelineInfo,
-\tconst uint32* ctx)
+\tuint32* ctx)
 {
 \tBayo2Target0ResourceBindingSummary summary{};
 \tif (pipelineInfo == nullptr || pipelineInfo->fetchShader == nullptr || ctx == nullptr)
@@ -238,7 +238,7 @@ static void Bayo2Target0ResourceTrace_LogDrawResources(
 \tif (!hasTarget0Watch)
 \t\treturn;
 
-\tconst uint32* ctx = LatteGPUState.contextNew.GetRawView();
+\tuint32* ctx = LatteGPUState.contextNew.GetRawView();
 \tconst auto vertexBuffers = Bayo2Target0ResourceTrace_SummarizeVertexBuffers(pipelineInfo, ctx);
 \tconst auto vsUniform = Bayo2Target0ResourceTrace_SummarizeUniformStage(
 \t\tvertexShader, ctx, mmSQ_VTX_UNIFORM_BLOCK_START, s_vkUniformDataVS, static_cast<uint32>(sizeof(s_vkUniformDataVS)));
