@@ -25,7 +25,7 @@ def replace_count(text: str, old: str, new: str, expected: int, label: str) -> s
 vk_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp")
 vk = vk_path.read_text(encoding="utf-8")
 
-resource_helpers = r'''extern float s_vkUniformDataVS[512 * 4];
+resource_helpers = '''extern float s_vkUniformDataVS[512 * 4];
 extern float s_vkUniformDataPS[512 * 4];
 extern float s_vkUniformDataGS[512 * 4];
 
