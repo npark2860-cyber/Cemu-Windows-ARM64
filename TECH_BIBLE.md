@@ -8,7 +8,7 @@
 - Primary hardware: **Snapdragon X Elite / Adreno X1-85**
 - Primary graphics API: **Vulkan**
 - Repository: `npark2860-cyber/Cemu-Windows-ARM64`
-- Active debug branch: `runtime-experiments-arm64`
+- 현재 작업 branch/HEAD는 고정값으로 이 문서에 박지 않고 **`CURRENT_HANDOFF.md`와 실제 GitHub 상태를 source of truth로 사용**한다.
 - 모든 신규 진단/실험 기능은 가능한 한 **UI의 checkbox 또는 동등한 런타임 제어 방식**으로 개별 ON/OFF 가능해야 한다.
 
 ## 2. Build architecture
@@ -49,6 +49,16 @@ Windows ARM64 CI의 핵심 구성:
 - Bayonetta 2: x64 Cemu 2.5/2.6 계열에서는 그래픽 문제가 있어도 실행되지만, 일부 ARM64 빌드에서는 강제 종료가 발생했다.
 - Tekken 관련 과거 그래픽/셰이더 문제와 이후 1P/2P 문제는 서로 다른 이슈로 취급한다.
 
+### 3.4 Bayonetta 2 / XCX occlusion-query facts
+
+현재까지 캡처로 확정된 차이는 다음과 같다.
+
+- **Bayonetta 2**: CPU occlusion query `type=0` 경로를 사용한다.
+- Bayonetta 2에서는 completed `GET_READY_ZERO`가 대량 존재하며, 해당 zero는 snapshot 누락이나 unconsumed slot overwrite로 설명되지 않는다. 즉 현재 캡처 기준으로 실제 완료·소비된 query 결과다.
+- **Xenoblade Chronicles X**: GPU occlusion query `type=2` 경로를 사용한다.
+- XCX 캡처에서는 exported `GX2QueryGetOcclusionResult()` 소비가 관찰되지 않았다.
+- 따라서 Bayo2와 XCX의 query-consumption 모델을 동일하다고 가정하지 않는다.
+
 ## 4. Vulkan / Adreno debugging principles
 
 1. **한 번에 한 변수**를 바꾼다.
@@ -59,6 +69,7 @@ Windows ARM64 CI의 핵심 구성:
 6. Adreno workaround는 GPU vendor/feature 조건과 결합해 범위를 최소화한다.
 7. 일반화 가능한 수정과 진단 전용 코드는 분리한다.
 8. CI 비용 절감을 위해 소스/문법/호출부 정적 검증 후 필요한 경우에만 Actions를 실행한다.
+9. 진단 trace는 가능한 한 observation-only로 유지하고, 관찰 단계와 behavior change 실험을 분리한다.
 
 ## 5. Diagnostic UI policy
 
@@ -120,7 +131,11 @@ Windows ARM64 CI의 핵심 구성:
 ## 8. Rules that must not be violated
 
 - 확정된 VS DEFAULT_VAL synthesize 수정 임의 제거 금지
+- permanent PS DEFAULT_VAL linkage compatibility 수정 임의 제거 금지
+- known-good pre-e834 runtime behavior 임의 제거 금지
+- AArch64 generated-code cache flush 수정 임의 제거 금지
 - 이미 배제된 실험의 무의미한 반복 금지
+- Bayo2와 XCX의 query-consumption 경로를 동일하다고 가정하지 말 것
 - 서로 다른 emulator/project의 Run ID 혼용 금지
 - Eden/SnapRyu의 GitHub Actions Run ID를 Cemu 저장소 Run ID로 취급하지 말 것
 - UI 제어 요구를 무시한 하드코딩 실험 금지
