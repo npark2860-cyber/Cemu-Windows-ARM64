@@ -194,6 +194,12 @@ downstream transition trace 자체는 Windows ARM64에서 compile 가능한 정�
 
 새 resource helper가 `const uint32* ctx`를 `LatteParsedFetchShaderBufferGroup_t::getCurrentBufferStride(uint32*)`에 전달하고 있었다. 기존 API 시그니처와 맞지 않는 compile incompatibility를 확인했다.
 
+### Vertex-buffer interpretation caveat
+
+현재 `vbIdentity` / `vbContent`는 **guest-declared vertex resource fingerprint**다. Vulkan renderer는 실제 GPU-visible vertex-buffer 범위를 게임이 준 size만으로 정하지 않고 max index / stride / attribute max offset 등을 이용해 `fixedBufferSize`를 재계산한다.
+
+따라서 `vbContent`를 Vulkan에 실제 bind/upload된 정확한 전체 byte-range hash라고 해석하지 않는다. 다만 query transition 방향 사이의 guest resource identity/content 변화 비교에는 사용할 수 있다.
+
 ---
 
 ## 2026-08-31 — target0 resource trace constness fix
@@ -214,19 +220,66 @@ query/render behavior 변경 없음.
 - Parent: `725aae2f63d6b3e766c37efe26c46341059dae83`
 - Diff scope: resource trace script only
 
-### Current CI validation
+### CI validation — Run #9
 
 - Workflow: `Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
 - Run number: `#9`
 - Run ID: `33349115978`
 - Head: `143d5631f48a3384c19e7366c39d9a1afb43ca5b`
-- State at documentation update: **IN PROGRESS**
-- All observation-trace apply/static verification steps and toolchain setup had succeeded; CI was in `Configure`.
+- Result: **FAILURE**
+- `Configure`: **SUCCESS**
+- `Build Cemu once`: **FAILURE**
+- Artifact: 없음
 
-### Branch synchronization
+### Exact first compiler failure
 
-- `diag-bayo2-target0-resource-identity` was fast-forwarded from `725aae2f...` to code checkpoint `143d5631...`.
-- Documentation commits after this point do not change the validated code payload.
+Job log에서 최초 C++ 오류를 직접 확인했다.
+
+```text
+VulkanRendererCore.cpp(293,1): error: expected expression
+293 | \thash ^= value + 0x9e3779b97f4a7c15ULL + (hash << 6) + (hash >> 2);
+```
+
+이후 `\tif`, `\tuint64`, struct member declaration 등 동일 literal `\t`가 들어간 줄에서 연쇄 parser error가 발생했다.
+
+### Confirmed root cause
+
+resource helper template가 다음처럼 Python raw string이었다.
+
+```python
+resource_helpers = r'''...'''
+```
+
+따라서 template 내부의 `\t`가 실제 tab으로 escape되지 않고 생성 C++에 문자 backslash+t로 삽입됐다. 이는 type/namespace/linkage 문제가 아니었다.
+
+### Minimum fix
+
+CI branch:
+
+- Commit: `6b96fb4a0fceb6f1285ea6a39db82852d4ad8972`
+- Message: `diagnostics: fix target0 resource trace indentation escapes`
+- Diff: 정확히 1줄
+
+```text
+-resource_helpers = r'''...
++resource_helpers = '''...
+```
+
+Handoff branch에도 동일 source blob으로 반영:
+
+- Commit: `80d94fff50fa764c2d7bf3be59e3ffaa5d3c9ba1`
+- Script blob: `6f9e41911bf64b51eda0df94a1f3b8b3407fe0d6`
+
+새 instrumentation이나 query/render behavior 변경은 없다.
+
+### Current validation
+
+- Workflow run: `#10`
+- Run ID: `33369558184`
+- CI head: `6b96fb4a0fceb6f1285ea6a39db82852d4ad8972`
+- State at this documentation update: **IN PROGRESS**
+
+다음 판단은 Run #10의 실제 build conclusion 이후에만 한다.
 
 ---
 
