@@ -76,7 +76,7 @@ Adreno에서 일부 vertex input/default value 처리와 shader key 안정성이
 
 ---
 
-## 2026-08-27 — Current diagnostic build recovered
+## 2026-08-27 — Diagnostic build recovered
 
 ### Repository
 
@@ -101,11 +101,132 @@ Adreno에서 일부 vertex input/default value 처리와 shader key 안정성이
 
 ### Meaning
 
-직전의 CI compile regression은 현재 source checkpoint에서는 해결되어 **진단판 포함 Windows ARM64 빌드가 다시 성공**한다.
+직전의 CI compile regression은 이 source checkpoint에서는 해결되어 진단판 포함 Windows ARM64 빌드가 다시 성공했다.
 
-### Current runtime question
+---
 
-진단 UI에서 일부 항목이 회색 비활성 상태다. 이는 해당 진단 기능의 UI shell은 있으나 실제 runtime probe가 미연결/미지원인 상태일 가능성이 높으므로, 다음 작업은 회색 항목 각각의 실제 연결 여부를 소스에서 확인하는 것이다.
+## 2026-08-28 ~ 2026-08-29 — Bayonetta 2 / XCX query-consumption comparison
+
+### Goal
+
+Bayonetta 2의 zero occlusion-result가 query 생산/완료 단계의 문제인지, 소비 방식의 차이인지 XCX와 비교한다.
+
+### Confirmed runtime facts
+
+**Bayonetta 2**
+
+- CPU occlusion query `type=0` 경로 사용.
+- completed `GET_READY_ZERO`가 대량 존재.
+- 현재 캡처에서 snapshot 누락/미소비 slot overwrite로 zero를 설명할 근거가 없었다.
+- 따라서 관찰된 ready-zero는 실제 완료·소비된 query 결과로 취급한다.
+
+**Xenoblade Chronicles X**
+
+- GPU occlusion query `type=2` 경로 사용.
+- 캡처에서 exported `GX2QueryGetOcclusionResult()` 소비는 관찰되지 않았다.
+
+### Conclusion
+
+- Bayo2와 XCX를 동일한 query-consumption 경로로 가정하는 비교는 금지.
+- Bayo2의 zero를 단순히 "query가 아직 준비되지 않음" 또는 "snapshot overwrite"로 되돌려 설명하는 가설은 현재 캡처와 맞지 않는다.
+
+---
+
+## 2026-08-29 — Bayo2 target transition downstream trace
+
+### Goal
+
+Bayo2 targeted query가 `0 -> nonzero` 또는 `nonzero -> 0`으로 바뀐 직후 실제 draw stream이 어떻게 달라지는지 observation-only로 좁힌다.
+
+### Implementation
+
+- query transition 발생 시 short watch를 arm.
+- 정확히 다음 3 command-stream frame의 draw fingerprint를 기록.
+- renderer state/query result/draw command는 변경하지 않음.
+
+### Verified build checkpoint
+
+- Commit: `b1694fc46ba56de381fd5e9e6ec37bbb93ec3f48`
+- Message: `diagnostics: chain Bayo2 downstream trace`
+- Workflow run: `#7`
+- Run ID: `33247256523`
+- Result: **SUCCESS**
+
+### Meaning
+
+downstream transition trace 자체는 Windows ARM64에서 compile 가능한 정상 checkpoint다.
+
+---
+
+## 2026-08-30 — Bayo2 target0 resource identity/content trace
+
+### Goal
+
+반복 관찰된 target0 query `0x46a92ec8`의 downstream pipeline family에서 draw argument만이 아니라 guest resource identity/content가 transition에 따라 달라지는지 기록한다.
+
+### Added observation data
+
+`[BAYO2_RESOURCE] DRAW`에서 다음을 기록하도록 chain했다.
+
+- vertex-buffer count / identity hash / sampled content hash
+- VS/PS/GS uniform-buffer identity/content hash
+- VS/PS/GS uniform-variable size/content hash
+- target0 transition/watch/frame/draw correlation
+
+고정 filter:
+
+- query: `0x46a92ec8`
+- pipeline stateHash: `0x4addb8b25c8fc2bf`
+- VS baseHash: `0xdba0c5a2b50b7103`
+- PS baseHash: `0x2360006f2b86aae5`
+
+### Initial chained checkpoint
+
+- Commit: `725aae2f63d6b3e766c37efe26c46341059dae83`
+- Message: `diagnostics: chain Bayo2 target0 resource trace`
+- Workflow run: `#8`
+- Run ID: `33286935862`
+- Result: **FAILURE**
+- All trace transform/static verification steps succeeded.
+- Failure occurred at `Build Cemu once`.
+
+### Static root-cause inspection
+
+새 resource helper가 `const uint32* ctx`를 `LatteParsedFetchShaderBufferGroup_t::getCurrentBufferStride(uint32*)`에 전달하고 있었다. 기존 API 시그니처와 맞지 않는 compile incompatibility를 확인했다.
+
+---
+
+## 2026-08-31 — target0 resource trace constness fix
+
+### Change
+
+`tools/diagnostics/Apply-Bayo2Target0ResourceIdentityTrace.py`에서 필요한 두 포인터만 `uint32*`로 수정했다.
+
+- vertex-buffer summary helper의 `ctx`
+- `LatteGPUState.contextNew.GetRawView()`를 받는 caller local `ctx`
+
+query/render behavior 변경 없음.
+
+### Code checkpoint
+
+- Commit: `143d5631f48a3384c19e7366c39d9a1afb43ca5b`
+- Message: `diagnostics: fix target0 resource trace constness`
+- Parent: `725aae2f63d6b3e766c37efe26c46341059dae83`
+- Diff scope: resource trace script only
+
+### Current CI validation
+
+- Workflow: `Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
+- Run number: `#9`
+- Run ID: `33349115978`
+- Head: `143d5631f48a3384c19e7366c39d9a1afb43ca5b`
+- State at documentation update: **IN PROGRESS**
+- All observation-trace apply/static verification steps and toolchain setup had succeeded; CI was in `Configure`.
+
+### Branch synchronization
+
+- `diag-bayo2-target0-resource-identity` was fast-forwarded from `725aae2f...` to code checkpoint `143d5631...`.
+- Documentation commits after this point do not change the validated code payload.
 
 ---
 
