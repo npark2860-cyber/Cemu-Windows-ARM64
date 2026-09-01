@@ -272,14 +272,62 @@ Handoff branch에도 동일 source blob으로 반영:
 
 새 instrumentation이나 query/render behavior 변경은 없다.
 
-### Current validation
+### Current validation at that documentation point
 
 - Workflow run: `#10`
 - Run ID: `33369558184`
 - CI head: `6b96fb4a0fceb6f1285ea6a39db82852d4ad8972`
-- State at this documentation update: **IN PROGRESS**
+- State at that documentation update: **IN PROGRESS**
 
-다음 판단은 Run #10의 실제 build conclusion 이후에만 한다.
+---
+
+## 2026-09-01 — target0 resource trace build validated
+
+### Run #10 final result
+
+- Workflow: `Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
+- Run number: `#10`
+- Run ID: `33369558184`
+- Head: `6b96fb4a0fceb6f1285ea6a39db82852d4ad8972`
+- Result: **SUCCESS**
+
+따라서 Run #9의 literal indentation compile failure는 `6b96fb4...`에서 해결됐고, target0 resource identity/content observation trace가 Windows ARM64에서 정상 compile되는 것이 검증됐다.
+
+### Runtime artifact
+
+- Name: `cemu-arm64-bayo2-target-query-draw-fingerprint`
+- Artifact ID: `9750570882`
+- Size: `11,979,643` bytes
+- SHA-256 digest: `9951398732e1185d0874c2d530e14b91829922d05791aae52498deeddd052127`
+- Created: `2026-08-31T08:20:41Z`
+- Expires: `2026-11-29T07:42:28Z`
+
+이 artifact가 다음 Bayonetta 2 runtime capture의 기준 빌드다.
+
+### Redundant Run #11 provenance
+
+현재 CI branch에는 Run #10 성공 여부를 재확인하기 전에 추가된 redundant normalization commit이 하나 더 있다.
+
+- Commit: `4f24fca6e0cc49d64bd14bca0b5ce1e586d2b59f`
+- Message: `diagnostics: normalize target0 resource trace indentation`
+- Parent: `6b96fb4a0fceb6f1285ea6a39db82852d4ad8972`
+- Diff: `resource_helpers = resource_helpers.replace(chr(92) + "t", chr(9))` 한 줄 추가
+- Run: `#11`
+- Run ID: `33467898875`
+- Last checked state: **IN PROGRESS**
+
+Run #10이 이미 성공했으므로 Run #11은 runtime 검증에 필요하지 않다. 추가 CI는 실행하지 않는다. 검증된 build checkpoint는 계속 `6b96fb4...` / Run #10으로 고정한다.
+
+### Next runtime question
+
+Run #10 artifact로 Bayonetta 2를 실행해 target0 `0 -> NZ`와 `NZ -> 0` transition을 모두 포함한 로그를 캡처한 뒤 `[BAYO2_RESOURCE] DRAW`를 비교한다.
+
+- `vbIdentity` / `vbContent`
+- `vsCbIdentity` / `vsCbContent` / `vsVarHash`
+- `psCbIdentity` / `psCbContent` / `psVarHash`
+- `gsCbIdentity` / `gsCbContent` / `gsVarHash`
+
+이 runtime evidence 전에는 새 instrumentation layer나 behavior workaround를 추가하지 않는다.
 
 ---
 
