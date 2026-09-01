@@ -314,6 +314,7 @@ static void Bayo2Target0ResourceTrace_LogDrawResources(
 }
 
 '''
+resource_helpers = resource_helpers.replace(chr(92) + "t", chr(9))
 
 vk = replace_once(
     vk,
