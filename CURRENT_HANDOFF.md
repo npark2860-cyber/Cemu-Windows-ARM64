@@ -14,15 +14,15 @@ Bayonetta 2의 CPU occlusion query `type=0`에서 실제 완료·소비된 zero/
 - Handoff/docs branch: `diag-bayo2-target0-resource-identity`
 - CI build branch: `diag-bayo2-target-query-draw-fingerprint`
 - CI branch current HEAD: `4f24fca6e0cc49d64bd14bca0b5ce1e586d2b59f`
-- CI branch validated successful checkpoint: `6b96fb4a0fceb6f1285ea6a39db82852d4ad8972`
+- CI branch first validated successful target0-resource checkpoint: `6b96fb4a0fceb6f1285ea6a39db82852d4ad8972`
 - Handoff-branch equivalent validated code checkpoint: `80d94fff50fa764c2d7bf3be59e3ffaa5d3c9ba1`
 - Validated resource trace script blob: `6f9e41911bf64b51eda0df94a1f3b8b3407fe0d6`
 
-`4f24fca...`는 Run #10 성공 여부를 재확인하기 전에 추가된 redundant normalization 1-line commit이다. runtime 기준 빌드는 계속 **`6b96fb4...` / Run #10**으로 고정한다.
+`4f24fca...`는 Run #10 성공 여부를 재확인하기 전에 추가된 redundant normalization commit이며 Run #11에서도 compile 성공이 확인됐다. behavior 차이는 없으므로 runtime 기준 빌드는 계속 **`6b96fb4...` / Run #10**으로 고정한다.
 
 Handoff branch에는 문서 commit이 추가되므로 branch HEAD와 code checkpoint를 구분한다.
 
-`main`에는 이 실험 변경을 넣지 않는다. 마지막 확인된 `main` HEAD는 `58954b34d147b134d7b23ee61b2057f49da2c014`이다.
+`main`에는 이 실험 변경을 넣지 않는다. 2026-09-02 재확인한 `main` HEAD는 `58954b34d147b134d7b23ee61b2057f49da2c014`이다.
 
 ## 3. Build checkpoints
 
@@ -75,19 +75,28 @@ Artifact:
 - Created: `2026-08-31T08:20:41Z`
 - Expires: `2026-11-29T07:42:28Z`
 
-**다음 runtime 테스트에는 이 Run #10 artifact를 사용한다.**
+**다음 runtime 테스트에는 이 Run #10 artifact를 기준으로 사용한다.**
 
-### Run #11 — redundant, not a required checkpoint
+### Run #11 — redundant normalization, final result confirmed
 
 - Commit: `4f24fca6e0cc49d64bd14bca0b5ce1e586d2b59f`
 - Message: `diagnostics: normalize target0 resource trace indentation`
 - Parent: `6b96fb4a0fceb6f1285ea6a39db82852d4ad8972`
-- Diff: `resource_helpers = resource_helpers.replace(chr(92) + "t", chr(9))` 한 줄 추가
+- Change: 생성 문자열의 남은 literal `\t`를 실제 tab으로 정규화하는 defensive build-only 처리
 - Run: `#11`
 - Run ID: `33467898875`
-- Last checked state: **IN PROGRESS**
+- Result: **SUCCESS**
 
-Run #10이 이미 성공했으므로 Run #11 결과를 기다릴 필요가 없으며 runtime 기준으로 사용하지 않는다. **추가 CI를 실행하지 않는다.**
+Run #11 artifact:
+
+- Name: `cemu-arm64-bayo2-target-query-draw-fingerprint`
+- Artifact ID: `5552367848`
+- Size: `24,598,681` bytes
+- SHA-256: `b753fa631077337ffc3024888218fb153800621887908befd81663465e8e80dc`
+- Created: `2026-09-02T01:52:28Z`
+- Expires: `2026-12-01T01:52:20Z`
+
+Run #10이 이미 최초 성공 checkpoint이고 Run #11은 redundant normalization뿐이므로 **추가 CI는 실행하지 않는다.**
 
 ## 4. Confirmed runtime facts that must be preserved
 
@@ -150,26 +159,32 @@ Cemu Vulkan renderer는 실제 GPU-visible vertex-buffer 범위에서 게임이 
 
 `tools/diagnostics/Apply-Bayo2Target0ResourceIdentityTrace.py`
 
-검증된 `6b96fb4...`까지의 build fix는 다음 세 가지다.
+최초 성공 checkpoint `6b96fb4...`까지의 build fix는 다음 세 가지다.
 
 1. vertex-buffer summary helper `ctx`: `const uint32*` -> `uint32*`
 2. caller local `ctx`: `const uint32*` -> `uint32*`
 3. resource helper template: raw triple string -> normal triple string
 
-3번은 생성 C++의 literal `\t`를 실제 tab으로 복원하기 위한 build-only fix다.
+Run #11의 `4f24fca...`는 3번의 효과를 defensive하게 정규화한 추가 build-only commit이다.
 
 query result, draw state, renderer behavior는 변경하지 않았다.
 
-## 7. Ruled out / do not repeat
+## 7. Latest supplied runtime log status
+
+사용자가 제공한 `log(2).zip`의 `log.txt`에는 `[BAYO2_QUERY_CORR]` 기록은 존재하지만 **`[BAYO2_RESOURCE]` 기록은 관찰되지 않았다.**
+
+따라서 이 로그는 현재 live question인 target0 resource identity/content 비교에 사용할 수 없다. 이 사실만으로 resource trace 자체가 실패했다고 판단하지 않으며, 검증된 Run #10 target0-resource artifact로 다시 캡처해야 한다.
+
+## 8. Ruled out / do not repeat
 
 - Bayo2 ready-zero를 단순 NOT_READY로 취급하는 해석 반복 금지.
 - missing snapshot / overwritten-unconsumed 가설을 현재 동일 캡처 조건에서 반복 금지.
 - Bayo2와 XCX가 같은 exported consumption path를 사용한다고 가정 금지.
 - 이미 성공한 `b1694fc...` downstream trace를 원인 확인 없이 되돌리지 말 것.
-- Run #10 성공 뒤 같은 compile validation을 다시 돌리기 위한 CI 실행 금지.
+- Run #10/Run #11 성공 뒤 같은 compile validation을 다시 돌리기 위한 CI 실행 금지.
 - runtime evidence 전에는 새 instrumentation layer를 추가하지 말 것.
 
-## 8. Live question
+## 9. Live question
 
 고정 pipeline family의 downstream draw에서 query transition 방향에 따라 다음 중 무엇이 달라지는가?
 
@@ -185,14 +200,15 @@ query result, draw state, renderer behavior는 변경하지 않았다.
 
 1. **Run #10 artifact ID `9750570882`를 사용해 Bayonetta 2를 실행한다.**
 2. 동일 재현 조건에서 target0 query `0x46a92ec8`의 `0 -> NZ`와 `NZ -> 0` transition이 모두 포함되도록 Cemu 로그를 캡처한다.
-3. `[BAYO2_RESOURCE] DRAW`를 transition 방향별로 묶어 다음을 비교한다.
+3. 새 로그에 `[BAYO2_RESOURCE] DRAW`가 실제 존재하는지 먼저 확인한다. 없으면 비교 분석으로 넘어가지 않는다.
+4. marker가 존재하면 transition 방향별로 다음을 비교한다.
    - `vbIdentity` / `vbContent`
    - `vsCbIdentity` / `vsCbContent` / `vsVarHash`
    - `psCbIdentity` / `psCbContent` / `psVarHash`
    - `gsCbIdentity` / `gsCbContent` / `gsVarHash`
-4. resource fingerprint 변화가 실제 flicker 방향/transition과 상관되는지 판정한다.
-5. 이 runtime 결과 전에는 새 instrumentation, behavior workaround, 추가 CI를 하지 않는다.
-6. runtime 결과를 `DEBUG_HISTORY.md`에 누적하고 이 파일을 다시 최신화한다.
+5. resource fingerprint 변화가 실제 flicker 방향/transition과 상관되는지 판정한다.
+6. 이 runtime 결과 전에는 새 instrumentation, behavior workaround, 추가 CI를 하지 않는다.
+7. runtime 결과를 `DEBUG_HISTORY.md`에 누적하고 이 파일을 다시 최신화한다.
 
 ## DO NOT ROLLBACK
 
