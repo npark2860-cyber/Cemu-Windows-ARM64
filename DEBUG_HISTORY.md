@@ -346,11 +346,11 @@ Run #10 artifact로 Bayonetta 2를 실행해 target0 `0 -> NZ`와 `NZ -> 0` tran
 ### Run #11 artifact
 
 - Name: `cemu-arm64-bayo2-target-query-draw-fingerprint`
-- Artifact ID: `5552367848`
-- Size: `24,598,681` bytes
-- SHA-256 digest: `b753fa631077337ffc3024888218fb153800621887908befd81663465e8e80dc`
-- Created: `2026-09-02T01:52:28Z`
-- Expires: `2026-12-01T01:52:20Z`
+- Artifact ID: `9786258817`
+- Size: `11,979,654` bytes
+- SHA-256 digest: `35770f76d30e17ebe2845e1debbbd115846bebd8e145f2858f35538a64de8936`
+- Created: `2026-09-01T04:32:41Z`
+- Expires: `2026-11-30T03:54:28Z`
 
 Runtime 기준 checkpoint는 계속 `6b96fb4...` / Run #10으로 유지한다.
 
