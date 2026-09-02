@@ -331,6 +331,41 @@ Run #10 artifact로 Bayonetta 2를 실행해 target0 `0 -> NZ`와 `NZ -> 0` tran
 
 ---
 
+## 2026-09-02 — Run #11 final status and supplied runtime-log check
+
+### Run #11 final result
+
+- Workflow: `Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
+- Run number: `#11`
+- Run ID: `33467898875`
+- Head: `4f24fca6e0cc49d64bd14bca0b5ce1e586d2b59f`
+- Result: **SUCCESS**
+
+`4f24fca...`는 literal indentation을 defensive하게 다시 정규화한 build-only commit이며 query/render behavior는 바꾸지 않는다. Run #10이 이미 최초 성공 checkpoint이므로 추가 compile-validation CI는 실행하지 않는다.
+
+### Run #11 artifact
+
+- Name: `cemu-arm64-bayo2-target-query-draw-fingerprint`
+- Artifact ID: `5552367848`
+- Size: `24,598,681` bytes
+- SHA-256 digest: `b753fa631077337ffc3024888218fb153800621887908befd81663465e8e80dc`
+- Created: `2026-09-02T01:52:28Z`
+- Expires: `2026-12-01T01:52:20Z`
+
+Runtime 기준 checkpoint는 계속 `6b96fb4...` / Run #10으로 유지한다.
+
+### Supplied `log(2).zip`
+
+사용자가 제공한 runtime `log.txt`에는 `[BAYO2_QUERY_CORR]` 기록은 다수 존재하지만 `[BAYO2_RESOURCE]` 기록은 관찰되지 않았다.
+
+따라서 이 로그만으로는 target0 transition의 VB/CB/uniform resource fingerprint 비교를 수행할 수 없다. 이 사실만으로 resource trace 자체 실패를 의미하지 않으며, Run #10 target0-resource artifact로 다시 캡처해야 한다.
+
+### Next action
+
+Run #10 artifact에서 target0 `0 -> NZ`와 `NZ -> 0`을 모두 포함한 로그를 새로 캡처하고, `[BAYO2_RESOURCE] DRAW` marker 존재를 먼저 확인한 뒤 resource fingerprint를 비교한다. runtime evidence 전에는 새 instrumentation이나 behavior workaround를 추가하지 않는다.
+
+---
+
 ## Logging template for future experiments
 
 각 실험은 아래 형식으로 추가한다.
