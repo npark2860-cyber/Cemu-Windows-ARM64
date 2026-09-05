@@ -18,7 +18,7 @@
 
 Bayonetta 2 JP target0 CPU occlusion query `0x46a92ec8`가 동일한 six-draw producer path에서 completed ZERO/NONZERO를 반복하는 이유를 좁힌다.
 
-현재 단계는 behavior fix가 아니라 **target0 producer index-buffer content observation**이다.
+현재 단계는 behavior fix가 아니라 **target0 producer exact index-buffer content observation**이다.
 
 ## 2. Repository / branch state
 
@@ -30,9 +30,21 @@ Handoff/docs branch: `diag-bayo2-target0-resource-identity`.
 
 CI branch: `diag-bayo2-target-query-draw-fingerprint`.
 
-Current validated CI code checkpoint before index-content work: `21b671c62c6e723bd83c74434e752de8955031c4`.
+Current CI branch HEAD: `8a735a583410f28d6b4c72770b120f39c001f41f`.
 
-Current staging branch before next instrumentation: `diag-bayo2-target0-depth-identity`.
+Current staging branch: `diag-bayo2-target0-index-content`.
+
+Index-content commits after Run #14:
+
+- `0d83f49481cadb41a51da4ece20c1f16c9ff62fd` — add exact target0 index-content trace
+- `8a735a583410f28d6b4c72770b120f39c001f41f` — chain index trace after depth trace
+
+Diff from Run #14 is intentionally narrow:
+
+- add `tools/diagnostics/Apply-Bayo2Target0IndexContentTrace.py`
+- add four chaining lines to `Apply-Bayo2Target0DepthIdentityTrace.py`
+
+No query/result/readiness/render/resource/draw behavior change is committed.
 
 ## 3. Protected checkpoints
 
@@ -44,7 +56,7 @@ Current staging branch before next instrumentation: `diag-bayo2-target0-depth-id
 
 Do not rerun old validation stages.
 
-## 4. Query-consumption facts that remain fixed
+## 4. Fixed query-consumption facts
 
 Bayonetta 2:
 
@@ -80,24 +92,7 @@ Completed ZERO/NONZERO is not explained by:
 
 Do not repeat these observations unless a new contradiction appears.
 
-## 6. Run #13 runtime — uniform delta
-
-Source: `DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md`.
-
-Key result:
-
-- 457 completed target0 generations
-- ZERO 431 / NONZERO 26
-- 22/26 NONZERO generations are isolated one-generation spikes
-- isolated NZ vs following ZERO VS changed-slot-set mean Jaccard 0.995, median 1.0
-- no repeated NZ-specific A->B->A vec4 transient
-- exact complete PS uniform states occur in both ZERO and NONZERO classes
-
-Conclusion: do not keep drilling the same uniform layer.
-
-## 7. Run #14 runtime — actual depth identity/history
-
-Input: user-supplied `log(4).zip`.
+## 6. Run #14 runtime — `log(4).zip`
 
 Detailed source: `DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md`.
 
@@ -106,9 +101,9 @@ Capture validity:
 - `[BAYO2_TARGET_DEPTH]`: 381 rows
 - completed target0 generations: 380
 - 380/380 completed generations have a depth row
-- final gen 381 is incomplete and excluded
+- final gen 381 incomplete and excluded
 
-Result classes:
+Results:
 
 - ZERO 354
 - NONZERO 26
@@ -117,54 +112,79 @@ Result classes:
 - `NZ->0` 24
 - `NZ->NZ` 2
 
-Actual depth identity is identical across all completed ZERO/NONZERO generations:
+Actual depth identity is identical across every completed result class:
 
-- `DB_HTILE_DATA_BASE = 0x00f54428`
-- actual/reconstructed depth phys = `0xf5442800`
-- bound texture phys = `0xf5442800`
-- same size/info/view/control
+- `DB_HTILE_DATA_BASE=0x00f54428`
+- reconstructed/raw depth phys `0xf5442800`
+- bound texture phys `0xf5442800`
+- same depth size/info/view/control
 - same format/tile/swizzle/1280x720/pitch/view
-- bound on every generation
-- GPU-updated on every generation
-- `lastUpdateEventCounter=8`, `lastUpdateFrameCounter=0`, `reloadCount=1` fixed
+- bound and GPU-updated on every generation
+- fixed `lastUpdateEventCounter=8`, `lastUpdateFrameCounter=0`, `reloadCount=1`
 
-Dynamic history:
+Dynamic bookkeeping is also not NZ-specific:
 
 - `dataUpdateFrame == current frame` on 380/380
 - `accessFrame == current frame` on 380/380
 - `lastUnflushedRTDrawcallIndex == query begin draw` on 377/380; three -9 anomalies are not NZ-specific
-- `lastWriteEventCounter` delta is explained by elapsed frame/draw work; conditioned on frame gap, ZERO and NZ transition distributions overlap strongly
+- conditioned on frame gap, `lastWriteEventCounter` delta distributions overlap between ZERO and NZ transitions
 
 Conclusion:
 
 **actual depth identity/history is not the ZERO/NONZERO discriminator.**
 
-Do not reopen the already closed f544 destructive/seeded behavior experiments.
+Do not reopen the closed destructive/seeded `f5442800` behavior experiments.
 
-## 8. NEXT ACTION — index-buffer content only
+## 7. Active experiment — exact index-buffer content
 
-The six target0 producer draw index identities are fixed in every observed generation and all use index type 4 = U16_BE:
+New marker: `[BAYO2_TARGET_INDEX]`.
 
-1. `0x1314dac0`, count 8394
-2. `0x13151d00`, count 129
-3. `0x13151ec0`, count 483
-4. `0x13152340`, count 6
-5. `0x13152400`, count 1560
-6. `0x131530c0`, count 504
+The six producer draw index identities are fixed and all use index type 4 = `U16_BE`:
 
-Next observation:
+1. `0x1314dac0`, count 8394, exact size 16788 bytes
+2. `0x13151d00`, count 129, exact size 258 bytes
+3. `0x13151ec0`, count 483, exact size 966 bytes
+4. `0x13152340`, count 6, exact size 12 bytes
+5. `0x13152400`, count 1560, exact size 3120 bytes
+6. `0x131530c0`, count 504, exact size 1008 bytes
 
-- exact-hash guest index bytes for each producer draw (`count * 2` bytes)
-- correlate six hashes by target generation to completed ZERO/NONZERO GET
-- record only target0 producer draws
+The new trace hashes the **entire guest index range**, not the older >4KB sampled hash helper.
+
+Constraints:
+
+- target0 producer only
 - no index mutation
+- no GPU readback
 - no query/result/readiness mutation
 - no render-state mutation
-- do not add sampled-texture observation in the same experiment
+- sampled textures are not mixed into this experiment
 
-If index content is also identical across result classes, sampled texture identity/content becomes the next missing producer input before any query-driver semantic A/B.
+## 8. Current CI — Run #15
 
-## 9. DO NOT ROLLBACK / DO NOT REPEAT
+Workflow: `Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
+
+Run: `#15`
+
+Run ID: `33951247306`
+
+Head: `8a735a583410f28d6b4c72770b120f39c001f41f`
+
+Status at this handoff update: **IN PROGRESS**.
+
+Do not start another CI run while Run #15 is active.
+
+## 9. NEXT ACTION
+
+1. Check Run #15 `33951247306` final status.
+2. If failure, recover the exact first failing error and correct only the index-content observation layer.
+3. If success, confirm artifact exists and use only that build for the next Bayo2 capture.
+4. Next runtime log must contain `[BAYO2_TARGET_INDEX]`.
+5. Join six index hashes per generation to target0 completed GET result.
+6. Compare ZERO/NONZERO and transition directions draw-position by draw-position.
+7. If index content is identical across result classes, sampled texture identity/content becomes the next missing producer input before any query-driver semantic A/B.
+8. Do not introduce a behavior workaround before this result.
+
+## 10. DO NOT ROLLBACK / DO NOT REPEAT
 
 Never roll back:
 
@@ -196,4 +216,4 @@ Do not repeat:
 
 ## New-tab startup prompt
 
-`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, DEBUG_HISTORY_20260829_QUERY_COMPARE.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_PRODUCER_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md, CURRENT_HANDOFF.md를 먼저 읽고 실제 branch/HEAD/Actions 상태와 대조해. CURRENT_HANDOFF NEXT ACTION부터 시작해. 현재 next experiment는 target0 0x46a92ec8 producer index-buffer exact content hash다. Bayo2/XCX query-consumption 차이를 유지하고 이미 배제된 실험을 반복하지 마. main은 건드리지 마.`
+`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, DEBUG_HISTORY_20260829_QUERY_COMPARE.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_PRODUCER_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md, CURRENT_HANDOFF.md를 먼저 읽고 실제 branch/HEAD/Actions 상태와 대조해. CURRENT_HANDOFF NEXT ACTION부터 시작해. 현재 active experiment는 target0 0x46a92ec8 exact index-buffer content trace이며 Run #15 33951247306의 최종 상태를 먼저 확인해. Bayo2/XCX query-consumption 차이를 유지하고 이미 배제된 실험을 반복하지 마. main은 건드리지 마.`
