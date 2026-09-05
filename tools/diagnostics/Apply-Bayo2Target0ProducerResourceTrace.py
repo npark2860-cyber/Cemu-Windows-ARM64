@@ -158,3 +158,7 @@ print("Bayonetta 2 target0 query-producer vertex/uniform resource trace installe
 # Apply target0 producer uniform vec4 delta observation trace.
 uniform_delta_path = Path("tools/diagnostics/Apply-Bayo2Target0UniformDeltaTrace.py")
 exec(compile(uniform_delta_path.read_text(encoding="utf-8"), str(uniform_delta_path), "exec"))
+
+# Apply target0 actual depth surface identity/history observation trace.
+depth_identity_path = Path("tools/diagnostics/Apply-Bayo2Target0DepthIdentityTrace.py")
+exec(compile(depth_identity_path.read_text(encoding="utf-8"), str(depth_identity_path), "exec"))
