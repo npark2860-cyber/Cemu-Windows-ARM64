@@ -13,13 +13,14 @@
 6. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md`
 7. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md`
 8. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_INDEX_CONTENT_RUNTIME.md`
-9. `CURRENT_HANDOFF.md`
+9. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_TEXTURE_RESOURCE_RUNTIME.md`
+10. `CURRENT_HANDOFF.md`
 
 ## 1. Current goal
 
 Bayonetta 2 JP target0 CPU occlusion query `0x46a92ec8`가 동일한 six-draw producer path에서 completed ZERO/NONZERO를 반복하는 이유를 좁힌다.
 
-현재 단계는 behavior fix가 아니라 **target0 producer sampled-texture resource identity/content observation**이다.
+현재 active experiment는 **PS unit11 GPU-updated depth-compare texture `0xf57c8000`의 bound-object write/update history observation**이다. Behavior workaround 단계가 아니다.
 
 ## 2. Repository / branch state
 
@@ -31,24 +32,23 @@ Handoff/docs branch: `diag-bayo2-target0-resource-identity`.
 
 CI branch: `diag-bayo2-target-query-draw-fingerprint`.
 
-Current CI branch HEAD: `552b8d4b500bdd959b6b3b4bb5eb2fcba157b4b6`.
+Current CI branch HEAD: `ce80d7a68dc88b90f299f9e2dfd53b8e267c92d9`.
 
-Current staging branch: `diag-bayo2-target0-texture-resource`.
+Current staging branch: `diag-bayo2-target0-depthcompare-history`.
 
-Run #15 exact-index code checkpoint:
-`8a735a583410f28d6b4c72770b120f39c001f41f`.
+Run #16 sampled-texture checkpoint: `552b8d4b500bdd959b6b3b4bb5eb2fcba157b4b6`.
 
-Texture-resource commits after Run #15:
+Depth-compare history commits after Run #16:
 
-- `4684c251706e16acfc2277909fd0e5fd6c8b42a0` — add target0 sampled-texture resource trace
-- `552b8d4b500bdd959b6b3b4bb5eb2fcba157b4b6` — chain texture trace after exact index trace
+- `1fcb9f2cc1a9b8fd49e444e01c60469e87841635` — add unit11 depth-compare texture history trace
+- `ce80d7a68dc88b90f299f9e2dfd53b8e267c92d9` — chain the new trace after sampled-texture observation
 
-Diff from Run #15 is intentionally narrow:
+Diff from Run #16 is intentionally narrow:
 
-- add `tools/diagnostics/Apply-Bayo2Target0TextureResourceTrace.py`
+- add `tools/diagnostics/Apply-Bayo2Target0DepthCompareTextureHistoryTrace.py`
 - add four chaining lines to `Apply-Bayo2Target0IndexContentTrace.py`
 
-No query/result/readiness/render/resource/draw behavior change is committed.
+No query/result/readiness/render/texture/draw behavior change is committed.
 
 ## 3. Protected checkpoints
 
@@ -58,6 +58,7 @@ No query/result/readiness/render/resource/draw behavior change is committed.
 - Run #13 — producer uniform vec4 delta — `2f5d4080...` — Run `33945290442` — SUCCESS
 - Run #14 — actual depth identity/history — `21b671c6...` — Run `33947749589` — SUCCESS
 - Run #15 — exact index-buffer content — `8a735a58...` — Run `33951247306` — SUCCESS
+- Run #16 — sampled-texture resource/content — `552b8d4b...` — Run `33958269235` — SUCCESS
 
 Do not rerun old validation stages.
 
@@ -87,127 +88,111 @@ Completed ZERO/NONZERO is not explained by:
 - different six-draw producer sequence
 - pipeline/shader/draw-argument fingerprint
 - primitive/clip/raster/depth-control/color-control/target-mask state
-- guest VB identity
-- sampled guest VB content
+- guest VB identity / sampled VB content
 - VS/PS/GS constant-buffer identity/content
 - PS full uniform state
 - transition-specific VS uniform vec4 delta family
-- actual bound depth surface identity
-- observed depth write/update bookkeeping
-- exact guest index-buffer content for all six producer draws
+- actual bound target depth surface identity (`0xf5442800`)
+- observed target depth write/update bookkeeping
+- exact guest index-buffer content for all six draws
+- sampled-texture unit selection
+- sampled-texture seven-word register identity
+- sampled image/mip guest address identity
+- sampler assignment / depth-compare flags
+- readable 4 KiB guest-memory texture prefixes
 
 Do not repeat these observations unless a new contradiction appears.
 
-## 6. Run #15 runtime — `log(5).zip`
+## 6. Run #16 runtime — `log (2)(2).zip`
 
-Detailed source: `DEBUG_HISTORY_20260905_BAYO2_TARGET0_INDEX_CONTENT_RUNTIME.md`.
+Detailed source: `DEBUG_HISTORY_20260905_BAYO2_TARGET0_TEXTURE_RESOURCE_RUNTIME.md`.
 
 Capture validity:
 
-- `[BAYO2_TARGET_INDEX]`: 2,916 rows
-- index generations observed: 486
-- exactly six rows for every observed generation
-- completed target0 GET generations: 485
-- 485/485 completed generations have exactly six index rows
-- final gen 486 incomplete and excluded
+- `[BAYO2_TARGET_TEXTURE]`: 15,599 rows
+- texture generations observed: 821
+- exactly 19 rows per generation
+- completed target0 GET generations: 820
+- final gen 821 incomplete and excluded
 
 Results:
 
-- ZERO 459
-- NONZERO 26
-- `FIRST` 1
-- `0->0` 432
-- `0->NZ` 26
-- `NZ->0` 26
-- `NZ->NZ` 0
+- ZERO 767
+- NONZERO 53
+- FIRST 1
+- `0->0` 717
+- `0->NZ` 49
+- `NZ->0` 49
+- `NZ->NZ` 4
+- 49 NONZERO episodes: 46 single-generation, 2 two-generation, 1 three-generation
 
-Every completed generation has the exact same six-draw full-byte index signature:
+All 820 completed generations collapse to **one identical logged sampled-texture signature** across the recurring producer shaders.
 
-1. `1314dac0`, 8394 U16_BE, 16788 bytes, hash `499385a99b630874`
-2. `13151d00`, 129 U16_BE, 258 bytes, hash `18db65c38bfd4da1`
-3. `13151ec0`, 483 U16_BE, 966 bytes, hash `dc23544499f56815`
-4. `13152340`, 6 U16_BE, 12 bytes, hash `067eea34dcd244c9`
-5. `13152400`, 1560 U16_BE, 3120 bytes, hash `e085dfaa370d1269`
-6. `131530c0`, 504 U16_BE, 1008 bytes, hash `9642728cfc61ecf2`
+VS families use no sampled textures. The four PS families use fixed subsets of units 0/1/2/3/11.
 
-Full-signature result:
+The critical exception is PS unit11:
 
-- all completed generations unique signature count: 1
-- ZERO signature count: 1
-- NONZERO signature count: 1
-- intersection: 1
+- all four PS shaders use it with `depthCompare=1`
+- fixed resource address `0xf57c8000`
+- Run #16 guest-memory hash is always 0 only because the helper rejects addresses `>=0x50000000`; this is not a content hash
+- runtime lifecycle shows `0xf57c8000` is a 1024x2048 format 0x11 depth texture, used as a depth attachment and delete-time `gpuUpdated=1`
 
-Conclusion:
+Therefore broad texture resource identity is closed, but GPU content/history of `0xf57c8000` remains unobserved.
 
-**exact guest index-buffer content is not the ZERO/NONZERO discriminator.**
+## 7. Active experiment — PS unit11 depth-compare texture history
 
-## 7. Active experiment — sampled texture resource/content
+New marker: `[BAYO2_TARGET_DEPTHCOMPARE]`.
 
-New marker: `[BAYO2_TARGET_TEXTURE]`.
+Once per target0 generation, using the already-bound PS unit11 view only, record:
 
-Scope is limited to the recurring target0 producer shader families already observed:
-
-VS:
-
-- `e6fc4f385f9b0034`
-- `93a12f899ed56598`
-
-PS:
-
-- `e2b9a6e6c2a4a0f8`
-- `519954498085e510`
-- `902ca3422dccc182`
-- `362608e302d3de4c`
-
-For each shader, once per target0 generation, log only texture units actually referenced by `textureUnitList`:
-
-- stage / shader / generation / frame / draw
-- texture count and unit
-- all seven guest texture resource register words
-- raw guest image/mip addresses from resource words 2/3
-- 4 KiB guest-memory prefix hash for image and mip address
-- sampler assignment index
-- depth-compare usage
-
-If a shader references no texture units, emit an explicit `textureCount=0` row.
+- register physical address and bound texture physical identity
+- depth/stencil/format/tile/swizzle/view geometry
+- data-defined / GPU-updated / readback / dynamic-reload flags
+- `lastWriteEventCounter`
+- `lastUpdateEventCounter`
+- update/data-update frame counters
+- reload count
+- last access frame
+- last unflushed RT draw index
+- `texDataHash2`
 
 Constraints:
 
-- no texture lookup/creation from the diagnostic helper
+- no texture lookup or creation
 - no GPU readback
 - no texture mutation
-- no descriptor mutation
 - no query/result/readiness mutation
 - no render-state/draw behavior change
 
-The 4 KiB hashes are sampled guest-memory prefixes, not proof of full texture byte equality and not a GPU image readback. Interpret accordingly.
+The purpose is to determine whether NONZERO correlates with a different GPU depth-texture write/update history before considering a query-driver semantic A/B.
 
-## 8. Current CI — Run #16
+## 8. Current CI — Run #17
 
 Workflow: `Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
 
-Run: `#16`
+Run: `#17`
 
-Run ID: `33958269235`
+Run ID: `33971629934`
 
-Head: `552b8d4b500bdd959b6b3b4bb5eb2fcba157b4b6`
+Head: `ce80d7a68dc88b90f299f9e2dfd53b8e267c92d9`
 
-Status at this handoff update: **QUEUED**.
+Status at this handoff update: **IN PROGRESS**.
 
-Do not start another CI run while Run #16 is active.
+Last checked job `101321059139`: checkout in progress.
+
+Do not start another CI run while Run #17 is active.
 
 ## 9. NEXT ACTION
 
-1. Check Run #16 `33958269235` final status.
-2. If failure, recover the exact first failing error and correct only the sampled-texture observation layer.
+1. Check Run #17 `33971629934` final status.
+2. If failure, recover the exact first failing error and correct only the new depth-compare-history observation layer.
 3. If success, confirm Build + Collect + Upload and artifact existence.
-4. Use only the Run #16 artifact for the next Bayo2 severe-flicker capture.
-5. Next runtime log must contain `[BAYO2_TARGET_TEXTURE]`.
-6. Join texture rows to target0 completed GET by `gen` and compare ZERO/NONZERO shader-by-shader/unit-by-unit.
-7. First compare complete seven-word resource identity and raw image/mip addresses.
-8. Then compare image/mip 4 KiB guest prefix hashes, remembering these are sampled guest RAM and not GPU readback.
-9. If texture resource identity/content also fails to discriminate, do not blindly add more broad resource logging; reassess host/GPU texture state versus occlusion-query backend semantics.
-10. Do not introduce a behavior workaround before this result.
+4. Use only the Run #17 artifact for the next severe-flicker capture.
+5. Next runtime log must contain `[BAYO2_TARGET_DEPTHCOMPARE]`.
+6. Join one history row per generation to target0 completed GET result.
+7. Compare ZERO/NONZERO and transition directions for `writeEvent`, update/data-update frame, access frame, unflushed RT draw and all fixed identity flags.
+8. If history is identical after controlling frame gap, the next step is not broader resource logging; shift toward a narrowly designed Vulkan/Adreno occlusion-query or GPU synchronization semantic A/B.
+9. Do not introduce a behavior workaround before this result.
 
 ## 10. DO NOT ROLLBACK / DO NOT REPEAT
 
@@ -239,7 +224,8 @@ Do not repeat:
 - f544 Bayo primary-cause experiments
 - XCX raw predication retry
 - exact target0 index-content hashing under the same conditions
+- broad target0 sampled-texture register/prefix hashing under the same conditions
 
 ## New-tab startup prompt
 
-`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, DEBUG_HISTORY_20260829_QUERY_COMPARE.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_PRODUCER_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_INDEX_CONTENT_RUNTIME.md, CURRENT_HANDOFF.md를 먼저 읽고 실제 branch/HEAD/Actions 상태와 대조해. CURRENT_HANDOFF NEXT ACTION부터 시작해. 현재 active experiment는 target0 0x46a92ec8 sampled-texture resource/content trace이며 Run #16 33958269235의 최종 상태를 먼저 확인해. Bayo2/XCX query-consumption 차이를 유지하고 이미 배제된 실험을 반복하지 마. main은 건드리지 마.`
+`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, DEBUG_HISTORY_20260829_QUERY_COMPARE.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_PRODUCER_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_INDEX_CONTENT_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_TEXTURE_RESOURCE_RUNTIME.md, CURRENT_HANDOFF.md를 먼저 읽고 실제 branch/HEAD/Actions 상태와 대조해. CURRENT_HANDOFF NEXT ACTION부터 시작해. 현재 active experiment는 target0 0x46a92ec8 PS unit11 0xf57c8000 depth-compare texture history trace이며 Run #17 33971629934의 최종 상태를 먼저 확인해. Bayo2/XCX query-consumption 차이를 유지하고 이미 배제된 실험을 반복하지 마. main은 건드리지 마.`
