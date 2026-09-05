@@ -143,3 +143,7 @@ print("Bayonetta 2 target0 exact index-buffer content trace installed; behavior 
 # Apply target0 sampled-texture resource/content observation trace.
 texture_resource_path = Path("tools/diagnostics/Apply-Bayo2Target0TextureResourceTrace.py")
 exec(compile(texture_resource_path.read_text(encoding="utf-8"), str(texture_resource_path), "exec"))
+
+# Apply target0 PS unit11 depth-compare texture history observation trace.
+depthcompare_history_path = Path("tools/diagnostics/Apply-Bayo2Target0DepthCompareTextureHistoryTrace.py")
+exec(compile(depthcompare_history_path.read_text(encoding="utf-8"), str(depthcompare_history_path), "exec"))
