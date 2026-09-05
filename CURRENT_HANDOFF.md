@@ -11,232 +11,160 @@
 4. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_RESOURCE_RUNTIME.md`
 5. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_PRODUCER_RESOURCE_RUNTIME.md`
 6. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md`
-7. `CURRENT_HANDOFF.md`
+7. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md`
+8. `CURRENT_HANDOFF.md`
 
 ## 1. Current goal
 
 Bayonetta 2 JP target0 CPU occlusion query `0x46a92ec8`가 동일한 six-draw producer path에서 completed ZERO/NONZERO를 반복하는 이유를 좁힌다.
 
-현재 단계는 behavior fix가 아니라 **실제 depth surface identity/history observation**이다.
+현재 단계는 behavior fix가 아니라 **target0 producer index-buffer content observation**이다.
 
 ## 2. Repository / branch state
 
-Repository:
-`npark2860-cyber/Cemu-Windows-ARM64`
+Repository: `npark2860-cyber/Cemu-Windows-ARM64`
 
-Main remains untouched.
+Main remains untouched. Known `main` HEAD: `58954b34d147b134d7b23ee61b2057f49da2c014`.
 
-Known `main` HEAD:
-`58954b34d147b134d7b23ee61b2057f49da2c014`
+Handoff/docs branch: `diag-bayo2-target0-resource-identity`.
 
-Handoff/docs branch:
-`diag-bayo2-target0-resource-identity`
+CI branch: `diag-bayo2-target-query-draw-fingerprint`.
 
-CI branch:
-`diag-bayo2-target-query-draw-fingerprint`
+Current validated CI code checkpoint before index-content work: `21b671c62c6e723bd83c74434e752de8955031c4`.
 
-Current CI branch HEAD:
-`21b671c62c6e723bd83c74434e752de8955031c4`
+Current staging branch before next instrumentation: `diag-bayo2-target0-depth-identity`.
 
-Current staging branch:
-`diag-bayo2-target0-depth-identity`
+## 3. Protected checkpoints
 
-Depth-observation commits after Run #13:
+- Run #10 — downstream target0 resource — `6b96fb4a...` — Run `33369558184` — SUCCESS
+- Run #11 — normalization — `4f24fca...` — Run `33467898875` — SUCCESS
+- Run #12 — producer resource — `4498bfe9...` — Run `33939024628` — SUCCESS
+- Run #13 — producer uniform vec4 delta — `2f5d4080...` — Run `33945290442` — SUCCESS
+- Run #14 — actual depth identity/history — `21b671c6...` — Run `33947749589` — SUCCESS
 
-- `280f1303f5a82ccfd26dd440abb723102b6c2b7d` — add target0 depth identity/history trace
-- `21b671c62c6e723bd83c74434e752de8955031c4` — chain depth trace from producer-resource layer
-
-Diff from Run #13 is intentionally narrow:
-
-- add `tools/diagnostics/Apply-Bayo2Target0DepthIdentityTrace.py`
-- add four chaining lines to `Apply-Bayo2Target0ProducerResourceTrace.py`
-
-No query/result/readiness/render/resource/draw behavior change is committed.
-
-## 3. Protected validated checkpoints
-
-Run #10 — downstream target0-resource:
-
-- commit `6b96fb4a0fceb6f1285ea6a39db82852d4ad8972`
-- Run ID `33369558184`
-- SUCCESS
-- artifact ID `9750570882`
-
-Run #11 — redundant normalization:
-
-- commit `4f24fca6e0cc49d64bd14bca0b5ce1e586d2b59f`
-- Run ID `33467898875`
-- SUCCESS
-
-Run #12 — producer-resource:
-
-- commit `4498bfe9c80c54ea1ac4df48355f27a1bf676e95`
-- Run ID `33939024628`
-- SUCCESS
-- artifact ID `9961710613`
-
-Run #13 — producer uniform vec4 delta:
-
-- commit `2f5d4080082219e096bfbf593d711c69fed807ce`
-- Run ID `33945290442`
-- SUCCESS
-
-Do not rerun these old validation stages.
+Do not rerun old validation stages.
 
 ## 4. Query-consumption facts that remain fixed
 
 Bayonetta 2:
 
-- CPU occlusion query type=0 only in these captures
+- CPU occlusion query type=0
 - exported `GX2QueryGetOcclusionResult()` heavily consumed
-- completed ready-zero is real completed/consumed data under the captured conditions
-- no `GET_NOT_READY`, missing-snapshot, repeat-generation, or overwritten-unconsumed explanation
+- completed ready-zero is real completed/consumed data in these captures
+- no GET_NOT_READY / missing-snapshot / overwritten-unconsumed explanation
 - do not globally force ready-zero visible
 
 XCX:
 
 - GPU occlusion query type=2
-- exported CPU `GX2QueryGetOcclusionResult()` consumption was not observed
-- no exported conditional-render markers / no raw `IT_SET_PREDICATION` in dedicated capture
+- exported CPU `GX2QueryGetOcclusionResult()` consumption not observed
+- no exported conditional-render marker / no raw `IT_SET_PREDICATION` in dedicated capture
 - historical XCX `0x100000` seed remains XCX-only
 
 Do not assume Bayo2 and XCX use the same consumption path.
 
-## 5. Closed/demoted Bayo2 target0 producer discriminators
+## 5. Closed/demoted target0 producer discriminators
 
-Across the validated capture chain, completed ZERO/NONZERO is not explained by:
+Completed ZERO/NONZERO is not explained by:
 
-- a different six-draw producer sequence
+- different six-draw producer sequence
 - pipeline/shader/draw-argument fingerprint
 - primitive/clip/raster/depth-control/color-control/target-mask state
 - guest VB identity
 - sampled guest VB content
 - VS/PS/GS constant-buffer identity/content
-- PS full uniform-variable state
-- a transition-specific VS uniform vec4 delta family
+- PS full uniform state
+- transition-specific VS uniform vec4 delta family
+- actual bound depth surface identity
+- observed depth write/update bookkeeping
 
 Do not repeat these observations unless a new contradiction appears.
 
-## 6. Run #13 runtime — `log(3).zip`
+## 6. Run #13 runtime — uniform delta
 
-Detailed source:
-`DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md`
+Source: `DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md`.
+
+Key result:
+
+- 457 completed target0 generations
+- ZERO 431 / NONZERO 26
+- 22/26 NONZERO generations are isolated one-generation spikes
+- isolated NZ vs following ZERO VS changed-slot-set mean Jaccard 0.995, median 1.0
+- no repeated NZ-specific A->B->A vec4 transient
+- exact complete PS uniform states occur in both ZERO and NONZERO classes
+
+Conclusion: do not keep drilling the same uniform layer.
+
+## 7. Run #14 runtime — actual depth identity/history
+
+Input: user-supplied `log(4).zip`.
+
+Detailed source: `DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md`.
 
 Capture validity:
 
-- `[BAYO2_TARGET_UNIFORM]`: 140,860 rows
-- `[BAYO2_TARGET_RESOURCE]`: 2,742 rows
-- target0 producer draws: 2,742
-- completed target0 generations: 457
-- exactly 6 producer draws per completed generation
+- `[BAYO2_TARGET_DEPTH]`: 381 rows
+- completed target0 generations: 380
+- 380/380 completed generations have a depth row
+- final gen 381 is incomplete and excluded
 
-Results:
+Result classes:
 
-- ZERO: 431
-- NONZERO: 26
-- `0->0`: 406
-- `0->NZ`: 24
-- `NZ->0`: 24
-- `NZ->NZ`: 2
-- 22 of 26 NONZERO generations are isolated single-generation spikes
-- only two two-generation NZ episodes: `152-153`, `398-399`
-- nonzero sample sums: 8,418..15,993
+- ZERO 354
+- NONZERO 26
+- `0->0` 329
+- `0->NZ` 24
+- `NZ->0` 24
+- `NZ->NZ` 2
 
-Uniform result:
+Actual depth identity is identical across all completed ZERO/NONZERO generations:
 
-- recurring VS changed-slot counts are essentially the same for `0->0`, `0->NZ`, and `NZ->0`
-- 127 VS slots change in every `0->NZ` and every `NZ->0`
-- isolated NZ generation vs immediate following ZERO changed-slot set: VS mean Jaccard 0.995, median 1.0
-- no repeated exact `A->B->A` VS vec4 transient; any slot appears at most 2/22 isolated NZ events
-- exact complete PS uniform states occur in both ZERO and NONZERO classes
-  - `e2b9...`: 10/26 NZ generations share a state also seen on ZERO
-  - each of `5199...`, `902c...`, `3626...`: 7/26 NZ generations share a ZERO state
+- `DB_HTILE_DATA_BASE = 0x00f54428`
+- actual/reconstructed depth phys = `0xf5442800`
+- bound texture phys = `0xf5442800`
+- same size/info/view/control
+- same format/tile/swizzle/1280x720/pitch/view
+- bound on every generation
+- GPU-updated on every generation
+- `lastUpdateEventCounter=8`, `lastUpdateFrameCounter=0`, `reloadCount=1` fixed
+
+Dynamic history:
+
+- `dataUpdateFrame == current frame` on 380/380
+- `accessFrame == current frame` on 380/380
+- `lastUnflushedRTDrawcallIndex == query begin draw` on 377/380; three -9 anomalies are not NZ-specific
+- `lastWriteEventCounter` delta is explained by elapsed frame/draw work; conditioned on frame gap, ZERO and NZ transition distributions overlap strongly
 
 Conclusion:
 
-**uniform data changes continuously, but this trace did not find an NZ-specific uniform discriminator. Do not keep drilling the same uniform layer.**
+**actual depth identity/history is not the ZERO/NONZERO discriminator.**
 
-## 7. Critical depth blind spot discovered
+Do not reopen the already closed f544 destructive/seeded behavior experiments.
 
-The old target draw trace recorded `DB_DEPTH_BASE/SIZE/INFO/VIEW` and showed `DB_DEPTH_BASE=0`.
+## 8. NEXT ACTION — index-buffer content only
 
-This did **not** identify the real depth surface.
+The six target0 producer draw index identities are fixed in every observed generation and all use index type 4 = U16_BE:
 
-Cemu `GX2SetDepthBuffer()` currently writes:
+1. `0x1314dac0`, count 8394
+2. `0x13151d00`, count 129
+3. `0x13151ec0`, count 483
+4. `0x13152340`, count 6
+5. `0x13152400`, count 1560
+6. `0x131530c0`, count 504
 
-- `DB_DEPTH_BASE = 0`
-- `DB_HTILE_DATA_BASE = physical(imagePtr) >> 8`
+Next observation:
 
-`LatteRenderTarget.cpp` reconstructs:
+- exact-hash guest index bytes for each producer draw (`count * 2` bytes)
+- correlate six hashes by target generation to completed ZERO/NONZERO GET
+- record only target0 producer draws
+- no index mutation
+- no query/result/readiness mutation
+- no render-state mutation
+- do not add sampled-texture observation in the same experiment
 
-`depthBufferPhysMem = DB_HTILE_DATA_BASE << 8`
+If index content is also identical across result classes, sampled texture identity/content becomes the next missing producer input before any query-driver semantic A/B.
 
-Therefore previous `depth=00000000/...` stability must not be interpreted as proof that the actual depth surface identity was stable.
-
-This is a newly identified observation gap. It is not a restart of the closed f544 Bayo experiments.
-
-## 8. Active experiment — actual depth identity/history
-
-New marker:
-`[BAYO2_TARGET_DEPTH]`
-
-Log once per target0 generation:
-
-- `DB_HTILE_DATA_BASE`
-- reconstructed raw physical address
-- depth size/info/view/control
-- current `LatteMRT::GetDepthAttachment()` presence
-- bound depth texture physical address / format / tile mode / swizzle / dimensions / pitch / view
-- `isUpdatedOnGPU`
-- readback flag
-- `lastWriteEventCounter`
-- `lastUpdateEventCounter`
-- update/data-update frame counters
-- reload/access/unflushed-draw bookkeeping
-
-Constraints:
-
-- no depth readback
-- no depth content hash yet
-- no depth mutation
-- no query/result mutation
-- no behavior workaround
-- do not mix index-buffer or sampled-texture experiments into this build
-
-## 9. Current CI — Run #14
-
-Workflow:
-`Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
-
-Run:
-`#14`
-
-Run ID:
-`33947749589`
-
-Head:
-`21b671c62c6e723bd83c74434e752de8955031c4`
-
-Status at this handoff update:
-**IN PROGRESS**
-
-Do not start another CI run while Run #14 is active.
-
-## 10. NEXT ACTION
-
-1. Check Run #14 `33947749589` final status.
-2. If failure, recover exact first failing error and correct only the new depth observation layer.
-3. If success, confirm Build + Collect + Upload and artifact existence.
-4. Next runtime log must contain `[BAYO2_TARGET_DEPTH]`.
-5. Join depth rows to target0 GET by `gen`.
-6. Compare ZERO/NONZERO and transition directions for:
-   - actual `htile`/depth physical identity
-   - bound depth texture identity
-   - write/update event counters and frame bookkeeping
-7. If actual depth identity/history is identical across result classes, only then choose the next missing producer input (index content or sampled texture identity) or a query-driver semantic A/B.
-8. Do not introduce a behavior workaround before this depth result.
-
-## 11. DO NOT ROLLBACK / DO NOT REPEAT
+## 9. DO NOT ROLLBACK / DO NOT REPEAT
 
 Never roll back:
 
@@ -268,4 +196,4 @@ Do not repeat:
 
 ## New-tab startup prompt
 
-`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_PRODUCER_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md, CURRENT_HANDOFF.md를 먼저 읽고 실제 branch/HEAD/Actions 상태와 대조해. CURRENT_HANDOFF NEXT ACTION부터 시작해. 현재 active experiment는 target0 0x46a92ec8 actual depth identity/history trace이며 Run #14 33947749589의 최종 상태를 먼저 확인해. Bayo2/XCX query-consumption 차이를 유지하고 이미 배제된 실험을 반복하지 마. main은 건드리지 마.`
+`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, DEBUG_HISTORY_20260829_QUERY_COMPARE.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_PRODUCER_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md, CURRENT_HANDOFF.md를 먼저 읽고 실제 branch/HEAD/Actions 상태와 대조해. CURRENT_HANDOFF NEXT ACTION부터 시작해. 현재 next experiment는 target0 0x46a92ec8 producer index-buffer exact content hash다. Bayo2/XCX query-consumption 차이를 유지하고 이미 배제된 실험을 반복하지 마. main은 건드리지 마.`
