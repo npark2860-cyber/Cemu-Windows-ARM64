@@ -246,3 +246,7 @@ exec(compile(downstream_path.read_text(encoding="utf-8"), str(downstream_path), 
 # Apply the approved target0 downstream vertex/uniform resource observation trace.
 resource_path = Path("tools/diagnostics/Apply-Bayo2Target0ResourceIdentityTrace.py")
 exec(compile(resource_path.read_text(encoding="utf-8"), str(resource_path), "exec"))
+
+# Apply target0 query-producer vertex/uniform resource observation trace.
+producer_resource_path = Path("tools/diagnostics/Apply-Bayo2Target0ProducerResourceTrace.py")
+exec(compile(producer_resource_path.read_text(encoding="utf-8"), str(producer_resource_path), "exec"))
