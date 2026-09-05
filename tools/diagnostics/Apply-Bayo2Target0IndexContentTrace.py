@@ -139,3 +139,7 @@ if vk.count("Bayo2Target0IndexContentTrace_LogDraw(pipeline_info") != 2:
 
 vk_path.write_text(vk, encoding="utf-8", newline="\n")
 print("Bayonetta 2 target0 exact index-buffer content trace installed; behavior unchanged")
+
+# Apply target0 sampled-texture resource/content observation trace.
+texture_resource_path = Path("tools/diagnostics/Apply-Bayo2Target0TextureResourceTrace.py")
+exec(compile(texture_resource_path.read_text(encoding="utf-8"), str(texture_resource_path), "exec"))
