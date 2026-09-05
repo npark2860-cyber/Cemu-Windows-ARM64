@@ -44,4 +44,8 @@ if starfox_id not in core or "[QUERY_COMPARE]" not in core:
     raise RuntimeError("Star Fox Latte query-consumption extension validation failed")
 core_path.write_text(core, encoding="utf-8", newline="\n")
 
+# Chain the focused, unsampled observation for recurring query 0x460f9fc8.
+focus_path = Path("tools/diagnostics/Apply-StarFoxFocusedQueryTrace.py")
+exec(compile(focus_path.read_text(encoding="utf-8"), str(focus_path), "exec"))
+
 print("Star Fox Zero JP added to existing QUERY_COMPARE observation trace; behavior unchanged")
