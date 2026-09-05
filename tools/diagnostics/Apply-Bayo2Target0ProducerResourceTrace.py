@@ -154,3 +154,7 @@ if vk.count("Bayo2Target0ProducerResourceTrace_LogDrawResources(pipeline_info") 
 
 vk_path.write_text(vk, encoding="utf-8", newline="\n")
 print("Bayonetta 2 target0 query-producer vertex/uniform resource trace installed; behavior unchanged")
+
+# Apply target0 producer uniform vec4 delta observation trace.
+uniform_delta_path = Path("tools/diagnostics/Apply-Bayo2Target0UniformDeltaTrace.py")
+exec(compile(uniform_delta_path.read_text(encoding="utf-8"), str(uniform_delta_path), "exec"))
