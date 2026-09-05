@@ -1,7 +1,7 @@
 # CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
 
-> 갱신: 2026-09-05 KST  
-> 이전 대화를 추측해서 복원하지 말고 GitHub 문서를 source of truth로 사용한다.
+> 갱신: 2026-09-06 KST  
+> GitHub 문서/branch/Actions를 source of truth로 사용한다. 이전 대화를 추측해서 복원하지 않는다.
 
 ## 0. 먼저 읽을 문서
 
@@ -14,218 +14,188 @@
 7. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md`
 8. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_INDEX_CONTENT_RUNTIME.md`
 9. `DEBUG_HISTORY_20260905_BAYO2_TARGET0_TEXTURE_RESOURCE_RUNTIME.md`
-10. `CURRENT_HANDOFF.md`
+10. `DEBUG_HISTORY_20260906_BAYO2_TARGET0_DEPTHCOMPARE_RUNTIME.md`
+11. `DEBUG_HISTORY_20260905_STARFOX_BAYO2_F57C8000_COMMON_DEPTH_PATH.md`
+12. `CURRENT_HANDOFF.md`
 
-## 1. Current goal
-
-Bayonetta 2 JP target0 CPU occlusion query `0x46a92ec8`가 동일한 six-draw producer path에서 completed ZERO/NONZERO를 반복하는 이유를 좁힌다.
-
-현재 active experiment는 **PS unit11 GPU-updated depth-compare texture `0xf57c8000`의 bound-object write/update history observation**이다. Behavior workaround 단계가 아니다.
-
-## 2. Repository / branch state
+## 1. Repository state
 
 Repository: `npark2860-cyber/Cemu-Windows-ARM64`
 
-Main remains untouched. Known `main` HEAD: `58954b34d147b134d7b23ee61b2057f49da2c014`.
+Main remains untouched. Known main HEAD: `58954b34d147b134d7b23ee61b2057f49da2c014`.
 
-Handoff/docs branch: `diag-bayo2-target0-resource-identity`.
+Docs branch: `diag-bayo2-target0-resource-identity`
 
-CI branch: `diag-bayo2-target-query-draw-fingerprint`.
+CI branch: `diag-bayo2-target-query-draw-fingerprint`
 
-Current CI branch HEAD: `ce80d7a68dc88b90f299f9e2dfd53b8e267c92d9`.
+Current CI HEAD: `0e78994bfa41614f2631ca84e34dff2a7979c645`
 
-Current staging branch: `diag-bayo2-target0-depthcompare-history`.
+Current staging branch: `diag-starfox-query-consumption`
 
-Run #16 sampled-texture checkpoint: `552b8d4b500bdd959b6b3b4bb5eb2fcba157b4b6`.
+Staging diff from Run #17 is intentionally narrow:
 
-Depth-compare history commits after Run #16:
+- add `tools/diagnostics/Apply-StarFoxQueryConsumptionTrace.py`
+- add four chaining lines to `Apply-Bayo2Target0DepthCompareTextureHistoryTrace.py`
 
-- `1fcb9f2cc1a9b8fd49e444e01c60469e87841635` — add unit11 depth-compare texture history trace
-- `ce80d7a68dc88b90f299f9e2dfd53b8e267c92d9` — chain the new trace after sampled-texture observation
+No query/result/readiness/render/texture/draw behavior change.
 
-Diff from Run #16 is intentionally narrow:
+## 2. Fixed query-consumption facts
 
-- add `tools/diagnostics/Apply-Bayo2Target0DepthCompareTextureHistoryTrace.py`
-- add four chaining lines to `Apply-Bayo2Target0IndexContentTrace.py`
-
-No query/result/readiness/render/texture/draw behavior change is committed.
-
-## 3. Protected checkpoints
-
-- Run #10 — downstream target0 resource — `6b96fb4a...` — Run `33369558184` — SUCCESS
-- Run #11 — normalization — `4f24fca...` — Run `33467898875` — SUCCESS
-- Run #12 — producer resource — `4498bfe9...` — Run `33939024628` — SUCCESS
-- Run #13 — producer uniform vec4 delta — `2f5d4080...` — Run `33945290442` — SUCCESS
-- Run #14 — actual depth identity/history — `21b671c6...` — Run `33947749589` — SUCCESS
-- Run #15 — exact index-buffer content — `8a735a58...` — Run `33951247306` — SUCCESS
-- Run #16 — sampled-texture resource/content — `552b8d4b...` — Run `33958269235` — SUCCESS
-
-Do not rerun old validation stages.
-
-## 4. Fixed query-consumption facts
-
-Bayonetta 2:
+Bayonetta 2 JP `00050000-1011B900`:
 
 - CPU occlusion query type=0
 - exported `GX2QueryGetOcclusionResult()` heavily consumed
-- completed ready-zero is real completed/consumed data in these captures
-- no GET_NOT_READY / missing-snapshot / overwritten-unconsumed explanation
+- completed ready-zero is real completed/consumed result
+- no GET_NOT_READY / missing snapshot / overwritten-unconsumed explanation
 - do not globally force ready-zero visible
 
-XCX:
+XCX JP `00050000-10116100`:
 
 - GPU occlusion query type=2
 - exported CPU `GX2QueryGetOcclusionResult()` consumption not observed
-- no exported conditional-render marker / no raw `IT_SET_PREDICATION` in dedicated capture
+- no exported conditional-render marker
+- dedicated raw capture had no `IT_SET_PREDICATION`
 - historical XCX `0x100000` seed remains XCX-only
 
-Do not assume Bayo2 and XCX use the same consumption path.
+Do not assume Bayo2/XCX/Star Fox use the same query path until measured.
 
-## 5. Closed/demoted target0 producer discriminators
+## 3. Closed Bayo2 target0 producer discriminators
 
-Completed ZERO/NONZERO is not explained by:
+Target0 `0x46a92ec8` completed ZERO/NONZERO is not explained by:
 
-- different six-draw producer sequence
-- pipeline/shader/draw-argument fingerprint
-- primitive/clip/raster/depth-control/color-control/target-mask state
-- guest VB identity / sampled VB content
-- VS/PS/GS constant-buffer identity/content
+- six-draw sequence
+- pipeline/shader/draw arguments and recorded render state
+- guest VB identity/content
+- VS/PS/GS CB identity/content
 - PS full uniform state
 - transition-specific VS uniform vec4 delta family
-- actual bound target depth surface identity (`0xf5442800`)
-- observed target depth write/update bookkeeping
-- exact guest index-buffer content for all six draws
-- sampled-texture unit selection
-- sampled-texture seven-word register identity
-- sampled image/mip guest address identity
+- actual target depth identity `0xf5442800`
+- target depth write/update bookkeeping
+- exact six-draw index-buffer content
+- sampled texture unit selection
+- seven-word texture resource identity
+- image/mip guest addresses
 - sampler assignment / depth-compare flags
-- readable 4 KiB guest-memory texture prefixes
+- readable 4 KiB texture prefixes
+- PS unit11 `0xf57c8000` bound-object write/update/access history
 
-Do not repeat these observations unless a new contradiction appears.
+Do not repeat these experiments under the same conditions.
 
-## 6. Run #16 runtime — `log (2)(2).zip`
+## 4. Run #17 — Bayo2 depth-compare history — CLOSED
 
-Detailed source: `DEBUG_HISTORY_20260905_BAYO2_TARGET0_TEXTURE_RESOURCE_RUNTIME.md`.
+Run #17:
 
-Capture validity:
+- Run ID `33971629934`
+- head `ce80d7a68dc88b90f299f9e2dfd53b8e267c92d9`
+- conclusion SUCCESS
+- artifact id `9971602143`
+- digest `sha256:8c5745809a761ac27da869bc658d80c82803077475616dac05ce73dfa28d614a`
 
-- `[BAYO2_TARGET_TEXTURE]`: 15,599 rows
-- texture generations observed: 821
-- exactly 19 rows per generation
-- completed target0 GET generations: 820
-- final gen 821 incomplete and excluded
+Runtime `log (2)(3).zip`:
 
-Results:
+- completed target0 generations: 666
+- ZERO 610 / NONZERO 56
+- `[BAYO2_TARGET_DEPTHCOMPARE]`: 667 rows, 666/666 completed gens covered
+- `0->0` 556 / `0->NZ` 53 / `NZ->0` 53 / `NZ->NZ` 3
 
-- ZERO 767
-- NONZERO 53
-- FIRST 1
-- `0->0` 717
-- `0->NZ` 49
-- `NZ->0` 49
-- `NZ->NZ` 4
-- 49 NONZERO episodes: 46 single-generation, 2 two-generation, 1 three-generation
+All completed generations have identical `f57c8000` identity and fixed bookkeeping fields. `dataUpdateFrame` and `accessFrame` equal producer frame for 666/666. `writeEvent` deltas overlap strongly after controlling frame gap. Nonzero `unflushedDraw` anomalies occur in both result classes.
 
-All 820 completed generations collapse to **one identical logged sampled-texture signature** across the recurring producer shaders.
+Conclusion: **observed `f57c8000` history is not the ZERO/NONZERO discriminator.**
 
-VS families use no sampled textures. The four PS families use fixed subsets of units 0/1/2/3/11.
+Detailed source: `DEBUG_HISTORY_20260906_BAYO2_TARGET0_DEPTHCOMPARE_RUNTIME.md`.
 
-The critical exception is PS unit11:
+## 5. Star Fox Zero independent reproduction
 
-- all four PS shaders use it with `depthCompare=1`
-- fixed resource address `0xf57c8000`
-- Run #16 guest-memory hash is always 0 only because the helper rejects addresses `>=0x50000000`; this is not a content hash
-- runtime lifecycle shows `0xf57c8000` is a 1024x2048 format 0x11 depth texture, used as a depth attachment and delete-time `gpuUpdated=1`
+Star Fox Zero JP v16 title ID: `00050000-101aff00`.
 
-Therefore broad texture resource identity is closed, but GPU content/history of `0xf57c8000` remains unobserved.
+User reports the visible symptom is the same as Bayo2: severe object flicker/disappear-reappear behavior.
 
-## 7. Active experiment — PS unit11 depth-compare texture history
+Runtime logs independently show a structurally matching path:
 
-New marker: `[BAYO2_TARGET_DEPTHCOMPARE]`.
+Bayo2:
 
-Once per target0 generation, using the already-bound PS unit11 view only, record:
+- `f57c8000`
+- `1024x2048`, pitch 1024
+- format `0x11`, depth, GPU-updated
+- producer PS unit11 depth-compare sampling
+- also used as depth attachment
 
-- register physical address and bound texture physical identity
-- depth/stencil/format/tile/swizzle/view geometry
-- data-defined / GPU-updated / readback / dynamic-reload flags
-- `lastWriteEventCounter`
-- `lastUpdateEventCounter`
-- update/data-update frame counters
-- reload count
-- last access frame
-- last unflushed RT draw index
-- `texDataHash2`
+Star Fox:
 
-Constraints:
+- `f57c8000`
+- `768x1536`, pitch 768
+- format `0x11`, depth, GPU-updated
+- PS stage/unit11 repeated reuse
+- also used as depth attachment
 
-- no texture lookup or creation
-- no GPU readback
-- no texture mutation
-- no query/result/readiness mutation
-- no render-state/draw behavior change
+This is strong cross-title evidence for a common Platinum-style depth/visibility path, but **query-consumption equivalence is not yet proven**.
 
-The purpose is to determine whether NONZERO correlates with a different GPU depth-texture write/update history before considering a query-driver semantic A/B.
+## 6. Active experiment — Star Fox query-consumption comparison
 
-## 8. Current CI — Run #17
+Use the existing observation-only `[QUERY_COMPARE]` instrumentation and add only Star Fox Zero JP to the title gates.
+
+Markers to compare:
+
+- `API_BEGIN` / `API_END` and query type
+- `FINISH_ZERO` / `FINISH_NONZERO`
+- `GET_READY_ZERO`
+- `GET_READY_NONZERO`
+- `GET_NOT_READY`
+- `CONDITIONAL_BEGIN` / `CONDITIONAL_END`
+
+No behavior change.
+
+Staging commits after Run #17:
+
+- `c6eaa131c25e6ca2466b3b32d55b24b2a83c41eb` — add Star Fox query-consumption title-gate extension
+- `0e78994bfa41614f2631ca84e34dff2a7979c645` — chain extension into existing diagnostic build
+
+Diff from Run #17: 2 files only, +51 lines total.
+
+## 7. Current CI — Run #18
 
 Workflow: `Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
 
-Run: `#17`
+Run #18
 
-Run ID: `33971629934`
+Run ID: `33977750768`
 
-Head: `ce80d7a68dc88b90f299f9e2dfd53b8e267c92d9`
+Head: `0e78994bfa41614f2631ca84e34dff2a7979c645`
 
-Status at this handoff update: **IN PROGRESS**.
+Last checked status: **QUEUED**.
 
-Last checked job `101321059139`: checkout in progress.
+Do not start another CI run while #18 is active.
 
-Do not start another CI run while Run #17 is active.
+## 8. NEXT ACTION
 
-## 9. NEXT ACTION
+1. Check Run #18 `33977750768` final status.
+2. If failure, recover exact first failing diagnostic and fix only the Star Fox gate/chain layer.
+3. If success, verify Build + Collect + Upload and artifact metadata.
+4. Use that artifact for Star Fox Zero JP v16 in the known flicker scene for ~10–15 seconds.
+5. Upload full `log.txt`.
+6. Parse `[QUERY_COMPARE]` and classify Star Fox against Bayo2/XCX:
+   - query type
+   - CPU GET consumption yes/no
+   - ready zero/nonzero distribution
+   - not-ready behavior
+   - conditional render use
+   - renderer FINISH behavior
+7. If Star Fox matches Bayo2 type=0 + CPU GET + ready-zero/nonzero oscillation, promote a shared Platinum visibility/depth path × Vulkan/Adreno hypothesis.
+8. If Star Fox does not use the same query path, do not force the query explanation; instead compare the common GPU-written depth -> PS unit11 reuse / synchronization path.
+9. Do not introduce a broad workaround before this cross-title classification.
 
-1. Check Run #17 `33971629934` final status.
-2. If failure, recover the exact first failing error and correct only the new depth-compare-history observation layer.
-3. If success, confirm Build + Collect + Upload and artifact existence.
-4. Use only the Run #17 artifact for the next severe-flicker capture.
-5. Next runtime log must contain `[BAYO2_TARGET_DEPTHCOMPARE]`.
-6. Join one history row per generation to target0 completed GET result.
-7. Compare ZERO/NONZERO and transition directions for `writeEvent`, update/data-update frame, access frame, unflushed RT draw and all fixed identity flags.
-8. If history is identical after controlling frame gap, the next step is not broader resource logging; shift toward a narrowly designed Vulkan/Adreno occlusion-query or GPU synchronization semantic A/B.
-9. Do not introduce a behavior workaround before this result.
-
-## 10. DO NOT ROLLBACK / DO NOT REPEAT
+## 9. DO NOT ROLLBACK / DO NOT REPEAT
 
 Never roll back:
 
 - VS DEFAULT_VAL synthesize/linkage compatibility
 - permanent PS DEFAULT_VAL linkage fix
 - AArch64 generated-code cache/I-cache coherency fix
-- known-good pre-e834 Vulkan compatibility behavior
-- validated query/downstream/resource observation chain
+- known-good pre-e834 Vulkan behavior
+- validated observation chain
 
-Do not repeat:
-
-- Bayo2 ready-zero as NOT_READY/default zero
-- missing snapshot / overwritten-unconsumed explanation
-- Bayo2 = XCX consumption-path assumption
-- global ready-zero force-visible
-- Position Invariance
-- viewport depth-range clamp
-- `depthBiasClamp`
-- Force Maximum LOD / generic LOD
-- negativeOneToOne / shader depth conversion rollback
-- RT barrier variants / forced render-pass split
-- depthclip
-- pipeline pNext
-- VS auxHash key
-- f4c24000 conversions
-- nested/duplicate query bookkeeping
-- f544 Bayo primary-cause experiments
-- XCX raw predication retry
-- exact target0 index-content hashing under the same conditions
-- broad target0 sampled-texture register/prefix hashing under the same conditions
+Do not repeat closed experiments listed in section 3 or old XCX/Bayo2 query assumptions.
 
 ## New-tab startup prompt
 
-`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, DEBUG_HISTORY_20260829_QUERY_COMPARE.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_PRODUCER_RESOURCE_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_UNIFORM_DELTA_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_DEPTH_IDENTITY_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_INDEX_CONTENT_RUNTIME.md, DEBUG_HISTORY_20260905_BAYO2_TARGET0_TEXTURE_RESOURCE_RUNTIME.md, CURRENT_HANDOFF.md를 먼저 읽고 실제 branch/HEAD/Actions 상태와 대조해. CURRENT_HANDOFF NEXT ACTION부터 시작해. 현재 active experiment는 target0 0x46a92ec8 PS unit11 0xf57c8000 depth-compare texture history trace이며 Run #17 33971629934의 최종 상태를 먼저 확인해. Bayo2/XCX query-consumption 차이를 유지하고 이미 배제된 실험을 반복하지 마. main은 건드리지 마.`
+`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, DEBUG_HISTORY_20260829_QUERY_COMPARE.md, DEBUG_HISTORY_20260906_BAYO2_TARGET0_DEPTHCOMPARE_RUNTIME.md, DEBUG_HISTORY_20260905_STARFOX_BAYO2_F57C8000_COMMON_DEPTH_PATH.md, CURRENT_HANDOFF.md를 먼저 읽고 실제 branch/HEAD/Actions 상태와 대조해. CURRENT_HANDOFF NEXT ACTION부터 시작해. 현재 active experiment는 Star Fox Zero JP query-consumption comparison이며 Run #18 33977750768의 최종 상태를 먼저 확인해. Bayo2/XCX query-consumption 차이를 유지하고 이미 배제된 실험을 반복하지 마. main은 건드리지 마.`
