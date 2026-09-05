@@ -154,3 +154,7 @@ if vk.count("Bayo2Target0DepthIdentityTrace_LogDraw(pipeline_info") != 2:
 
 vk_path.write_text(vk, encoding="utf-8", newline="\n")
 print("Bayonetta 2 target0 depth identity/history trace installed; behavior unchanged")
+
+# Apply target0 exact index-buffer content observation trace.
+index_content_path = Path("tools/diagnostics/Apply-Bayo2Target0IndexContentTrace.py")
+exec(compile(index_content_path.read_text(encoding="utf-8"), str(index_content_path), "exec"))
