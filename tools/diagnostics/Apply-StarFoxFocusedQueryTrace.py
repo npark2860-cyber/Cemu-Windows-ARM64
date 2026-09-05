@@ -66,13 +66,10 @@ core_state_anchor = "static uint64 s_queryCompareFinishNonZeroCount = 0;\n"
 core_state_block = core_state_anchor + "static uint64 s_starFoxFocusFinishCount = 0;\n"
 core = replace_once(core, core_state_anchor, core_state_block, "Star Fox focus core state")
 
-finish_anchor = '''void LatteQuery_finishGX2Query(LatteGX2QueryInformation* gx2Query)
-{
-\tconst uint64 traceTitleId = CafeSystem::GetForegroundTitleId();
+finish_anchor = '''\tconst uint64 traceTitleId = CafeSystem::GetForegroundTitleId();
+\tif (QueryCompareCoreTraceEnabled(traceTitleId))
 '''
-finish_block = '''void LatteQuery_finishGX2Query(LatteGX2QueryInformation* gx2Query)
-{
-\tconst uint64 traceTitleId = CafeSystem::GetForegroundTitleId();
+finish_block = '''\tconst uint64 traceTitleId = CafeSystem::GetForegroundTitleId();
 \tif (traceTitleId == 0x00050000101AFF00ULL && gx2Query->queryMPTR == 0x460f9fc8)
 \t{
 \t\tconst uint64 n = ++s_starFoxFocusFinishCount;
@@ -81,6 +78,7 @@ finish_block = '''void LatteQuery_finishGX2Query(LatteGX2QueryInformation* gx2Qu
 \t\t\tn, gx2Query->queryMPTR, gx2Query->queryEventStart, gx2Query->queryEventEnd,
 \t\t\tgx2Query->sampleSum, gx2Query->sampleSum == 0 ? "ZERO" : "NONZERO");
 \t}
+\tif (QueryCompareCoreTraceEnabled(traceTitleId))
 '''
 core = replace_once(core, finish_anchor, finish_block, "Star Fox focus FINISH")
 
