@@ -155,3 +155,7 @@ if vk.count("Bayo2Target0DepthCompareHistoryTrace_LogDraw(pipeline_info") != 2:
 
 vk_path.write_text(vk, encoding="utf-8", newline="\n")
 print("Bayonetta 2 target0 depth-compare texture history trace installed; behavior unchanged")
+
+# Extend the already-installed QUERY_COMPARE gates to Star Fox Zero JP.
+starfox_query_path = Path("tools/diagnostics/Apply-StarFoxQueryConsumptionTrace.py")
+exec(compile(starfox_query_path.read_text(encoding="utf-8"), str(starfox_query_path), "exec"))
