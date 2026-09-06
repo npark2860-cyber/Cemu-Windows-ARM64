@@ -1,175 +1,120 @@
 # CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
 
-> 이 파일은 **현재 상태만** 유지한다. 완료된 실험은 `DEBUG_HISTORY.md`로 이동한다. 새 탭은 이 파일의 `NEXT ACTION`부터 시작한다.
+> 이 파일은 현재 상태만 유지한다. 이 탭의 상세 근거는 `DEBUG_HISTORY_20260906_QUERY_MAPPED_DIRECT_DIVERGENCE.md`를 우선한다.
 
-## 1. Current goal
+## CURRENT STATE
 
-Windows ARM64 / Snapdragon X Elite / Adreno X1-85 환경에서 Cemu Vulkan의 멈춤/강종/저성능 원인을 범용 진단판으로 좁힌다.
+Repository:
 
-현재 우선순위는 **진단 UI에서 회색 비활성 상태인 항목들이 왜 비활성인지 소스에서 확인하고, 실제 runtime probe가 빠진 항목을 한 그룹씩 연결하는 것**이다.
+- `npark2860-cyber/Cemu-Windows-ARM64`
 
-## 2. Repository state
+Active branch:
 
-- Repository: `npark2860-cyber/Cemu-Windows-ARM64`
-- Active branch: `runtime-experiments-arm64`
-- Last verified **code-changing** HEAD: `8bca12fa5119f12b34b73ba5482d2ffeea89f5a8`
-- Commit: `Fix literal tab escapes in RT diagnostics`
+- `diag-query-mapped-direct-divergence`
 
-주의: 이 handoff 체계를 만들면서 위 code checkpoint 뒤에 문서 전용 commit이 추가되었다. 다음 탭에서는 반드시 GitHub에서 실제 branch HEAD를 다시 읽고, `8bca12fa...` 이후 변경이 문서-only인지 코드 변경인지 확인한다. **소스 기준점은 `8bca12fa...`** 이다.
+Last verified code-changing checkpoint:
 
-## 3. Last successful build / current test build
+- `790a945780ea561518dd072d9f73c0e3e89b4700`
+- `diagnostics: restore protected direct query readback baseline`
 
-### Latest successful CI
+The branch may contain documentation-only commits after this code checkpoint. Always verify actual branch HEAD, but do not treat docs-only HEAD movement as a code change.
 
-- Workflow: `Cemu ARM64 Diagnostic Edition`
-- Run: `#24`
-- Run ID: `33017387410`
-- Head SHA: `8bca12fa5119f12b34b73ba5482d2ffeea89f5a8`
-- Result: **SUCCESS**
-- Artifact: `cemu-arm64-diagnostic-edition`
-- Artifact ID: `9626115561`
-- Artifact digest: `sha256:9540922b3f7b0155148f6eadcf7469e4d1e4d58e9591bee53cbdb05429f040f3`
+`main` is out of scope and must not be modified.
 
-### Runtime state
+## IMMUTABLE VERIFIED PASS
 
-- 위 diagnostic build는 실행되어 **ARM64 Diagnostics UI가 열리는 것까지 확인**됨.
-- 이 탭에서는 게임별 전체 runtime A/B를 새로 수행하지 않음.
-- 과거 gameplay 정상 기준: VS DEFAULT_VAL synthesize 적용 후 Adreno X1-85에서 BOTW/TTT2 렌더 정상 확인.
+Do not regress these results:
 
-## 4. Current Diagnostics UI state
+- Star Fox Zero JP (`00050000-101AFF00`): Run #25 FIXED by title-gated `vkGetQueryPoolResults` direct readback.
+- Bayonetta 2 JP (`00050000-1011B900`): Run #26 FIXED by the same path.
+- retained PASS branch/head: `exp-bayo2-query-direct-readback` / `5d758a096ee9409e7c25372a6caa9ad9d2378575`
+- XCX remains separate; do not globalize blocking direct readback.
 
-Reference screenshot: `스크린샷 2026-08-27 073356.png` (conversation attachment; repository file 아님)
+## CONFIRMED ROOT-CAUSE BOUNDARY
 
-- `Diagnostics master`: **OFF / unchecked**
-- `Preset`: **Custom**
-- `Hitch threshold (ms)`: **50**
-- 화면에 보이는 모든 개별 checkbox: **unchecked**
+Star Fox Zero runtime instrumentation proves repeated cases where:
 
-### Enabled/selectable but currently OFF
+- owning command buffer is finished: `cmdFinished=1`
+- direct Vulkan query read succeeds: `vkResult=0`
+- `direct` is nonzero
+- mapped result is still `0`
+- `mismatch=1`
 
-Left column:
+Therefore the reproduced failure is downstream of a completed query result and is in the normal query-copy / mapped-result path, not simply an unfinished query.
 
-- JIT block lifecycle
-- Branch patching
-- JIT execution entry
-- Guest memory access
-- Queue submit
-- Pipeline creation
-- Pipeline state snapshot
-- VS diagnostics
-- GS diagnostics
-- Pipeline barriers
-- WAW dependency
-- Render-pass split
+Bayonetta 2 runtime memory metadata proves:
 
-Right column:
+- `memoryType=4`
+- actual flags `0x0000000f`
+- requested flags `0x0000000e`
+- `fallback=0`
 
-- Guest/host JIT mapping
-- readonly / I-cache
-- ARM64 exception context
-- Pipeline cache
-- Pipeline failure
-- Shader hash association
-- PS diagnostics
-- Shader auxHash
-- Render-pass begin/end
-- RAW dependency
-- Self dependency
-- Synchronization summary
+The selected query-result memory is `DEVICE_LOCAL | HOST_VISIBLE | HOST_COHERENT | HOST_CACHED`. Missing invalidate for non-coherent memory is therefore ruled out for this captured Adreno path.
 
-### Grey / disabled in current UI
+## EXPERIMENTS ALREADY DONE
 
-Left column:
+Do not repeat these blindly:
 
-- Semaphore flow
-- Device-lost / submit errors
-- Pipeline-cache mismatch
-- Shader interface
-- SPIR-V compile failure
-- Dump every shader
-- FBO changes
-- Load/store behavior
-- Feedback-loop support
+1. transfer-write -> host-read barrier
+   - commit `79fbf25ab8a255fe15ad8210bad21a9a5491c34e`
+   - Run #28 `34017106924`
+   - CI SUCCESS
 
-Right column:
+2. forced mapped-memory invalidate
+   - commit `7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
+   - Run #29 `34019347912`
+   - CI SUCCESS
+   - runtime memory is HOST_COHERENT, so non-coherent invalidate is not the root fix
 
-- Command-buffer lifecycle
-- Fence lifecycle
-- Submit completion
-- Shader creation
-- GLSL compile failure
-- Dump failed shader
-- Attachment usage
-- Render-target aliasing
-- Feedback-loop use
+3. DEVICE_LOCAL intermediate isolation
+   - diagnostic commit `eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`
+   - trigger head `6532c82d1c75b983465bcac40cf36f947462e0b9`
+   - Run #30 `34021733515`
+   - CI SUCCESS
+   - artifact `9986265293`
+   - digest `sha256:c7083f69433ae71029673d7ac21291a6f6b8543060eec4a794e0949eb0621b3b`
+   - runtime result: **NOT VERIFIED**; no Run #30 runtime log is available
 
-**Interpretation rule:** grey means “원인 배제”가 아니다. UI 항목은 존재하지만 backend/probe가 미연결이거나 현재 build 조건에서 지원되지 않는 상태로 취급한다.
+4. protected baseline restored
+   - code checkpoint `790a945780ea561518dd072d9f73c0e3e89b4700`
+   - trigger Run #31 `34024292927`
+   - trigger head `be3064da39e2913719de6fc800e7f417d28a0aec`
+   - CI SUCCESS
+   - artifact `9987082611`
+   - digest `sha256:74aef6d516965fc1ec93fc32d0a6ad2fe0358e36a439afdf1b9d2e6c344499bd`
+   - Run #31 tree matches the restored protected code checkpoint tree
 
-## 5. Confirmed facts
+## CURRENT OPEN QUESTION
 
-- Windows ARM64 build toolchain 자체는 현재 동작한다.
-- Run #24가 성공했으므로 현재 source checkpoint `8bca12fa...`는 CI compile 가능하다.
-- 과거 compile regression은 Configure가 아니라 `Build Cemu` 단계에서 발생했으며 현재 checkpoint에서는 해결됨.
-- VS DEFAULT_VAL synthesize는 Adreno shader key 문제 해결에 효과가 있었고 확정 기반 수정이다.
-- Wii U decrypt는 ARM64에서 동작 확인됨.
-- Diagnostics UI의 회색 항목은 현재 선택할 수 없다.
+The remaining branch point is exactly this:
 
-## 6. Ruled out / do not repeat blindly
+- Does `vkCmdCopyQueryPoolResults` fail only when its immediate destination is the persistent HOST_VISIBLE mapped buffer?
+- Or does the query-copy result remain wrong even when the immediate destination is DEVICE_LOCAL?
 
-- “ARM64라서 CMake/vcpkg 자체가 근본적으로 빌드 불가” 가설은 현재 Run #24 성공으로 배제.
-- 과거의 `33006509619` 같은 다른 프로젝트/Eden 계열 Run ID를 Cemu Run으로 재사용하지 말 것.
-- VS DEFAULT_VAL synthesize를 제거하여 원점 회귀하는 실험 금지.
-- 빌드 실패 원인을 확인하지 않고 다음 진단 기능을 계속 누적하는 방식 금지.
-
-## 7. Live hypotheses
-
-1. 회색 항목 중 일부는 UI 정의만 있고 실제 backend probe/flag 연결이 빠져 있다.
-2. 일부는 platform/build feature guard 때문에 Windows ARM64에서 의도치 않게 disable 되어 있을 수 있다.
-3. Vulkan 멈춤/강종의 핵심을 잡으려면 submit/synchronization/lifetime 계열의 미연결 진단이 특히 중요할 가능성이 높다.
-4. Command buffer / fence / semaphore / submit completion / device-lost 로그를 동시에 무조건 켜기보다 각각 독립 toggle로 연결해야 A/B가 가능하다.
-
-## 8. Files changed in this handoff tab
-
-Source code: **변경 없음**
-
-Documentation added at repository root:
-
-- `TECH_BIBLE.md`
-- `DEBUG_HISTORY.md`
-- `CURRENT_HANDOFF.md`
-
-## 9. Latest log / dump references
-
-- 이 handoff 작성 탭에서 새 게임 runtime log/dump는 제공되지 않음.
-- 최신 UI 상태 근거: `스크린샷 2026-08-27 073356.png`
-- 새 로그/덤프가 들어오면 파일명을 이 섹션에 즉시 추가한다.
+Run #30 was built specifically to answer this without sacrificing the known direct-readback visual fix.
 
 # NEXT ACTION
 
-1. GitHub에서 `runtime-experiments-arm64`의 실제 HEAD를 확인한다.
-2. `8bca12fa...` 이후가 문서-only commit인지 검증한다.
-3. ARM64 Diagnostics UI를 구현한 파일과 backend diagnostic flag/probe 정의를 찾는다.
-4. 위 **grey/disabled 18개 항목 각각**에 대해 다음 중 어느 상태인지 표로 만든다.
-   - backend 구현 있음 + UI 연결 누락
-   - backend 일부 구현
-   - 완전 미구현
-   - platform/feature guard 때문에 disabled
-5. 첫 구현 대상은 submit/lifetime 그룹으로 한다:
-   - Command-buffer lifecycle
-   - Fence lifecycle
-   - Semaphore flow
-   - Submit completion
-   - Device-lost / submit errors
-6. 한 번에 한 그룹만 연결하고 정적 검증한다.
-7. 정적 검증 통과 후에만 CI를 실행한다.
-8. 새로 확인한 사실/실험 결과는 `DEBUG_HISTORY.md`에 누적하고 이 파일을 다시 최신화한다.
+1. **Do not rebuild.** Reuse Run #30 artifact `9986265293`.
+2. Test **Star Fox Zero JP first** with that Run #30/intermediate build.
+3. Capture `log.txt` from startup through the reproduced flicker scene.
+4. Confirm the startup build is the Run #30/intermediate revision, not restored Run #31.
+5. Classify both:
+   - whether mapped query values become nonzero
+   - whether visual flicker remains fixed
+6. Then test Bayonetta 2 JP with the same Run #30 artifact.
+7. If the intermediate path repairs mapped values, narrow the defect to query-copy directly into host-visible mapped memory.
+8. If the intermediate path still produces mapped zero, classify `vkCmdCopyQueryPoolResults` itself as the failing Adreno path and retain protected `vkGetQueryPoolResults` while investigating a non-blocking replacement.
+9. Record the runtime result in `DEBUG_HISTORY_20260906_QUERY_MAPPED_DIRECT_DIVERGENCE.md` before any next code experiment.
 
-## DO NOT ROLLBACK
+## DO NOT ROLLBACK / DO NOT TOUCH
 
-- VS DEFAULT_VAL synthesize 기반 수정
-- 현재 정상 CI checkpoint `8bca12fa...`의 코드 상태를 근거 없이 되돌리는 작업
-- UI에서 각 실험을 독립적으로 제어해야 한다는 원칙
+- Star Fox Zero + Bayonetta 2 title-gated direct-readback FIXED behavior
+- PASS branch/head `exp-bayo2-query-direct-readback` / `5d758a096ee9409e7c25372a6caa9ad9d2378575`
+- VS DEFAULT_VAL synthesize fixes
+- `main`
+- XCX query behavior; keep it separate
 
 ## New-tab startup prompt
 
-`Cemu ARM64 디버그 작업 계속. GitHub의 TECH_BIBLE.md, DEBUG_HISTORY.md, CURRENT_HANDOFF.md를 읽고 실제 브랜치/HEAD까지 확인한 뒤, CURRENT_HANDOFF.md의 NEXT ACTION부터 바로 실행해. 이전 대화 추측 금지, 이미 배제된 실험 반복 금지, 완료 후 문서 갱신.`
+`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 CURRENT_HANDOFF.md와 DEBUG_HISTORY_20260906_QUERY_MAPPED_DIRECT_DIVERGENCE.md를 먼저 읽고 실제 branch/HEAD와 대조해. Star Fox Zero와 Bayonetta 2의 vkGetQueryPoolResults direct readback FIXED 상태는 절대 되돌리지 말고, CURRENT_HANDOFF의 NEXT ACTION부터 진행해. main은 건드리지 마.`
