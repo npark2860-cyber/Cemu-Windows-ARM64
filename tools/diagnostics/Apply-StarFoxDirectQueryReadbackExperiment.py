@@ -10,8 +10,8 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 # Preserve the runtime-PASS direct-readback behavior for Star Fox Zero JP and
 # Bayonetta 2 JP, while tracing the persistent mapped query-result path and
-# testing the narrow Vulkan device->host visibility dependency required after
-# vkCmdCopyQueryPoolResults. Other titles remain unchanged.
+# testing the narrow Vulkan device->host visibility dependency plus an explicit
+# mapped-memory invalidate before the host read. Other titles remain unchanged.
 
 api_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h")
 api = api_path.read_text(encoding="utf-8")
@@ -150,9 +150,20 @@ old_result_block = '''\t\tif (!m_rendererVk->HasCommandBufferFinished(it.m_finis
 new_result_block = '''\t\tconst bool commandBufferFinished = m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer);
 \t\tif (!commandBufferFinished)
 \t\t\tbreak;
+\t\tconst bool targetDirectReadback = TargetDirectQueryReadbackEnabled();
+\t\tVkResult invalidateResult = VK_SUCCESS;
+\t\tif (targetDirectReadback)
+\t\t{
+\t\t\tVkMappedMemoryRange queryMappedRange{};
+\t\t\tqueryMappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+\t\t\tqueryMappedRange.memory = m_rendererVk->m_occlusionQueries.memoryQueryResults;
+\t\t\tqueryMappedRange.offset = static_cast<VkDeviceSize>(it.queryIndex) * sizeof(uint64);
+\t\t\tqueryMappedRange.size = sizeof(uint64);
+\t\t\tinvalidateResult = vkInvalidateMappedMemoryRanges(m_rendererVk->GetLogicalDevice(), 1, &queryMappedRange);
+\t\t}
 \t\tconst uint64 mappedResultValue = m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
 \t\tuint64 fragmentResult = mappedResultValue;
-\t\tif (TargetDirectQueryReadbackEnabled())
+\t\tif (targetDirectReadback)
 \t\t{
 \t\t\tuint64 directResultValue = 0;
 \t\t\tconst VkResult directResult = vkGetQueryPoolResults(
@@ -168,27 +179,29 @@ new_result_block = '''\t\tconst bool commandBufferFinished = m_rendererVk->HasCo
 \t\t\tconst bool valueMismatch = directResult == VK_SUCCESS && directResultValue != mappedResultValue;
 \t\t\tif (directResult == VK_SUCCESS)
 \t\t\t\tfragmentResult = directResultValue;
-\t\t\tif (n <= 128 || (n % 1000ULL) == 0 || directResult != VK_SUCCESS || valueMismatch)
+\t\t\tif (n <= 128 || (n % 1000ULL) == 0 || directResult != VK_SUCCESS || invalidateResult != VK_SUCCESS || valueMismatch)
 \t\t\t{
 \t\t\t\tcemuLog_log(LogType::Force,
-\t\t\t\t\t"[QUERY_DIRECT] n={} title={:016x} queryIndex={} cmdBuffer={} cmdFinished={} vkResult={} direct={} mapped={} selected={} mismatch={}",
+\t\t\t\t\t"[QUERY_DIRECT] n={} title={:016x} queryIndex={} cmdBuffer={} cmdFinished={} invalidate={} vkResult={} direct={} mapped={} selected={} mismatch={}",
 \t\t\t\t\tn, CafeSystem::GetForegroundTitleId(), it.queryIndex, it.m_finishCommandBuffer, commandBufferFinished ? 1 : 0,
-\t\t\t\t\tstatic_cast<sint32>(directResult), directResultValue, mappedResultValue, fragmentResult, valueMismatch ? 1 : 0);
+\t\t\t\t\tstatic_cast<sint32>(invalidateResult), static_cast<sint32>(directResult), directResultValue, mappedResultValue, fragmentResult, valueMismatch ? 1 : 0);
 \t\t\t}
 \t\t}
 \t\tm_acccumulatedSum += fragmentResult;
 '''
-query = replace_once(query, old_result_block, new_result_block, "target direct-readback result selection and completion trace")
+query = replace_once(query, old_result_block, new_result_block, "target direct-readback result selection and explicit mapped invalidate")
 
 for token in (
     "[QUERY_DIRECT]",
     "vkGetQueryPoolResults(",
+    "vkInvalidateMappedMemoryRanges(",
+    "VkMappedMemoryRange queryMappedRange",
     "TargetDirectQueryReadbackEnabled()",
     "0x00050000101AFF00ULL",
     "0x000500001011B900ULL",
     "m_acccumulatedSum += fragmentResult;",
     "valueMismatch",
-    "cmdBuffer={} cmdFinished={}",
+    "invalidate={}",
     "const bool commandBufferFinished = m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer);",
     "VK_ACCESS_TRANSFER_WRITE_BIT",
     "VK_ACCESS_HOST_READ_BIT",
@@ -205,6 +218,8 @@ if "fragmentResult = directResultValue;" not in query:
     raise RuntimeError("runtime-PASS direct-readback result selection was lost")
 if query.count("vkCmdPipelineBarrier(") < 1:
     raise RuntimeError("query transfer-to-host visibility barrier was not installed")
+if query.count("vkInvalidateMappedMemoryRanges(") != 1:
+    raise RuntimeError("target explicit mapped-memory invalidate was not installed exactly once")
 
 query_path.write_text(query, encoding="utf-8", newline="\n")
-print("Star Fox Zero + Bayonetta 2 direct-readback PASS path preserved; transfer-to-host query visibility barrier installed")
+print("Star Fox Zero + Bayonetta 2 direct-readback PASS path preserved; query host barrier + explicit mapped invalidate installed")
