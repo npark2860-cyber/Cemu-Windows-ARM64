@@ -59,8 +59,6 @@ Conclusion: a missing transfer-to-host barrier alone is not the cause.
 - Runtime build banner `Init Cemu 7a71d54`
 - Star Fox Zero JP
 
-Single added variable over the barrier experiment: call `vkInvalidateMappedMemoryRanges` on the exact 8-byte query slot before reading the mapped pointer.
-
 Runtime capture `log(20260906-081927).zip`:
 
 - `[QUERY_DIRECT]` observations: 299,255
@@ -70,47 +68,62 @@ Runtime capture `log(20260906-081927).zip`:
 - direct nonzero: 299,094
 - mapped nonzero: 2
 - mismatch: 299,092
-- exact direct/mapped agreement: 163 total, of which 161 were both zero and 2 were nonzero exact matches
-
-The two nonzero mapped matches were:
-
-- n=4000, queryIndex=870: direct=838 mapped=838
-- n=248000, queryIndex=1001: direct=32 mapped=32
 
 Runtime result: **FAIL to repair mapped path**.
 
-Conclusion:
+Conclusion: HOST_COHERENT + explicit invalidate still leaves mapped stale/zero almost always. Missing invalidate is closed as the explanation.
 
-- HOST_COHERENT + explicit invalidate still leaves the mapped value stale/zero almost always.
-- Therefore this is not explained by a missing host invalidate operation.
-- Because rare values do arrive at the correct mapped location, a completely wrong bind/map offset is also unlikely.
-- Direct `vkGetQueryPoolResults` remains the protected correct runtime result.
+## Run #30 — DEVICE_LOCAL intermediate query copy
 
-## Run #30 experiment — DEVICE_LOCAL intermediate query copy
+- Run `34021733515`
+- Job `101455446048`
+- Head `6532c82d1c75b983465bcac40cf36f947462e0b9`
+- Runtime build banner `Init Cemu 6532c82`
+- Star Fox Zero JP
+- Capture `log(20260906-091505).zip`
 
-Diagnostic commit:
+Path for target titles:
 
-`eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`
+`vkCmdCopyQueryPoolResults -> DEVICE_LOCAL intermediate -> vkCmdCopyBuffer -> HOST_VISIBLE mapped buffer -> CPU mapped read`
 
-Single conceptual variable relative to Run #28:
+Runtime observations:
 
-For Star Fox Zero JP and Bayonetta 2 JP only:
+- `[QUERY_INTERMEDIATE] allocated=1 size=8192`
+- `[QUERY_DIRECT]` observations: 218,590
+- direct nonzero: 218,450
+- mapped nonzero: 1
+- mismatch: 218,449
+- first completed query: `direct=1192 mapped=0 selected=1192 mismatch=1`
+- protected direct result remained selected
 
-`vkCmdCopyQueryPoolResults -> DEVICE_LOCAL intermediate buffer -> TRANSFER_WRITE/TRANSFER_READ barrier -> vkCmdCopyBuffer -> existing HOST_VISIBLE mapped buffer -> TRANSFER_WRITE/HOST_READ barrier -> CPU mapped read`
+User runtime observation: **small object flicker/regression appeared**. It was not the original large flicker pattern, but the build was visibly worse than the previous fully-correct direct-readback build.
 
-The failed explicit invalidate from Run #29 is removed. The direct `vkGetQueryPoolResults` value remains selected during the experiment, so the known visual FIX remains protected.
+Conclusion: **FAIL**.
 
-Purpose:
+- DEVICE_LOCAL intermediate + `vkCmdCopyBuffer` did not repair the mapped result path.
+- It also introduced a visual regression despite direct still being selected.
+- Do not continue tuning or promote this intermediate-copy path.
+- The new GPU copy/barrier path must be removed before further diagnosis.
 
-Determine whether Adreno specifically fails when `vkCmdCopyQueryPoolResults` writes directly into HOST_VISIBLE/HOST_CACHED memory, while ordinary `vkCmdCopyBuffer` device-local-to-host transfer remains functional.
+The Run #30 result increases suspicion that `vkCmdCopyQueryPoolResults` itself is unreliable on this Qualcomm Windows Vulkan path, rather than the problem being only HOST_VISIBLE destination visibility. This is still a working hypothesis, not yet a final proof.
+
+## Run #31 — protected direct-readback A/B restoration
+
+CI branch has been restored to the exact Run #26 direct-readback experiment script, with no intermediate buffer/copy/barrier additions.
+
+- CI head: `be3064da39e2913719de6fc800e7f417d28a0aec`
+- Run `34024292927`
+- Status at update: IN PROGRESS
+- Diagnostic branch restore commit: `790a945780ea561518dd072d9f73c0e3e89b4700`
+
+Purpose: reproduce the known visual PASS and prove the small Run #30 flicker was caused by the intermediate experiment rather than a new external/runtime change.
 
 ## NEXT ACTION
 
-1. Build Run #30 from `eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`.
-2. Run Star Fox Zero JP first.
-3. Confirm `[QUERY_INTERMEDIATE] allocated=1`.
-4. Inspect `[QUERY_DIRECT] ... path=intermediate`.
-5. Success criterion: nonzero `direct=N mapped=N mismatch=0` consistently.
-6. If restored, test Bayonetta 2 with the same build and then consider the intermediate copy as the narrow Adreno-compatible permanent mapped readback path.
-7. If still `mapped=0`, stop host-cache/barrier experiments and investigate `vkCmdCopyQueryPoolResults` execution/storage semantics on this driver more directly.
-8. XCX remains separate; do not globalize blocking direct readback.
+1. Let Run #31 complete.
+2. Run Star Fox Zero JP in the same scene/conditions used for Run #30.
+3. Primary criterion: the small object flicker must disappear and return to the Run #25/#26 fully-correct appearance.
+4. If visual PASS returns, close Run #30 as a confirmed experiment-induced regression.
+5. Preserve the direct-readback path unchanged before any next low-level query-copy diagnostic.
+6. Do not repeat barrier/invalidate/intermediate-copy experiments under the same conditions.
+7. XCX remains separate; do not globalize blocking direct readback.
