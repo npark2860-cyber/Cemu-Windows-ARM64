@@ -8,11 +8,12 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
-# One-variable behavior experiment for Star Fox Zero JP only.
+# One-variable behavior experiment for the two reproduced Platinum-era flicker
+# titles only: Star Fox Zero JP and Bayonetta 2 JP.
 # Bypass Cemu's vkCmdCopyQueryPoolResults -> persistently mapped buffer result
 # consumption and instead fetch the completed Vulkan occlusion-query result with
 # vkGetQueryPoolResults after the owning command buffer has finished.
-# Other titles retain the existing path unchanged.
+# All other titles retain the existing path unchanged.
 
 api_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h")
 api = api_path.read_text(encoding="utf-8")
@@ -40,15 +41,17 @@ query = replace_once(
     query,
     '#include "Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h"\n',
     '#include "Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h"\n#include "Cafe/CafeSystem.h"\n',
-    "Star Fox direct-readback CafeSystem include",
+    "target direct-readback CafeSystem include",
 )
 
 get_result_anchor = "bool LatteQueryObjectVk::getResult(uint64& numSamplesPassed)\n"
-helper = '''static uint64 s_starFoxDirectQueryReadbackCount = 0;
+helper = '''static uint64 s_targetDirectQueryReadbackCount = 0;
 
-static bool StarFoxDirectQueryReadbackEnabled()
+static bool TargetDirectQueryReadbackEnabled()
 {
-\treturn CafeSystem::GetForegroundTitleId() == 0x00050000101AFF00ULL;
+\tconst uint64 titleId = CafeSystem::GetForegroundTitleId();
+\treturn titleId == 0x00050000101AFF00ULL || // Star Fox Zero JP
+\t\ttitleId == 0x000500001011B900ULL;   // Bayonetta 2 JP
 }
 
 '''
@@ -56,13 +59,13 @@ query = replace_once(
     query,
     get_result_anchor,
     helper + get_result_anchor,
-    "Star Fox direct-readback helper insertion",
+    "target direct-readback helper insertion",
 )
 
 old_sum = "\t\tm_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];\n"
 new_sum = '''\t\tconst uint64 mappedResultValue = m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
 \t\tuint64 fragmentResult = mappedResultValue;
-\t\tif (StarFoxDirectQueryReadbackEnabled())
+\t\tif (TargetDirectQueryReadbackEnabled())
 \t\t{
 \t\t\tuint64 directResultValue = 0;
 \t\t\tconst VkResult directResult = vkGetQueryPoolResults(
@@ -74,35 +77,36 @@ new_sum = '''\t\tconst uint64 mappedResultValue = m_rendererVk->m_occlusionQueri
 \t\t\t\t&directResultValue,
 \t\t\t\tsizeof(uint64),
 \t\t\t\tVK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
-\t\t\tconst uint64 n = ++s_starFoxDirectQueryReadbackCount;
+\t\t\tconst uint64 n = ++s_targetDirectQueryReadbackCount;
 \t\t\tconst bool valueMismatch = directResult == VK_SUCCESS && directResultValue != mappedResultValue;
 \t\t\tif (directResult == VK_SUCCESS)
 \t\t\t\tfragmentResult = directResultValue;
 \t\t\tif (n <= 128 || (n % 1000ULL) == 0 || directResult != VK_SUCCESS || valueMismatch)
 \t\t\t{
 \t\t\t\tcemuLog_log(LogType::Force,
-\t\t\t\t\t"[STARFOX_QUERY_DIRECT] n={} queryIndex={} vkResult={} direct={} mapped={} selected={} mismatch={}",
-\t\t\t\t\tn, it.queryIndex, static_cast<sint32>(directResult), directResultValue,
+\t\t\t\t\t"[QUERY_DIRECT] n={} title={:016x} queryIndex={} vkResult={} direct={} mapped={} selected={} mismatch={}",
+\t\t\t\t\tn, CafeSystem::GetForegroundTitleId(), it.queryIndex, static_cast<sint32>(directResult), directResultValue,
 \t\t\t\t\tmappedResultValue, fragmentResult, valueMismatch ? 1 : 0);
 \t\t\t}
 \t\t}
 \t\tm_acccumulatedSum += fragmentResult;
 '''
-query = replace_once(query, old_sum, new_sum, "Star Fox direct-readback result selection")
+query = replace_once(query, old_sum, new_sum, "target direct-readback result selection")
 
 for token in (
-    "[STARFOX_QUERY_DIRECT]",
+    "[QUERY_DIRECT]",
     "vkGetQueryPoolResults(",
-    "StarFoxDirectQueryReadbackEnabled()",
+    "TargetDirectQueryReadbackEnabled()",
     "0x00050000101AFF00ULL",
+    "0x000500001011B900ULL",
     "m_acccumulatedSum += fragmentResult;",
     "valueMismatch",
 ):
     if token not in query:
-        raise RuntimeError(f"Star Fox direct-readback token missing: {token}")
+        raise RuntimeError(f"target direct-readback token missing: {token}")
 
 if "m_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];" in query:
     raise RuntimeError("old unconditional mapped-buffer accumulation path still present")
 
 query_path.write_text(query, encoding="utf-8", newline="\n")
-print("Star Fox Zero direct Vulkan query readback experiment installed; other titles unchanged")
+print("Star Fox Zero + Bayonetta 2 direct Vulkan query readback experiment installed; other titles unchanged")
