@@ -13,141 +13,104 @@ Do not remove or weaken the title-gated direct-readback path until a replacement
 
 ## Run #27 — mapped/direct side-by-side capture
 
-- Workflow run: `34013912085`
-- Job: `101434315915`
-- CI head: `77c47610c3c472198f13fb399f483691411c1c8c`
-- CI result: SUCCESS
-- Runtime title: Star Fox Zero JP v16
-- Runtime build banner: `Init Cemu 77c4761`
+- Run `34013912085`
+- Job `101434315915`
+- Head `77c47610c3c472198f13fb399f483691411c1c8c`
+- CI SUCCESS
+- Star Fox Zero JP v16
 
-### Selected query-result memory
-
-Runtime log:
+Selected mapped query-result memory:
 
 `[QUERY_MAP_META] found=1 memoryType=4 heap=0 flags=0x0000000f requested=0x0000000e fallback=0`
 
-Therefore the persistent query-result buffer selected memory type 4 with actual flags `0x0f`:
+Actual flags `0x0f` = DEVICE_LOCAL | HOST_VISIBLE | HOST_COHERENT | HOST_CACHED.
 
-- DEVICE_LOCAL
-- HOST_VISIBLE
-- HOST_COHERENT
-- HOST_CACHED
-
-The primary allocation path succeeded (`fallback=0`).
-
-### First mapped/direct divergence
-
-First completed fragment observed:
-
-`[QUERY_DIRECT] n=1 title=00050000101aff00 queryIndex=1023 cmdBuffer=2813 cmdFinished=1 vkResult=0 direct=1192 mapped=0 selected=1192 mismatch=1`
-
-Immediately following fragments repeat the same pattern:
-
-- owning command buffer reported finished
-- `vkGetQueryPoolResults` returned `VK_SUCCESS`
-- direct result was nonzero
-- mapped result remained zero
-
-The direct query-pool readback remained correct and continued to drive the FIXED runtime behavior.
-
-## Run #28 — transfer-to-host barrier experiment
-
-Diagnostic commit:
-
-`79fbf25ab8a255fe15ad8210bad21a9a5491c34e`
-
-Workflow:
-
-- Run #28: `34017106924`
-- Job: `101442707298`
-- CI result: SUCCESS
-- Runtime build banner: `Init Cemu 79fbf25`
-- Runtime title: Star Fox Zero JP v16
-
-Single changed variable:
-
-After each target-title `vkCmdCopyQueryPoolResults`, insert a buffer memory barrier for the exact 8-byte query-result range:
-
-`TRANSFER_WRITE -> HOST_READ`
-
-The direct `vkGetQueryPoolResults` result remained the selected runtime value, preserving the Star Fox FIXED graphics behavior.
-
-### Runtime result: FAIL for mapped-path repair
-
-The barrier did not restore the mapped result path.
-
-The first results still showed:
+First completed divergence:
 
 `direct=1192 mapped=0 selected=1192 mismatch=1`
 
-Full-log parse summary:
+The pattern persisted far beyond 100,000 completed query observations. The direct query-pool value remained correct and preserved the visual FIX.
 
-- `[QUERY_DIRECT]` records parsed: 230,184
-- command-buffer finished records: 230,184 / 230,184
-- `vkGetQueryPoolResults` success: 230,184 / 230,184
-- direct nonzero: 230,032
+## Run #28 — TRANSFER_WRITE -> HOST_READ barrier
+
+- Run `34017106924`
+- Job `101442707298`
+- Head `79fbf25ab8a255fe15ad8210bad21a9a5491c34e`
+- CI SUCCESS
+- Runtime Star Fox Zero JP
+
+Single variable: exact 8-byte buffer barrier after `vkCmdCopyQueryPoolResults`:
+
+- TRANSFER / TRANSFER_WRITE
+- HOST / HOST_READ
+
+Runtime result: **FAIL to repair mapped path**.
+
+The mapped result remained zero for essentially all nonzero direct results. Two rare mapped nonzero values exactly matched direct, proving the mapped pointer/offset is not globally unrelated to the target memory.
+
+Conclusion: a missing transfer-to-host barrier alone is not the cause.
+
+## Run #29 — explicit mapped-memory invalidate
+
+- Run `34019347912`
+- Job `101448913796`
+- Head `7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
+- CI SUCCESS
+- Runtime build banner `Init Cemu 7a71d54`
+- Star Fox Zero JP
+
+Single added variable over the barrier experiment: call `vkInvalidateMappedMemoryRanges` on the exact 8-byte query slot before reading the mapped pointer.
+
+Runtime capture `log(20260906-081927).zip`:
+
+- `[QUERY_DIRECT]` observations: 299,255
+- `cmdFinished=1`: 299,255 / 299,255
+- `invalidate=VK_SUCCESS(0)`: 299,255 / 299,255
+- `vkGetQueryPoolResults=VK_SUCCESS(0)`: 299,255 / 299,255
+- direct nonzero: 299,094
 - mapped nonzero: 2
-- mismatches: 230,030
-- mismatch rate: ~99.9331%
-- both zero: 152
-- exact equal nonzero mapped/direct: only 2
+- mismatch: 299,092
+- exact direct/mapped agreement: 163 total, of which 161 were both zero and 2 were nonzero exact matches
 
-The two nonzero mapped reads were both exact matches with direct:
+The two nonzero mapped matches were:
 
-- `n=120 queryIndex=1015 cmdBuffer=2233 direct=488207 mapped=488207`
-- `n=225000 queryIndex=987 cmdBuffer=38086 direct=189539 mapped=189539`
+- n=4000, queryIndex=870: direct=838 mapped=838
+- n=248000, queryIndex=1001: direct=32 mapped=32
 
-Therefore the mapped pointer/offset is not universally wrong. The destination occasionally becomes visible correctly, but almost all device-written query results remain stale from the host view.
+Runtime result: **FAIL to repair mapped path**.
 
-### Interpretation after Run #28
+Conclusion:
 
-Closed explanation:
+- HOST_COHERENT + explicit invalidate still leaves the mapped value stale/zero almost always.
+- Therefore this is not explained by a missing host invalidate operation.
+- Because rare values do arrive at the correct mapped location, a completely wrong bind/map offset is also unlikely.
+- Direct `vkGetQueryPoolResults` remains the protected correct runtime result.
 
-- missing `TRANSFER_WRITE -> HOST_READ` barrier alone is not sufficient to explain or repair the Adreno behavior.
+## Run #30 experiment — DEVICE_LOCAL intermediate query copy
 
-Still live:
+Diagnostic commit:
 
-- Qualcomm Windows Vulkan host-cache/coherency quirk despite the memory type advertising `HOST_COHERENT | HOST_CACHED`
-- `vkCmdCopyQueryPoolResults` writes becoming available only sporadically to the persistent mapping
-- driver-specific behavior on the direct-to-host-visible query-copy path
+`eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`
 
-The source allocation and map offsets remain structurally consistent: the query-result buffer is bound at memory offset 0 and the same `VkDeviceMemory` is mapped from offset 0.
+Single conceptual variable relative to Run #28:
 
-## Run #29 — explicit mapped-memory invalidate experiment
+For Star Fox Zero JP and Bayonetta 2 JP only:
 
-Diagnostic branch:
+`vkCmdCopyQueryPoolResults -> DEVICE_LOCAL intermediate buffer -> TRANSFER_WRITE/TRANSFER_READ barrier -> vkCmdCopyBuffer -> existing HOST_VISIBLE mapped buffer -> TRANSFER_WRITE/HOST_READ barrier -> CPU mapped read`
 
-`diag-query-mapped-direct-divergence`
+The failed explicit invalidate from Run #29 is removed. The direct `vkGetQueryPoolResults` value remains selected during the experiment, so the known visual FIX remains protected.
 
-Commit:
+Purpose:
 
-`7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
-
-CI branch:
-
-`diag-bayo2-target-query-draw-fingerprint`
-
-Workflow:
-
-- Run #29: `34019347912`
-- state at creation: queued
-
-Single new variable relative to Run #28:
-
-After owning command-buffer completion and before reading `ptrQueryResults[it.queryIndex]`, issue `vkInvalidateMappedMemoryRanges` for the exact query-result range on Star Fox Zero JP / Bayonetta 2 JP.
-
-The Run #28 `TRANSFER_WRITE -> HOST_READ` barrier remains in place.
-
-The direct `vkGetQueryPoolResults` result remains the selected runtime value, so the protected Star Fox / Bayonetta 2 FIXED behavior is preserved during this diagnostic.
-
-`[QUERY_DIRECT]` now also records `invalidate=<VkResult>`.
+Determine whether Adreno specifically fails when `vkCmdCopyQueryPoolResults` writes directly into HOST_VISIBLE/HOST_CACHED memory, while ordinary `vkCmdCopyBuffer` device-local-to-host transfer remains functional.
 
 ## NEXT ACTION
 
-1. Complete Run #29 CI.
+1. Build Run #30 from `eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`.
 2. Run Star Fox Zero JP first.
-3. Verify `invalidate=0`.
-4. Check whether nonzero results change to `direct=N mapped=N mismatch=0`.
-5. If explicit invalidate restores mapped agreement, classify this as an Adreno/Windows coherent-host-cache visibility quirk and test Bayonetta 2 with the same narrow path.
-6. If mapped remains zero despite successful invalidate, move away from host-cache synchronization and test a device-local intermediate query-copy buffer followed by ordinary `vkCmdCopyBuffer` into the mapped host-visible buffer.
-7. Keep XCX separate and do not globalize blocking direct readback.
+3. Confirm `[QUERY_INTERMEDIATE] allocated=1`.
+4. Inspect `[QUERY_DIRECT] ... path=intermediate`.
+5. Success criterion: nonzero `direct=N mapped=N mismatch=0` consistently.
+6. If restored, test Bayonetta 2 with the same build and then consider the intermediate copy as the narrow Adreno-compatible permanent mapped readback path.
+7. If still `mapped=0`, stop host-cache/barrier experiments and investigate `vkCmdCopyQueryPoolResults` execution/storage semantics on this driver more directly.
+8. XCX remains separate; do not globalize blocking direct readback.
