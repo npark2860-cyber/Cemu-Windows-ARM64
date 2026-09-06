@@ -51,7 +51,8 @@ query = replace_once(
 )
 
 old_sum = "\t\tm_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];\n"
-new_sum = '''\t\tuint64 fragmentResult = m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
+new_sum = '''\t\tconst uint64 mappedResultValue = m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
+\t\tuint64 fragmentResult = mappedResultValue;
 \t\tif (StarFoxDirectQueryReadbackEnabled())
 \t\t{
 \t\t\tuint64 directResultValue = 0;
@@ -65,14 +66,15 @@ new_sum = '''\t\tuint64 fragmentResult = m_rendererVk->m_occlusionQueries.ptrQue
 \t\t\t\tsizeof(uint64),
 \t\t\t\tVK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
 \t\t\tconst uint64 n = ++s_starFoxDirectQueryReadbackCount;
+\t\t\tconst bool valueMismatch = directResult == VK_SUCCESS && directResultValue != mappedResultValue;
 \t\t\tif (directResult == VK_SUCCESS)
 \t\t\t\tfragmentResult = directResultValue;
-\t\t\tif (n <= 128 || (n % 1000ULL) == 0 || directResult != VK_SUCCESS)
+\t\t\tif (n <= 128 || (n % 1000ULL) == 0 || directResult != VK_SUCCESS || valueMismatch)
 \t\t\t{
 \t\t\t\tcemuLog_log(LogType::Force,
-\t\t\t\t\t"[STARFOX_QUERY_DIRECT] n={} queryIndex={} vkResult={} direct={} mapped={} selected={}",
+\t\t\t\t\t"[STARFOX_QUERY_DIRECT] n={} queryIndex={} vkResult={} direct={} mapped={} selected={} mismatch={}",
 \t\t\t\t\tn, it.queryIndex, static_cast<sint32>(directResult), directResultValue,
-\t\t\t\t\tm_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex], fragmentResult);
+\t\t\t\t\tmappedResultValue, fragmentResult, valueMismatch ? 1 : 0);
 \t\t\t}
 \t\t}
 \t\tm_acccumulatedSum += fragmentResult;
@@ -85,6 +87,7 @@ for token in (
     "StarFoxDirectQueryReadbackEnabled()",
     "0x00050000101AFF00ULL",
     "m_acccumulatedSum += fragmentResult;",
+    "valueMismatch",
 ):
     if token not in query:
         raise RuntimeError(f"Star Fox direct-readback token missing: {token}")
