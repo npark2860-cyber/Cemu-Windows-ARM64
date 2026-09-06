@@ -2,12 +2,14 @@
 
 Date: 2026-09-06
 
-## Protected runtime PASS baseline
+## Protected direct-readback baseline
 
-Do not remove or weaken the title-gated direct-readback path until a replacement reproduces both runtime PASS results.
+Do not remove or weaken the title-gated direct-readback path until a replacement reproduces the known runtime behavior.
 
-- Star Fox Zero JP (`00050000-101AFF00`): Run #25 FIXED by `vkGetQueryPoolResults` direct readback.
-- Bayonetta 2 JP (`00050000-1011B900`): Run #26 FIXED by the same direct-readback path.
+- Star Fox Zero JP (`00050000-101AFF00`): Run #25 fixed the original/large flicker with `vkGetQueryPoolResults` direct readback.
+- User retrospective A/B recheck on Run #25 confirms a **small-object residual flicker was already present immediately after the original fix**.
+- Therefore Run #25 must no longer be described as visually perfect; it is the baseline where the major flicker is fixed but the smaller residual symptom remains.
+- Bayonetta 2 JP (`00050000-1011B900`): Run #26 fixed the reproduced flicker with the same direct-readback path.
 - PASS experiment HEAD: `5d758a096ee9409e7c25372a6caa9ad9d2378575` on `exp-bayo2-query-direct-readback`.
 - `main` remains untouched at `58954b34d147b134d7b23ee61b2057f49da2c014`.
 
@@ -29,7 +31,7 @@ First completed divergence:
 
 `direct=1192 mapped=0 selected=1192 mismatch=1`
 
-The pattern persisted far beyond 100,000 completed query observations. The direct query-pool value remained correct and preserved the visual FIX.
+The direct query-pool value remained correct and preserved the Run #25 major-flicker fix while the mapped path remained stale/zero.
 
 ## Run #28 — TRANSFER_WRITE -> HOST_READ barrier
 
@@ -37,18 +39,12 @@ The pattern persisted far beyond 100,000 completed query observations. The direc
 - Job `101442707298`
 - Head `79fbf25ab8a255fe15ad8210bad21a9a5491c34e`
 - CI SUCCESS
-- Runtime Star Fox Zero JP
 
-Single variable: exact 8-byte buffer barrier after `vkCmdCopyQueryPoolResults`:
+Exact-range `TRANSFER_WRITE -> HOST_READ` barrier after `vkCmdCopyQueryPoolResults`.
 
-- TRANSFER / TRANSFER_WRITE
-- HOST / HOST_READ
+Result: **FAIL to repair mapped path**. Mapped remained zero for essentially all nonzero direct results. Two rare mapped nonzero values exactly matched direct.
 
-Runtime result: **FAIL to repair mapped path**.
-
-The mapped result remained zero for essentially all nonzero direct results. Two rare mapped nonzero values exactly matched direct, proving the mapped pointer/offset is not globally unrelated to the target memory.
-
-Conclusion: a missing transfer-to-host barrier alone is not the cause.
+Conclusion: missing transfer-to-host barrier alone is not the cause.
 
 ## Run #29 — explicit mapped-memory invalidate
 
@@ -57,19 +53,19 @@ Conclusion: a missing transfer-to-host barrier alone is not the cause.
 - Head `7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
 - CI SUCCESS
 - Runtime build banner `Init Cemu 7a71d54`
-- Star Fox Zero JP
+- Capture `log(20260906-081927).zip`
 
-Runtime capture `log(20260906-081927).zip`:
+Results:
 
-- `[QUERY_DIRECT]` observations: 299,255
+- `[QUERY_DIRECT]`: 299,255
 - `cmdFinished=1`: 299,255 / 299,255
-- `invalidate=VK_SUCCESS(0)`: 299,255 / 299,255
+- `vkInvalidateMappedMemoryRanges=VK_SUCCESS(0)`: 299,255 / 299,255
 - `vkGetQueryPoolResults=VK_SUCCESS(0)`: 299,255 / 299,255
 - direct nonzero: 299,094
 - mapped nonzero: 2
 - mismatch: 299,092
 
-Runtime result: **FAIL to repair mapped path**.
+Result: **FAIL to repair mapped path**.
 
 Conclusion: HOST_COHERENT + explicit invalidate still leaves mapped stale/zero almost always. Missing invalidate is closed as the explanation.
 
@@ -79,51 +75,71 @@ Conclusion: HOST_COHERENT + explicit invalidate still leaves mapped stale/zero a
 - Job `101455446048`
 - Head `6532c82d1c75b983465bcac40cf36f947462e0b9`
 - Runtime build banner `Init Cemu 6532c82`
-- Star Fox Zero JP
 - Capture `log(20260906-091505).zip`
 
-Path for target titles:
+Target path:
 
 `vkCmdCopyQueryPoolResults -> DEVICE_LOCAL intermediate -> vkCmdCopyBuffer -> HOST_VISIBLE mapped buffer -> CPU mapped read`
 
 Runtime observations:
 
 - `[QUERY_INTERMEDIATE] allocated=1 size=8192`
-- `[QUERY_DIRECT]` observations: 218,590
+- `[QUERY_DIRECT]`: 218,590
 - direct nonzero: 218,450
 - mapped nonzero: 1
 - mismatch: 218,449
-- first completed query: `direct=1192 mapped=0 selected=1192 mismatch=1`
+- one nonzero exact agreement was observed (`direct=3032 mapped=3032 mismatch=0`), but it was isolated and did not persist
 - protected direct result remained selected
 
-User runtime observation: **small object flicker/regression appeared**. It was not the original large flicker pattern, but the build was visibly worse than the previous fully-correct direct-readback build.
+Result: **FAIL to repair mapped path**.
 
-Conclusion: **FAIL**.
+Important correction to earlier interpretation:
 
-- DEVICE_LOCAL intermediate + `vkCmdCopyBuffer` did not repair the mapped result path.
-- It also introduced a visual regression despite direct still being selected.
-- Do not continue tuning or promote this intermediate-copy path.
-- The new GPU copy/barrier path must be removed before further diagnosis.
+- User initially noticed small-object flicker while testing Run #30.
+- A later A/B recheck of the original Run #25 build confirmed the same small-object flicker was already present immediately after the major flicker fix.
+- Therefore **Run #30 is NOT proven to have introduced that small-object flicker**.
+- Retract the previous claim that Run #30 caused a visual regression.
+- Run #30 is still closed as a mapped-path repair because intermediate copy did not make mapped/direct values agree consistently.
 
-The Run #30 result increases suspicion that `vkCmdCopyQueryPoolResults` itself is unreliable on this Qualcomm Windows Vulkan path, rather than the problem being only HOST_VISIBLE destination visibility. This is still a working hypothesis, not yet a final proof.
+## Run #31 — exact direct-readback restoration
 
-## Run #31 — protected direct-readback A/B restoration
-
-CI branch has been restored to the exact Run #26 direct-readback experiment script, with no intermediate buffer/copy/barrier additions.
-
-- CI head: `be3064da39e2913719de6fc800e7f417d28a0aec`
 - Run `34024292927`
-- Status at update: IN PROGRESS
+- Job `101462397659`
+- Head `be3064da39e2913719de6fc800e7f417d28a0aec`
+- CI SUCCESS
 - Diagnostic branch restore commit: `790a945780ea561518dd072d9f73c0e3e89b4700`
+- Runtime banner `Init Cemu be3064d`
+- Capture `log(20260906-102908).zip`
 
-Purpose: reproduce the known visual PASS and prove the small Run #30 flicker was caused by the intermediate experiment rather than a new external/runtime change.
+Run #31 removes the Run #30 intermediate allocation/copy/barriers and restores the exact direct-readback experiment script.
+
+Runtime results:
+
+- `[QUERY_INTERMEDIATE]`: absent
+- `[QUERY_DIRECT]`: 170,384
+- `vkResult=0`: 170,384 / 170,384
+- direct nonzero: 170,264
+- mapped nonzero: 0
+- `selected == direct`: 170,384 / 170,384
+- `mismatch=0`: 120, all `direct=0 / mapped=0`
+- nonzero direct/mapped agreement: 0
+
+This confirms the direct-readback workaround functions independently of the mapped path. It does **not** solve the remaining small-object flicker, which predates Run #30 and was already present in Run #25.
+
+## Current interpretation
+
+Two Star Fox symptoms must now be kept separate:
+
+1. **Original/large flicker** — fixed by the title-gated direct `vkGetQueryPoolResults` path in Run #25.
+2. **Small-object residual flicker** — still present in Run #25 and therefore not explained by Run #27-30 mapped-readback experiments.
+
+The mapped result path remains independently broken (`direct>0 / mapped=0` almost always), but it is not yet proven to be the cause of the remaining small-object flicker because the active direct path bypasses mapped values for accumulation.
 
 ## NEXT ACTION
 
-1. Let Run #31 complete.
-2. Run Star Fox Zero JP in the same scene/conditions used for Run #30.
-3. Primary criterion: the small object flicker must disappear and return to the Run #25/#26 fully-correct appearance.
-4. If visual PASS returns, close Run #30 as a confirmed experiment-induced regression.
-5. Preserve the direct-readback path unchanged before any next low-level query-copy diagnostic.
-6. Do not repeat barrier/invalidate/intermediate-copy experiments under the same conditions.
-7. XCX remains separate; do not globalize blocking direct readback.
+1. Preserve the exact Run #25/Run #31 direct-readback baseline and the major-flicker fix.
+2. Treat the small-object flicker as a separate unresolved symptom from this point forward.
+3. Do not attribute that residual flicker to Run #30.
+4. Do not repeat barrier/invalidate/intermediate-copy experiments as attempts to fix the residual symptom without new evidence.
+5. Establish a reproducible scene/object for the small flicker and correlate that symptom against query/draw activity while direct results remain selected.
+6. Keep XCX separate; do not globalize blocking direct readback.
