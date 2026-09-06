@@ -29,15 +29,11 @@ CI branch:
 
 `diag-bayo2-target-query-draw-fingerprint`
 
-Current CI HEAD:
-
-`7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
-
-Protected runtime-PASS experiment branch:
+Protected runtime-PASS branch:
 
 `exp-bayo2-query-direct-readback`
 
-Protected runtime-PASS experiment HEAD:
+Protected runtime-PASS HEAD:
 
 `5d758a096ee9409e7c25372a6caa9ad9d2378575`
 
@@ -47,169 +43,141 @@ Current mapped/direct diagnostic branch:
 
 Current diagnostic HEAD:
 
-`7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
+`eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`
 
-## 2. Permanent baseline — do not roll back
+## 2. Protected runtime PASS — never roll back
 
-Never roll back:
+Star Fox Zero JP `00050000-101AFF00`:
 
-- VS producer-side `DEFAULT_VAL` synthesize/linkage fix
-- permanent PS DEFAULT_VAL linkage compatibility
-- AArch64 generated-code cache / I-cache coherency fix
-- known-good pre-e834 Vulkan behavior
-- Runtime Diagnostics coverage
-- Star Fox Zero / Bayonetta 2 title-gated direct `vkGetQueryPoolResults()` PASS path until a replacement reproduces both runtime PASS results
-
-## 3. Query-consumption facts
+- Run #25
+- direct `vkGetQueryPoolResults`
+- visual flicker FIXED
 
 Bayonetta 2 JP `00050000-1011B900`:
 
+- Run #26
+- same direct `vkGetQueryPoolResults`
+- visual flicker FIXED
+
+The direct result must remain selected until a replacement mapped path reproduces both PASS results.
+
+## 3. Query-consumption separation
+
+Star Fox Zero / Bayonetta 2:
+
 - CPU occlusion query type=0
-- exported `GX2QueryGetOcclusionResult()` heavily consumed
-- completed ready-zero is real
-- direct Vulkan query readback fixes flicker
+- exported CPU query consumption active
 
-Star Fox Zero JP `00050000-101AFF00` v16:
-
-- CPU occlusion query type=0
-- exported CPU GET active
-- `GET_NOT_READY = 0`
-- direct Vulkan query readback fixes flicker
-
-XCX JP `00050000-10116100`:
+XCX:
 
 - GPU occlusion query type=2
-- exported CPU GET consumption not observed
-- keep separate; do not transplant Star Fox/Bayo2 behavior without evidence
+- exported `GX2QueryGetOcclusionResult()` consumption not observed
 
-## 4. Protected runtime PASS references
+Do not transplant Star Fox/Bayo2 behavior to XCX without new evidence.
 
-### Run #25 — Star Fox
+## 4. Run #27 — persistent mapped path divergence confirmed
 
-- Run ID `34007865487`
-- Job ID `101418283084`
-- Head `7154c20d24abc574a09ba7733f05a987b3446420`
-- Runtime: **Star Fox Zero flicker FIXED**
-
-### Run #26 — Star Fox + Bayonetta 2
-
-- Run ID `34011609042`
-- Job ID `101428310700`
-- Head `5d758a096ee9409e7c25372a6caa9ad9d2378575`
-- Runtime: **Bayonetta 2 flicker FIXED**
-
-Do not remove this direct-readback path yet.
-
-## 5. Run #27 — mapped/direct divergence confirmed
-
-- Run ID `34013912085`
-- Job ID `101434315915`
+- Run `34013912085`
 - Head `77c47610c3c472198f13fb399f483691411c1c8c`
-- CI: SUCCESS
+- CI SUCCESS
 
-Selected persistent query-result memory:
+Mapped result memory:
 
-`memoryType=4 flags=0x0000000f fallback=0`
+`memoryType=4 flags=0x0000000f`
 
-Actual flags:
+= DEVICE_LOCAL | HOST_VISIBLE | HOST_COHERENT | HOST_CACHED.
 
-- DEVICE_LOCAL
-- HOST_VISIBLE
-- HOST_COHERENT
-- HOST_CACHED
+Completed queries showed:
 
-First completed divergence:
+`cmdFinished=1, direct>0, mapped=0`
 
-`cmdFinished=1 vkResult=0 direct=1192 mapped=0 selected=1192 mismatch=1`
+while direct values preserved correct rendering.
 
-The same pattern persists throughout the capture.
+## 5. Run #28 — device->host barrier FAIL
 
-## 6. Run #28 — TRANSFER_WRITE -> HOST_READ barrier
-
-- Run ID `34017106924`
-- Job ID `101442707298`
+- Run `34017106924`
 - Head `79fbf25ab8a255fe15ad8210bad21a9a5491c34e`
-- CI: SUCCESS
-- Runtime: Star Fox graphics remained normal because direct result stayed selected
+- CI SUCCESS
 
-Single changed variable:
-
-`vkCmdCopyQueryPoolResults` exact 8-byte destination range gets:
+Added exact-range:
 
 `TRANSFER_WRITE -> HOST_READ`
 
-### Runtime result: mapped-path repair FAILED
+Result: mapped remained zero almost always.
 
-Full-log parse:
+Conclusion: missing buffer barrier alone is not the cause.
 
-- parsed `[QUERY_DIRECT]`: 230,184
-- `cmdFinished=1`: 230,184 / 230,184
-- `vkGetQueryPoolResults` success: 230,184 / 230,184
-- direct nonzero: 230,032
+## 6. Run #29 — explicit invalidate FAIL
+
+- Run `34019347912`
+- Job `101448913796`
+- Head `7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
+- CI SUCCESS
+- Runtime Star Fox Zero JP
+
+Capture: `log(20260906-081927).zip`
+
+Results:
+
+- query observations: 299,255
+- command buffer finished: 100%
+- `vkInvalidateMappedMemoryRanges`: VK_SUCCESS 100%
+- direct `vkGetQueryPoolResults`: VK_SUCCESS 100%
+- direct nonzero: 299,094
 - mapped nonzero: 2
-- mismatches: 230,030 (~99.9331%)
+- mismatch: 299,092
 
-Only two mapped nonzero reads appeared, and both exactly matched direct:
-
-- `n=120`: `488207 == 488207`
-- `n=225000`: `189539 == 189539`
+The two nonzero mapped values exactly matched direct.
 
 Therefore:
 
-- buffer memory binding/map offsets are not universally wrong
-- missing transfer->host barrier alone is not the fix
-- host-visible value becomes correct only extremely sporadically
+- explicit invalidate does not repair the path
+- HOST_COHERENT cache visibility alone is not the explanation
+- bind/map offset is unlikely to be globally wrong
 
-## 7. Current experiment — Run #29 explicit invalidate
+## 7. Current experiment — Run #30
 
-Single new variable relative to Run #28:
+Diagnostic commit:
 
-After owning command-buffer completion and before reading the mapped pointer, call:
+`eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`
 
-`vkInvalidateMappedMemoryRanges`
+For Star Fox Zero and Bayonetta 2 only:
 
-for the exact query-result 8-byte range on Star Fox Zero / Bayonetta 2 target titles.
+`vkCmdCopyQueryPoolResults`
+`-> DEVICE_LOCAL intermediate buffer`
+`-> TRANSFER_WRITE/TRANSFER_READ barrier`
+`-> vkCmdCopyBuffer`
+`-> existing HOST_VISIBLE mapped buffer`
+`-> TRANSFER_WRITE/HOST_READ barrier`
+`-> CPU mapped read`
 
-Run #28 barrier remains in place.
+The failed explicit invalidate from Run #29 is removed.
 
-The direct result still remains selected, preserving the known FIXED graphics path.
+The direct `vkGetQueryPoolResults` value remains the selected runtime result, so the known FIXED visual behavior is protected.
 
-Commit:
-
-`7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
-
-Run #29:
-
-- Run ID `34019347912`
-- Job ID `101448913796`
-- Current status: **IN PROGRESS**
-
-New log field:
-
-`invalidate=<VkResult>`
+Purpose: isolate whether Adreno fails specifically when `vkCmdCopyQueryPoolResults` writes directly into HOST_VISIBLE/HOST_CACHED memory.
 
 ## 8. NEXT ACTION
 
-1. Complete Run #29 build.
+1. Trigger/build Run #30 from `eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`.
 2. Run Star Fox Zero JP first.
-3. Verify `invalidate=0`.
-4. Primary success criterion:
-   - `direct=N mapped=N mismatch=0` for nonzero results.
-5. If explicit invalidate restores mapped agreement, treat this as a Qualcomm Windows Vulkan coherent-host-cache visibility quirk and test Bayonetta 2.
-6. If invalidate succeeds but mapped remains zero, stop spending time on simple host-cache synchronization. Next experiment: `vkCmdCopyQueryPoolResults` into a device-local intermediate buffer, then ordinary `vkCmdCopyBuffer` into the mapped host-visible result buffer.
-7. Keep direct readback as protected fallback until a replacement reproduces both Star Fox and Bayonetta 2 PASS.
-8. XCX remains separate.
+3. Confirm `[QUERY_INTERMEDIATE] allocated=1`.
+4. Inspect `[QUERY_DIRECT] ... path=intermediate`.
+5. Success criterion: nonzero `direct=N mapped=N mismatch=0` consistently.
+6. If PASS, test Bayonetta 2 with the same build.
+7. If both PASS and mapped/direct agree, convert this into the narrowest permanent Adreno-compatible mapped path and regression-test BOTW/XCX separately.
+8. If mapped still zero, stop repeating host cache/barrier experiments and investigate query-copy execution/storage behavior directly.
+9. Do not globally switch every title to blocking direct reads.
 
-## 9. Closed / do not repeat
+## DO NOT ROLLBACK
 
-Do not repeat:
-
-- HOST_NON_COHERENT as Run #27 cause
-- command buffer simply unfinished
-- query-pool result itself being zero/wrong
-- transfer->host barrier alone as the mapped-path repair
-- previously closed Bayo2 depth/resource/pipeline experiments
+- Star Fox Zero Run #25 direct-readback FIX
+- Bayonetta 2 Run #26 direct-readback FIX
+- VS DEFAULT_VAL synthesize/linkage fixes
+- AArch64 generated-code cache/I-cache fix
+- known-good pre-e834 Vulkan baseline
+- `main` untouched state
 
 ## New-tab startup prompt
 
-`Cemu Windows ARM64 / Adreno 작업 계속. GitHub의 CURRENT_HANDOFF.md와 DEBUG_HISTORY_20260906_QUERY_MAPPED_DIRECT_DIVERGENCE.md를 먼저 읽고 실제 branch/HEAD/Actions와 대조해. main은 58954b34d147b134d7b23ee61b2057f49da2c014로 untouched. Star Fox Zero와 Bayonetta 2의 direct vkGetQueryPoolResults FIXED 상태는 절대 되돌리지 마. Run #28에서 TRANSFER_WRITE -> HOST_READ barrier를 넣어도 230,184 records 중 mapped nonzero는 2개뿐이라 barrier 단독은 FAIL로 닫혔다. 현재 Run #29는 barrier 유지 + host read 직전 vkInvalidateMappedMemoryRanges 한 변수 실험이다. NEXT ACTION부터 진행하고 XCX는 별도 유지해.`
+`Cemu Windows ARM64 / Adreno 작업 계속. GitHub CURRENT_HANDOFF.md와 DEBUG_HISTORY_20260906_QUERY_MAPPED_DIRECT_DIVERGENCE.md를 source of truth로 읽고 실제 branch/HEAD/Actions와 대조해. main은 58954b34d147b134d7b23ee61b2057f49da2c014로 untouched. Star Fox Zero/Bayonetta 2 direct vkGetQueryPoolResults FIXED 상태는 절대 되돌리지 마. Run #28 TRANSFER_WRITE->HOST_READ barrier와 Run #29 explicit invalidate는 mapped path를 복구하지 못했다. 현재 NEXT ACTION은 DEVICE_LOCAL intermediate query buffer -> vkCmdCopyBuffer -> HOST_VISIBLE mapped buffer 실험 Run #30이다. XCX는 별도 type=2 계열로 유지해.`
