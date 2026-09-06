@@ -18,17 +18,17 @@ Protected runtime-PASS branch:
 
 Docs branch:
 
-`diag-bayo2-target0-resource-identity`
+- `diag-bayo2-target0-resource-identity`
 
 Diagnostic development branch:
 
 - `diag-query-mapped-direct-divergence`
-- intermediate-copy implementation commit `eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`
+- restored direct-readback HEAD `790a945780ea561518dd072d9f73c0e3e89b4700`
 
 CI trigger branch:
 
 - `diag-bayo2-target-query-draw-fingerprint`
-- current CI implementation HEAD `6532c82d1c75b983465bcac40cf36f947462e0b9`
+- current HEAD `be3064da39e2913719de6fc800e7f417d28a0aec`
 
 ## Protected runtime PASS — never roll back
 
@@ -44,7 +44,7 @@ Bayonetta 2 JP `00050000-1011B900`:
 - same direct `vkGetQueryPoolResults`
 - visual flicker FIXED
 
-The direct result remains selected until a replacement mapped path reproduces both PASS results.
+The direct result remains selected until a replacement path reproduces both PASS results.
 
 ## Query-consumption separation
 
@@ -60,96 +60,82 @@ XCX:
 
 Do not transplant Star Fox/Bayo2 behavior to XCX without evidence.
 
-## Run #27 — mapped/direct divergence confirmed
+## Confirmed mapped-path failures
 
-- Run `34013912085`
-- Head `77c47610c3c472198f13fb399f483691411c1c8c`
-- CI SUCCESS
+Run #27:
 
-Mapped result memory:
+- HOST_VISIBLE/HOST_COHERENT/HOST_CACHED memory type 4
+- completed queries repeatedly `direct>0 / mapped=0`
 
-`memoryType=4 flags=0x0000000f`
+Run #28:
 
-= DEVICE_LOCAL | HOST_VISIBLE | HOST_COHERENT | HOST_CACHED.
+- exact-range `TRANSFER_WRITE -> HOST_READ` barrier
+- FAIL; mapped remained zero almost always
 
-Completed queries repeatedly showed:
+Run #29:
 
-`cmdFinished=1, direct>0, mapped=0`
+- explicit `vkInvalidateMappedMemoryRanges`
+- 299,255/299,255 VK_SUCCESS
+- mapped nonzero only 2 times
+- FAIL
 
-while direct values preserved correct rendering.
+Therefore missing host barrier/invalidate is closed under these captures.
 
-## Run #28 — transfer->host barrier FAIL
+## Run #30 — DEVICE_LOCAL intermediate experiment FAIL + visual regression
 
-- Run `34017106924`
-- Head `79fbf25ab8a255fe15ad8210bad21a9a5491c34e`
-- CI SUCCESS
+- Run `34021733515`
+- Job `101455446048`
+- Head `6532c82d1c75b983465bcac40cf36f947462e0b9`
+- Runtime banner `Init Cemu 6532c82`
+- Star Fox Zero JP
+- Capture `log(20260906-091505).zip`
 
-Added exact-range `TRANSFER_WRITE -> HOST_READ` barrier.
+Target path:
 
-Result: mapped remained zero almost always.
-
-Conclusion: missing buffer barrier alone is not the cause.
-
-## Run #29 — explicit invalidate FAIL
-
-- Run `34019347912`
-- Job `101448913796`
-- Head `7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
-- CI SUCCESS
-- Runtime Star Fox Zero JP
-- Capture: `log(20260906-081927).zip`
+`vkCmdCopyQueryPoolResults -> DEVICE_LOCAL intermediate -> vkCmdCopyBuffer -> HOST_VISIBLE mapped buffer`
 
 Results:
 
-- query observations: 299,255
-- command buffer finished: 299,255 / 299,255
-- `vkInvalidateMappedMemoryRanges`: VK_SUCCESS 299,255 / 299,255
-- direct `vkGetQueryPoolResults`: VK_SUCCESS 299,255 / 299,255
-- direct nonzero: 299,094
-- mapped nonzero: 2
-- mismatch: 299,092
+- `[QUERY_INTERMEDIATE] allocated=1 size=8192`
+- `[QUERY_DIRECT]` observations: 218,590
+- direct nonzero: 218,450
+- mapped nonzero: 1
+- mismatch: 218,449
+- first query: `direct=1192 mapped=0 selected=1192 mismatch=1`
 
-The only two nonzero mapped values exactly matched direct.
+Runtime user observation:
 
-Therefore explicit invalidate does not repair the path. HOST_COHERENT cache visibility and a missing invalidate are closed as explanations under this capture.
+- small object flicker appeared
+- not identical to the old large flicker, but visibly worse than the previously fully-correct direct-readback build
 
-## Current experiment — Run #30
+Conclusion:
 
-CI:
+- intermediate path did not repair mapped results
+- it introduced a visual regression
+- **do not continue or promote this path**
+- remove it before further diagnosis
 
-- Run #30 ID `34021733515`
-- Job `101455446048`
-- Head `6532c82d1c75b983465bcac40cf36f947462e0b9`
+Working hypothesis strengthened, but not yet proven: the Qualcomm Windows Vulkan issue may lie in `vkCmdCopyQueryPoolResults` execution/storage itself rather than only destination host visibility.
+
+## Current experiment — Run #31 protected baseline restoration
+
+The CI script has been restored to the exact Run #26 direct-readback implementation. No intermediate allocation/copy/barriers/invalidate are present in the target experiment.
+
+- CI head `be3064da39e2913719de6fc800e7f417d28a0aec`
+- Run #31 `34024292927`
 - Status at update: IN PROGRESS
 
-For Star Fox Zero and Bayonetta 2 only:
-
-`vkCmdCopyQueryPoolResults`
-`-> DEVICE_LOCAL intermediate buffer`
-`-> TRANSFER_WRITE/TRANSFER_READ barrier`
-`-> vkCmdCopyBuffer`
-`-> existing HOST_VISIBLE mapped buffer`
-`-> TRANSFER_WRITE/HOST_READ barrier`
-`-> CPU mapped read`
-
-The failed explicit invalidate from Run #29 is removed.
-
-The direct `vkGetQueryPoolResults` value remains selected, preserving the known visual FIX during this experiment.
-
-Purpose: determine whether Adreno specifically fails when `vkCmdCopyQueryPoolResults` writes directly into HOST_VISIBLE/HOST_CACHED memory, while ordinary device-local-to-host `vkCmdCopyBuffer` works.
+Purpose: A/B verify that removing the Run #30 intermediate path restores the fully-correct Star Fox appearance.
 
 ## NEXT ACTION
 
-1. Let Run #30 complete; do not modify source while it is building.
-2. If CI fails, record the first real compile/patch diagnostic and fix only that.
-3. If CI succeeds, run Star Fox Zero JP first.
-4. Confirm `[QUERY_INTERMEDIATE] allocated=1`.
-5. Inspect `[QUERY_DIRECT] ... path=intermediate`.
-6. Success criterion: nonzero `direct=N mapped=N mismatch=0` consistently.
-7. If restored, run Bayonetta 2 with the same build.
-8. If both titles pass and mapped/direct agree, convert the intermediate path into the narrowest safe Adreno-compatible mapped readback fix and regression-test BOTW/XCX separately.
-9. If mapped remains zero, stop repeating host-cache/barrier experiments and investigate `vkCmdCopyQueryPoolResults` execution/storage semantics directly.
-10. Do not globally switch every title to blocking direct reads.
+1. Let Run #31 complete.
+2. Test Star Fox Zero JP in the same scene/conditions as Run #30.
+3. Primary criterion: Run #30's small object flicker disappears completely.
+4. If PASS, close Run #30 as confirmed experiment-induced visual regression.
+5. Keep the exact direct-readback baseline protected before the next low-level diagnostic.
+6. Do not repeat the barrier/invalidate/intermediate-copy experiments under the same conditions.
+7. XCX remains separate; do not globalize blocking direct readback.
 
 ## DO NOT ROLLBACK
 
