@@ -17,12 +17,21 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 api_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h")
 api = api_path.read_text(encoding="utf-8")
 api_anchor = "VKFUNC_DEVICE(vkCmdCopyQueryPoolResults);\n"
-api = replace_once(
-    api,
-    api_anchor,
-    api_anchor + "VKFUNC_DEVICE(vkGetQueryPoolResults);\n",
-    "Vulkan query direct-readback function loader",
-)
+api_get_query_results = "VKFUNC_DEVICE(vkGetQueryPoolResults);\n"
+api_get_query_results_count = api.count(api_get_query_results)
+if api_get_query_results_count == 0:
+    api = replace_once(
+        api,
+        api_anchor,
+        api_anchor + api_get_query_results,
+        "Vulkan query direct-readback function loader",
+    )
+elif api_get_query_results_count != 1:
+    raise RuntimeError(
+        f"Vulkan query direct-readback loader expected at most one existing declaration, found {api_get_query_results_count}"
+    )
+if api.count(api_get_query_results) != 1:
+    raise RuntimeError("Vulkan query direct-readback loader declaration count is not exactly one")
 api_path.write_text(api, encoding="utf-8", newline="\n")
 
 query_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanQuery.cpp")
