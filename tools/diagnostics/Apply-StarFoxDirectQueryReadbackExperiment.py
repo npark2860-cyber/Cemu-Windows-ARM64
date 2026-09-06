@@ -9,8 +9,9 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 
 # Preserve the runtime-PASS direct-readback behavior for Star Fox Zero JP and
-# Bayonetta 2 JP, while adding observation-only metadata around the existing
-# mapped vkCmdCopyQueryPoolResults path. Other titles remain unchanged.
+# Bayonetta 2 JP, while tracing the persistent mapped query-result path and
+# testing the narrow Vulkan device->host visibility dependency required after
+# vkCmdCopyQueryPoolResults. Other titles remain unchanged.
 
 api_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h")
 api = api_path.read_text(encoding="utf-8")
@@ -113,6 +114,35 @@ query = replace_once(
     "target direct-readback helper insertion",
 )
 
+old_copy_block = '''\tvkCmdCopyQueryPoolResults(m_rendererVk->m_state.currentCommandBuffer, m_rendererVk->m_occlusionQueries.queryPool, queryIndex, 1, m_rendererVk->m_occlusionQueries.bufferQueryResults, queryIndex * sizeof(uint64), 8, VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+\tlist_queryFragments.back().m_finishCommandBuffer = m_rendererVk->GetCurrentCommandBufferId();
+'''
+new_copy_block = '''\tconst VkDeviceSize queryResultOffset = static_cast<VkDeviceSize>(queryIndex) * sizeof(uint64);
+\tvkCmdCopyQueryPoolResults(m_rendererVk->m_state.currentCommandBuffer, m_rendererVk->m_occlusionQueries.queryPool, queryIndex, 1, m_rendererVk->m_occlusionQueries.bufferQueryResults, queryResultOffset, sizeof(uint64), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+\tif (TargetDirectQueryReadbackEnabled())
+\t{
+\t\tVkBufferMemoryBarrier queryHostReadBarrier{};
+\t\tqueryHostReadBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+\t\tqueryHostReadBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+\t\tqueryHostReadBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+\t\tqueryHostReadBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+\t\tqueryHostReadBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+\t\tqueryHostReadBarrier.buffer = m_rendererVk->m_occlusionQueries.bufferQueryResults;
+\t\tqueryHostReadBarrier.offset = queryResultOffset;
+\t\tqueryHostReadBarrier.size = sizeof(uint64);
+\t\tvkCmdPipelineBarrier(
+\t\t\tm_rendererVk->m_state.currentCommandBuffer,
+\t\t\tVK_PIPELINE_STAGE_TRANSFER_BIT,
+\t\t\tVK_PIPELINE_STAGE_HOST_BIT,
+\t\t\t0,
+\t\t\t0, nullptr,
+\t\t\t1, &queryHostReadBarrier,
+\t\t\t0, nullptr);
+\t}
+\tlist_queryFragments.back().m_finishCommandBuffer = m_rendererVk->GetCurrentCommandBufferId();
+'''
+query = replace_once(query, old_copy_block, new_copy_block, "query transfer-to-host visibility barrier")
+
 old_result_block = '''\t\tif (!m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer))
 \t\t\tbreak;
 \t\tm_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
@@ -160,14 +190,21 @@ for token in (
     "valueMismatch",
     "cmdBuffer={} cmdFinished={}",
     "const bool commandBufferFinished = m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer);",
+    "VK_ACCESS_TRANSFER_WRITE_BIT",
+    "VK_ACCESS_HOST_READ_BIT",
+    "VK_PIPELINE_STAGE_TRANSFER_BIT",
+    "VK_PIPELINE_STAGE_HOST_BIT",
+    "queryHostReadBarrier",
 ):
     if token not in query:
-        raise RuntimeError(f"target direct-readback token missing: {token}")
+        raise RuntimeError(f"target direct-readback/host-visibility token missing: {token}")
 
 if "m_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];" in query:
     raise RuntimeError("old unconditional mapped-buffer accumulation path still present")
 if "fragmentResult = directResultValue;" not in query:
     raise RuntimeError("runtime-PASS direct-readback result selection was lost")
+if query.count("vkCmdPipelineBarrier(") < 1:
+    raise RuntimeError("query transfer-to-host visibility barrier was not installed")
 
 query_path.write_text(query, encoding="utf-8", newline="\n")
-print("Star Fox Zero + Bayonetta 2 direct-readback PASS path preserved; mapped/direct divergence metadata installed")
+print("Star Fox Zero + Bayonetta 2 direct-readback PASS path preserved; transfer-to-host query visibility barrier installed")
