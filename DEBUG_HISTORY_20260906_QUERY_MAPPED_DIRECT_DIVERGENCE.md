@@ -40,8 +40,6 @@ Observed repeatedly:
 - `selected=direct`
 - `mismatch=1`
 
-Representative records include direct values ranging from small sample counts to large nonzero counts while mapped remains zero. The divergence persists across many command buffers and query indices.
-
 This rules out “the query simply was not finished when the CPU read it” as the explanation for the reproduced target failure.
 
 ## Confirmed memory type — coherent, no fallback
@@ -61,61 +59,91 @@ Therefore the reproduced mapped/direct divergence occurs on HOST_COHERENT memory
 
 ## Experiments already built — do not repeat blindly
 
-The following single-variable diagnostic steps were already implemented and built successfully:
-
 1. Transfer-write -> host-read visibility barrier
    - diagnostic commit: `79fbf25ab8a255fe15ad8210bad21a9a5491c34e`
-   - trigger Run #28: `34017106924`
-   - result: CI SUCCESS
+   - Run #28: `34017106924`
+   - CI SUCCESS
 
 2. Forced mapped-memory invalidate on target titles
    - diagnostic commit: `7a71d5405f3d438d52dce9554eb93a0ee49a2ed2`
-   - trigger Run #29: `34019347912`
-   - result: CI SUCCESS
-   - Bayonetta 2 log confirms the selected result memory is coherent (`flags=0x0f`, `fallback=0`), so invalidate is not a principled fix for this captured device path.
+   - Run #29: `34019347912`
+   - CI SUCCESS
+   - Bayonetta 2 log confirms HOST_COHERENT result memory (`flags=0x0f`, `fallback=0`); invalidate is not the root fix.
 
 3. Device-local intermediate isolation
    - diagnostic commit: `eb04e6f370c8bbf2ae9564e19edef8b6e8c7d266`
    - trigger Run #30 head: `6532c82d1c75b983465bcac40cf36f947462e0b9`
    - Run ID: `34021733515`
-   - result: CI SUCCESS
+   - CI SUCCESS
    - artifact ID: `9986265293`
    - artifact digest: `sha256:c7083f69433ae71029673d7ac21291a6f6b8543060eec4a794e0949eb0621b3b`
-   - behavior: for Star Fox Zero JP and Bayonetta 2 JP only, `vkCmdCopyQueryPoolResults` writes first to a DEVICE_LOCAL intermediate buffer, then `vkCmdCopyBuffer` copies to the existing mapped host buffer. Direct readback remains selected so the known FIXED behavior is protected.
-   - runtime result: **NOT CAPTURED / NOT VERIFIED**. No Run #30 runtime log is present in the available September 6 uploads. Do not infer PASS or FAIL.
+   - implementation: target titles use `vkCmdCopyQueryPoolResults` -> DEVICE_LOCAL intermediate -> `vkCmdCopyBuffer` -> existing mapped host buffer.
+   - implementation contains both required dependencies:
+     - intermediate `TRANSFER_WRITE -> TRANSFER_READ`
+     - destination `TRANSFER_WRITE -> HOST_READ`
+   - direct readback remains selected, preserving the known FIXED result selection.
+
+### Star Fox Zero JP Run #30 runtime result — FAILED TO REPAIR MAPPED PATH
+
+Uploaded runtime log identifies the expected build:
+
+- `Init Cemu 6532c82`
+- title `00050000101aff00`
+- `[QUERY_INTERMEDIATE] allocated=1 size=8192`
+- `[QUERY_MAP_META] found=1 memoryType=4 heap=0 flags=0x0000000f requested=0x0000000e fallback=0`
+
+Parsed logged `[QUERY_DIRECT]` records:
+
+- records: `336166`
+- path: `intermediate` for all parsed records
+- `vkResult=0` for all parsed records
+- direct nonzero: `335995`
+- mismatch: `335993`
+- mapped nonzero among logged records: `2`
+- equal direct/mapped logged records: `173`, of which `171` are both zero and only `2` are nonzero matches
+
+Representative beginning:
+
+`[QUERY_DIRECT] n=1 ... cmdFinished=1 path=intermediate vkResult=0 direct=1192 mapped=0 selected=1192 mismatch=1`
+
+The same pattern continues through the end of the capture. Two sparse periodic records show nonzero equality (`n=284000` and `n=326000`), proving the chain can occasionally transfer a value, but the DEVICE_LOCAL intermediate does not repair the systematic failure.
+
+Because Run #30 contains explicit transfer-write/read and transfer-write/host-read barriers, this result is not explained by a missing barrier between the two copies.
 
 4. Protected direct-readback baseline restoration
    - diagnostic code commit: `790a945780ea561518dd072d9f73c0e3e89b4700`
    - trigger Run #31 head: `be3064da39e2913719de6fc800e7f417d28a0aec`
    - Run ID: `34024292927`
-   - result: CI SUCCESS
+   - CI SUCCESS
    - artifact ID: `9987082611`
    - artifact digest: `sha256:74aef6d516965fc1ec93fc32d0a6ad2fe0358e36a439afdf1b9d2e6c344499bd`
-   - current source tree is back on the protected Star Fox Zero + Bayonetta 2 direct-readback behavior; other titles retain the normal mapped path.
+   - current protected source tree is back on the Star Fox Zero + Bayonetta 2 direct-readback behavior; other titles retain the normal mapped path.
 
 ## Current technical classification
 
 Confirmed:
 
-- `vkGetQueryPoolResults(... WAIT_BIT)` returns the correct completed query result on the two reproduced titles.
-- The normal Cemu path records `vkCmdCopyQueryPoolResults` into `m_occlusionQueries.bufferQueryResults`, waits for the owning command buffer to finish, then reads `ptrQueryResults[queryIndex]`.
-- On the reproduced Adreno X1-85 path, the mapped value can remain zero after command-buffer completion while direct query-pool readback is nonzero.
-- The result memory selected in the captured Bayonetta 2 run is HOST_COHERENT.
+- `vkGetQueryPoolResults(... WAIT_BIT)` returns the completed query result correctly on the reproduced target path.
+- The normal `vkCmdCopyQueryPoolResults` -> mapped-buffer path can return zero after the owning command buffer is finished.
+- The selected result memory is HOST_COHERENT; non-coherent invalidation is not the cause.
+- Adding a transfer-write -> host-read barrier does not resolve the captured failure.
+- Routing query-copy first into DEVICE_LOCAL memory, with a proper `TRANSFER_WRITE -> TRANSFER_READ` barrier and then a `vkCmdCopyBuffer` plus `TRANSFER_WRITE -> HOST_READ` barrier, still leaves the mapped result zero for nearly all logged nonzero direct results.
 
-Still unresolved:
+Therefore the failure boundary is now narrowed past host-visible destination selection and host cache visibility. The remaining suspect is the Adreno `vkCmdCopyQueryPoolResults` result-copy path itself (or driver behavior specifically tied to that command), not the subsequent CPU mapped read.
 
-- whether Qualcomm's failure is specific to `vkCmdCopyQueryPoolResults` targeting the persistently mapped host-visible buffer, or whether the query-copy result is also wrong when the immediate destination is DEVICE_LOCAL.
-
-Run #30 exists specifically to answer that branch point.
+Do not claim a final driver bug across all titles yet: Bayonetta 2 Run #30 still needs the same runtime classification, and XCX uses a different consumption path.
 
 ## NEXT ACTION
 
-1. Do **not** build again yet.
-2. Reuse Run #30 artifact `9986265293` (`sha256:c7083f69433ae71029673d7ac21291a6f6b8543060eec4a794e0949eb0621b3b`).
-3. Run Star Fox Zero JP first and capture `log.txt` from startup through the reproduced scene.
-4. Verify the build identifies as the Run #30/intermediate code, not restored Run #31.
-5. Determine whether the mapped value becomes nonzero through the DEVICE_LOCAL -> mapped-buffer copy path and whether visual flicker remains fixed.
-6. Only after Star Fox classification, run Bayonetta 2 JP on the same Run #30 build.
-7. If DEVICE_LOCAL intermediate makes mapped values correct, narrow the defect to direct query-copy into the host-visible mapped destination and design the smallest title/device-scoped replacement.
-8. If DEVICE_LOCAL intermediate still leaves mapped values zero, treat `vkCmdCopyQueryPoolResults` itself as the failing Adreno path and retain `vkGetQueryPoolResults` as the protected workaround while investigating a non-blocking alternative.
+1. Do **not** rebuild yet.
+2. Reuse Run #30 artifact `9986265293`.
+3. Run Bayonetta 2 JP (`00050000-1011B900`) with the same Run #30/intermediate build.
+4. Capture `log.txt` from startup through the previously reproduced scene.
+5. Verify:
+   - `Init Cemu 6532c82`
+   - `[QUERY_INTERMEDIATE] allocated=1`
+   - target title `000500001011b900`
+6. Parse `[QUERY_DIRECT]` and compare direct/mapped values.
+7. If Bayonetta 2 reproduces the same intermediate-path divergence, close the mapped-copy line of investigation for these two titles and move to a non-blocking direct-query-result replacement experiment.
+8. Preferred next one-variable experiment after both-title confirmation: call `vkGetQueryPoolResults` **without `VK_QUERY_RESULT_WAIT_BIT` after `HasCommandBufferFinished(...)` is true**. On `VK_SUCCESS`, consume direct result; on `VK_NOT_READY`, retain the fragment and retry rather than blocking or releasing the query index.
 9. Do not modify `main`; do not remove the Run #25/#26 direct-readback PASS path; do not mix XCX into this experiment.
