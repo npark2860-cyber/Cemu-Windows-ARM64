@@ -9,82 +9,39 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 
 # Preserve the runtime-PASS direct-readback behavior for Star Fox Zero JP and
-# Bayonetta 2 JP, while tracing the persistent mapped query-result path and
-# testing the narrow Vulkan device->host visibility dependency plus an explicit
-# mapped-memory invalidate before the host read. Other titles remain unchanged.
+# Bayonetta 2 JP. For those targets only, isolate vkCmdCopyQueryPoolResults from
+# HOST_VISIBLE memory by copying query results into a DEVICE_LOCAL intermediate
+# buffer first, then vkCmdCopyBuffer into the existing mapped host buffer.
 
 api_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h")
 api = api_path.read_text(encoding="utf-8")
 api_anchor = "VKFUNC_DEVICE(vkCmdCopyQueryPoolResults);\n"
 api_get_query_results = "VKFUNC_DEVICE(vkGetQueryPoolResults);\n"
-api_get_query_results_count = api.count(api_get_query_results)
-if api_get_query_results_count == 0:
-    api = replace_once(
-        api,
-        api_anchor,
-        api_anchor + api_get_query_results,
-        "Vulkan query direct-readback function loader",
-    )
-elif api_get_query_results_count != 1:
-    raise RuntimeError(
-        f"Vulkan query direct-readback loader expected at most one existing declaration, found {api_get_query_results_count}"
-    )
-if api.count(api_get_query_results) != 1:
-    raise RuntimeError("Vulkan query direct-readback loader declaration count is not exactly one")
+api_count = api.count(api_get_query_results)
+if api_count == 0:
+    api = replace_once(api, api_anchor, api_anchor + api_get_query_results, "Vulkan query direct-readback loader")
+elif api_count != 1:
+    raise RuntimeError(f"vkGetQueryPoolResults loader expected at most once, found {api_count}")
+if "VKFUNC_DEVICE(vkCmdCopyBuffer);" not in api:
+    raise RuntimeError("vkCmdCopyBuffer loader missing")
 api_path.write_text(api, encoding="utf-8", newline="\n")
 
-# Record the exact memory-type selection inputs and resolved memory-type flags
-# for the persistent query-result buffer. The allocation requests themselves are
-# unchanged from the runtime-PASS path.
+header_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h")
+header = header_path.read_text(encoding="utf-8")
+old_query_fields = '''\t\tVkBuffer bufferQueryResults;\n\t\tVkDeviceMemory memoryQueryResults;\n\t\tuint64* ptrQueryResults;\n'''
+new_query_fields = '''\t\tVkBuffer bufferQueryResults;\n\t\tVkDeviceMemory memoryQueryResults;\n\t\tVkBuffer bufferQueryResultsIntermediate;\n\t\tVkDeviceMemory memoryQueryResultsIntermediate;\n\t\tuint64* ptrQueryResults;\n'''
+header = replace_once(header, old_query_fields, new_query_fields, "query intermediate buffer fields")
+header_path.write_text(header, encoding="utf-8", newline="\n")
+
 renderer_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp")
 renderer = renderer_path.read_text(encoding="utf-8")
-old_allocation = '''\t// occlusion query result buffer
-\tif (!memoryManager->CreateBuffer(OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64), VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults))
-\t{
-\t\tmemoryManager->CreateBuffer(OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64), VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults);
-\t}
-\tbufferPtr = nullptr;
-'''
-new_allocation = '''\t// occlusion query result buffer
-\tconst VkMemoryPropertyFlags queryResultPrimaryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-\tconst VkMemoryPropertyFlags queryResultFallbackProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-\tVkMemoryPropertyFlags queryResultRequestedProperties = queryResultPrimaryProperties;
-\tbool queryResultFallback = false;
-\tif (!memoryManager->CreateBuffer(OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64), VK_BUFFER_USAGE_TRANSFER_DST_BIT, queryResultPrimaryProperties, m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults))
-\t{
-\t\tqueryResultFallback = true;
-\t\tqueryResultRequestedProperties = queryResultFallbackProperties;
-\t\tmemoryManager->CreateBuffer(OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64), VK_BUFFER_USAGE_TRANSFER_DST_BIT, queryResultFallbackProperties, m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults);
-\t}
-\tVkMemoryRequirements queryResultMemoryRequirements{};
-\tvkGetBufferMemoryRequirements(m_logicalDevice, m_occlusionQueries.bufferQueryResults, &queryResultMemoryRequirements);
-\tuint32 queryResultMemoryTypeIndex = 0xFFFFFFFFu;
-\tconst bool queryResultMemoryTypeFound = memoryManager->FindMemoryType(queryResultMemoryRequirements.memoryTypeBits, queryResultRequestedProperties, queryResultMemoryTypeIndex);
-\tVkPhysicalDeviceMemoryProperties queryResultMemoryProperties{};
-\tvkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &queryResultMemoryProperties);
-\tVkMemoryPropertyFlags queryResultActualProperties = 0;
-\tuint32 queryResultHeapIndex = 0xFFFFFFFFu;
-\tif (queryResultMemoryTypeFound && queryResultMemoryTypeIndex < queryResultMemoryProperties.memoryTypeCount)
-\t{
-\t\tqueryResultActualProperties = queryResultMemoryProperties.memoryTypes[queryResultMemoryTypeIndex].propertyFlags;
-\t\tqueryResultHeapIndex = queryResultMemoryProperties.memoryTypes[queryResultMemoryTypeIndex].heapIndex;
-\t}
-\tcemuLog_log(LogType::Force,
-\t\t"[QUERY_MAP_META] found={} memoryType={} heap={} flags=0x{:08x} requested=0x{:08x} fallback={}",
-\t\tqueryResultMemoryTypeFound ? 1 : 0, queryResultMemoryTypeIndex, queryResultHeapIndex,
-\t\tstatic_cast<uint32>(queryResultActualProperties), static_cast<uint32>(queryResultRequestedProperties), queryResultFallback ? 1 : 0);
-\tbufferPtr = nullptr;
-'''
-renderer = replace_once(renderer, old_allocation, new_allocation, "query-result buffer memory metadata")
-for token in (
-    "[QUERY_MAP_META]",
-    "queryResultMemoryTypeIndex",
-    "queryResultActualProperties",
-    "queryResultPrimaryProperties",
-    "queryResultFallbackProperties",
-):
-    if token not in renderer:
-        raise RuntimeError(f"query-result memory metadata token missing: {token}")
+old_allocation = '''\t// occlusion query result buffer\n\tif (!memoryManager->CreateBuffer(OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64), VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults))\n\t{\n\t\tmemoryManager->CreateBuffer(OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64), VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults);\n\t}\n\tbufferPtr = nullptr;\n'''
+new_allocation = '''\t// occlusion query result buffer\n\tconst VkMemoryPropertyFlags queryResultPrimaryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;\n\tconst VkMemoryPropertyFlags queryResultFallbackProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;\n\tVkMemoryPropertyFlags queryResultRequestedProperties = queryResultPrimaryProperties;\n\tbool queryResultFallback = false;\n\tif (!memoryManager->CreateBuffer(OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64), VK_BUFFER_USAGE_TRANSFER_DST_BIT, queryResultPrimaryProperties, m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults))\n\t{\n\t\tqueryResultFallback = true;\n\t\tqueryResultRequestedProperties = queryResultFallbackProperties;\n\t\tmemoryManager->CreateBuffer(OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64), VK_BUFFER_USAGE_TRANSFER_DST_BIT, queryResultFallbackProperties, m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults);\n\t}\n\tVkMemoryRequirements queryResultMemoryRequirements{};\n\tvkGetBufferMemoryRequirements(m_logicalDevice, m_occlusionQueries.bufferQueryResults, &queryResultMemoryRequirements);\n\tuint32 queryResultMemoryTypeIndex = 0xFFFFFFFFu;\n\tconst bool queryResultMemoryTypeFound = memoryManager->FindMemoryType(queryResultMemoryRequirements.memoryTypeBits, queryResultRequestedProperties, queryResultMemoryTypeIndex);\n\tVkPhysicalDeviceMemoryProperties queryResultMemoryProperties{};\n\tvkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &queryResultMemoryProperties);\n\tVkMemoryPropertyFlags queryResultActualProperties = 0;\n\tuint32 queryResultHeapIndex = 0xFFFFFFFFu;\n\tif (queryResultMemoryTypeFound && queryResultMemoryTypeIndex < queryResultMemoryProperties.memoryTypeCount)\n\t{\n\t\tqueryResultActualProperties = queryResultMemoryProperties.memoryTypes[queryResultMemoryTypeIndex].propertyFlags;\n\t\tqueryResultHeapIndex = queryResultMemoryProperties.memoryTypes[queryResultMemoryTypeIndex].heapIndex;\n\t}\n\tcemuLog_log(LogType::Force,\n\t\t"[QUERY_MAP_META] found={} memoryType={} heap={} flags=0x{:08x} requested=0x{:08x} fallback={}",\n\t\tqueryResultMemoryTypeFound ? 1 : 0, queryResultMemoryTypeIndex, queryResultHeapIndex,\n\t\tstatic_cast<uint32>(queryResultActualProperties), static_cast<uint32>(queryResultRequestedProperties), queryResultFallback ? 1 : 0);\n\n\tif (!memoryManager->CreateBuffer(\n\t\tOCCLUSION_QUERY_POOL_SIZE * sizeof(uint64),\n\t\tVK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,\n\t\tVK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,\n\t\tm_occlusionQueries.bufferQueryResultsIntermediate,\n\t\tm_occlusionQueries.memoryQueryResultsIntermediate))\n\t{\n\t\tthrow std::runtime_error("failed to allocate device-local query-result intermediate buffer");\n\t}\n\tcemuLog_log(LogType::Force, "[QUERY_INTERMEDIATE] allocated=1 size={}", OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64));\n\tbufferPtr = nullptr;\n'''
+renderer = replace_once(renderer, old_allocation, new_allocation, "query-result host + intermediate allocation")
+
+old_cleanup = '''\tmemoryManager->DeleteBuffer(m_xfbRingBuffer, m_xfbRingBufferMemory);\n\tmemoryManager->DeleteBuffer(m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults);\n\tmemoryManager->DeleteBuffer(m_bufferCache, m_bufferCacheMemory);\n'''
+new_cleanup = '''\tmemoryManager->DeleteBuffer(m_xfbRingBuffer, m_xfbRingBufferMemory);\n\tmemoryManager->DeleteBuffer(m_occlusionQueries.bufferQueryResults, m_occlusionQueries.memoryQueryResults);\n\tmemoryManager->DeleteBuffer(m_occlusionQueries.bufferQueryResultsIntermediate, m_occlusionQueries.memoryQueryResultsIntermediate);\n\tmemoryManager->DeleteBuffer(m_bufferCache, m_bufferCacheMemory);\n'''
+renderer = replace_once(renderer, old_cleanup, new_cleanup, "query intermediate buffer cleanup")
 renderer_path.write_text(renderer, encoding="utf-8", newline="\n")
 
 query_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanQuery.cpp")
@@ -97,129 +54,24 @@ query = replace_once(
 )
 
 get_result_anchor = "bool LatteQueryObjectVk::getResult(uint64& numSamplesPassed)\n"
-helper = '''static uint64 s_targetDirectQueryReadbackCount = 0;
+helper = '''static uint64 s_targetDirectQueryReadbackCount = 0;\n\nstatic bool TargetDirectQueryReadbackEnabled()\n{\n\tconst uint64 titleId = CafeSystem::GetForegroundTitleId();\n\treturn titleId == 0x00050000101AFF00ULL ||\n\t\ttitleId == 0x000500001011B900ULL;\n}\n\n'''
+query = replace_once(query, get_result_anchor, helper + get_result_anchor, "target direct-readback helper")
 
-static bool TargetDirectQueryReadbackEnabled()
-{
-\tconst uint64 titleId = CafeSystem::GetForegroundTitleId();
-\treturn titleId == 0x00050000101AFF00ULL || // Star Fox Zero JP
-\t\ttitleId == 0x000500001011B900ULL;   // Bayonetta 2 JP
-}
+old_copy_block = '''\tvkCmdCopyQueryPoolResults(m_rendererVk->m_state.currentCommandBuffer, m_rendererVk->m_occlusionQueries.queryPool, queryIndex, 1, m_rendererVk->m_occlusionQueries.bufferQueryResults, queryIndex * sizeof(uint64), 8, VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);\n\tlist_queryFragments.back().m_finishCommandBuffer = m_rendererVk->GetCurrentCommandBufferId();\n'''
+new_copy_block = '''\tconst VkDeviceSize queryResultOffset = static_cast<VkDeviceSize>(queryIndex) * sizeof(uint64);\n\tif (TargetDirectQueryReadbackEnabled())\n\t{\n\t\tvkCmdCopyQueryPoolResults(m_rendererVk->m_state.currentCommandBuffer, m_rendererVk->m_occlusionQueries.queryPool, queryIndex, 1, m_rendererVk->m_occlusionQueries.bufferQueryResultsIntermediate, queryResultOffset, sizeof(uint64), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);\n\t\tVkBufferMemoryBarrier intermediateBarrier{};\n\t\tintermediateBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;\n\t\tintermediateBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;\n\t\tintermediateBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;\n\t\tintermediateBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;\n\t\tintermediateBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;\n\t\tintermediateBarrier.buffer = m_rendererVk->m_occlusionQueries.bufferQueryResultsIntermediate;\n\t\tintermediateBarrier.offset = queryResultOffset;\n\t\tintermediateBarrier.size = sizeof(uint64);\n\t\tvkCmdPipelineBarrier(m_rendererVk->m_state.currentCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &intermediateBarrier, 0, nullptr);\n\t\tVkBufferCopy queryCopyRegion{};\n\t\tqueryCopyRegion.srcOffset = queryResultOffset;\n\t\tqueryCopyRegion.dstOffset = queryResultOffset;\n\t\tqueryCopyRegion.size = sizeof(uint64);\n\t\tvkCmdCopyBuffer(m_rendererVk->m_state.currentCommandBuffer, m_rendererVk->m_occlusionQueries.bufferQueryResultsIntermediate, m_rendererVk->m_occlusionQueries.bufferQueryResults, 1, &queryCopyRegion);\n\t\tVkBufferMemoryBarrier queryHostReadBarrier{};\n\t\tqueryHostReadBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;\n\t\tqueryHostReadBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;\n\t\tqueryHostReadBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;\n\t\tqueryHostReadBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;\n\t\tqueryHostReadBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;\n\t\tqueryHostReadBarrier.buffer = m_rendererVk->m_occlusionQueries.bufferQueryResults;\n\t\tqueryHostReadBarrier.offset = queryResultOffset;\n\t\tqueryHostReadBarrier.size = sizeof(uint64);\n\t\tvkCmdPipelineBarrier(m_rendererVk->m_state.currentCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 0, nullptr, 1, &queryHostReadBarrier, 0, nullptr);\n\t}\n\telse\n\t{\n\t\tvkCmdCopyQueryPoolResults(m_rendererVk->m_state.currentCommandBuffer, m_rendererVk->m_occlusionQueries.queryPool, queryIndex, 1, m_rendererVk->m_occlusionQueries.bufferQueryResults, queryResultOffset, sizeof(uint64), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);\n\t}\n\tlist_queryFragments.back().m_finishCommandBuffer = m_rendererVk->GetCurrentCommandBufferId();\n'''
+query = replace_once(query, old_copy_block, new_copy_block, "device-local query intermediate copy path")
 
-'''
-query = replace_once(
-    query,
-    get_result_anchor,
-    helper + get_result_anchor,
-    "target direct-readback helper insertion",
-)
+old_result_block = '''\t\tif (!m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer))\n\t\t\tbreak;\n\t\tm_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];\n'''
+new_result_block = '''\t\tconst bool commandBufferFinished = m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer);\n\t\tif (!commandBufferFinished)\n\t\t\tbreak;\n\t\tconst uint64 mappedResultValue = m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];\n\t\tuint64 fragmentResult = mappedResultValue;\n\t\tif (TargetDirectQueryReadbackEnabled())\n\t\t{\n\t\t\tuint64 directResultValue = 0;\n\t\t\tconst VkResult directResult = vkGetQueryPoolResults(m_rendererVk->GetLogicalDevice(), m_rendererVk->m_occlusionQueries.queryPool, it.queryIndex, 1, sizeof(directResultValue), &directResultValue, sizeof(uint64), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);\n\t\t\tconst uint64 n = ++s_targetDirectQueryReadbackCount;\n\t\t\tconst bool valueMismatch = directResult == VK_SUCCESS && directResultValue != mappedResultValue;\n\t\t\tif (directResult == VK_SUCCESS)\n\t\t\t\tfragmentResult = directResultValue;\n\t\t\tif (n <= 128 || (n % 1000ULL) == 0 || directResult != VK_SUCCESS || valueMismatch)\n\t\t\t{\n\t\t\t\tcemuLog_log(LogType::Force, "[QUERY_DIRECT] n={} title={:016x} queryIndex={} cmdBuffer={} cmdFinished={} path=intermediate vkResult={} direct={} mapped={} selected={} mismatch={}", n, CafeSystem::GetForegroundTitleId(), it.queryIndex, it.m_finishCommandBuffer, commandBufferFinished ? 1 : 0, static_cast<sint32>(directResult), directResultValue, mappedResultValue, fragmentResult, valueMismatch ? 1 : 0);\n\t\t\t}\n\t\t}\n\t\tm_acccumulatedSum += fragmentResult;\n'''
+query = replace_once(query, old_result_block, new_result_block, "target direct-readback result selection")
 
-old_copy_block = '''\tvkCmdCopyQueryPoolResults(m_rendererVk->m_state.currentCommandBuffer, m_rendererVk->m_occlusionQueries.queryPool, queryIndex, 1, m_rendererVk->m_occlusionQueries.bufferQueryResults, queryIndex * sizeof(uint64), 8, VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
-\tlist_queryFragments.back().m_finishCommandBuffer = m_rendererVk->GetCurrentCommandBufferId();
-'''
-new_copy_block = '''\tconst VkDeviceSize queryResultOffset = static_cast<VkDeviceSize>(queryIndex) * sizeof(uint64);
-\tvkCmdCopyQueryPoolResults(m_rendererVk->m_state.currentCommandBuffer, m_rendererVk->m_occlusionQueries.queryPool, queryIndex, 1, m_rendererVk->m_occlusionQueries.bufferQueryResults, queryResultOffset, sizeof(uint64), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
-\tif (TargetDirectQueryReadbackEnabled())
-\t{
-\t\tVkBufferMemoryBarrier queryHostReadBarrier{};
-\t\tqueryHostReadBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-\t\tqueryHostReadBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-\t\tqueryHostReadBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-\t\tqueryHostReadBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-\t\tqueryHostReadBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-\t\tqueryHostReadBarrier.buffer = m_rendererVk->m_occlusionQueries.bufferQueryResults;
-\t\tqueryHostReadBarrier.offset = queryResultOffset;
-\t\tqueryHostReadBarrier.size = sizeof(uint64);
-\t\tvkCmdPipelineBarrier(
-\t\t\tm_rendererVk->m_state.currentCommandBuffer,
-\t\t\tVK_PIPELINE_STAGE_TRANSFER_BIT,
-\t\t\tVK_PIPELINE_STAGE_HOST_BIT,
-\t\t\t0,
-\t\t\t0, nullptr,
-\t\t\t1, &queryHostReadBarrier,
-\t\t\t0, nullptr);
-\t}
-\tlist_queryFragments.back().m_finishCommandBuffer = m_rendererVk->GetCurrentCommandBufferId();
-'''
-query = replace_once(query, old_copy_block, new_copy_block, "query transfer-to-host visibility barrier")
-
-old_result_block = '''\t\tif (!m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer))
-\t\t\tbreak;
-\t\tm_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
-'''
-new_result_block = '''\t\tconst bool commandBufferFinished = m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer);
-\t\tif (!commandBufferFinished)
-\t\t\tbreak;
-\t\tconst bool targetDirectReadback = TargetDirectQueryReadbackEnabled();
-\t\tVkResult invalidateResult = VK_SUCCESS;
-\t\tif (targetDirectReadback)
-\t\t{
-\t\t\tVkMappedMemoryRange queryMappedRange{};
-\t\t\tqueryMappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-\t\t\tqueryMappedRange.memory = m_rendererVk->m_occlusionQueries.memoryQueryResults;
-\t\t\tqueryMappedRange.offset = static_cast<VkDeviceSize>(it.queryIndex) * sizeof(uint64);
-\t\t\tqueryMappedRange.size = sizeof(uint64);
-\t\t\tinvalidateResult = vkInvalidateMappedMemoryRanges(m_rendererVk->GetLogicalDevice(), 1, &queryMappedRange);
-\t\t}
-\t\tconst uint64 mappedResultValue = m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
-\t\tuint64 fragmentResult = mappedResultValue;
-\t\tif (targetDirectReadback)
-\t\t{
-\t\t\tuint64 directResultValue = 0;
-\t\t\tconst VkResult directResult = vkGetQueryPoolResults(
-\t\t\t\tm_rendererVk->GetLogicalDevice(),
-\t\t\t\tm_rendererVk->m_occlusionQueries.queryPool,
-\t\t\t\tit.queryIndex,
-\t\t\t\t1,
-\t\t\t\tsizeof(directResultValue),
-\t\t\t\t&directResultValue,
-\t\t\t\tsizeof(uint64),
-\t\t\t\tVK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
-\t\t\tconst uint64 n = ++s_targetDirectQueryReadbackCount;
-\t\t\tconst bool valueMismatch = directResult == VK_SUCCESS && directResultValue != mappedResultValue;
-\t\t\tif (directResult == VK_SUCCESS)
-\t\t\t\tfragmentResult = directResultValue;
-\t\t\tif (n <= 128 || (n % 1000ULL) == 0 || directResult != VK_SUCCESS || invalidateResult != VK_SUCCESS || valueMismatch)
-\t\t\t{
-\t\t\t\tcemuLog_log(LogType::Force,
-\t\t\t\t\t"[QUERY_DIRECT] n={} title={:016x} queryIndex={} cmdBuffer={} cmdFinished={} invalidate={} vkResult={} direct={} mapped={} selected={} mismatch={}",
-\t\t\t\t\tn, CafeSystem::GetForegroundTitleId(), it.queryIndex, it.m_finishCommandBuffer, commandBufferFinished ? 1 : 0,
-\t\t\t\t\tstatic_cast<sint32>(invalidateResult), static_cast<sint32>(directResult), directResultValue, mappedResultValue, fragmentResult, valueMismatch ? 1 : 0);
-\t\t\t}
-\t\t}
-\t\tm_acccumulatedSum += fragmentResult;
-'''
-query = replace_once(query, old_result_block, new_result_block, "target direct-readback result selection and explicit mapped invalidate")
-
-for token in (
-    "[QUERY_DIRECT]",
-    "vkGetQueryPoolResults(",
-    "vkInvalidateMappedMemoryRanges(",
-    "VkMappedMemoryRange queryMappedRange",
-    "TargetDirectQueryReadbackEnabled()",
-    "0x00050000101AFF00ULL",
-    "0x000500001011B900ULL",
-    "m_acccumulatedSum += fragmentResult;",
-    "valueMismatch",
-    "invalidate={}",
-    "const bool commandBufferFinished = m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer);",
-    "VK_ACCESS_TRANSFER_WRITE_BIT",
-    "VK_ACCESS_HOST_READ_BIT",
-    "VK_PIPELINE_STAGE_TRANSFER_BIT",
-    "VK_PIPELINE_STAGE_HOST_BIT",
-    "queryHostReadBarrier",
-):
+for token in ("[QUERY_DIRECT]", "path=intermediate", "vkGetQueryPoolResults(", "vkCmdCopyBuffer(", "bufferQueryResultsIntermediate", "VK_ACCESS_TRANSFER_READ_BIT", "VK_ACCESS_HOST_READ_BIT", "m_acccumulatedSum += fragmentResult;"):
     if token not in query:
-        raise RuntimeError(f"target direct-readback/host-visibility token missing: {token}")
-
-if "m_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];" in query:
-    raise RuntimeError("old unconditional mapped-buffer accumulation path still present")
+        raise RuntimeError(f"query intermediate/direct-readback token missing: {token}")
+if "vkInvalidateMappedMemoryRanges(" in query:
+    raise RuntimeError("failed invalidate experiment leaked into intermediate-copy experiment")
 if "fragmentResult = directResultValue;" not in query:
     raise RuntimeError("runtime-PASS direct-readback result selection was lost")
-if query.count("vkCmdPipelineBarrier(") < 1:
-    raise RuntimeError("query transfer-to-host visibility barrier was not installed")
-if query.count("vkInvalidateMappedMemoryRanges(") != 1:
-    raise RuntimeError("target explicit mapped-memory invalidate was not installed exactly once")
-
 query_path.write_text(query, encoding="utf-8", newline="\n")
-print("Star Fox Zero + Bayonetta 2 direct-readback PASS path preserved; query host barrier + explicit mapped invalidate installed")
+
+print("Star Fox Zero + Bayonetta 2 direct-readback PASS path preserved; DEVICE_LOCAL query intermediate -> host buffer copy experiment installed")
