@@ -11,10 +11,11 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 # -----------------------------------------------------------------------------
 # Star Fox Zero JP query-consumption comparison extension.
 #
-# Observation-only. The existing Bayo2/XCX QUERY_COMPARE instrumentation has
-# already been applied when this script runs. Add only Star Fox Zero JP
-# (00050000-101AFF00) to the same title gates so the exact same API/core markers
-# can be compared without changing query behavior, values, readiness or order.
+# The QUERY_COMPARE title-gate extension and focused ordinal trace are
+# observation-only. After those are installed, chain one explicit Star Fox-only
+# Vulkan behavior A/B: direct vkGetQueryPoolResults readback instead of the
+# mapped vkCmdCopyQueryPoolResults buffer consumption path. Other titles remain
+# unchanged.
 # -----------------------------------------------------------------------------
 starfox_id = "0x00050000101AFF00ULL"
 
@@ -44,8 +45,12 @@ if starfox_id not in core or "[QUERY_COMPARE]" not in core:
     raise RuntimeError("Star Fox Latte query-consumption extension validation failed")
 core_path.write_text(core, encoding="utf-8", newline="\n")
 
-# Chain the focused, unsampled observation for recurring query 0x460f9fc8.
+# Focused unsampled ordinal trace.
 focus_path = Path("tools/diagnostics/Apply-StarFoxFocusedQueryTrace.py")
 exec(compile(focus_path.read_text(encoding="utf-8"), str(focus_path), "exec"))
 
-print("Star Fox Zero JP added to existing QUERY_COMPARE observation trace; behavior unchanged")
+# Explicit one-variable behavior A/B for Star Fox only.
+direct_path = Path("tools/diagnostics/Apply-StarFoxDirectQueryReadbackExperiment.py")
+exec(compile(direct_path.read_text(encoding="utf-8"), str(direct_path), "exec"))
+
+print("Star Fox Zero JP query trace + direct-readback A/B installed")
