@@ -10,10 +10,10 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 # One-variable behavior experiment for the two reproduced Platinum-era flicker
 # titles only: Star Fox Zero JP and Bayonetta 2 JP.
-# Bypass Cemu's vkCmdCopyQueryPoolResults -> persistently mapped buffer result
-# consumption and instead fetch the completed Vulkan occlusion-query result with
-# vkGetQueryPoolResults after the owning command buffer has finished.
-# All other titles retain the existing path unchanged.
+# Keep the proven direct vkGetQueryPoolResults path, but remove WAIT_BIT so the
+# CPU call itself is non-blocking. If Vulkan reports VK_NOT_READY, retain the
+# query fragment/query index and let the normal query consumer retry later.
+# All other titles retain the existing mapped-buffer path unchanged.
 
 api_path = Path("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h")
 api = api_path.read_text(encoding="utf-8")
@@ -46,6 +46,7 @@ query = replace_once(
 
 get_result_anchor = "bool LatteQueryObjectVk::getResult(uint64& numSamplesPassed)\n"
 helper = '''static uint64 s_targetDirectQueryReadbackCount = 0;
+static uint64 s_targetDirectQueryNotReadyCount = 0;
 
 static bool TargetDirectQueryReadbackEnabled()
 {
@@ -62,6 +63,23 @@ query = replace_once(
     "target direct-readback helper insertion",
 )
 
+old_get_result_finish = '''\thandleFinishedFragments();
+\tcemu_assert_debug(list_queryFragments.empty());
+\tnumSamplesPassed = m_acccumulatedSum;
+'''
+new_get_result_finish = '''\thandleFinishedFragments();
+\tif (TargetDirectQueryReadbackEnabled() && !list_queryFragments.empty())
+\t\treturn false;
+\tcemu_assert_debug(list_queryFragments.empty());
+\tnumSamplesPassed = m_acccumulatedSum;
+'''
+query = replace_once(
+    query,
+    old_get_result_finish,
+    new_get_result_finish,
+    "target nonblocking direct-readback getResult retry",
+)
+
 old_sum = "\t\tm_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];\n"
 new_sum = '''\t\tconst uint64 mappedResultValue = m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
 \t\tuint64 fragmentResult = mappedResultValue;
@@ -76,37 +94,49 @@ new_sum = '''\t\tconst uint64 mappedResultValue = m_rendererVk->m_occlusionQueri
 \t\t\t\tsizeof(directResultValue),
 \t\t\t\t&directResultValue,
 \t\t\t\tsizeof(uint64),
-\t\t\t\tVK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+\t\t\t\tVK_QUERY_RESULT_64_BIT);
 \t\t\tconst uint64 n = ++s_targetDirectQueryReadbackCount;
+\t\t\tif (directResult == VK_NOT_READY)
+\t\t\t{
+\t\t\t\tconst uint64 notReadyCount = ++s_targetDirectQueryNotReadyCount;
+\t\t\t\tcemuLog_log(LogType::Force,
+\t\t\t\t\t"[QUERY_DIRECT] n={} title={:016x} queryIndex={} vkResult={} direct={} mapped={} selected=0 mismatch=0 retry=1 notReadyTotal={}",
+\t\t\t\t\tn, CafeSystem::GetForegroundTitleId(), it.queryIndex, static_cast<sint32>(directResult), directResultValue,
+\t\t\t\t\tmappedResultValue, notReadyCount);
+\t\t\t\tbreak;
+\t\t\t}
 \t\t\tconst bool valueMismatch = directResult == VK_SUCCESS && directResultValue != mappedResultValue;
 \t\t\tif (directResult == VK_SUCCESS)
 \t\t\t\tfragmentResult = directResultValue;
 \t\t\tif (n <= 128 || (n % 1000ULL) == 0 || directResult != VK_SUCCESS || valueMismatch)
 \t\t\t{
 \t\t\t\tcemuLog_log(LogType::Force,
-\t\t\t\t\t"[QUERY_DIRECT] n={} title={:016x} queryIndex={} vkResult={} direct={} mapped={} selected={} mismatch={}",
+\t\t\t\t\t"[QUERY_DIRECT] n={} title={:016x} queryIndex={} vkResult={} direct={} mapped={} selected={} mismatch={} retry=0 notReadyTotal={}",
 \t\t\t\t\tn, CafeSystem::GetForegroundTitleId(), it.queryIndex, static_cast<sint32>(directResult), directResultValue,
-\t\t\t\t\tmappedResultValue, fragmentResult, valueMismatch ? 1 : 0);
+\t\t\t\t\tmappedResultValue, fragmentResult, valueMismatch ? 1 : 0, s_targetDirectQueryNotReadyCount);
 \t\t\t}
 \t\t}
 \t\tm_acccumulatedSum += fragmentResult;
 '''
-query = replace_once(query, old_sum, new_sum, "target direct-readback result selection")
+query = replace_once(query, old_sum, new_sum, "target nonblocking direct-readback result selection")
 
 for token in (
     "[QUERY_DIRECT]",
     "vkGetQueryPoolResults(",
-    "TargetDirectQueryReadbackEnabled()",
+    "VK_QUERY_RESULT_64_BIT);",
+    "directResult == VK_NOT_READY",
+    "s_targetDirectQueryNotReadyCount",
+    "TargetDirectQueryReadbackEnabled() && !list_queryFragments.empty()",
     "0x00050000101AFF00ULL",
     "0x000500001011B900ULL",
     "m_acccumulatedSum += fragmentResult;",
-    "valueMismatch",
+    "retry=1",
 ):
     if token not in query:
-        raise RuntimeError(f"target direct-readback token missing: {token}")
+        raise RuntimeError(f"target nonblocking direct-readback token missing: {token}")
 
 if "m_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];" in query:
     raise RuntimeError("old unconditional mapped-buffer accumulation path still present")
 
 query_path.write_text(query, encoding="utf-8", newline="\n")
-print("Star Fox Zero + Bayonetta 2 direct Vulkan query readback experiment installed; other titles unchanged")
+print("Star Fox Zero + Bayonetta 2 nonblocking direct Vulkan query readback experiment installed; VK_NOT_READY retries without consuming the query; other titles unchanged")
