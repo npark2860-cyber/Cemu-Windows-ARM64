@@ -1,9 +1,10 @@
-name: Final Adreno compatibility ARM64
+name: Cemu Windows ARM64 Release
 
 on:
   push:
     branches:
       - final-adreno-compat-arm64
+  workflow_dispatch:
 
 concurrency:
   group: final-adreno-compat-arm64
@@ -116,5 +117,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-final-adreno-compat
+          name: cemu-arm64-release-direct-query-readback
           path: ./bin/Cemu.exe
