@@ -61,6 +61,14 @@ jobs:
 
           git diff -- $swap $vr
 
+      - name: Apply AMD FidelityFX FSR1
+        shell: pwsh
+        run: |
+          python tools/graphics/Apply-FidelityFXFSRExperiment.py
+          python tools/graphics/Apply-FidelityFXFSRFullExperiment.py
+          git diff --check
+          git diff -- src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/HW/Latte/Renderer/RendererOuputShader.h src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp
+
       - name: Setup release mode parameters
         run: |
           echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
@@ -117,5 +125,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-release-direct-query-readback
+          name: cemu-arm64-release-direct-query-readback-fsr
           path: ./bin/Cemu.exe
