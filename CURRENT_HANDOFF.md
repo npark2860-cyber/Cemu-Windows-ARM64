@@ -77,7 +77,7 @@ Behavior:
 - artifact name `cemu-arm64-bayo2-target-query-draw-fingerprint`
 - digest `sha256:156bc7f4b6b977704c6d7c41719a1f62c25dc43a5b1914dd1a927ad758fba2af`
 
-## STAR FOX ZERO RUN #32 RUNTIME
+## STAR FOX ZERO RUN #32 — FULL RUNTIME PASS
 
 Supplied log confirms:
 
@@ -99,23 +99,26 @@ Parsed `[QUERY_DIRECT]`:
 - selected direct `404653/404653`
 - no crash/fatal/assert/VK_ERROR/device-lost record found
 
+Tester visual confirmation:
+
+- formerly broken/flickering scene remained FIXED
+- behavior was unchanged from the already-fixed direct-readback build
+
 Classification:
 
-- **NONBLOCKING API READINESS PASS** on Star Fox Zero.
-- After `HasCommandBufferFinished(...)`, WAIT_BIT is unnecessary in this capture; every direct query read returned immediately with `VK_SUCCESS`.
+- **FULL RUNTIME PASS** on Star Fox Zero.
+- After `HasCommandBufferFinished(...)`, WAIT_BIT was unnecessary in this capture; every direct query read returned immediately with `VK_SUCCESS`.
 - Retry path was not exercised because `VK_NOT_READY` never occurred.
 - Mapped-copy failure remains, direct result selection remains correct.
-- Full visual PASS is not claimed from log alone; tester visual confirmation is still required.
 
 # NEXT ACTION
 
-1. Confirm whether Star Fox Zero's formerly flickering scene remained visually FIXED on Run #32.
-2. Reuse exact Run #32 artifact `10002247263`; **do not rebuild**.
-3. Test Bayonetta 2 JP with the same artifact.
-4. Capture `log.txt` through the reproduced scene.
-5. Check Bayonetta 2 visual result plus `vkResult`, `retry`, `notReadyTotal`, and any stall/query-index retention symptom.
-6. If Bayonetta 2 also stays FIXED and nonblocking, accept target-gated non-blocking direct readback for these two titles.
-7. If either title regresses or stalls, revert behavior to protected blocking direct checkpoint `790a945780ea561518dd072d9f73c0e3e89b4700`; do not reopen barrier/invalidate/intermediate experiments.
+1. Reuse exact Run #32 artifact `10002247263`; **do not rebuild**.
+2. Test Bayonetta 2 JP with the same artifact.
+3. Capture `log.txt` through the reproduced scene.
+4. Check Bayonetta 2 visual result plus `vkResult`, `retry`, `notReadyTotal`, and any stall/query-index retention symptom.
+5. If Bayonetta 2 also stays FIXED and nonblocking, accept target-gated non-blocking direct readback for these two titles.
+6. If Bayonetta 2 regresses or stalls, revert behavior to protected blocking direct checkpoint `790a945780ea561518dd072d9f73c0e3e89b4700`; do not reopen barrier/invalidate/intermediate experiments.
 
 ## DO NOT ROLLBACK / DO NOT TOUCH
 
