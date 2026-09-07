@@ -204,42 +204,68 @@ Diff from previous active handoff is one file only:
 
 - `tools/diagnostics/Apply-StarFoxDirectQueryReadbackExperiment.py`
 
-## Run #32 build status
+## Run #32 build — CI SUCCESS
 
 - Run #32 ID `34074452899`
 - job `101597749211`
 - head `57f2e9e7dbdfebdd450449ff264476d31fbc1e60`
 - workflow `Cemu ARM64 Bayo2 Target Query Draw Fingerprint Trace`
+- conclusion: `SUCCESS`
+- all patch/trace validation, configure, ARM64 compile, collection and artifact upload steps passed
+- artifact ID `10002247263`
+- artifact name `cemu-arm64-bayo2-target-query-draw-fingerprint`
+- artifact digest `sha256:156bc7f4b6b977704c6d7c41719a1f62c25dc43a5b1914dd1a927ad758fba2af`
 
-Verified successful before compilation:
+## Run #32 Star Fox Zero JP runtime — NONBLOCKING API READINESS PASS
 
-- checkout
-- baseline behavior application
-- PS DEFAULT_VAL compatibility fix
-- AArch64 generated-code cache flush fix
-- FSR application
-- runtime experiment harness
-- VS/RT diagnostic transforms
-- query-consumption trace validation/application
-- correlation trace validation/application
-- targeted fingerprint trace validation/application
-- existing observation-only validations
-- clang-cl/MSVC ARM64/Ninja/CMake setup
-- vcpkg bootstrap / NuGet setup
+Supplied runtime log identifies the expected Run #32 build and title:
 
-At the last recorded GitHub state, Run #32 is in `Configure`; build/artifact/runtime result is not yet claimed.
+- `Init Cemu 57f2e9e`
+- `TitleId: 00050000-101aff00`
+- no crash/fatal/assert/VK_ERROR/device-lost record found in the capture
+
+Parsed `[QUERY_DIRECT]` records:
+
+- logged records: `404653`
+- observed sequence counter reached: `n=572838`
+- queryIndex range in logged records: `832..1023`
+- all logged calls: `vkResult=0` (`VK_SUCCESS`)
+- `VK_NOT_READY`: `0`
+- `retry=1`: `0`
+- `retry=0`: `404653`
+- maximum `notReadyTotal`: `0`
+- direct nonzero: `404430`
+- mapped nonzero: `2`
+- mismatch: `404428`
+- `selected == direct`: `404653 / 404653`
+
+Representative first record:
+
+`[QUERY_DIRECT] n=1 title=00050000101aff00 queryIndex=1023 vkResult=0 direct=1192 mapped=0 selected=1192 mismatch=1 retry=0 notReadyTotal=0`
+
+Representative last logged record:
+
+`[QUERY_DIRECT] n=572838 title=00050000101aff00 queryIndex=882 vkResult=0 direct=2 mapped=0 selected=2 mismatch=1 retry=0 notReadyTotal=0`
+
+Classification:
+
+- On this Star Fox Zero capture, the existing `HasCommandBufferFinished(...)` gate is sufficient for `vkGetQueryPoolResults(..., VK_QUERY_RESULT_64_BIT)` to return immediately with `VK_SUCCESS`; the removed `WAIT_BIT` is not needed for readiness in the observed path.
+- The retry mechanism was not exercised at all, but importantly there is no evidence of query-index retention/exhaustion caused by `VK_NOT_READY` because none occurred.
+- The mapped-copy failure remains visible (`mapped=0` for essentially all nonzero direct values), while direct selection remains correct.
+- This is an API/readiness PASS for the non-blocking replacement on Star Fox Zero.
+- Visual FIXED state cannot be inferred from log text alone and still requires the tester's direct observation before declaring full runtime PASS equivalent to Run #25.
 
 ## NEXT ACTION
 
-1. Complete classification of Run #32 CI result. Do not start another build unless Run #32 itself fails for a code reason.
-2. If Run #32 produces the artifact, test **Star Fox Zero JP first**.
-3. Confirm startup identifies the Run #32 build/head and capture `log.txt` through the formerly flickering scene.
-4. Check:
-   - visual FIXED state retained
-   - `[QUERY_DIRECT] retry=1` count/rate
-   - eventual retry -> `VK_SUCCESS`
-   - no query-index exhaustion/stall
-5. If Star Fox Zero passes, test Bayonetta 2 JP with the exact same artifact.
-6. Only if both reproduce their Run #25/#26 FIXED behavior may this non-blocking direct path replace the protected blocking-direct baseline for these two titles.
-7. If either regresses, revert the experiment to protected commit `790a945780ea561518dd072d9f73c0e3e89b4700` behavior; do not reopen already-eliminated mapped-copy experiments.
-8. Do not modify `main`; do not mix XCX into this experiment.
+1. Confirm the tester's visual result for Star Fox Zero Run #32. If the formerly flickering scene is FIXED, mark Star Fox Run #32 full runtime PASS.
+2. Reuse the same Run #32 artifact `10002247263`; do not rebuild.
+3. Test Bayonetta 2 JP (`00050000-1011B900`) with this exact artifact.
+4. Capture `log.txt` through the previously reproduced scene and classify:
+   - visual FIXED state
+   - `vkResult`
+   - `retry`
+   - `notReadyTotal`
+   - query-index retention/stall symptoms
+5. If Bayonetta 2 also stays FIXED and direct calls remain nonblocking, accept this target-gated non-blocking direct-readback path as the replacement for the protected blocking-direct path for these two titles.
+6. If either title regresses visually or stalls, preserve/revert to protected blocking direct behavior at `790a945780ea561518dd072d9f73c0e3e89b4700`; do not reopen eliminated barrier/invalidate/intermediate experiments.
+7. Do not modify `main`; do not mix XCX into this experiment.
