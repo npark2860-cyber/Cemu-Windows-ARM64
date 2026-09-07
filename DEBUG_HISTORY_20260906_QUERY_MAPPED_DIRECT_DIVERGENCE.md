@@ -216,7 +216,7 @@ Diff from previous active handoff is one file only:
 - artifact name `cemu-arm64-bayo2-target-query-draw-fingerprint`
 - artifact digest `sha256:156bc7f4b6b977704c6d7c41719a1f62c25dc43a5b1914dd1a927ad758fba2af`
 
-## Run #32 Star Fox Zero JP runtime — NONBLOCKING API READINESS PASS
+## Run #32 Star Fox Zero JP runtime — FULL PASS
 
 Supplied runtime log identifies the expected Run #32 build and title:
 
@@ -239,33 +239,29 @@ Parsed `[QUERY_DIRECT]` records:
 - mismatch: `404428`
 - `selected == direct`: `404653 / 404653`
 
-Representative first record:
+Tester visual confirmation:
 
-`[QUERY_DIRECT] n=1 title=00050000101aff00 queryIndex=1023 vkResult=0 direct=1192 mapped=0 selected=1192 mismatch=1 retry=0 notReadyTotal=0`
-
-Representative last logged record:
-
-`[QUERY_DIRECT] n=572838 title=00050000101aff00 queryIndex=882 vkResult=0 direct=2 mapped=0 selected=2 mismatch=1 retry=0 notReadyTotal=0`
+- formerly broken/flickering scene remained FIXED
+- behavior was unchanged from the already-fixed direct-readback build
 
 Classification:
 
-- On this Star Fox Zero capture, the existing `HasCommandBufferFinished(...)` gate is sufficient for `vkGetQueryPoolResults(..., VK_QUERY_RESULT_64_BIT)` to return immediately with `VK_SUCCESS`; the removed `WAIT_BIT` is not needed for readiness in the observed path.
-- The retry mechanism was not exercised at all, but importantly there is no evidence of query-index retention/exhaustion caused by `VK_NOT_READY` because none occurred.
-- The mapped-copy failure remains visible (`mapped=0` for essentially all nonzero direct values), while direct selection remains correct.
-- This is an API/readiness PASS for the non-blocking replacement on Star Fox Zero.
-- Visual FIXED state cannot be inferred from log text alone and still requires the tester's direct observation before declaring full runtime PASS equivalent to Run #25.
+- **FULL RUNTIME PASS** for Star Fox Zero on Run #32 non-blocking direct readback.
+- The existing `HasCommandBufferFinished(...)` gate is sufficient in this capture; removing `VK_QUERY_RESULT_WAIT_BIT` did not alter visible behavior and every observed direct query returned `VK_SUCCESS` immediately.
+- The retry path was not exercised because `VK_NOT_READY` never occurred.
+- The mapped-copy failure remains visible, while direct selection remains correct.
 
 ## NEXT ACTION
 
-1. Confirm the tester's visual result for Star Fox Zero Run #32. If the formerly flickering scene is FIXED, mark Star Fox Run #32 full runtime PASS.
-2. Reuse the same Run #32 artifact `10002247263`; do not rebuild.
-3. Test Bayonetta 2 JP (`00050000-1011B900`) with this exact artifact.
-4. Capture `log.txt` through the previously reproduced scene and classify:
+1. Reuse the same Run #32 artifact `10002247263`; do not rebuild.
+2. Test Bayonetta 2 JP (`00050000-1011B900`) with this exact artifact.
+3. Capture `log.txt` through the previously reproduced scene.
+4. Classify:
    - visual FIXED state
    - `vkResult`
    - `retry`
    - `notReadyTotal`
-   - query-index retention/stall symptoms
+   - any stall/query-index retention symptom
 5. If Bayonetta 2 also stays FIXED and direct calls remain nonblocking, accept this target-gated non-blocking direct-readback path as the replacement for the protected blocking-direct path for these two titles.
-6. If either title regresses visually or stalls, preserve/revert to protected blocking direct behavior at `790a945780ea561518dd072d9f73c0e3e89b4700`; do not reopen eliminated barrier/invalidate/intermediate experiments.
+6. If Bayonetta 2 regresses visually or stalls, preserve/revert to protected blocking direct behavior at `790a945780ea561518dd072d9f73c0e3e89b4700`; do not reopen eliminated barrier/invalidate/intermediate experiments.
 7. Do not modify `main`; do not mix XCX into this experiment.
