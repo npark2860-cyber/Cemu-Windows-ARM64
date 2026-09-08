@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - final-adreno-compat-arm64
-      - fix/arm64-diagnostics-ui-artifact-gate
   workflow_dispatch:
 
 concurrency:
