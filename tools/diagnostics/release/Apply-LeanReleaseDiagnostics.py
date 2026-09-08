@@ -75,20 +75,24 @@ finally:
     if temp.exists():
         temp.unlink()
 
-# Adreno correlation adds no new checkbox. Existing failure switches gate the
-# 64-draw ring itself. The detail layer only enriches already-gated entries with
-# compact descriptor/FBO/flush/feedback state and stable short shader IDs.
+# Initial incident layer: bounded draw correlation plus compact FBO/descriptor
+# detail. No new checkbox is introduced; existing failure switches gate it.
 run("tools/diagnostics/release/Apply-AdrenoIncidentCorrelation.py")
 run("tools/diagnostics/release/Apply-AdrenoIncidentDetails.py")
 
-# UI is applied last so RuntimeDiagnostics::IsImplemented already represents
-# the final concrete probe set. Unsupported candidate flags are skipped before
-# any wxCheckBox is constructed.
+# Build the complete 77-item UI first and run the original lean verifier while
+# its historical IncidentContextEnabled representation is still intact. This
+# preserves the 77/77 consumer/UI contract check.
 run("tools/diagnostics/release/Apply-LeanDiagnosticUI.py")
-
-# Static contract: every selectable flag has a non-UI runtime consumer, no
-# legacy A/B experiment dependency leaks into the generated release sources,
-# and direct-query loader declarations remain unique.
 run("tools/diagnostics/release/Verify-LeanDiagnostics.py")
+
+# Final triage pass changes no implemented flag set. It makes incident gating a
+# single atomic read, serializes/deduplicates incidents, caches healthy-state
+# device identity, distinguishes cached-vs-fresh shaders, and adds bounded
+# resource + image-layout history. The UI hardening pass then removes every
+# one-click bulk-enable path and replaces Full with a safe Adreno Triage preset.
+run("tools/diagnostics/release/Apply-AdrenoFinalTriage.py")
+run("tools/diagnostics/release/Apply-AdrenoSafeUI.py")
+run("tools/diagnostics/release/Verify-AdrenoFinalTriage.py")
 
 print("[lean-release-diagnostics] PASS")
