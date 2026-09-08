@@ -11,6 +11,15 @@ def run(script):
     subprocess.run([sys.executable, str(path)], cwd=ROOT, check=True)
 
 
+def replace_once_file(rel, old, new, label):
+    path = ROOT / rel
+    text = path.read_text(encoding="utf-8")
+    count = text.count(old)
+    if count != 1:
+        raise RuntimeError(f"{label}: expected 1 anchor, found {count}")
+    path.write_text(text.replace(old, new, 1), encoding="utf-8", newline="\n")
+
+
 # Order is intentional. Several patches share exact source anchors.
 # 1) Pipeline establishes compile/shader/cache probes.
 # 2) Shader-failure diagnostics must extend IsImplemented before RT inserts a
@@ -24,6 +33,17 @@ def run(script):
 run("tools/diagnostics/release/Apply-LeanPipelineDiagnostics.py")
 run("tools/diagnostics/Apply-ShaderFailureDiagnostics.py")
 run("tools/diagnostics/release/Apply-LeanRTDiagnostics.py")
+
+# CompleteDiagnostics was originally authored against the historical RT probe
+# label "forcedSplit". Keep the lean observation semantics but normalize this
+# label so its exact source anchor remains reusable.
+replace_once_file(
+    "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp",
+    '"[RT_PASS_SPLIT] draws={} count={}"',
+    '"[RT_PASS_SPLIT] draws={} forcedSplit={}"',
+    "lean RT pass-split completion anchor",
+)
+
 run("tools/diagnostics/release/Apply-LeanPerformanceDiagnostics.py")
 run("tools/diagnostics/release/Apply-LeanVulkanDiagnostics.py")
 run("tools/diagnostics/release/Apply-LeanFrameDiagnostics.py")
