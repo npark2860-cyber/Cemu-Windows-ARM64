@@ -1,14 +1,13 @@
-name: Cemu Windows ARM64 Release
+name: "[Diagnostics] Cemu Windows ARM64"
 
 on:
   push:
     branches:
-      - final-adreno-compat-arm64
       - fix/arm64-diagnostics-ui-artifact-gate
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: diagnostics-arm64-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -24,6 +23,13 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+
+      - name: Assert Diagnostics branch role
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -ne "refs/heads/fix/arm64-diagnostics-ui-artifact-gate") {
+            throw "Diagnostics workflow ran on unexpected ref: ${{ github.ref }}"
+          }
 
       - name: Apply known-good pre-e834 runtime behavior
         shell: pwsh
@@ -75,10 +81,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git diff -- src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/HW/Latte/Renderer/RendererOuputShader.h src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Install lean switchable ARM64 diagnostics (default OFF)
+      - name: Install switchable ARM64 diagnostics
         shell: pwsh
         run: |
           python ./tools/diagnostics/release/Apply-LeanReleaseDiagnostics.py
@@ -166,14 +170,14 @@ jobs:
       - name: Build Cemu
         run: cmake --build build
 
-      - name: Verify final Cemu diagnostics UI binary
+      - name: Verify final diagnostics binary
         run: python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage binary --path bin/Cemu_release.exe
 
       - name: Prepare artifact
-        run: Rename-Item bin/Cemu_release.exe Cemu.exe
+        run: Rename-Item bin/Cemu_release.exe Cemu-Diagnostics.exe
 
-      - name: Upload artifact
+      - name: Upload diagnostics artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-release-direct-query-readback-fsr
-          path: ./bin/Cemu.exe
+          name: cemu-arm64-diagnostics
+          path: ./bin/Cemu-Diagnostics.exe
