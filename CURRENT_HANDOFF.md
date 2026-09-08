@@ -1,8 +1,8 @@
 # CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
 
-> Canonical branch-role/promotion policy: `BRANCH_POLICY.md`
->
-> If an older debug/handoff document names a different active branch or promotion flow, ignore that stale branch instruction. Fetch the actual GitHub branch/HEAD/workflow/source first.
+> Canonical policy: `BRANCH_POLICY.md`
+> Active-role manifest: `ACTIVE_BRANCH_ROLES.md`
+> Do **not** trust a hardcoded HEAD in a handoff. Before every write/build, fetch the actual branch HEAD and workflow from GitHub.
 
 ## ROLE
 
@@ -11,34 +11,37 @@
 Repository:
 - `npark2860-cyber/Cemu-Windows-ARM64`
 
-Active test branch:
+Branch:
 - `runtime-experiments-arm64`
 
-Functional test baseline before docs-only policy commits:
-- `c26842d0dca4d0bbb8f468c5aedc83cde7557beb`
-- same functional baseline as Diagnostics before the next experiment
+Only active workflow on this branch:
+- `.github/workflows/runtime-experiments-arm64.yml`
+- display name: `[Test] Cemu Windows ARM64`
 
-## TEST RULE
+Only valid artifact identity:
+- `cemu-arm64-test`
+- executable: `Cemu-Test.exe`
 
-All behavior-changing experiments happen here.
+## TEST CONTRACT
+
+All behavior-changing experiments happen here only.
 
 Rules:
 - start from the current Diagnostics baseline
-- change one variable at a time
+- change one behavior variable at a time
 - static-verify the diff before CI
 - do not call an experiment a FIX until required CI/runtime validation passes
-- do not mix XCX query experiments with Bayonetta 2 / Star Fox Zero paths
-- do not repeat already excluded experiments without new evidence
+- keep XCX query experiments separate from Bayonetta 2 / Star Fox Zero paths
+- do not repeat rejected experiments without new evidence
+- never promote the whole Test branch into Release
 
 ## VERIFIED FIX PROMOTION
 
 When a Test change is verified as a FIX:
 1. apply **only that FIX** to **[Release] `final-adreno-compat-arm64`**
 2. apply the **same FIX** to **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**
-3. keep diagnostics-only code out of Release
-4. reset/advance this Test branch from the updated Diagnostics baseline before starting the next experiment
-
-Never promote the whole Test branch into Release if that would carry diagnostics or experiment-only commits.
+3. keep diagnostics/test-only code out of Release
+4. advance/reset Test from the updated Diagnostics baseline before starting the next experiment
 
 ## PROTECTED / DO NOT REGRESS
 
@@ -46,9 +49,9 @@ Never promote the whole Test branch into Release if that would carry diagnostics
 - VS `DEFAULT_VAL` synthesize/linkage FIX
 - FidelityFX FSR1 EASU + RCAS
 - existing Adreno / pre-e834 verified fixes
-- XCX query path remains separate
+- XCX query behavior remains separate
 - `main` must not be touched
 
 ## NEXT ACTION RULE
 
-There is no implicit experiment. Before changing behavior, identify the single variable being tested and confirm the actual current Test HEAD/source.
+There is no implicit experiment. Before changing runtime behavior, identify the single variable being tested and fetch the current Test HEAD/source.
