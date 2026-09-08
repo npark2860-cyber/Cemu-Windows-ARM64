@@ -78,6 +78,20 @@ jobs:
       - name: Apply generic ARM64 Diagnostic Edition
         run: python ./tools/diagnostics/Add-PipelineDiagnostics.py
 
+      - name: Deduplicate preserved query loader declaration
+        shell: pwsh
+        run: |
+          $api = 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h'
+          $text = Get-Content $api -Raw
+          $decl = 'VKFUNC_DEVICE(vkGetQueryPoolResults);'
+          $count = ([regex]::Matches($text, [regex]::Escape($decl))).Count
+          if ($count -ne 2) { throw "Expected exactly 2 vkGetQueryPoolResults declarations after diagnostic composition, found $count" }
+          $first = $text.IndexOf($decl)
+          $text = $text.Remove($first, $decl.Length)
+          $countAfter = ([regex]::Matches($text, [regex]::Escape($decl))).Count
+          if ($countAfter -ne 1) { throw "vkGetQueryPoolResults declaration normalization failed: $countAfter" }
+          Set-Content -Path $api -Value $text -NoNewline
+
       - name: Show diagnostic source diff
         shell: pwsh
         run: git diff -- src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/gui/wxgui/MainWindow.cpp src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp src/Cafe/HW/Latte/Core/LattePerformanceMonitor.cpp src/Cafe/HW/Latte/Renderer/RendererOuputShader.h src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp src/Cafe/HW/Latte/Core/LatteShader.h src/Cafe/HW/Latte/Core/LatteShader.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp src/diagnostics/RuntimeExperiments.h src/diagnostics/RuntimeDiagnostics.h
