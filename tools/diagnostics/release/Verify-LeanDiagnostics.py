@@ -128,6 +128,30 @@ require("RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::DumpFailedShader)
 require("RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::DumpEveryShader)" in shader,
         "dump-every-shader is individually gated")
 
+# Adreno incident correlation must itself obey the OFF-is-silent contract.
+# Existing failure switches opt into the ring; there is deliberately no extra
+# checkbox and no unconditional per-draw tracking.
+incident_match = re.search(r"inline bool IncidentContextEnabled\(\)\s*\{(.*?)\n\}", header, re.S)
+require(incident_match is not None, "Adreno incident-context gate exists")
+incident_body = incident_match.group(1)
+for required_flag in ("PipelineFailure", "GLSLCompileFailure", "SPIRVCompileFailure", "DeviceLostSubmitError", "DumpFailedShader"):
+    require(f"Enabled(Flag::{required_flag})" in incident_body,
+            f"incident context is controlled by existing {required_flag} switch")
+record_match = re.search(r"inline void RecordDrawBreadcrumb\(DrawBreadcrumb entry\)\s*\{(.*?)\n\}", header, re.S)
+require(record_match is not None and "if (!IncidentContextEnabled())" in record_match.group(1),
+        "draw breadcrumb recording exits immediately while incident diagnostics are OFF")
+core = read("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp")
+require("RuntimeDiagnostics::IncidentContextEnabled()" in core and "RuntimeDiagnostics::RecordDrawBreadcrumb(b)" in core,
+        "resolved draw context is recorded only through the incident gate")
+require("[ADRENO_INCIDENT] BEGIN" in renderer and "[ADRENO_DEVICE]" in renderer and "[ADRENO_FEATURES]" in renderer and "[ADRENO_DRAW]" in renderer,
+        "incident dump contains device/features/recent draw correlation")
+require("LogDiagnosticIncidentContext(\"pipeline_create_failure\")" in read("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp"),
+        "pipeline failure emits correlated incident context")
+require("LogDiagnosticIncidentContext(\"glsl_parse_failure\")" in shader and "LogDiagnosticIncidentContext(\"spirv_empty_output\")" in shader,
+        "shader failures emit correlated incident context")
+require("queue_submit_device_lost" in renderer and "fence_device_lost" in renderer,
+        "submit/fence device-lost paths emit correlated incident context")
+
 # No source-level legacy A/B switches may be injected by the release diagnostic
 # path. This catches the historical failure mode where a diagnostic build
 # silently modified execution behavior.
