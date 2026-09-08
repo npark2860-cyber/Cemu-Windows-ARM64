@@ -10,24 +10,33 @@ def replace_once(text, old, new, label):
 
 path = Path("src/gui/wxgui/MainWindow.cpp")
 text = path.read_text(encoding="utf-8")
+persist_diagnostics = "RuntimeDiagnostics_SavePersistedSettings" in text
 
 # There must be no one-click path that enables every heavy probe. Replace the
-# historical master checkbox with a one-way Disable all button.
+# historical master checkbox with a one-way Disable all button. Test builds may
+# already have persistence layered onto the generated UI, so preserve that
+# behavior without making the safe-UI pass depend on it.
+disable_all = '''        auto* disableAll = new wxButton(this, wxID_ANY, _("Disable all"));
+        disableAll->Bind(wxEVT_BUTTON, [this](wxCommandEvent&){
+            RuntimeDiagnostics::SetAll(false);
+            RuntimeDiagnostics::ClearIncidentContext();
+            RefreshChecks();
+'''
+if persist_diagnostics:
+    disable_all += '''            RuntimeDiagnostics_SavePersistedSettings();
+'''
+disable_all += '''            cemuLog_log(LogType::Force, "[CEMU_DIAG] All diagnostics OFF");
+        });
+        top->Add(disableAll, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+'''
+
 text = replace_once(
     text,
     '''        m_master = new wxCheckBox(this, wxID_ANY, _("Diagnostics master"));
         m_master->SetValue(RuntimeDiagnostics::AnyEnabled());
         top->Add(m_master, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 ''',
-    '''        auto* disableAll = new wxButton(this, wxID_ANY, _("Disable all"));
-        disableAll->Bind(wxEVT_BUTTON, [this](wxCommandEvent&){
-            RuntimeDiagnostics::SetAll(false);
-            RuntimeDiagnostics::ClearIncidentContext();
-            RefreshChecks();
-            cemuLog_log(LogType::Force, "[CEMU_DIAG] All diagnostics OFF");
-        });
-        top->Add(disableAll, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
-''',
+    disable_all,
     "safe disable-all control",
 )
 
@@ -40,13 +49,22 @@ text = replace_once(
     "safe Adreno preset name",
 )
 
-master_bind = '''        m_master->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e){
+master_bind_plain = '''        m_master->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e){
             RuntimeDiagnostics::SetAll(e.IsChecked());
             RefreshChecks();
             cemuLog_log(LogType::Force, "[CEMU_DIAG] Master={}", RuntimeDiagnostics::AnyEnabled() ? "ON" : "OFF");
         });
 
 '''
+master_bind_persisted = '''        m_master->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e){
+            RuntimeDiagnostics::SetAll(e.IsChecked());
+            RefreshChecks();
+            RuntimeDiagnostics_SavePersistedSettings();
+            cemuLog_log(LogType::Force, "[CEMU_DIAG] Master={}", RuntimeDiagnostics::AnyEnabled() ? "ON" : "OFF");
+        });
+
+'''
+master_bind = master_bind_persisted if persist_diagnostics else master_bind_plain
 text = replace_once(text, master_bind, "", "remove unsafe master binding")
 
 # Every preset starts from a clean OFF state and clears stale correlation rings.
@@ -102,6 +120,8 @@ if "DumpEveryShader" not in text:
     raise RuntimeError("manual DumpEveryShader checkbox unexpectedly disappeared")
 if 'DiagFlag::DumpEveryShader' in text[text.find('else if (p == 7)'):text.find('RefreshChecks();', text.find('else if (p == 7)'))]:
     raise RuntimeError("Adreno Triage must never enable DumpEveryShader")
+if persist_diagnostics and "RuntimeDiagnostics_SavePersistedSettings();" not in disable_all:
+    raise RuntimeError("Disable all lost persisted-state save hook")
 
 path.write_text(text, encoding="utf-8", newline="\n")
 print("[adreno-safe-ui] no bulk-enable master; Adreno Triage is failure-driven and DumpEveryShader remains manual only")
