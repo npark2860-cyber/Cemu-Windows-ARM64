@@ -1,4 +1,4 @@
-name: Cemu ARM64 Diagnostic Edition
+name: "[Test] Cemu Windows ARM64"
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: runtime-experiments-arm64
+  group: test-arm64-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -23,6 +23,13 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+
+      - name: Assert Test branch role
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -ne "refs/heads/runtime-experiments-arm64") {
+            throw "Test workflow ran on unexpected ref: ${{ github.ref }}"
+          }
 
       - name: Apply known-good pre-e834 runtime behavior
         shell: pwsh
@@ -149,7 +156,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifact/experiments | Out-Null
-          Copy-Item bin/Cemu_release.exe artifact/Cemu_release.exe
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-Test.exe
           Copy-Item tools/diagnostics/README.md artifact/experiments/README.md
           $launchers = @{
             'A_depthclip_feature.cmd' = 'depthclip-feature,pipeline-diag'
@@ -178,12 +185,12 @@ jobs:
             'PERF_8_force_pass_reuse.cmd' = 'timer-udiv64,timer-arm64-serialize,timer-stats,perf-force-pass-reuse,rt-stats'
           }
           foreach ($entry in $launchers.GetEnumerator()) {
-            $body = "@echo off`r`nset CEMU_EXPERIMENTS=$($entry.Value)`r`nstart `"`" `"%~dp0..\Cemu_release.exe`"`r`n"
+            $body = "@echo off`r`nset CEMU_EXPERIMENTS=$($entry.Value)`r`nstart `"`" `"%~dp0..\Cemu-Test.exe`"`r`n"
             Set-Content -Path (Join-Path 'artifact/experiments' $entry.Key) -Value $body -NoNewline -Encoding ascii
           }
 
-      - name: Upload diagnostic artifact
+      - name: Upload test artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-diagnostic-edition
+          name: cemu-arm64-test
           path: ./artifact/
