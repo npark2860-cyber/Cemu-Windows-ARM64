@@ -1,94 +1,60 @@
 # CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
 
-## CURRENT STATE
+> Canonical branch-role/promotion policy: `BRANCH_POLICY.md`
+>
+> If an older debug/handoff document names a different active branch or promotion flow, ignore that stale branch instruction. Fetch the actual GitHub branch/HEAD/workflow/source first.
+
+## ROLE
+
+**[Diagnostics]**
 
 Repository:
-
 - `npark2860-cyber/Cemu-Windows-ARM64`
 
-Active branch:
+Active diagnostics branch:
+- `fix/arm64-diagnostics-ui-artifact-gate`
 
-- `diag-query-mapped-direct-divergence`
+Functional diagnostics baseline before docs-only policy commits:
+- `c26842d0dca4d0bbb8f468c5aedc83cde7557beb`
+- release behavior baseline plus switchable diagnostics UI
+- persistent diagnostics checkbox state / hitch threshold
+- safe `Disable all` behavior
 
-Accepted non-blocking experiment code checkpoint:
+## DIAGNOSTICS RULE
 
-- `bac23bd90b3ce51b87f7a7e955aea9e90a2005ef`
+This branch must always equal:
 
-CI trigger branch/head:
+**current Release FIX set + diagnostics instrumentation/UI**
 
-- `diag-bayo2-target-query-draw-fingerprint`
-- `57f2e9e7dbdfebdd450449ff264476d31fbc1e60`
+Therefore every FIX promoted to `final-adreno-compat-arm64` must also be applied here.
 
-Protected blocking-direct fallback:
+Diagnostics-only code may stay here:
+- switchable logging/instrumentation
+- diagnostics UI
+- checkbox/preset/hitch-threshold persistence
+- observation-only failure correlation
 
-- `790a945780ea561518dd072d9f73c0e3e89b4700`
+Do not promote diagnostics-only code into Release unless explicitly requested.
 
-`main` is out of scope.
+## PROTECTED / DO NOT REGRESS
 
-## VERIFIED PASS
+- Bayonetta 2 / Star Fox Zero `vkGetQueryPoolResults` direct query readback FIX
+- VS `DEFAULT_VAL` synthesize/linkage FIX
+- FidelityFX FSR1 EASU + RCAS
+- existing Adreno / pre-e834 verified fixes
+- XCX query path remains separate
+- `main` must not be touched
+- excluded query/workaround experiments must not be repeated without new evidence
 
-Run #32:
+## PROMOTION RULE
 
-- run `34074452899`
-- job `101597749211`
-- artifact `10002247263`
-- digest `sha256:156bc7f4b6b977704c6d7c41719a1f62c25dc43a5b1914dd1a927ad758fba2af`
-- CI SUCCESS
+When a Test change is runtime-verified as a FIX:
+1. apply the verified FIX to Release
+2. apply the same verified FIX here
+3. keep diagnostics extras here only
+4. reset/advance Test from this updated Diagnostics baseline before the next experiment
 
-Star Fox Zero JP:
+## NEXT ACTION RULE
 
-- FULL RUNTIME PASS
-- formerly broken/flickering scene remained FIXED
-- `404653` logged direct reads
-- all `VK_SUCCESS`
-- `VK_NOT_READY=0`
-- `retry=1=0`
-
-Bayonetta 2 JP:
-
-- FULL RUNTIME PASS
-- game remained in the same FIXED state
-- `65236` logged direct reads
-- all `VK_SUCCESS`
-- `VK_NOT_READY=0`
-- `retry=1=0`
-- no query-retention stall/exhaustion observed
-
-Detailed Run #32 record:
-
-- `DEBUG_HISTORY_20260907_QUERY_NOWAIT_PASS.md`
-
-## ACCEPTED CLASSIFICATION
-
-For these two reproduced Adreno cases:
-
-- `vkCmdCopyQueryPoolResults` is the failing result-copy path.
-- `vkGetQueryPoolResults` returns the correct result.
-- after `HasCommandBufferFinished(...)`, `VK_QUERY_RESULT_WAIT_BIT` was unnecessary in both tested titles.
-
-Accepted replacement behavior:
-
-- target gate: Star Fox Zero JP + Bayonetta 2 JP only
-- `vkGetQueryPoolResults(... VK_QUERY_RESULT_64_BIT)`
-- `VK_SUCCESS`: consume direct result
-- `VK_NOT_READY`: retain fragment/query index and retry later
-
-XCX remains separate. Do not globalize this behavior.
-
-# NEXT ACTION
-
-1. Promote the accepted non-blocking direct-readback behavior from the diagnostic patch script into the real Vulkan query source on a non-main branch.
-2. Keep the title gate limited to Star Fox Zero JP + Bayonetta 2 JP.
-3. Preserve `VK_NOT_READY` retain/retry semantics.
-4. Static-verify the source diff first.
-5. Run CI once for the promoted-source implementation.
-6. Reuse that artifact for final smoke if needed.
-7. Do not touch `main` or XCX.
-
-## DO NOT ROLLBACK / DO NOT TOUCH
-
-- retained PASS branch/head `exp-bayo2-query-direct-readback` / `5d758a096ee9409e7c25372a6caa9ad9d2378575`
-- protected blocking fallback `790a945780ea561518dd072d9f73c0e3e89b4700`
-- VS DEFAULT_VAL synthesize fixes
-- `main`
-- XCX query behavior
+Use this branch for investigation and log collection.
+Behavior-changing experiments belong on **[Test] `runtime-experiments-arm64`**, not here.
