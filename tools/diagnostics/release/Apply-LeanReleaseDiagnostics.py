@@ -23,7 +23,8 @@ def replace_once_file(rel, old, new, label):
 # Order is intentional. Several patches share exact source anchors.
 # 1) Pipeline establishes compile/shader/cache probes.
 # 2) Shader-failure diagnostics must extend IsImplemented before RT inserts a
-#    new section after ShaderAuxHash.
+#    new section after ShaderAuxHash. The bundle enhancer then adds the exact
+#    preprocessed GLSL and rejected SPIR-V artifacts without adding new flags.
 # 3) RT diagnostics must patch the original draw-counter tail before the
 #    performance layer adds its per-draw gated counter.
 # 4) Performance establishes ScopedJitCompile/readyRE counters required by the
@@ -32,6 +33,7 @@ def replace_once_file(rel, old, new, label):
 # 6) Frame, ARM64 and submit probes then layer on observation-only hooks.
 run("tools/diagnostics/release/Apply-LeanPipelineDiagnostics.py")
 run("tools/diagnostics/Apply-ShaderFailureDiagnostics.py")
+run("tools/diagnostics/release/Apply-ShaderFailureBundleEnhancements.py")
 run("tools/diagnostics/release/Apply-LeanRTDiagnostics.py")
 
 # CompleteDiagnostics was originally authored against the historical RT probe
