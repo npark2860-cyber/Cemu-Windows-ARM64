@@ -62,10 +62,20 @@ for flag in sorted(implemented):
 require(not missing_consumers,
         f"every selectable flag has a non-UI runtime consumer; missing={missing_consumers}")
 
-# UI contract: candidate entries are harmless metadata, but an unsupported flag
-# must be rejected before wxCheckBox construction. Therefore an impossible
-# diagnostic produces no checkbox at all, rather than a dead/grey control.
+# UI contract: the final kDiagItems list and the concrete IsImplemented set
+# must be identical. If a probe cannot be implemented, its item must be removed
+# from kDiagItems rather than left behind as a dead/grey checkbox.
 main = read("src/gui/wxgui/MainWindow.cpp")
+items_match = re.search(r"static constexpr DiagItem kDiagItems\[\] = \{(.*?)\n\};", main, re.S)
+require(items_match is not None, "ARM64 Diagnostics item list found")
+ui_items = set(re.findall(r"DiagFlag::([A-Za-z0-9_]+)", items_match.group(1)))
+missing_ui = sorted(implemented - ui_items)
+dead_ui = sorted(ui_items - implemented)
+require(not missing_ui and not dead_ui,
+        f"UI items exactly match concrete probes; missing={missing_ui} dead={dead_ui}")
+
+# Defense in depth: even if the candidate list is edited later, unsupported
+# items must still be rejected before wxCheckBox construction.
 loop_start = main.find("for (const auto& item : kDiagItems)")
 continue_pos = main.find("if (!RuntimeDiagnostics::IsImplemented(item.flag))", loop_start)
 checkbox_pos = main.find("new wxCheckBox", loop_start)
@@ -74,10 +84,6 @@ require(loop_start >= 0 and continue_pos > loop_start and checkbox_pos > continu
 require("Not wired to a runtime probe in this build" not in main,
         "no dead/grey unsupported diagnostic checkbox UI remains")
 
-ui_flags = set(re.findall(r"DiagFlag::([A-Za-z0-9_]+)", main))
-missing_ui = sorted(implemented - ui_flags)
-require(not missing_ui, f"every implemented diagnostic is reachable from ARM64 Diagnostics UI; missing={missing_ui}")
-
 # The release diagnostic path must not depend on the old A/B experiment
 # harness. Any RuntimeExperiments reference in generated src means the lean
 # contract was violated.
@@ -85,7 +91,6 @@ legacy_refs = []
 for rel, data in source_texts.items():
     if "RuntimeExperiments" in data:
         legacy_refs.append(rel)
-# MainWindow was excluded above but scan it too for completeness.
 if "RuntimeExperiments" in main:
     legacy_refs.append("src/gui/wxgui/MainWindow.cpp")
 require(not legacy_refs, f"no legacy RuntimeExperiments dependency in release sources; refs={legacy_refs}")
@@ -137,6 +142,6 @@ for forbidden in (
     offenders = [rel for rel, data in source_texts.items() if forbidden in data]
     require(not offenders, f"behavior-changing diagnostic experiment absent: {forbidden}")
 
-print(f"[lean-diag-verify] PASS implemented={len(implemented)}")
+print(f"[lean-diag-verify] PASS implemented={len(implemented)} ui={len(ui_items)}")
 for flag in sorted(implemented):
     print(f"[lean-diag-verify]   {flag}: {consumer_locations[flag][0]}")
