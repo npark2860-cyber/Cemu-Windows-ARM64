@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: final-adreno-compat-arm64
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -60,27 +60,37 @@ jobs:
           Set-Content -Path $vr -Value $v -NoNewline
 
           git diff -- $swap $vr
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Apply AMD FidelityFX FSR1
         shell: pwsh
         run: |
           python tools/graphics/Apply-FidelityFXFSRExperiment.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/graphics/Apply-FidelityFXFSRFullExperiment.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff -- src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/HW/Latte/Renderer/RendererOuputShader.h src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Install lean switchable ARM64 diagnostics (default OFF)
         shell: pwsh
         run: |
           python ./tools/diagnostics/release/Apply-LeanReleaseDiagnostics.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --stat
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Stamp and verify diagnostics UI build source
         shell: pwsh
         run: |
           python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage source --stamp-source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $hash = (Get-FileHash 'src/gui/wxgui/MainWindow.cpp' -Algorithm SHA256).Hash.ToLowerInvariant()
           "DIAG_UI_SOURCE_SHA256=$hash" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
           Write-Host "Diagnostics MainWindow source SHA256: $hash"
@@ -136,6 +146,7 @@ jobs:
         shell: pwsh
         run: |
           python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $hash = (Get-FileHash 'src/gui/wxgui/MainWindow.cpp' -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($hash -ne $env:DIAG_UI_SOURCE_SHA256) {
             throw "MainWindow.cpp changed during configure. Before=$env:DIAG_UI_SOURCE_SHA256 After=$hash"
