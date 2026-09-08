@@ -102,10 +102,11 @@ finally:
 run("tools/diagnostics/release/Apply-AdrenoIncidentCorrelation.py")
 run("tools/diagnostics/release/Apply-AdrenoIncidentDetails.py")
 
-# Create the full 77-item UI, then apply the final Adreno-oriented correlation
-# and safe-UI passes. The final verifier checks the finished generated source,
-# not an intermediate representation.
+# Create the full 77-item UI, add test-build persistence, then apply the final
+# Adreno-oriented correlation and safe-UI passes. The final verifier checks the
+# finished generated source, not an intermediate representation.
 run("tools/diagnostics/release/Apply-LeanDiagnosticUI.py")
+run("tools/diagnostics/release/Apply-PersistentDiagnosticSettings.py")
 run("tools/diagnostics/release/Apply-AdrenoFinalTriage.py")
 run("tools/diagnostics/release/Apply-AdrenoFinalPolish.py")
 run("tools/diagnostics/release/Apply-AdrenoSafeUI.py")
