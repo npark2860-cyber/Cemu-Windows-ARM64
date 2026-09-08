@@ -1,0 +1,5 @@
+DIAGNOSTICS_BRANCH=fix/arm64-diagnostics-ui-artifact-gate
+WORKFLOW=.github/workflows/diagnostics-arm64.yml
+ARTIFACT=cemu-arm64-diagnostics
+RELEASE_ONLY_CODE_ALLOWED=NO
+TEST_EXPERIMENTS_ALLOWED=NO
