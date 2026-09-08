@@ -1,0 +1,5 @@
+RELEASE_BRANCH=final-adreno-compat-arm64
+WORKFLOW=.github/workflows/final-adreno-compat-arm64.yml
+ARTIFACT=cemu-arm64-release
+DIAGNOSTICS_ALLOWED=NO
+TEST_EXPERIMENTS_ALLOWED=NO
