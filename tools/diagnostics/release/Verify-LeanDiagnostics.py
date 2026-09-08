@@ -127,6 +127,10 @@ require("RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::DumpFailedShader)
         "failed-shader dump is individually gated")
 require("RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::DumpEveryShader)" in shader,
         "dump-every-shader is individually gated")
+require("[SPIRV_DUMP_FAILED]" in shader and "DiagnosticDumpSpirv" in shader,
+        "driver-rejected shader module preserves exact SPIR-V when failed-shader dump is enabled")
+require("[SHADER_DUMP_PREPROCESSED]" in shader and "PreprocessedGLSL" in shader,
+        "failed shader bundle preserves preprocessed GLSL for compiler line correlation")
 
 # Adreno incident correlation must itself obey the OFF-is-silent contract.
 # Existing failure switches opt into the ring; there is deliberately no extra
@@ -145,6 +149,12 @@ require("RuntimeDiagnostics::IncidentContextEnabled()" in core and "RuntimeDiagn
         "resolved draw context is recorded only through the incident gate")
 require("[ADRENO_INCIDENT] BEGIN" in renderer and "[ADRENO_DEVICE]" in renderer and "[ADRENO_FEATURES]" in renderer and "[ADRENO_DRAW]" in renderer,
         "incident dump contains device/features/recent draw correlation")
+require("vsId=VS-" in renderer and "psId=PS-" in renderer and "gsId=GS-" in renderer,
+        "incident draw lines expose stable short shader IDs alongside full hashes")
+require(all(token in header for token in ("descriptorTextures", "descriptorUniformBuffers", "descriptorStorageBuffers", "fboWidth", "fboHeight", "fboColorCount", "feedbackAspect", "flushIndex")),
+        "incident breadcrumb carries compact descriptor/FBO/flush/feedback details")
+require(all(token in renderer for token in ("descTex=", "descUBO=", "descSSBO=", "fboSize=", "feedback=", "flush=")),
+        "incident log renders compact descriptor/FBO/synchronization details")
 require("LogDiagnosticIncidentContext(\"pipeline_create_failure\")" in read("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp"),
         "pipeline failure emits correlated incident context")
 require("LogDiagnosticIncidentContext(\"glsl_parse_failure\")" in shader and "LogDiagnosticIncidentContext(\"spirv_empty_output\")" in shader,
