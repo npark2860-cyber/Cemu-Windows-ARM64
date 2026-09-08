@@ -16,6 +16,16 @@ def replace_once(text, old, new, label):
     return text.replace(old, new, 1)
 
 
+def replace_one_of(text, candidates, new, label):
+    matches = [(old, text.count(old)) for old in candidates if text.count(old)]
+    total = sum(count for _, count in matches)
+    if total != 1:
+        details = ", ".join(str(count) for _, count in matches) or "none"
+        raise RuntimeError(f"{label}: expected exactly one compatible anchor, found {total} ({details})")
+    old = next(old for old, count in matches if count == 1)
+    return text.replace(old, new, 1)
+
+
 def ensure_include(text, anchor, include_line, label):
     if include_line in text:
         return text
@@ -64,16 +74,31 @@ c = replace_once(
     "}\n",
     "RendererShaderVk diagnostic source retention",
 )
-c = replace_once(
-    c,
-    "\t\t\t// generate shader from cached SPIR-V buffer\n\t\t\tCreateVkShaderModule(std::span<uint32>((uint32*)cacheFileData.data(), cacheFileData.size() / sizeof(uint32)));\n",
-    "\t\t\t// generate shader from cached SPIR-V buffer\n"
+
+# AdrenoFinalTriage rewrites the cached CreateVkShaderModule call to carry
+# provenance. Accept that final form, while retaining the historical form as a
+# compatibility fallback so this narrow pass does not depend on comment layout.
+cached_original = (
+    "\t\t\tCreateVkShaderModule(std::span<uint32>((uint32*)cacheFileData.data(), "
+    "cacheFileData.size() / sizeof(uint32)));\n"
+)
+cached_provenance = (
+    "\t\t\tCreateVkShaderModule(std::span<uint32>((uint32*)cacheFileData.data(), "
+    "cacheFileData.size() / sizeof(uint32)), \"spirv_cache\", h1, h2, isRenderThread);\n"
+)
+cached_new = (
     "\t\t\tauto cachedSpirv = std::span<uint32>((uint32*)cacheFileData.data(), cacheFileData.size() / sizeof(uint32));\n"
     "\t\t\tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::PSInputLinkage))\n"
     "\t\t\t\tm_diagSpirvCode.assign(cachedSpirv.begin(), cachedSpirv.end());\n"
-    "\t\t\tCreateVkShaderModule(cachedSpirv);\n",
+    "\t\t\tCreateVkShaderModule(cachedSpirv, \"spirv_cache\", h1, h2, isRenderThread);\n"
+)
+c = replace_one_of(
+    c,
+    [cached_provenance, cached_original],
+    cached_new,
     "cached SPIR-V diagnostic retention",
 )
+
 c = replace_once(
     c,
     "\tGlslangToSpv(*Program.getIntermediate(state), spirvBuffer, &logger, &spvOptions);\n",
@@ -216,7 +241,7 @@ write(pc_path, p)
 # bounded to failing pipeline pairs.
 checks = {
     hdr_path: ["GetDiagnosticGLSL", "GetDiagnosticSPIRV", "m_diagSpirvCode"],
-    cpp_path: ["Flag::PSInputLinkage", "m_diagSpirvCode = spirvBuffer", "cachedSpirv"],
+    cpp_path: ["Flag::PSInputLinkage", "m_diagSpirvCode = spirvBuffer", "cachedSpirv", '"spirv_cache"'],
     pc_path: ["PS_INPUT_GLSL", "PS_INPUT_DUMP", "shaderDumps/ps_input_linkage", "_diagDumpPSInputLinkagePair"],
 }
 for path, needles in checks.items():
