@@ -87,6 +87,8 @@ jobs:
         run: |
           python ./tools/diagnostics/release/Apply-LeanReleaseDiagnostics.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python ./tools/diagnostics/release/Apply-PSInputLinkageDumpDiagnostics.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --stat
