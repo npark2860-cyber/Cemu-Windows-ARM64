@@ -1,4 +1,4 @@
-name: Cemu Windows ARM64 Release
+name: [Release] Cemu Windows ARM64
 
 on:
   push:
@@ -77,16 +77,6 @@ jobs:
           git diff -- src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/HW/Latte/Renderer/RendererOuputShader.h src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Install lean switchable ARM64 diagnostics (default OFF)
-        shell: pwsh
-        run: |
-          python ./tools/diagnostics/release/Apply-LeanReleaseDiagnostics.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git diff --check
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git diff --stat
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
       - name: Apply Cemu ARM64 window branding
         shell: pwsh
         run: |
@@ -111,16 +101,18 @@ jobs:
           git diff -- $main $ws
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Stamp and verify diagnostics UI build source
+      - name: Verify release is diagnostics-free
         shell: pwsh
         run: |
-          python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage source --stamp-source
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git diff --check
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $hash = (Get-FileHash 'src/gui/wxgui/MainWindow.cpp' -Algorithm SHA256).Hash.ToLowerInvariant()
-          "DIAG_UI_SOURCE_SHA256=$hash" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
-          Write-Host "Diagnostics MainWindow source SHA256: $hash"
+          $main = Get-Content 'src/gui/wxgui/MainWindow.cpp' -Raw
+          if ($main.Contains('ARM64 Diagnostics') -or $main.Contains('RuntimeDiagnostics')) {
+            throw 'Release UI contains diagnostics code'
+          }
+          $pipeline = Get-Content 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp' -Raw
+          if ($pipeline.Contains('[ADRENO_DIAG]') -or $pipeline.Contains('RuntimeDiagnostics::')) {
+            throw 'Release pipeline contains diagnostics logging code'
+          }
+          Write-Host 'PASS: release sources are diagnostics-free'
 
       - name: Setup release mode parameters
         run: |
@@ -169,28 +161,8 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
 
-      - name: Verify diagnostics UI source survived configure
-        shell: pwsh
-        run: |
-          python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage source
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $hash = (Get-FileHash 'src/gui/wxgui/MainWindow.cpp' -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($hash -ne $env:DIAG_UI_SOURCE_SHA256) {
-            throw "MainWindow.cpp changed during configure. Before=$env:DIAG_UI_SOURCE_SHA256 After=$hash"
-          }
-          Write-Host "Diagnostics MainWindow source unchanged after configure: $hash"
-
-      - name: Build diagnostics UI target
-        run: cmake --build build --target CemuWxGui --verbose
-
-      - name: Verify diagnostics UI object and library
-        run: python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage object --path build
-
       - name: Build Cemu
         run: cmake --build build
-
-      - name: Verify final Cemu diagnostics UI binary
-        run: python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage binary --path bin/Cemu_release.exe
 
       - name: Prepare artifact
         run: Rename-Item bin/Cemu_release.exe Cemu.exe
@@ -198,5 +170,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-release-direct-query-readback-fsr
+          name: cemu-arm64-release
           path: ./bin/Cemu.exe
