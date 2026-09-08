@@ -3,3 +3,4 @@ WORKFLOW=.github/workflows/final-adreno-compat-arm64.yml
 ARTIFACT=cemu-arm64-release
 DIAGNOSTICS_ALLOWED=NO
 TEST_EXPERIMENTS_ALLOWED=NO
+ROLE_LAYOUT_VERSION=1
