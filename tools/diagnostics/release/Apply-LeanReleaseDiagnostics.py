@@ -73,6 +73,12 @@ finally:
     if temp.exists():
         temp.unlink()
 
+# Adreno incident correlation adds no new checkbox. It reuses the existing
+# failure switches to keep a 64-draw in-memory context ring only while a
+# relevant failure diagnostic is enabled, then emits one compact incident
+# bundle with driver/features/pipeline/shader/descriptors/FBO context.
+run("tools/diagnostics/release/Apply-AdrenoIncidentCorrelation.py")
+
 # UI is applied last so RuntimeDiagnostics::IsImplemented already represents
 # the final concrete probe set. Unsupported candidate flags are skipped before
 # any wxCheckBox is constructed.
