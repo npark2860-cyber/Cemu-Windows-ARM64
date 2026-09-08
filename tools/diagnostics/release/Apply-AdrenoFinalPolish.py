@@ -27,6 +27,22 @@ if "#include <utility>\n" not in header:
         "#include <unordered_map>\n#include <utility>\n",
         "diagnostic utility include",
     )
+
+# The release path is intentionally independent of the historical experiment
+# harness. Remove the stale comment wording too so the final verifier can treat
+# any surviving RuntimeExperiments:: token as a real contract violation.
+header = replace_once(
+    header,
+    '''// UI diagnostics no longer fan out through the old coarse experiment names.
+// Environment-variable experiments still work because RuntimeExperiments::Enabled()
+// falls through to parsing CEMU_EXPERIMENTS when this returns false.
+inline bool LegacyBridgeEnabled(std::string_view)
+''',
+    '''// Release diagnostics do not bridge UI controls to behavior-changing experiment switches.
+inline bool LegacyBridgeEnabled(std::string_view)
+''',
+    "remove stale RuntimeExperiments comment reference",
+)
 header_path.write_text(header, encoding="utf-8", newline="\n")
 
 
@@ -138,4 +154,4 @@ if 'LogDiagnosticIncidentContext(fenceStatus == VK_ERROR_DEVICE_LOST ? "fence_de
     raise RuntimeError("fence incident subject was not installed")
 
 renderer_path.write_text(renderer, encoding="utf-8", newline="\n")
-print("[adreno-final-polish] all shader phases carry provenance; incident output bounded to recent context")
+print("[adreno-final-polish] all shader phases carry provenance; incident output bounded to recent context; stale experiment references removed")
