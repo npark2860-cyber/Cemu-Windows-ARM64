@@ -1,8 +1,8 @@
 # CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
 
-> Canonical branch-role/promotion policy: `BRANCH_POLICY.md`
->
-> If an older debug/handoff document names a different active branch or promotion flow, ignore that stale branch instruction. Fetch the actual GitHub branch/HEAD/workflow/source first.
+> Canonical policy: `BRANCH_POLICY.md`
+> Active-role manifest: `ACTIVE_BRANCH_ROLES.md`
+> Do **not** trust a hardcoded HEAD in a handoff. Before every write/build, fetch the actual branch HEAD and workflow from GitHub.
 
 ## ROLE
 
@@ -11,30 +11,36 @@
 Repository:
 - `npark2860-cyber/Cemu-Windows-ARM64`
 
-Active diagnostics branch:
+Branch:
 - `fix/arm64-diagnostics-ui-artifact-gate`
 
-Functional diagnostics baseline before docs-only policy commits:
-- `c26842d0dca4d0bbb8f468c5aedc83cde7557beb`
-- release behavior baseline plus switchable diagnostics UI
-- persistent diagnostics checkbox state / hitch threshold
-- safe `Disable all` behavior
+Only active workflow on this branch:
+- `.github/workflows/diagnostics-arm64.yml`
+- display name: `[Diagnostics] Cemu Windows ARM64`
 
-## DIAGNOSTICS RULE
+Only valid artifact identity:
+- `cemu-arm64-diagnostics`
+- executable: `Cemu-Diagnostics.exe`
 
-This branch must always equal:
+## DIAGNOSTICS CONTRACT
 
-**current Release FIX set + diagnostics instrumentation/UI**
+This branch must always represent:
 
-Therefore every FIX promoted to `final-adreno-compat-arm64` must also be applied here.
+**current Release FIX set + observation-only diagnostics UI/instrumentation**
 
-Diagnostics-only code may stay here:
-- switchable logging/instrumentation
-- diagnostics UI
-- checkbox/preset/hitch-threshold persistence
-- observation-only failure correlation
+Every FIX promoted to Release must also be applied here.
 
-Do not promote diagnostics-only code into Release unless explicitly requested.
+Diagnostics-only features stay here and do not move to Release unless explicitly requested.
+
+Current targeted diagnostics include:
+- switchable diagnostics UI with persisted checkbox state / hitch threshold
+- `PS input linkage`
+  - SPI_PS_INPUT_CNTL / semantic / DEFAULT_VAL / interpolation / VS producer visibility
+- `GPU occlusion/query visibility`
+  - generic GPU occlusion/query visibility tracing
+  - XCX analysis remains logically separate from Bayonetta 2 / Star Fox Zero query analysis
+
+Both targeted diagnostics are default OFF and are observation-only.
 
 ## PROTECTED / DO NOT REGRESS
 
@@ -42,19 +48,19 @@ Do not promote diagnostics-only code into Release unless explicitly requested.
 - VS `DEFAULT_VAL` synthesize/linkage FIX
 - FidelityFX FSR1 EASU + RCAS
 - existing Adreno / pre-e834 verified fixes
-- XCX query path remains separate
+- XCX query behavior remains separate from Bayonetta 2 / Star Fox Zero
 - `main` must not be touched
-- excluded query/workaround experiments must not be repeated without new evidence
+- rejected experiments are not repeated without new evidence
 
 ## PROMOTION RULE
 
 When a Test change is runtime-verified as a FIX:
-1. apply the verified FIX to Release
-2. apply the same verified FIX here
-3. keep diagnostics extras here only
-4. reset/advance Test from this updated Diagnostics baseline before the next experiment
+1. apply only that FIX to Release
+2. apply the same FIX here
+3. keep diagnostics-only code here
+4. advance/reset Test from the updated Diagnostics baseline before the next experiment
 
 ## NEXT ACTION RULE
 
 Use this branch for investigation and log collection.
-Behavior-changing experiments belong on **[Test] `runtime-experiments-arm64`**, not here.
+Behavior-changing experiments belong on **[Test] `runtime-experiments-arm64`**.
