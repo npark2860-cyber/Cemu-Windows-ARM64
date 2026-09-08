@@ -1,8 +1,8 @@
 # CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
 
-> Canonical branch-role/promotion policy: `BRANCH_POLICY.md`
->
-> If an older debug/handoff document names a different active branch or promotion flow, ignore that stale branch instruction. Fetch the actual GitHub branch/HEAD/workflow/source first.
+> Canonical policy: `BRANCH_POLICY.md`
+> Active-role manifest: `ACTIVE_BRANCH_ROLES.md`
+> Do **not** trust a hardcoded HEAD in a handoff. Before every write/build, fetch the actual branch HEAD and workflow from GitHub.
 
 ## ROLE
 
@@ -11,32 +11,36 @@
 Repository:
 - `npark2860-cyber/Cemu-Windows-ARM64`
 
-Active release branch:
+Branch:
 - `final-adreno-compat-arm64`
 
-Functional release baseline:
-- `6d26a324cf48b648a04442bb13c96ce10343d0ce`
-- commit: `release: restore permanent PS DEFAULT_VAL linkage fix`
+Only active workflow on this branch:
+- `.github/workflows/final-adreno-compat-arm64.yml`
+- display name: `[Release] Cemu Windows ARM64`
 
-Verified release CI:
-- run `34218238464`
-- PASS
-- artifact `cemu-arm64-release-direct-query-readback-fsr`
-- artifact id `10054345029`
-- digest `sha256:3e4f6ba33ac79251d8e54cfbcebef53cd61ce888532297766b1403dcba865994`
+Only valid artifact identity:
+- `cemu-arm64-release`
+- executable: `Cemu.exe`
 
-## RELEASE RULE
+## RELEASE CONTRACT
 
-This branch contains verified production behavior only.
+This branch is production/release only.
 
-Do not add:
-- diagnostic-only UI/persistence
+Allowed:
+- runtime-verified fixes
+- protected Adreno compatibility fixes
+- FSR1
+- release branding (`Cemu ARM64`)
+
+Forbidden:
+- ARM64 Diagnostics UI
+- diagnostic checkbox persistence
 - logging-only instrumentation
-- unverified experiments
+- `RuntimeDiagnostics` runtime hooks in the release binary
+- `[ADRENO_DIAG]`, `[CEMU_DIAG]`, `[GPU_QUERY_VIS]`, `[PS_INPUT_LINKAGE]` diagnostic markers in the release binary
+- unverified behavior experiments
 
-A Test change may reach this branch only after required verification/runtime validation. Promote only the verified FIX, not the whole Test/Diagnostics branch.
-
-Every FIX promoted here must also be applied to the Diagnostics branch so Diagnostics remains current Release + diagnostics.
+The Release workflow contains branch-role and diagnostics-free guards and must fail if these constraints are violated.
 
 ## PROTECTED / DO NOT REGRESS
 
@@ -44,12 +48,21 @@ Every FIX promoted here must also be applied to the Diagnostics branch so Diagno
 - VS `DEFAULT_VAL` synthesize/linkage FIX
 - FidelityFX FSR1 EASU + RCAS
 - existing Adreno / pre-e834 verified fixes
-- XCX query path remains separate
+- XCX query behavior remains separate from Bayonetta 2 / Star Fox Zero
 - `main` must not be touched
-- excluded query/workaround experiments must not be repeated without new evidence
+- rejected query/workaround experiments are not repeated without new evidence
+
+## PROMOTION RULE
+
+A Test change becomes a release FIX only after required static verification, CI and runtime validation.
+
+When verified:
+1. promote only the verified FIX to Release
+2. apply the same FIX to Diagnostics
+3. do not carry Diagnostics/Test-only commits into Release
 
 ## NEXT ACTION RULE
 
-New behavior-changing work starts on **[Test] `runtime-experiments-arm64`**.
-For investigation/logging use **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**.
-Do not develop experiments directly on this Release branch.
+- investigation/logging -> **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**
+- behavior-changing experiment -> **[Test] `runtime-experiments-arm64`**
+- do not develop experiments directly on Release
