@@ -4,110 +4,230 @@ Repository: `npark2860-cyber/Cemu-Windows-ARM64`
 
 Development branch: `exp/release-arm64-diagnostics-lean`
 
-Reviewed HEAD before this document commit: `b3e11e4bd24587b664eb269c2c752edc5d1a250c`
+Release baseline branch: `final-adreno-compat-arm64`
 
 Build/CI remains prohibited until the user explicitly requests a build.
 
-## Mandatory pre-build fixes
+## Final review result
 
-### 1. Safe UI semantics
+The six mandatory pre-build diagnostic design fixes identified in the final review are now staged in the lean release patch chain. They are not yet compile- or runtime-validated.
 
-Current `Diagnostics master` uses `RuntimeDiagnostics::SetAll(true)` when checked. That can enable every diagnostic including `DumpEveryShader`, which is contrary to the user-mandated anti-heavy-log principle.
+The final orchestrator is:
 
-Before build:
+`tools/diagnostics/release/Apply-LeanReleaseDiagnostics.py`
 
-- remove the all-on master behavior, or convert it to a global gate that does not alter individual selections;
-- preferably provide a `Disable all` action rather than a one-click `Enable all` action;
-- if `Full` preset remains, label it clearly as very heavy and keep it non-default;
-- add a safe `Adreno Triage` preset that enables only failure/event-oriented diagnostics and never `DumpEveryShader`.
+The final generated-source verifier is:
 
-### 2. Incident block integrity
+`tools/diagnostics/release/Verify-AdrenoDiagnosticsComplete.py`
 
-Shader compilation is asynchronous and may fail on more than one compiler thread. `[ADRENO_INCIDENT] BEGIN/END` blocks must not interleave.
+Do not claim PASS until the patch chain runs successfully against a clean release baseline and the user explicitly authorizes a build for compiler/runtime validation.
 
-Before build:
+## Implemented/staged mandatory fixes
 
-- serialize incident dumps with a dedicated mutex;
-- assign a monotonic `incident=<id>` to every incident line;
-- suppress duplicate incident expansion by a stable failure key, or enforce a bounded first-N policy;
-- repeated duplicates should become compact one-line count updates rather than another 64-draw dump.
+### 1. Safe UI semantics — STAGED
 
-### 3. Shader-origin and direct shader-to-pipeline attribution
+The historical `Diagnostics master` checkbox and all-on behavior are removed by `Apply-AdrenoSafeUI.py`.
 
-`RendererShaderVk::CompileInternal()` has two materially different paths:
+Final intended UI behavior:
 
-1. precompiled SPIR-V cache -> `vkCreateShaderModule`;
-2. generated GLSL -> glslang -> SPIR-V -> `vkCreateShaderModule`.
+- no `RuntimeDiagnostics::SetAll(true)` path in ARM64 Diagnostics;
+- `Disable all` is the only global action;
+- `DumpEveryShader` remains a manual checkbox only;
+- the old `Full` preset is replaced by `Adreno Triage`;
+- `Adreno Triage` enables only failure-oriented probes:
+  - `PipelineFailure`
+  - `PipelineCacheMismatch`
+  - `GLSLCompileFailure`
+  - `SPIRVCompileFailure`
+  - `DumpFailedShader`
+  - `DeviceLostSubmitError`
+- `Adreno Triage` never enables `DumpEveryShader`.
 
-A shader failure must say which path produced the rejected module.
+### 2. Incident block integrity — STAGED
 
-Before build, include:
+The final incident layer provides:
 
-- `source=spirv_cache` or `source=fresh_compile`;
-- cache key/file identity when the cached path was used;
-- `isRenderThread` / async compiler context;
-- shader short ID plus full base/aux hash;
-- direct related pipeline state hash(es), using the existing shader dependency relationship rather than relying only on the most recent draw ring.
+- monotonic `incident=<id>`;
+- a dedicated incident log mutex so asynchronous shader compiler threads cannot interleave one incident block with another;
+- stable failure-key deduplication;
+- a one-second repeat window;
+- `repeatsSuppressed=<n>` on the next expanded occurrence;
+- bounded incident output even though the in-memory rings retain deeper history.
 
-The last point is important because an asynchronously compiled shader can fail before any related draw is recorded.
+Current bounded history/output targets:
 
-### 4. Resource I/O context
+- draw history: 64 retained / newest 24 emitted per incident;
+- image-layout history: 64 retained / newest 24 emitted;
+- resource history: 32 retained / newest 12 emitted.
 
-Cemu already exposes file path at open time and file position/handle/size at read time. A bounded resource breadcrumb should be attached to incidents.
+### 3. Shader origin and direct shader-to-pipeline attribution — STAGED
 
-Minimum useful form:
+`RendererShaderVk` now carries diagnostic provenance through shader-module creation.
 
-- guest path/container path;
+The intended incident can distinguish:
+
+- `source=spirv_cache`;
+- `source=fresh_compile`;
+- exact precompiled cache key pair;
+- render-thread versus asynchronous worker compilation context;
+- short shader ID plus full base/aux hash.
+
+All shader failure phases are keyed by the exact shader:
+
+- GLSL preprocess;
+- GLSL parse;
+- GLSL link;
+- mapIO;
+- empty SPIR-V output;
+- `vkCreateShaderModule` failure.
+
+The existing `RendererShaderVk::list_pipelineInfo` dependency relationship is copied under `RendererShaderVk::s_dependencyLock` and emitted as direct `[ADRENO_SHADER_PIPELINE]` correlation. This avoids relying only on recent draw inference when an asynchronously compiled shader fails before it is drawn.
+
+`DumpFailedShader` still solely controls failure artifacts:
+
+- original/generated GLSL;
+- preprocessed GLSL;
+- exact rejected SPIR-V bytes when module creation fails.
+
+`DumpEveryShader` remains independent and manual-heavy only.
+
+### 4. Resource I/O context — STAGED
+
+The generic Cemu FSA path is instrumented only while relevant incident diagnostics are active.
+
+Captured resource facts:
+
+- canonical Wii U virtual path where the file was opened while diagnostics were active;
 - file handle;
-- file offset;
-- bytes requested/read;
+- starting offset;
+- requested bytes;
+- actual bytes read;
 - monotonic sequence/timestamp.
 
-Tracking must occur only while relevant incident diagnostics are enabled. It must not emit per-read logs by default.
+OFF behavior:
 
-Archive-entry attribution such as `data000.cpk -> ui_shop.dat` is optional. Generic Cemu diagnostics should first record `data000.cpk + offset`; Bayonetta-specific CPK TOC resolution can be performed offline or through an optional mapping layer. Do not hard-code Bayonetta archive knowledge into generic Cemu runtime diagnostics.
+- no resource path map is maintained;
+- no file-position lookup is performed for diagnostic attribution;
+- no resource breadcrumb is recorded.
 
-### 5. Image-layout/barrier history attached to incidents
+If diagnostics are enabled after a file was already open, the path is explicitly reported as:
 
-`ImageLayoutTransition` currently provides a selectable log probe, but Adreno triage needs failure-local history rather than an independent log stream.
+`<unknown-open-before-diagnostics>`
 
-Before build, add a bounded in-memory layout/barrier breadcrumb, active only when incident diagnostics are enabled, containing at least:
+rather than guessed.
+
+Generic runtime diagnostics intentionally do not hard-code Bayonetta archive knowledge. A read can therefore be reported as `/vol/content/.../data000.cpk + offset`. Mapping that offset to an entry such as `ui_shop.dat` remains an optional/offline CPK-TOC attribution step.
+
+### 5. Image-layout/barrier history — STAGED
+
+`VulkanRenderer::barrier_image()` feeds a bounded incident-only history containing:
 
 - image identity;
 - old/new layout;
-- aspect;
-- mip/layer range;
-- src/dst access masks where available;
-- src/dst pipeline stages where available;
-- frame/draw or global sequence.
+- source/destination pipeline stages;
+- source/destination access masks;
+- aspect mask;
+- mip range;
+- layer range;
+- sequence/timestamp.
 
-On incident, dump the most recent relevant transitions in chronological order. This is especially important on Adreno because image layout specificity, render-pass/subpass behavior and GMEM interactions are unusually important.
+This history is attached to the common incident as `[ADRENO_IMAGE_LAYOUT]` instead of requiring manual reconstruction from an unrelated log stream.
 
-### 6. Device-lost path must not make normal Vulkan queries after loss
+The existing dedicated `ImageLayoutTransition` checkbox remains available for a user who explicitly wants the broader transition log.
 
-The current common incident dumper calls `vkGetPhysicalDeviceProperties2()` when the incident is emitted. That is acceptable for normal shader/pipeline failures but should not be relied on after `VK_ERROR_DEVICE_LOST`.
+### 6. Device-lost-safe incident identity — STAGED
 
-Before build:
+The common incident dumper no longer performs Vulkan property/feature enumeration/query calls when an incident is emitted.
 
-- cache the device/driver/feature fingerprint while the Vulkan device is healthy;
-- device-lost incident output must use only cached data plus safe local state;
-- do not add post-loss Vulkan calls merely for diagnostics.
+Instead, the device/driver identity is cached while the Vulkan backend is healthy from the `vkGetPhysicalDeviceProperties2()` query that Cemu already performs in `DetermineVendor()`.
 
-`VK_EXT_device_fault` remains deferred because enabling it may require changing device-extension state even while diagnostics are nominally OFF. It should not be added until a design preserves the baseline-runtime contract.
+Cached incident identity includes:
 
-## High-value optional addition
+- device name;
+- vendor/device ID;
+- raw driver version;
+- API version;
+- driver ID/name/info when available.
 
-### Mapped-memory flush breadcrumb
+The incident also emits already-known feature/extension state from local `m_featureControl` data.
 
-Cemu uses `vkFlushMappedMemoryRanges()` in Vulkan memory/upload paths, including uniform data and upload reservations. For Windows ARM64/Adreno UMA cases where shader/pipeline state is correct but GPU-visible data is stale or corrupted, a small incident-only breadcrumb could record:
+This keeps `VK_ERROR_DEVICE_LOST` triage from adding diagnostic Vulkan queries after loss.
+
+`VK_EXT_device_fault` remains deferred because enabling it could alter device-creation extension state even when diagnostics are otherwise OFF.
+
+## OFF-path contract
+
+Final incident correlation uses a single atomic `g_incidentContextActive` hot-path gate.
+
+That atomic is refreshed only when one of these existing failure switches changes:
+
+- `PipelineFailure`
+- `GLSLCompileFailure`
+- `SPIRVCompileFailure`
+- `DeviceLostSubmitError`
+- `DumpFailedShader`
+
+When none are enabled:
+
+- draw incident breadcrumbs are not recorded;
+- resource attribution work is skipped;
+- image-layout incident breadcrumbs are not recorded;
+- incident file/path state is not maintained.
+
+No new correlation checkbox was added.
+
+## Final verifier contract
+
+`Verify-AdrenoDiagnosticsComplete.py` is intended to fail if the finished generated release source violates any of these rules:
+
+- not all 77 implemented diagnostics match the 77 UI items;
+- a selectable flag has no concrete runtime consumer;
+- a dead/grey unsupported checkbox exists;
+- `RuntimeExperiments::` survives in generated release source;
+- a global all-on UI path survives;
+- `DumpEveryShader` appears in a preset;
+- incident correlation lacks the atomic OFF gate;
+- incident history is unbounded;
+- incident blocks are not serialized or lack stable IDs/deduplication;
+- post-fault incident logging contains Vulkan property/feature/enumeration queries;
+- shader cache-vs-fresh provenance is lost;
+- shader failure phases are not keyed by base/aux hash;
+- direct shader-to-pipeline dependency correlation is missing;
+- failed shader artifacts are not individually gated;
+- resource open/read/close attribution is missing or ungated;
+- image-layout stage/access/subresource attribution is missing;
+- the accepted Star Fox Zero / Bayonetta 2 direct-query workaround is missing;
+- `vkGetQueryPoolResults` loader declaration is duplicated;
+- the diagnostic GPU timestamp query pool is not lazy and switch-gated.
+
+The stale source comment that mentioned `RuntimeExperiments::Enabled()` has also been removed by the final polish pass so a surviving `RuntimeExperiments::` token can be treated as a real verifier failure rather than a comment false-positive.
+
+## Protected behavior
+
+The final verification flow still requires preservation of:
+
+- Star Fox Zero JP direct-query readback workaround;
+- Bayonetta 2 JP direct-query readback workaround;
+- title-gated `vkGetQueryPoolResults` direct path;
+- XCX separate query behavior;
+- known-good pre-e834 Vulkan behavior;
+- VS `DEFAULT_VAL` synthesize behavior;
+- AMD FidelityFX FSR1 EASU + RCAS release workflow;
+- `main` untouched.
+
+## High-value optional item — DEFERRED
+
+Mapped-memory flush breadcrumb remains optional.
+
+Cemu uses `vkFlushMappedMemoryRanges()` in uniform/upload paths. If later evidence shows a Windows ARM64/Adreno problem where shader/pipeline/layout state is correct but GPU-visible data is stale or corrupted, add a small incident-only breadcrumb containing:
 
 - memory object class/identity;
 - offset/size;
-- coherent vs non-coherent path;
+- coherent/non-coherent path;
 - `nonCoherentAtomSize` alignment facts;
-- frame/draw/global sequence.
+- sequence/frame/draw context where available.
 
-This is valuable but lower priority than resource and layout history. Add it only if the implementation stays observation-only and switch-gated.
+Do not add this before evidence justifies it.
 
 ## Not required for first build
 
@@ -118,27 +238,33 @@ This is valuable but lower priority than resource and layout history. Add it onl
 - unconditional `VK_EXT_device_fault` enablement;
 - screenshot/frame-capture automation.
 
-These can be added later if the incident bundle still leaves ambiguity.
-
 ## Desired incident shape
 
-A single incident should be sufficient for first-pass diagnosis:
+A single incident is designed to provide this first-pass chain:
 
-`resource I/O -> layout/barrier -> draw -> descriptor/FBO -> pipeline -> VS/PS/GS -> shader source/cache origin -> submit/fence -> failure`
+`resource I/O -> image layout/barrier -> draw -> descriptor/FBO -> pipeline -> VS/PS/GS -> shader source/cache origin -> submit/fence -> failure`
 
-The incident should use one stable incident ID and deterministic shader/pipeline identifiers so assistant-side analysis requires no manual cross-log reconstruction.
+All related lines use one stable incident ID so assistant-side analysis does not require manual hash/log reconstruction.
 
-## Validation still required before claiming readiness
+## Validation status
 
-A source-only review cannot replace an actual patch-chain dry run. The local sandbox cannot currently clone GitHub (`Could not resolve host: github.com`), so `Apply-LeanReleaseDiagnostics.py` has not yet been executed end-to-end against a clean checkout in this session.
+- six mandatory final-review fixes: **STAGED**
+- final safe UI pass: **STAGED**
+- final comprehensive verifier: **STAGED**
+- end-to-end patch-chain execution on a clean release checkout: **NOT YET RUN**
+- compiler/CI validation: **NOT RUN**
+- runtime validation: **NOT RUN**
 
-When environment access permits, before any compile:
+The local sandbox previously failed to clone GitHub because DNS resolution for `github.com` was unavailable. Therefore this session must not claim end-to-end patch-chain PASS merely from source/anchor review.
 
-1. apply `Apply-LeanReleaseDiagnostics.py` to a clean release baseline checkout;
-2. require all patch anchors to succeed;
-3. run `Verify-LeanDiagnostics.py`;
-4. run `git diff --check`;
-5. verify no generated source references `RuntimeExperiments`;
-6. verify protected Star Fox Zero / Bayonetta 2 direct-query code and FSR workflow remain untouched.
+## Next action
 
-Only after the user explicitly says to build should CI/compiler validation start.
+Do not add more diagnostic features before the first validation unless a static blocker is discovered.
+
+When the user explicitly says `빌드`:
+
+1. apply the reviewed lean diagnostics to the release workflow/baseline;
+2. require the final patch-chain verifier to PASS;
+3. run compiler/CI validation;
+4. inspect the first real failure if any;
+5. preserve the protected query/FSR/pre-e834 behavior throughout.
