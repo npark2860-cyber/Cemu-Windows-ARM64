@@ -1,94 +1,54 @@
 # CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
 
-## CURRENT STATE
+> Canonical branch-role/promotion policy: `BRANCH_POLICY.md`
+>
+> If an older debug/handoff document names a different active branch or promotion flow, ignore that stale branch instruction. Fetch the actual GitHub branch/HEAD/workflow/source first.
+
+## ROLE
+
+**[Test]**
 
 Repository:
-
 - `npark2860-cyber/Cemu-Windows-ARM64`
 
-Active branch:
+Active test branch:
+- `runtime-experiments-arm64`
 
-- `diag-query-mapped-direct-divergence`
+Functional test baseline before docs-only policy commits:
+- `c26842d0dca4d0bbb8f468c5aedc83cde7557beb`
+- same functional baseline as Diagnostics before the next experiment
 
-Accepted non-blocking experiment code checkpoint:
+## TEST RULE
 
-- `bac23bd90b3ce51b87f7a7e955aea9e90a2005ef`
+All behavior-changing experiments happen here.
 
-CI trigger branch/head:
+Rules:
+- start from the current Diagnostics baseline
+- change one variable at a time
+- static-verify the diff before CI
+- do not call an experiment a FIX until required CI/runtime validation passes
+- do not mix XCX query experiments with Bayonetta 2 / Star Fox Zero paths
+- do not repeat already excluded experiments without new evidence
 
-- `diag-bayo2-target-query-draw-fingerprint`
-- `57f2e9e7dbdfebdd450449ff264476d31fbc1e60`
+## VERIFIED FIX PROMOTION
 
-Protected blocking-direct fallback:
+When a Test change is verified as a FIX:
+1. apply **only that FIX** to **[Release] `final-adreno-compat-arm64`**
+2. apply the **same FIX** to **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**
+3. keep diagnostics-only code out of Release
+4. reset/advance this Test branch from the updated Diagnostics baseline before starting the next experiment
 
-- `790a945780ea561518dd072d9f73c0e3e89b4700`
+Never promote the whole Test branch into Release if that would carry diagnostics or experiment-only commits.
 
-`main` is out of scope.
+## PROTECTED / DO NOT REGRESS
 
-## VERIFIED PASS
+- Bayonetta 2 / Star Fox Zero `vkGetQueryPoolResults` direct query readback FIX
+- VS `DEFAULT_VAL` synthesize/linkage FIX
+- FidelityFX FSR1 EASU + RCAS
+- existing Adreno / pre-e834 verified fixes
+- XCX query path remains separate
+- `main` must not be touched
 
-Run #32:
+## NEXT ACTION RULE
 
-- run `34074452899`
-- job `101597749211`
-- artifact `10002247263`
-- digest `sha256:156bc7f4b6b977704c6d7c41719a1f62c25dc43a5b1914dd1a927ad758fba2af`
-- CI SUCCESS
-
-Star Fox Zero JP:
-
-- FULL RUNTIME PASS
-- formerly broken/flickering scene remained FIXED
-- `404653` logged direct reads
-- all `VK_SUCCESS`
-- `VK_NOT_READY=0`
-- `retry=1=0`
-
-Bayonetta 2 JP:
-
-- FULL RUNTIME PASS
-- game remained in the same FIXED state
-- `65236` logged direct reads
-- all `VK_SUCCESS`
-- `VK_NOT_READY=0`
-- `retry=1=0`
-- no query-retention stall/exhaustion observed
-
-Detailed Run #32 record:
-
-- `DEBUG_HISTORY_20260907_QUERY_NOWAIT_PASS.md`
-
-## ACCEPTED CLASSIFICATION
-
-For these two reproduced Adreno cases:
-
-- `vkCmdCopyQueryPoolResults` is the failing result-copy path.
-- `vkGetQueryPoolResults` returns the correct result.
-- after `HasCommandBufferFinished(...)`, `VK_QUERY_RESULT_WAIT_BIT` was unnecessary in both tested titles.
-
-Accepted replacement behavior:
-
-- target gate: Star Fox Zero JP + Bayonetta 2 JP only
-- `vkGetQueryPoolResults(... VK_QUERY_RESULT_64_BIT)`
-- `VK_SUCCESS`: consume direct result
-- `VK_NOT_READY`: retain fragment/query index and retry later
-
-XCX remains separate. Do not globalize this behavior.
-
-# NEXT ACTION
-
-1. Promote the accepted non-blocking direct-readback behavior from the diagnostic patch script into the real Vulkan query source on a non-main branch.
-2. Keep the title gate limited to Star Fox Zero JP + Bayonetta 2 JP.
-3. Preserve `VK_NOT_READY` retain/retry semantics.
-4. Static-verify the source diff first.
-5. Run CI once for the promoted-source implementation.
-6. Reuse that artifact for final smoke if needed.
-7. Do not touch `main` or XCX.
-
-## DO NOT ROLLBACK / DO NOT TOUCH
-
-- retained PASS branch/head `exp-bayo2-query-direct-readback` / `5d758a096ee9409e7c25372a6caa9ad9d2378575`
-- protected blocking fallback `790a945780ea561518dd072d9f73c0e3e89b4700`
-- VS DEFAULT_VAL synthesize fixes
-- `main`
-- XCX query behavior
+There is no implicit experiment. Before changing behavior, identify the single variable being tested and confirm the actual current Test HEAD/source.
