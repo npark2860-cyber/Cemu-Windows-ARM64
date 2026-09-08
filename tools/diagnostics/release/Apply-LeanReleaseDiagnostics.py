@@ -36,6 +36,28 @@ run("tools/diagnostics/Apply-ShaderFailureDiagnostics.py")
 run("tools/diagnostics/release/Apply-ShaderFailureBundleEnhancements.py")
 run("tools/diagnostics/release/Apply-LeanRTDiagnostics.py")
 
+# LeanRT makes seven graphics/feedback flags selectable, but historically did
+# not extend Verify-DiagnosticCoverage.py. CompleteDiagnostics expects the last
+# of these (FeedbackUse) to already exist as its continuation anchor. Keep the
+# verifier synchronized here before running the completion pass.
+replace_once_file(
+    "tools/diagnostics/Verify-DiagnosticCoverage.py",
+    '''    # Render-target / synchronization
+''',
+    '''    # Shader / render-target / feedback
+    "ShaderInterface": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "Flag::ShaderInterface"), ("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "[SHADER_INTERFACE]")],
+    "FBOChanges": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "Flag::FBOChanges"), ("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "[FBO_CHANGE]")],
+    "AttachmentUsage": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "Flag::AttachmentUsage"), ("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "[ATTACHMENT_USE]")],
+    "LoadStoreBehavior": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "Flag::LoadStoreBehavior"), ("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "[LOAD_STORE]")],
+    "RenderTargetAliasing": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "Flag::RenderTargetAliasing"), ("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "[RT_ALIAS]")],
+    "FeedbackSupport": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "Flag::FeedbackSupport"), ("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "[FEEDBACK_SUPPORT]")],
+    "FeedbackUse": [("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "Flag::FeedbackUse"), ("src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp", "[FEEDBACK_USE]")],
+
+    # Render-target / synchronization
+''',
+    "lean RT coverage verifier hooks",
+)
+
 # CompleteDiagnostics was originally authored against the historical RT probe
 # label "forcedSplit". Keep the lean observation semantics but normalize this
 # label so its exact source anchor remains reusable.
