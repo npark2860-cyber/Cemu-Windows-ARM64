@@ -30,19 +30,21 @@ def stamp_and_verify_source(stamp: bool):
     text = main.read_text(encoding="utf-8")
 
     if stamp and SENTINEL not in text:
-        old = 'cemuLog_log(LogType::Force, "[CEMU_DIAG] UI_OPEN Architecture=ARM64");'
-        new = (
-            'cemuLog_log(LogType::Force, '
-            '"[CEMU_DIAG] UI_OPEN Architecture=ARM64 '
-            + SENTINEL
-            + '");'
-        )
+        old = '''    {
+#if defined(__aarch64__)
+        cemuLog_log(LogType::Force, "[CEMU_DIAG] UI_OPEN Architecture=ARM64");
+'''
+        new = '''    {
+        cemuLog_log(LogType::Force, "[CEMU_DIAG] UI_SENTINEL CEMU_ARM64_DIAGNOSTICS_UI_SENTINEL_20260908");
+#if defined(__aarch64__)
+        cemuLog_log(LogType::Force, "[CEMU_DIAG] UI_OPEN Architecture=ARM64");
+'''
         count = text.count(old)
         if count != 1:
             fail(f"UI sentinel stamp anchor count changed: expected 1, found {count}")
         text = text.replace(old, new, 1)
         main.write_text(text, encoding="utf-8", newline="\n")
-        print(f"[release-diag-ui-verify] stamped {SENTINEL} into ARM64 UI-open path")
+        print(f"[release-diag-ui-verify] stamped {SENTINEL} into unconditional UI-open path")
 
     text = main.read_text(encoding="utf-8")
     missing = [item for item in REQUIRED if item not in text]
