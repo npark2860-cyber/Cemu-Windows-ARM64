@@ -24,6 +24,23 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Assert Release branch role
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -ne "refs/heads/final-adreno-compat-arm64") {
+            throw "Release workflow ran on unexpected ref: ${{ github.ref }}"
+          }
+          $guard = Get-Content 'ROLE_GUARD_RELEASE.txt' -Raw
+          foreach ($required in @(
+            'RELEASE_BRANCH=final-adreno-compat-arm64',
+            'WORKFLOW=.github/workflows/final-adreno-compat-arm64.yml',
+            'ARTIFACT=cemu-arm64-release',
+            'DIAGNOSTICS_ALLOWED=NO',
+            'TEST_EXPERIMENTS_ALLOWED=NO'
+          )) {
+            if (-not $guard.Contains($required)) { throw "Release role marker mismatch: $required" }
+          }
+
       - name: Apply known-good pre-e834 runtime behavior
         shell: pwsh
         run: |
@@ -101,7 +118,7 @@ jobs:
           git diff -- $main $ws
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Verify release is diagnostics-free
+      - name: Verify release source is diagnostics-free
         shell: pwsh
         run: |
           $main = Get-Content 'src/gui/wxgui/MainWindow.cpp' -Raw
@@ -111,6 +128,10 @@ jobs:
           $pipeline = Get-Content 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp' -Raw
           if ($pipeline.Contains('[ADRENO_DIAG]') -or $pipeline.Contains('RuntimeDiagnostics::')) {
             throw 'Release pipeline contains diagnostics logging code'
+          }
+          $query = Get-Content 'src/Cafe/HW/Latte/Renderer/Vulkan/VulkanQuery.cpp' -Raw
+          foreach ($forbidden in @('[GPU_QUERY_VIS]', '[PS_INPUT_LINKAGE]', 'Flag::GpuOcclusionQueryVisibility', 'Flag::PSInputLinkage')) {
+            if ($query.Contains($forbidden)) { throw "Release query source contains diagnostic marker: $forbidden" }
           }
           Write-Host 'PASS: release sources are diagnostics-free'
 
@@ -163,6 +184,16 @@ jobs:
 
       - name: Build Cemu
         run: cmake --build build
+
+      - name: Verify release binary is diagnostics-free
+        shell: pwsh
+        run: |
+          $bytes = [System.IO.File]::ReadAllBytes('bin/Cemu_release.exe')
+          $ascii = [System.Text.Encoding]::ASCII.GetString($bytes)
+          foreach ($forbidden in @('ARM64 Diagnostics', '[ADRENO_DIAG]', '[CEMU_DIAG]', '[GPU_QUERY_VIS]', '[PS_INPUT_LINKAGE]')) {
+            if ($ascii.Contains($forbidden)) { throw "Release binary contains diagnostic marker: $forbidden" }
+          }
+          Write-Host 'PASS: release binary contains no custom diagnostics markers'
 
       - name: Prepare artifact
         run: Rename-Item bin/Cemu_release.exe Cemu.exe
