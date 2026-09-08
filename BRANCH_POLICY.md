@@ -13,20 +13,34 @@ Only these three branches are active for ongoing work:
    - Contains only verified behavior fixes and release features.
    - Must not contain diagnostic-only UI, checkbox persistence, logging-only instrumentation, or unverified experiments.
    - Release artifacts are produced only from this branch.
+   - The active custom workflow must be `.github/workflows/final-adreno-compat-arm64.yml` and must identify itself as `[Release]`.
 
 2. **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**
    - Must always represent **current Release + diagnostic instrumentation/UI**.
    - Every fix that has been verified and promoted to Release must also be applied here.
    - Diagnostic-only logging/UI/persistence may exist here and must not be promoted to Release unless explicitly requested.
    - This is the normal branch for reproducing and investigating failures with switchable diagnostics.
+   - The active custom workflow must be `.github/workflows/diagnostics-arm64.yml` and must identify itself as `[Diagnostics]`.
 
 3. **[Test] `runtime-experiments-arm64`**
    - Must normally start from the current Diagnostics baseline.
    - Behavior-changing experiments are performed here only.
    - Change one variable at a time.
    - An experiment is not a FIX until static verification, CI, and required runtime validation pass.
+   - The active custom workflow must be `.github/workflows/runtime-experiments-arm64.yml` and must identify itself as `[Test]`.
 
 All other historical branches are **read-only reference/archive branches** and are not valid targets for new work unless the user explicitly requests historical inspection. `main` is outside this workflow and must not be touched.
+
+## Non-negotiable branch-role isolation
+
+Before any write or CI run, determine the role first: Release, Diagnostics, or Test.
+
+- Never fast-forward or merge Diagnostics/Test wholesale into Release.
+- Never run a Release workflow from Diagnostics or Test.
+- Never run a Diagnostics workflow from Release or Test.
+- Never run a Test workflow from Release or Diagnostics.
+- Never hand an artifact to the user unless branch + HEAD + workflow name + artifact name all match the intended role.
+- If any branch contains another role's active custom workflow, treat that as repository corruption and fix it before further work.
 
 ## Promotion flow
 
@@ -45,9 +59,9 @@ Do **not** fast-forward or merge an entire Diagnostics/Test branch into Release 
 
 ## Artifact identity rules
 
-- **Release artifact**: only from `final-adreno-compat-arm64`.
-- **Diagnostics artifact**: only from `fix/arm64-diagnostics-ui-artifact-gate`.
-- **Test artifact**: only from `runtime-experiments-arm64`.
+- **Release artifact**: only from `final-adreno-compat-arm64`, artifact name `cemu-arm64-release`.
+- **Diagnostics artifact**: only from `fix/arm64-diagnostics-ui-artifact-gate`, artifact name `cemu-arm64-diagnostics`.
+- **Test artifact**: only from `runtime-experiments-arm64`, artifact name `cemu-arm64-test`.
 - Never call a Diagnostics or Test artifact a release build.
 - Before handing an artifact to the user, verify branch, HEAD, workflow run, and artifact source.
 
@@ -72,6 +86,8 @@ Before any code change or CI run:
 2. Fetch the actual branch HEAD.
 3. Inspect the actual workflow/source on that branch.
 4. Confirm protected fixes are present.
-5. Make the smallest role-appropriate change only.
+5. Confirm the branch does not contain another role's active custom workflow.
+6. Make the smallest role-appropriate change only.
+7. Run static role guards before CI.
 
 If a handoff document is stale, update the document instead of following the stale branch/HEAD.
