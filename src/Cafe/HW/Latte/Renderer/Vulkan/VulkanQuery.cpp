@@ -45,6 +45,16 @@ static bool UseDirectQueryReadbackWorkaround()
 		titleId == 0x000500001011B900ULL;   // Bayonetta 2 JP
 }
 
+static bool UseXCXDirectQueryReadbackExperiment()
+{
+	return CafeSystem::GetForegroundTitleId() == 0x0005000010116100ULL; // Xenoblade Chronicles X JP
+}
+
+static bool UseDirectQueryReadback()
+{
+	return UseDirectQueryReadbackWorkaround() || UseXCXDirectQueryReadbackExperiment();
+}
+
 bool LatteQueryObjectVk::getResult(uint64& numSamplesPassed)
 {
 	if (!m_vkQueryEnded)
@@ -52,7 +62,7 @@ bool LatteQueryObjectVk::getResult(uint64& numSamplesPassed)
 	if (!m_rendererVk->HasCommandBufferFinished(m_finishCommandBuffer))
 		return false;
 	handleFinishedFragments();
-	if (UseDirectQueryReadbackWorkaround() && !list_queryFragments.empty())
+	if (UseDirectQueryReadback() && !list_queryFragments.empty())
 		return false;
 	cemu_assert_debug(list_queryFragments.empty());
 	numSamplesPassed = m_acccumulatedSum;
@@ -114,7 +124,7 @@ void LatteQueryObjectVk::handleFinishedFragments()
 			break;
 
 		uint64 fragmentResult = m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
-		if (UseDirectQueryReadbackWorkaround())
+		if (UseDirectQueryReadback())
 		{
 			uint64 directResult = 0;
 			const VkResult result = vkGetQueryPoolResults(
