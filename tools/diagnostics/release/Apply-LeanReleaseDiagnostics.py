@@ -80,19 +80,13 @@ finally:
 run("tools/diagnostics/release/Apply-AdrenoIncidentCorrelation.py")
 run("tools/diagnostics/release/Apply-AdrenoIncidentDetails.py")
 
-# Build the complete 77-item UI first and run the original lean verifier while
-# its historical IncidentContextEnabled representation is still intact. This
-# preserves the 77/77 consumer/UI contract check.
+# Create the full 77-item UI, then apply the final Adreno-oriented correlation
+# and safe-UI passes. The final verifier checks the finished generated source,
+# not an intermediate representation.
 run("tools/diagnostics/release/Apply-LeanDiagnosticUI.py")
-run("tools/diagnostics/release/Verify-LeanDiagnostics.py")
-
-# Final triage pass changes no implemented flag set. It makes incident gating a
-# single atomic read, serializes/deduplicates incidents, caches healthy-state
-# device identity, distinguishes cached-vs-fresh shaders, and adds bounded
-# resource + image-layout history. The UI hardening pass then removes every
-# one-click bulk-enable path and replaces Full with a safe Adreno Triage preset.
 run("tools/diagnostics/release/Apply-AdrenoFinalTriage.py")
+run("tools/diagnostics/release/Apply-AdrenoFinalPolish.py")
 run("tools/diagnostics/release/Apply-AdrenoSafeUI.py")
-run("tools/diagnostics/release/Verify-AdrenoFinalTriage.py")
+run("tools/diagnostics/release/Verify-AdrenoDiagnosticsComplete.py")
 
 print("[lean-release-diagnostics] PASS")
