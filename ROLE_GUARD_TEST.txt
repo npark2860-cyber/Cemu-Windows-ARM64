@@ -1,0 +1,5 @@
+TEST_BRANCH=runtime-experiments-arm64
+WORKFLOW=.github/workflows/runtime-experiments-arm64.yml
+ARTIFACT=cemu-arm64-test
+RELEASE_ARTIFACT_ALLOWED=NO
+DIAGNOSTICS_ARTIFACT_ALLOWED=NO
