@@ -1,4 +1,4 @@
-name: [Release] Cemu Windows ARM64
+name: "[Release] Cemu Windows ARM64"
 
 on:
   push:
