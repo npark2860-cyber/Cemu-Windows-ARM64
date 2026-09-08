@@ -76,6 +76,15 @@ jobs:
           git diff --check
           git diff --stat
 
+      - name: Stamp and verify diagnostics UI build source
+        shell: pwsh
+        run: |
+          python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage source --stamp-source
+          git diff --check
+          $hash = (Get-FileHash 'src/gui/wxgui/MainWindow.cpp' -Algorithm SHA256).Hash.ToLowerInvariant()
+          "DIAG_UI_SOURCE_SHA256=$hash" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Diagnostics MainWindow source SHA256: $hash"
+
       - name: Setup release mode parameters
         run: |
           echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
@@ -123,8 +132,27 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
 
+      - name: Verify diagnostics UI source survived configure
+        shell: pwsh
+        run: |
+          python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage source
+          $hash = (Get-FileHash 'src/gui/wxgui/MainWindow.cpp' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne $env:DIAG_UI_SOURCE_SHA256) {
+            throw "MainWindow.cpp changed during configure. Before=$env:DIAG_UI_SOURCE_SHA256 After=$hash"
+          }
+          Write-Host "Diagnostics MainWindow source unchanged after configure: $hash"
+
+      - name: Build diagnostics UI target
+        run: cmake --build build --target CemuWxGui --verbose
+
+      - name: Verify diagnostics UI object and library
+        run: python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage object --path build
+
       - name: Build Cemu
         run: cmake --build build
+
+      - name: Verify final Cemu diagnostics UI binary
+        run: python ./tools/diagnostics/release/Verify-ReleaseDiagnosticUIBuild.py --stage binary --path bin/Cemu_release.exe
 
       - name: Prepare artifact
         run: Rename-Item bin/Cemu_release.exe Cemu.exe
