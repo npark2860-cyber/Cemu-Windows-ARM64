@@ -112,4 +112,9 @@ run("tools/diagnostics/release/Apply-AdrenoFinalPolish.py")
 run("tools/diagnostics/release/Apply-AdrenoSafeUI.py")
 run("tools/diagnostics/release/Verify-AdrenoDiagnosticsComplete.py")
 
+# Add the two narrow observation-only probes after the legacy 77/77 verifier so
+# they cannot destabilize the mature diagnostic bundle. The targeted script has
+# its own static contract checks and appends flags, preserving saved bit indices.
+run("tools/diagnostics/release/Apply-TargetedShaderQueryDiagnostics.py")
+
 print("[lean-release-diagnostics] PASS")
