@@ -1,5 +1,4 @@
 #include "Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h"
-#include "Cafe/CafeSystem.h"
 
 class LatteQueryObjectVk : public LatteQueryObject
 {
@@ -38,13 +37,6 @@ private:
 	uint64 m_acccumulatedSum;
 };
 
-static bool UseDirectQueryReadbackWorkaround()
-{
-	const uint64 titleId = CafeSystem::GetForegroundTitleId();
-	return titleId == 0x00050000101AFF00ULL || // Star Fox Zero JP
-		titleId == 0x000500001011B900ULL;   // Bayonetta 2 JP
-}
-
 bool LatteQueryObjectVk::getResult(uint64& numSamplesPassed)
 {
 	if (!m_vkQueryEnded)
@@ -52,8 +44,6 @@ bool LatteQueryObjectVk::getResult(uint64& numSamplesPassed)
 	if (!m_rendererVk->HasCommandBufferFinished(m_finishCommandBuffer))
 		return false;
 	handleFinishedFragments();
-	if (UseDirectQueryReadbackWorkaround() && !list_queryFragments.empty())
-		return false;
 	cemu_assert_debug(list_queryFragments.empty());
 	numSamplesPassed = m_acccumulatedSum;
 	//numSamplesPassed = m_rendererVk->m_occlusionQueries.ptrQueryResults[m_queryIndex];
@@ -112,27 +102,7 @@ void LatteQueryObjectVk::handleFinishedFragments()
 			break;
 		if (!m_rendererVk->HasCommandBufferFinished(it.m_finishCommandBuffer))
 			break;
-
-		uint64 fragmentResult = m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
-		if (UseDirectQueryReadbackWorkaround())
-		{
-			uint64 directResult = 0;
-			const VkResult result = vkGetQueryPoolResults(
-				m_rendererVk->GetLogicalDevice(),
-				m_rendererVk->m_occlusionQueries.queryPool,
-				it.queryIndex,
-				1,
-				sizeof(directResult),
-				&directResult,
-				sizeof(uint64),
-				VK_QUERY_RESULT_64_BIT);
-			if (result == VK_NOT_READY)
-				break;
-			if (result == VK_SUCCESS)
-				fragmentResult = directResult;
-		}
-
-		m_acccumulatedSum += fragmentResult;
+		m_acccumulatedSum += m_rendererVk->m_occlusionQueries.ptrQueryResults[it.queryIndex];
 		releaseQueryIndex(it.queryIndex);
 		list_queryFragments.erase(list_queryFragments.begin());
 	}
