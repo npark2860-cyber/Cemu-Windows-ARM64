@@ -2,90 +2,92 @@
 
 This document is the canonical branch-role and promotion policy for this repository.
 
-Actual GitHub branch / HEAD / workflow / source remains the source of truth. If an older handoff or debug-history document conflicts with this file about current policy, this file wins.
+If an older handoff/debug document conflicts with this file about which branch to use or how a verified fix is promoted, **this file wins**. Actual GitHub branch/HEAD/workflow/source remains the source of truth for the implementation currently present on each branch.
 
 ## Exactly three active work branches
 
+Only these three branches are active for ongoing work:
+
 1. **[Release] `final-adreno-compat-arm64`**
    - Production/release baseline only.
-   - Contains verified behavior fixes and release features only.
-   - No diagnostic-only UI/logging and no unverified experiments.
-   - Active workflow: `.github/workflows/final-adreno-compat-arm64.yml`
-   - Artifact: `cemu-arm64-release`
+   - Contains only verified behavior fixes and release features.
+   - Must not contain diagnostic-only UI, checkbox persistence, logging-only instrumentation, or unverified experiments.
+   - Release artifacts are produced only from this branch.
+   - The active custom workflow must be `.github/workflows/final-adreno-compat-arm64.yml` and must identify itself as `[Release]`.
 
 2. **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**
-   - Current Release behavior + observation-only diagnostic instrumentation/UI.
-   - Diagnostics must not change game behavior while their switches are OFF.
-   - Active workflow: `.github/workflows/diagnostics-arm64.yml`
-   - Artifact: `cemu-arm64-diagnostics`
+   - Must always represent **current Release + diagnostic instrumentation/UI**.
+   - Every fix that has been verified and promoted to Release must also be applied here.
+   - Diagnostic-only logging/UI/persistence may exist here and must not be promoted to Release unless explicitly requested.
+   - This is the normal branch for reproducing and investigating failures with switchable diagnostics.
+   - The active custom workflow must be `.github/workflows/diagnostics-arm64.yml` and must identify itself as `[Diagnostics]`.
 
 3. **[Test] `runtime-experiments-arm64`**
-   - Behavior-changing experiments only.
-   - One behavior variable at a time.
-   - An experiment is not a FIX until static verification, CI and required runtime validation pass.
-   - Active workflow: `.github/workflows/runtime-experiments-arm64.yml`
-   - Artifact: `cemu-arm64-test`
+   - Must normally start from the current Diagnostics baseline.
+   - Behavior-changing experiments are performed here only.
+   - Change one variable at a time.
+   - An experiment is not a FIX until static verification, CI, and required runtime validation pass.
+   - The active custom workflow must be `.github/workflows/runtime-experiments-arm64.yml` and must identify itself as `[Test]`.
 
-All other branches/workflows are historical reference only unless explicitly requested. `main` must not be modified.
+All other historical branches are **read-only reference/archive branches** and are not valid targets for new work unless the user explicitly requests historical inspection. `main` is outside this workflow and must not be touched.
 
-## Current Adreno Vulkan query baseline
+## Non-negotiable branch-role isolation
 
-As of 2026-09-09, the current Adreno driver baseline is treated as having the previously observed Vulkan query behavior normalized.
+Before any write or CI run, determine the role first: Release, Diagnostics, or Test.
 
-Therefore the active Release and Diagnostics baselines must use the normal upstream Cemu occlusion-query path for:
-
-- Bayonetta 2
-- Star Fox Zero
-- Xenoblade Chronicles X (XCX)
-
-The following are no longer active fixes and must not be present in Release/Diagnostics behavior:
-
-- title-gated `vkGetQueryPoolResults` direct-readback workaround for Bayonetta 2 / Star Fox Zero
-- XCX-specific direct-readback experiment
-- XCX forced `0 -> 1` occlusion visibility experiment
-- any equivalent title-ID-gated query-result override for those games
-
-Generic observation-only query diagnostics are still allowed in Diagnostics, but they must not select, replace, force, or synthesize query results.
-
-The old query experiments remain in DEBUG_HISTORY only as historical evidence. Do not reintroduce them unless a new regression is reproduced on the current driver baseline.
-
-## Non-negotiable protected behavior
-
-- Do not touch `main`.
-- Keep the verified VS `DEFAULT_VAL` synthesize/linkage compatibility fix.
-- Keep AMD FidelityFX FSR1 EASU + RCAS.
-- Keep existing verified Adreno / pre-e834 compatibility behavior that is unrelated to the retired per-title query workarounds.
-- Do not repeat rejected experiments without new evidence.
-
-## Role isolation
-
-Before any write or CI run, determine the intended role first.
-
-- Never merge Diagnostics/Test wholesale into Release.
-- Never run a Release workflow from Diagnostics/Test.
-- Never run a Diagnostics workflow from Release/Test.
-- Never run a Test workflow from Release/Diagnostics.
-- Never hand off an artifact unless branch + HEAD + workflow + artifact identity match the intended role.
+- Never fast-forward or merge Diagnostics/Test wholesale into Release.
+- Never run a Release workflow from Diagnostics or Test.
+- Never run a Diagnostics workflow from Release or Test.
+- Never run a Test workflow from Release or Diagnostics.
+- Never hand an artifact to the user unless branch + HEAD + workflow name + artifact name all match the intended role.
+- If any branch contains another role's active custom workflow, treat that as repository corruption and fix it before further work.
 
 ## Promotion flow
 
-**Diagnostics baseline -> Test one-variable experiment -> runtime-verified FIX -> promote only that FIX to Release and Diagnostics -> advance Test from the updated Diagnostics baseline**
+The fixed workflow is:
 
-When a Test change is verified:
+**Diagnostics baseline -> Test one-variable experiment -> runtime-verified FIX -> promote the same FIX to Release and Diagnostics -> reset/advance Test from updated Diagnostics baseline**
 
-1. apply only the verified FIX to Release;
-2. apply the same FIX to Diagnostics;
-3. keep diagnostics/test-only code out of Release;
-4. reset/advance Test from the updated Diagnostics baseline before the next experiment.
+When a Test change is verified as a FIX:
+
+1. Apply **only the verified FIX** to `final-adreno-compat-arm64`.
+2. Apply the **same verified FIX** to `fix/arm64-diagnostics-ui-artifact-gate`.
+3. Keep diagnostic-only code exclusive to the Diagnostics branch.
+4. After both are synchronized, move/reset `runtime-experiments-arm64` to the updated Diagnostics baseline before the next experiment.
+
+Do **not** fast-forward or merge an entire Diagnostics/Test branch into Release if that would carry diagnostic or experimental commits. Promote selected FIX commits/patches only.
+
+## Artifact identity rules
+
+- **Release artifact**: only from `final-adreno-compat-arm64`, artifact name `cemu-arm64-release`.
+- **Diagnostics artifact**: only from `fix/arm64-diagnostics-ui-artifact-gate`, artifact name `cemu-arm64-diagnostics`.
+- **Test artifact**: only from `runtime-experiments-arm64`, artifact name `cemu-arm64-test`.
+- Never call a Diagnostics or Test artifact a release build.
+- Before handing an artifact to the user, verify branch, HEAD, workflow run, and artifact source.
+
+## Mandatory no-regression constraints
+
+The following are protected and must survive every promotion unless the user explicitly changes policy:
+
+- Do not touch `main`.
+- Keep Bayonetta 2 / Star Fox Zero `vkGetQueryPoolResults` direct query readback FIX.
+- Keep VS `DEFAULT_VAL` synthesize/linkage FIX.
+- Keep FidelityFX FSR1 EASU + RCAS.
+- Keep existing Adreno / pre-e834 verified fixes.
+- Keep XCX query behavior separate from Bayonetta 2 / Star Fox Zero.
+- Do not repeat already excluded query experiments.
+- Do not reintroduce previously rejected workaround experiments as fixes without new evidence.
 
 ## Start-of-work verification
 
-Before code change or CI:
+Before any code change or CI run:
 
-1. identify Release / Diagnostics / Test role;
-2. fetch actual branch HEAD;
-3. inspect the actual workflow/source;
-4. confirm protected fixes are present;
-5. confirm retired per-title query workarounds are absent from Release/Diagnostics;
-6. make the smallest role-appropriate change;
-7. statically verify before CI.
+1. Identify which of the three roles the requested work belongs to.
+2. Fetch the actual branch HEAD.
+3. Inspect the actual workflow/source on that branch.
+4. Confirm protected fixes are present.
+5. Confirm the branch does not contain another role's active custom workflow.
+6. Make the smallest role-appropriate change only.
+7. Run static role guards before CI.
+
+If a handoff document is stale, update the document instead of following the stale branch/HEAD.

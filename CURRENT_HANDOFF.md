@@ -2,7 +2,7 @@
 
 > Canonical policy: `BRANCH_POLICY.md`
 > Active-role manifest: `ACTIVE_BRANCH_ROLES.md`
-> Always verify the actual GitHub branch HEAD/workflow/source before writing or building.
+> Do **not** trust a hardcoded HEAD in a handoff. Before every write/build, fetch the actual branch HEAD and workflow from GitHub.
 
 ## ROLE
 
@@ -14,33 +14,55 @@ Repository:
 Branch:
 - `final-adreno-compat-arm64`
 
-Workflow:
+Only active workflow on this branch:
 - `.github/workflows/final-adreno-compat-arm64.yml`
 - display name: `[Release] Cemu Windows ARM64`
 
-Artifact:
+Only valid artifact identity:
 - `cemu-arm64-release`
 - executable: `Cemu.exe`
 
-## CURRENT RELEASE CONTRACT
+## RELEASE CONTRACT
 
-Release contains only verified common behavior fixes/features. It must not contain diagnostic-only UI/logging or experimental runtime behavior.
+This branch is production/release only.
 
-Current Adreno driver baseline no longer requires per-title Vulkan query workarounds for:
-- Bayonetta 2
-- Star Fox Zero
-- Xenoblade Chronicles X (XCX)
+Allowed:
+- runtime-verified fixes
+- protected Adreno compatibility fixes
+- FSR1
+- release branding (`Cemu ARM64`)
 
-Release must use the normal upstream Cemu occlusion-query path for those titles. No title-gated `vkGetQueryPoolResults` direct readback, XCX direct-readback experiment, forced zero-to-one visibility, or equivalent query-result override is allowed.
+Forbidden:
+- ARM64 Diagnostics UI
+- diagnostic checkbox persistence
+- logging-only instrumentation
+- `RuntimeDiagnostics` runtime hooks in the release binary
+- `[ADRENO_DIAG]`, `[CEMU_DIAG]`, `[GPU_QUERY_VIS]`, `[PS_INPUT_LINKAGE]` diagnostic markers in the release binary
+- unverified behavior experiments
+
+The Release workflow contains branch-role and diagnostics-free guards and must fail if these constraints are violated.
 
 ## PROTECTED / DO NOT REGRESS
 
-- VS `DEFAULT_VAL` synthesize/linkage compatibility FIX
+- Bayonetta 2 / Star Fox Zero `vkGetQueryPoolResults` direct query readback FIX
+- VS `DEFAULT_VAL` synthesize/linkage FIX
 - FidelityFX FSR1 EASU + RCAS
-- verified Adreno / pre-e834 compatibility fixes unrelated to the retired per-title query workaround
+- existing Adreno / pre-e834 verified fixes
+- XCX query behavior remains separate from Bayonetta 2 / Star Fox Zero
 - `main` must not be touched
-- rejected experiments are not repeated without new evidence
+- rejected query/workaround experiments are not repeated without new evidence
 
-## NEXT ACTION
+## PROMOTION RULE
 
-Build the Release branch with its own workflow and verify the produced artifact identity. Runtime smoke validation should use the current Adreno driver baseline.
+A Test change becomes a release FIX only after required static verification, CI and runtime validation.
+
+When verified:
+1. promote only the verified FIX to Release
+2. apply the same FIX to Diagnostics
+3. do not carry Diagnostics/Test-only commits into Release
+
+## NEXT ACTION RULE
+
+- investigation/logging -> **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**
+- behavior-changing experiment -> **[Test] `runtime-experiments-arm64`**
+- do not develop experiments directly on Release
