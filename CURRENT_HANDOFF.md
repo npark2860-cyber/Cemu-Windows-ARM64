@@ -2,7 +2,7 @@
 
 > Canonical policy: `BRANCH_POLICY.md`
 > Active-role manifest: `ACTIVE_BRANCH_ROLES.md`
-> Always verify the actual GitHub branch HEAD/workflow/source before writing or building.
+> Do **not** trust a hardcoded HEAD in a handoff. Before every write/build, fetch the actual branch HEAD and workflow from GitHub.
 
 ## ROLE
 
@@ -14,39 +14,53 @@ Repository:
 Branch:
 - `fix/arm64-diagnostics-ui-artifact-gate`
 
-Workflow:
+Only active workflow on this branch:
 - `.github/workflows/diagnostics-arm64.yml`
 - display name: `[Diagnostics] Cemu Windows ARM64`
 
-Artifact:
+Only valid artifact identity:
 - `cemu-arm64-diagnostics`
 - executable: `Cemu-Diagnostics.exe`
 
-## CURRENT DIAGNOSTICS CONTRACT
+## DIAGNOSTICS CONTRACT
 
-Diagnostics represents current Release behavior plus switchable observation-only instrumentation/UI.
+This branch must always represent:
 
-Current Adreno driver baseline no longer requires per-title Vulkan query behavior changes for:
-- Bayonetta 2
-- Star Fox Zero
-- Xenoblade Chronicles X (XCX)
+**current Release FIX set + observation-only diagnostics UI/instrumentation**
 
-The generated diagnostics build must retain the normal upstream Cemu query-result behavior. Generic query lifecycle/result visibility logging is allowed, but it must never choose a different result source, force visibility, synthesize a nonzero result, or gate behavior by those title IDs.
+Every FIX promoted to Release must also be applied here.
 
-Current targeted diagnostics remain observation-only, including:
-- PS input linkage
-- generic GPU occlusion/query visibility
+Diagnostics-only features stay here and do not move to Release unless explicitly requested.
 
-Both are default OFF.
+Current targeted diagnostics include:
+- switchable diagnostics UI with persisted checkbox state / hitch threshold
+- `PS input linkage`
+  - SPI_PS_INPUT_CNTL / semantic / DEFAULT_VAL / interpolation / VS producer visibility
+- `GPU occlusion/query visibility`
+  - generic GPU occlusion/query visibility tracing
+  - XCX analysis remains logically separate from Bayonetta 2 / Star Fox Zero query analysis
+
+Both targeted diagnostics are default OFF and are observation-only.
 
 ## PROTECTED / DO NOT REGRESS
 
-- VS `DEFAULT_VAL` synthesize/linkage compatibility FIX
+- Bayonetta 2 / Star Fox Zero `vkGetQueryPoolResults` direct query readback FIX
+- VS `DEFAULT_VAL` synthesize/linkage FIX
 - FidelityFX FSR1 EASU + RCAS
-- verified Adreno / pre-e834 compatibility fixes unrelated to the retired per-title query workaround
-- diagnostics remain switchable and observation-only
+- existing Adreno / pre-e834 verified fixes
+- XCX query behavior remains separate from Bayonetta 2 / Star Fox Zero
 - `main` must not be touched
+- rejected experiments are not repeated without new evidence
 
-## NEXT ACTION
+## PROMOTION RULE
 
-Build the Diagnostics branch with its own workflow, require all diagnostics verifiers to PASS, and verify the produced artifact identity. Runtime validation uses the current Adreno driver baseline.
+When a Test change is runtime-verified as a FIX:
+1. apply only that FIX to Release
+2. apply the same FIX here
+3. keep diagnostics-only code here
+4. advance/reset Test from the updated Diagnostics baseline before the next experiment
+
+## NEXT ACTION RULE
+
+Use this branch for investigation and log collection.
+Behavior-changing experiments belong on **[Test] `runtime-experiments-arm64`**.
