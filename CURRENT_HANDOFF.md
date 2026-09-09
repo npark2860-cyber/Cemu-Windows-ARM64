@@ -38,17 +38,19 @@ Current targeted diagnostics include:
   - SPI_PS_INPUT_CNTL / semantic / DEFAULT_VAL / interpolation / VS producer visibility
 - `GPU occlusion/query visibility`
   - generic GPU occlusion/query visibility tracing
-  - XCX analysis remains logically separate from Bayonetta 2 / Star Fox Zero query analysis
 
 Both targeted diagnostics are default OFF and are observation-only.
 
 ## PROTECTED / DO NOT REGRESS
 
-- Bayonetta 2 / Star Fox Zero `vkGetQueryPoolResults` direct query readback FIX
+- Bayonetta 2 / Star Fox Zero / Xenoblade Chronicles X `vkGetQueryPoolResults` direct query readback FIX for all JPN / USA / EUR application title IDs
+  - Bayonetta 2: `00050000-1011B900`, `00050000-10172600`, `00050000-10172700`
+  - Star Fox Zero: `00050000-101AFF00`, `00050000-101B0400`, `00050000-101B0500`
+  - Xenoblade Chronicles X: `00050000-10116100`, `00050000-101C4D00`, `00050000-101C4C00`
+- XCX historical `0 -> 1 force-visible` experiment is not part of Diagnostics behavior
 - VS `DEFAULT_VAL` synthesize/linkage FIX
 - FidelityFX FSR1 EASU + RCAS
 - existing Adreno / pre-e834 verified fixes
-- XCX query behavior remains separate from Bayonetta 2 / Star Fox Zero
 - `main` must not be touched
 - rejected experiments are not repeated without new evidence
 

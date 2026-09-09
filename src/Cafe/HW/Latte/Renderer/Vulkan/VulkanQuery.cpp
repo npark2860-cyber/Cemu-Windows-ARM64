@@ -41,8 +41,15 @@ private:
 static bool UseDirectQueryReadbackWorkaround()
 {
 	const uint64 titleId = CafeSystem::GetForegroundTitleId();
-	return titleId == 0x00050000101AFF00ULL || // Star Fox Zero JP
-		titleId == 0x000500001011B900ULL;   // Bayonetta 2 JP
+	return titleId == 0x000500001011B900ULL || // Bayonetta 2 JPN
+		titleId == 0x0005000010172600ULL || // Bayonetta 2 USA
+		titleId == 0x0005000010172700ULL || // Bayonetta 2 EUR
+		titleId == 0x00050000101AFF00ULL || // Star Fox Zero JPN
+		titleId == 0x00050000101B0400ULL || // Star Fox Zero USA
+		titleId == 0x00050000101B0500ULL || // Star Fox Zero EUR
+		titleId == 0x0005000010116100ULL || // Xenoblade Chronicles X JPN
+		titleId == 0x00050000101C4D00ULL || // Xenoblade Chronicles X USA
+		titleId == 0x00050000101C4C00ULL;   // Xenoblade Chronicles X EUR
 }
 
 bool LatteQueryObjectVk::getResult(uint64& numSamplesPassed)
