@@ -70,11 +70,15 @@ Do **not** fast-forward or merge an entire Diagnostics/Test branch into Release 
 The following are protected and must survive every promotion unless the user explicitly changes policy:
 
 - Do not touch `main`.
-- Keep Bayonetta 2 / Star Fox Zero `vkGetQueryPoolResults` direct query readback FIX.
+- Keep Bayonetta 2 / Star Fox Zero / Xenoblade Chronicles X `vkGetQueryPoolResults` direct query readback FIX for all JPN / USA / EUR application title IDs.
+- Protected application title IDs:
+  - Bayonetta 2: `00050000-1011B900` JPN, `00050000-10172600` USA, `00050000-10172700` EUR.
+  - Star Fox Zero: `00050000-101AFF00` JPN, `00050000-101B0400` USA, `00050000-101B0500` EUR.
+  - Xenoblade Chronicles X: `00050000-10116100` JPN, `00050000-101C4D00` USA, `00050000-101C4C00` EUR.
+- Do not promote the historical XCX `0 -> 1 force-visible` experiment into Release or Diagnostics.
 - Keep VS `DEFAULT_VAL` synthesize/linkage FIX.
 - Keep FidelityFX FSR1 EASU + RCAS.
 - Keep existing Adreno / pre-e834 verified fixes.
-- Keep XCX query behavior separate from Bayonetta 2 / Star Fox Zero.
 - Do not repeat already excluded query experiments.
 - Do not reintroduce previously rejected workaround experiments as fixes without new evidence.
 
