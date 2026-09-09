@@ -66,6 +66,17 @@ bool LatteQueryObjectVk::getResult(uint64& numSamplesPassed)
 		return false;
 	cemu_assert_debug(list_queryFragments.empty());
 	numSamplesPassed = m_acccumulatedSum;
+	if (UseXCXDirectQueryReadbackExperiment())
+	{
+		static bool s_forceVisibleLogged = false;
+		if (!s_forceVisibleLogged)
+		{
+			cemuLog_log(LogType::Force, "[XCX_QUERY_FORCE_VISIBLE] active");
+			s_forceVisibleLogged = true;
+		}
+		if (numSamplesPassed == 0)
+			numSamplesPassed = 1;
+	}
 	//numSamplesPassed = m_rendererVk->m_occlusionQueries.ptrQueryResults[m_queryIndex];
 	return true;
 }
