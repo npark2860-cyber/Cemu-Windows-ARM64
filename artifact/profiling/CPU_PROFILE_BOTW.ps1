@@ -56,11 +56,12 @@ for ($remaining = 60; $remaining -gt 0; $remaining--) {
 Write-Progress -Activity 'BOTW warm-up' -Completed
 
 # Windows 11 ARM64 systems have occasionally retained a bad sampled-profile interval.
-# Resetting it before capture is harmless and improves CPU Usage (Sampled) reliability.
+# Reset it before capture, then use the verbose CPU profile because CPU.light can
+# omit SampledProfile stack walking and produce Stack=n/a in WPA.
 & $wpr -resetprofint | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "wpr -resetprofint failed with exit code $LASTEXITCODE" }
 
-& $wpr -start CPU.light -filemode | Out-Host
+& $wpr -start CPU -filemode | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "WPR CPU sampling could not start (exit code $LASTEXITCODE)." }
 
 $capturing = $true
