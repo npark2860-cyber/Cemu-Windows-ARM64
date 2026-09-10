@@ -109,7 +109,8 @@ neon_anchor = '''#else
 \t\t\telse
 '''
 neon_block = '''#elif defined(__aarch64__)
-\t\t\tif (RuntimeExperiments::Enabled("texture-hash-neon"))
+\t\t\tstatic const bool expNeonTextureHash = RuntimeExperiments::Enabled("texture-hash-neon");
+\t\t\tif (expNeonTextureHash)
 \t\t\t{
 \t\t\t\tuint32x4_t h128a = vdupq_n_u32(0);
 \t\t\t\tuint32x4_t h128b = vdupq_n_u32(0);
