@@ -147,7 +147,7 @@ jobs:
           -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
 
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DCMAKE_C_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Z7" -DCMAKE_CXX_FLAGS_RELEASE="/O2 /Ob2 /DNDEBUG /Z7" -DCMAKE_EXE_LINKER_FLAGS_RELEASE="/INCREMENTAL:NO /DEBUG:FULL /OPT:REF /OPT:ICF" -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
 
       - name: Build Cemu once
         run: cmake --build build
@@ -156,7 +156,12 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifact/experiments | Out-Null
+          New-Item -ItemType Directory -Force -Path artifact/profiling | Out-Null
           Copy-Item bin/Cemu_release.exe artifact/Cemu-Test.exe
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-CPUProfile.exe
+          $pdb = Get-ChildItem -Path bin,build -Recurse -Filter 'Cemu*.pdb' -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select-Object -First 1
+          if (-not $pdb) { throw 'Cemu PDB was not generated for the CPU profiling build.' }
+          Copy-Item $pdb.FullName artifact/profiling/Cemu-CPUProfile.pdb
           Copy-Item tools/diagnostics/README.md artifact/experiments/README.md
           $launchers = @{
             'A_depthclip_feature.cmd' = 'depthclip-feature,pipeline-diag'
