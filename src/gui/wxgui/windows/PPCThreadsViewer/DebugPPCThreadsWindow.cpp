@@ -248,7 +248,7 @@ void DebugPPCThreadsWindow::RefreshThreadList()
 			coreinit::OSMutex* mutex = cafeThread->waitingForMutex;
 			wxString extraInfoLabel;
 			if (mutex)
-				extraInfoLabel = wxString::Format("Mutex 0x%08x (Held by thread 0x%08X Lock-Count: %d)", memory_getVirtualOffsetFromPointer(mutex), mutex->owner.GetMPTR(), (uint32)mutex->lockCount);
+				extraInfoLabel += wxString::Format("Mutex 0x%08x (Held by thread 0x%08X Lock-Count: %d)", memory_getVirtualOffsetFromPointer(mutex), mutex->owner.GetMPTR(), (uint32)mutex->lockCount);
 
 			// OSSetThreadCancelState
 			if (cafeThread->requestFlags & OSThread_t::REQUEST_FLAG_CANCEL)
@@ -325,47 +325,131 @@ void DebugPPCThreadsWindow::ProfileThreadWorker(OSThread_t* thread)
 {
 	wxProgressDialogManager progressDialog(this);
 	progressDialog.Create(_("Profiling thread"),
-						  _("Capturing samples..."),
+						  _("Capturing RUNNING-only samples..."),
 						  1000, // range
 						  wxPD_CAN_SKIP);
 
 	std::unordered_map<VAddr, uint32> samples;
-	// loop for one minute
+	constexpr uint64 captureDurationMs = 60000;
 	uint64 startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
 						   std::chrono::system_clock::now().time_since_epoch())
 						   .count();
-	uint32 totalSampleCount = 0;
+
+	uint64 observationCount = 0;
+	uint64 runningCount = 0;
+	uint64 readyCount = 0;
+	uint64 waitingCount = 0;
+	uint64 suspendedCount = 0;
+	uint64 noneCount = 0;
+	uint64 moribundCount = 0;
+	uint64 otherCount = 0;
+	uint32 executionSampleCount = 0;
+
 	while (true)
 	{
-		// suspend thread
-		coreinit::OSSuspendThread(thread);
-		// wait until thread is not running anymore
+		uint64 now = std::chrono::duration_cast<std::chrono::milliseconds>(
+						 std::chrono::system_clock::now().time_since_epoch())
+						 .count();
+		uint64 elapsed = now - startTime;
+		if (elapsed >= captureDurationMs)
+			break;
+
+		bool captureRunningSample = false;
 		__OSLockScheduler();
-		while (coreinit::OSIsThreadRunningNoLock(thread))
+		if (!coreinit::__OSIsThreadActive(thread))
 		{
 			__OSUnlockScheduler();
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-			__OSLockScheduler();
+			break;
 		}
-		uint32 sampleIP = thread->context.srr0;
-		__OSUnlockScheduler();
-		coreinit::OSResumeThread(thread);
-		// count sample
-		samples[sampleIP]++;
-		totalSampleCount++;
-		if ((totalSampleCount % 50) == 0)
+
+		if (thread->suspendCounter != 0)
 		{
-			wxString msg = formatWxString(_("Capturing samples... ({:})\nResults will be written to log.txt\n"), totalSampleCount);
-			if (totalSampleCount < 30000)
-				msg.Append(_("Click Skip button for early results with lower accuracy"));
-			else
-				msg.Append(_("Click Skip button to finish"));
-			progressDialog.Update(totalSampleCount * 1000 / 30000, msg);
+			++suspendedCount;
+		}
+		else
+		{
+			switch (thread->state)
+			{
+			case OSThread_t::THREAD_STATE::STATE_RUNNING:
+				++runningCount;
+				captureRunningSample = true;
+				// The scheduler lock closes the READY/WAITING race between the state
+				// observation and the profiler-induced suspend request.
+				coreinit::__OSSuspendThreadNolock(thread);
+				break;
+			case OSThread_t::THREAD_STATE::STATE_READY:
+				++readyCount;
+				break;
+			case OSThread_t::THREAD_STATE::STATE_WAITING:
+				++waitingCount;
+				break;
+			case OSThread_t::THREAD_STATE::STATE_NONE:
+				++noneCount;
+				break;
+			case OSThread_t::THREAD_STATE::STATE_MORIBUND:
+				++moribundCount;
+				break;
+			default:
+				++otherCount;
+				break;
+			}
+		}
+		__OSUnlockScheduler();
+		++observationCount;
+
+		if (captureRunningSample)
+		{
+			// Wait until the PPC context has actually been stored, then sample srr0.
+			__OSLockScheduler();
+			while (coreinit::OSIsThreadRunningNoLock(thread))
+			{
+				__OSUnlockScheduler();
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				__OSLockScheduler();
+			}
+			uint32 sampleIP = thread->context.srr0;
+			__OSUnlockScheduler();
+			coreinit::OSResumeThread(thread);
+
+			samples[sampleIP]++;
+			++executionSampleCount;
+		}
+
+		if ((observationCount % 50) == 0)
+		{
+			wxString msg = formatWxString(
+				_("Capturing RUNNING-only samples... ({:} execution / {:} observations)\nResults will be written to log.txt\nClick Skip button to finish early"),
+				executionSampleCount, observationCount);
+			uint64 progress = elapsed * 1000 / captureDurationMs;
+			if (progress > 1000)
+				progress = 1000;
+			progressDialog.Update((int)progress, msg);
 			if (progressDialog.IsCancelledOrSkipped())
 				break;
 		}
+
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
+
+	auto pct = [observationCount](uint64 value) -> double {
+		if (observationCount == 0)
+			return 0.0;
+		return (double)value * 100.0 / (double)observationCount;
+	};
+	cemuLog_log(LogType::Force,
+		"[PPC_PROFILE_STATE] observations={} RUNNING={} ({:.2f}%) READY={} ({:.2f}%) WAITING={} ({:.2f}%) SUSPENDED={} ({:.2f}%) NONE={} ({:.2f}%) MORIBUND={} ({:.2f}%) OTHER={} ({:.2f}%)",
+		observationCount,
+		runningCount, pct(runningCount),
+		readyCount, pct(readyCount),
+		waitingCount, pct(waitingCount),
+		suspendedCount, pct(suspendedCount),
+		noneCount, pct(noneCount),
+		moribundCount, pct(moribundCount),
+		otherCount, pct(otherCount));
+	cemuLog_log(LogType::Force,
+		"[PPC_PROFILE_EXEC] RUNNING-only execution samples={} (state observed before profiler-induced suspend)",
+		executionSampleCount);
+
 	PresentProfileResults(thread, samples);
 	progressDialog.Destroy();
 }
