@@ -132,4 +132,17 @@ neon_block = '''#elif defined(__aarch64__)
 t = replace_once(t, neon_anchor, neon_block, "ARM64 texture hash NEON branch")
 p.write_text(t, encoding="utf-8", newline="\n")
 
+# PPC thread profiler cadence A/B diagnostic.
+# Keep the suspend-completion polling at 1 ms, but reduce only the outer
+# observation cadence from 1 ms to 10 ms to minimize profiler-induced FPS loss.
+p = Path("src/gui/wxgui/windows/PPCThreadsViewer/DebugPPCThreadsWindow.cpp")
+t = p.read_text(encoding="utf-8")
+t = replace_once(
+    t,
+    '\t\tstd::this_thread::sleep_for(std::chrono::milliseconds(1));\n\t}\n\n\tauto pct = [observationCount](uint64 value) -> double {',
+    '\t\tstd::this_thread::sleep_for(std::chrono::milliseconds(10));\n\t}\n\n\tauto pct = [observationCount](uint64 value) -> double {',
+    "PPC profiler outer sampling cadence",
+)
+p.write_text(t, encoding="utf-8", newline="\n")
+
 print("[diagnostics-performance] installed")
