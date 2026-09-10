@@ -88,4 +88,47 @@ t = replace_once(t,
     'void VulkanRenderer::bufferCache_copy(uint32 srcOffset, uint32 dstOffset, uint32 size)\n{\n\tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::MemoryUploadStats))\n\t\tRuntimeDiagnostics::AddCopyBytes(size);\n',
     "buffer copy bytes")
 p.write_text(t, encoding="utf-8", newline="\n")
+
+# ARM64 texture hash NEON A/B experiment.
+# Default behavior is unchanged. On AArch64, texture-hash-neon mirrors the
+# existing x64 AVX2 huge-uncompressed-texture sampling scheme: 32-byte XOR
+# samples every 288 bytes, reduced by summing eight 32-bit lanes.
+p = Path("src/Cafe/HW/Latte/Core/LatteTextureCache.cpp")
+t = p.read_text(encoding="utf-8")
+t = ensure_include(t, '#include "Common/cpu_features.h"\n', '#include "Cafe/HW/Latte/Renderer/Renderer.h"\n', '#include "diagnostics/RuntimeExperiments.h"\n', "texture hash experiment include")
+if '#include <arm_neon.h>\n' not in t:
+    t = replace_once(
+        t,
+        '#include "diagnostics/RuntimeExperiments.h"\n',
+        '#include "diagnostics/RuntimeExperiments.h"\n#if defined(__aarch64__)\n#include <arm_neon.h>\n#endif\n',
+        "texture hash NEON include",
+    )
+neon_anchor = '''#else
+\t\t\tif( false ) {}
+#endif
+\t\t\telse
+'''
+neon_block = '''#elif defined(__aarch64__)
+\t\t\tif (RuntimeExperiments::Enabled("texture-hash-neon"))
+\t\t\t{
+\t\t\t\tuint32x4_t h128a = vdupq_n_u32(0);
+\t\t\t\tuint32x4_t h128b = vdupq_n_u32(0);
+\t\t\t\tconst uint8* readPtr = reinterpret_cast<const uint8*>(texDataU32);
+\t\t\t\tuint32 sampleCount = memRange / 288;
+\t\t\t\twhile (sampleCount--)
+\t\t\t\t{
+\t\t\t\t\th128a = veorq_u32(h128a, vld1q_u32(reinterpret_cast<const uint32*>(readPtr)));
+\t\t\t\t\th128b = veorq_u32(h128b, vld1q_u32(reinterpret_cast<const uint32*>(readPtr + 16)));
+\t\t\t\t\treadPtr += 288;
+\t\t\t\t}
+\t\t\t\thashVal = vaddvq_u32(h128a) + vaddvq_u32(h128b);
+\t\t\t}
+#else
+\t\t\tif( false ) {}
+#endif
+\t\t\telse
+'''
+t = replace_once(t, neon_anchor, neon_block, "ARM64 texture hash NEON branch")
+p.write_text(t, encoding="utf-8", newline="\n")
+
 print("[diagnostics-performance] installed")

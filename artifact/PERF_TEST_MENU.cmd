@@ -15,6 +15,7 @@ echo  [3] ARM64 Serialize only
 echo  [4] Skip WAW Barrier only
 echo  [5] Skip RT Load Barrier only
 echo  [6] Force Render Pass Reuse only
+echo  [7] ARM64 NEON Texture Hash only
 echo  [Q] Quit
 echo.
 echo Test rule for every preset:
@@ -37,6 +38,7 @@ if "%SEL%"=="3" goto serialize
 if "%SEL%"=="4" goto skipwaw
 if "%SEL%"=="5" goto skiprtload
 if "%SEL%"=="6" goto passreuse
+if "%SEL%"=="7" goto texturehashneon
 goto menu
 
 :baseline
@@ -72,6 +74,11 @@ goto run
 :passreuse
 set "CEMU_PERF_PRESET=FORCE_PASS_REUSE"
 set "CEMU_EXPERIMENTS=perf-force-pass-reuse,perf-log"
+goto run
+
+:texturehashneon
+set "CEMU_PERF_PRESET=TEXTURE_HASH_NEON"
+set "CEMU_EXPERIMENTS=texture-hash-neon,perf-log"
 goto run
 
 :run
