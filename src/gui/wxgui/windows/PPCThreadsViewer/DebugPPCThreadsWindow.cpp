@@ -248,7 +248,7 @@ void DebugPPCThreadsWindow::RefreshThreadList()
 			coreinit::OSMutex* mutex = cafeThread->waitingForMutex;
 			wxString extraInfoLabel;
 			if (mutex)
-				extraInfoLabel += wxString::Format("Mutex 0x%08x (Held by thread 0x%08X Lock-Count: %d)", memory_getVirtualOffsetFromPointer(mutex), mutex->owner.GetMPTR(), (uint32)mutex->lockCount);
+				extraInfoLabel = wxString::Format("Mutex 0x%08x (Held by thread 0x%08X Lock-Count: %d)", memory_getVirtualOffsetFromPointer(mutex), mutex->owner.GetMPTR(), (uint32)mutex->lockCount);
 
 			// OSSetThreadCancelState
 			if (cafeThread->requestFlags & OSThread_t::REQUEST_FLAG_CANCEL)
