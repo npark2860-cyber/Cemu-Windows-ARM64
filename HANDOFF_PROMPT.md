@@ -29,17 +29,8 @@ Experiment:
 Implementation commit:
 `f929fa8007d6ef17f90a3c166b5d248d2ee30e3d`
 
-실제 commit message:
-`perf: add ARM64 R_NAME LDP experiment`
-
-Build-time installer:
-`tools/diagnostics/Apply-ARM64RNameLdp.py`
-
 Compile-only repair:
 `fc330d1c7c29e68042208337ac6e46eb21c69421`
-
-- Python raw triple-quoted helper string 때문에 생성 C++에 literal `\t`가 들어간 문제만 수정
-- 최적화 의미/범위는 변경하지 않음
 
 검증 CI:
 - run `34591462835`
@@ -47,79 +38,77 @@ Compile-only repair:
 - SUCCESS
 - artifact `cemu-arm64-test`
 - artifact ID `10262500252`
-- digest `sha256:7fb8e3f213818d4f0cc46067bd02ff6cd1fd4be37553564e9105a111f037d8fe`
 
-## 반드시 기억할 정정 사항
+실제 P1은 GPR `R0..R31`의 인접 uint32 state loads를 `LDP Wreg,Wreg`로 묶는 실험이다. 예전 handoff의 non-GPR 64-bit/+8/LR+CTR/XER+temporaryFPR 설명은 문서 오류이므로 사용하지 않는다.
 
-빌드 실패 뒤 작성된 이전 handoff에는 P1을 다음처럼 잘못 설명한 부분이 있었다.
-- non-GPR 64-bit R_NAME
-- +8 byte adjacent fields
-- LR+CTR / XER+temporaryFPR
-- `F940...` native examples
+## VERIFY — PASS
 
-이 설명은 실제 `f929fa8...` 구현과 맞지 않으며, pre-P1 `DEBUG_HISTORY`에도 그 상세 근거가 기록되어 있지 않다. 다시 source of truth로 사용하지 않는다.
+`0x0420CB80` enterable state-restore segment에서:
+- `r3+r4`
+- `r5+r6`
+- `r24+r25`
+- `r26+r27`
+- `r28+r29`
+- `r30+r31`
 
-실제 P1은 다음과 같다.
-- `PPCREC_IML_TYPE_R_NAME`
-- IML base format `I64`
-- 이름은 `PPCREC_NAME_R0..R31`만
-- contiguous `R_NAME` run 안에서 guest GPR n/n+1을 찾음
-- 각 GPR이 run 안에 정확히 한 번 있고 목적 host register가 서로 다를 때만 pair
-- `PPCInterpreter_t::gpr[]`는 `uint32[32]`
-- 기존 개별 `ldr W...` 두 개 대신 `ldp W...,W...` 하나를 emit
-- unmatched GPR과 non-GPR R_NAME은 기존 lowering 그대로
-
-## VERIFY 결과 — PASS
-
-성공 artifact에서 `ARM64_RNAME_LDP_VERIFY.cmd` 실행 로그 확인 완료.
-
-Hot entry:
-- `0x0420CB80`
-
-Enterable post-RA state-restore segment:
-- `ppc=0x00000000`
-- `enter=0x0420CB80`
-
-관찰된 pair:
-- r3+r4
-- r5+r6
-- r24+r25
-- r26+r27
-- r28+r29
-- r30+r31
-
-Runtime diagnostic:
+총 6 pair가 형성되었고:
 - `pairs=6`
 - `native_bytes_saved=24`
 
-여섯 partner IML은 추가 native bytes가 0으로 기록되어 pair emission과 정확히 일치한다. 마지막 JUMP도 유지된다. BOTW stable gameplay smoke도 통과했다.
+final JUMP와 unrelated lowering은 유지되고 BOTW stable-gameplay smoke도 통과했다.
 
-VERIFY 실행의 초기 FPS 숫자는 성능 판정에 사용하지 않는다.
+## 첫 controlled A/B — POSITIVE
+
+실행 순서:
+1. BASELINE
+2. CANDIDATE
+
+비교 구간:
+`t=70..260s`
+
+결과:
+- avg FPS: `49.66745 -> 50.76435` = **+2.2085%**
+- avg frame time: `20.13760 -> 19.70055 ms` = **-2.1703%**
+- mean p99: `22.25870 -> 21.52095 ms` = **-3.3144%**
+- mean 1% low: `45.10415 -> 46.49985 FPS` = **+3.0944%**
+
+추가 확인:
+- candidate가 20개 aligned window 중 19개에서 FPS 우세
+- baseline `t=250..260s` 급락을 제외해도 우세 유지
+- `t=70..240s`: 약 **+1.7869% FPS**
+- `t=70..230s`: 약 **+1.7369% FPS**
+
+판정:
+- 첫 pair는 명확한 positive direction
+- `arm64-rname-ldp`는 보존할 positive candidate
+- 아직 FIX 아님
+- 다음 단계는 같은 artifact로 역순 재검증 한 번
 
 ## 지금 바로 할 일
 
 새 코드를 작성하거나 새 빌드를 만들지 않는다.
 
-기존 성공 artifact로 첫 controlled A/B를 실행한다.
+같은 artifact로 순서만 뒤집는다.
 
-순서:
-1. `ARM64_RNAME_LDP_BASELINE.cmd`
-2. Cemu 종료
-3. `ARM64_RNAME_LDP_CANDIDATE.cmd`
+1. `ARM64_RNAME_LDP_CANDIDATE.cmd`
+2. Cemu 완전 종료
+3. `ARM64_RNAME_LDP_BASELINE.cmd`
 
 조건:
 - 동일 save/location/camera
 - 정지 scene
 - 동일 graphics/FPS++ settings
-- weather fixed
+- fixed weather
 - 각 preset마다 Cemu 재시작
-- 최소 `t=260s`까지 실행
+- 최소 `t=260s`까지
 - 비교 구간 `t=70..260s`
 - `arm64-compare-reuse`는 섞지 않음
 
-두 PERF log를 받아 avg FPS, avg frame time, p99, 1% low를 비교한다.
+두 PERF 로그를 비교해 역순에서도 positive인지 확인한다.
 
-첫 pair가 의미 있게 positive면 역순으로 한 번 더 반복한 뒤 candidate 보존 여부를 판단한다. Neutral/negative면 benchmark invalidation 증거가 없는 한 P1을 reject한다.
+역순에서도 positive + correctness OK면 P1을 repeatable positive candidate로 확정하고, promotion 전에 reprofile한다.
+
+역순이 neutral/negative면 order/drift 영향을 분석하고 promotion하지 않는다.
 
 `arm64-compare-reuse`는 별도의 약 +1.68% positive candidate이며 아직 FIX가 아니다.
 
