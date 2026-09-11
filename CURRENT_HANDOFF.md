@@ -22,6 +22,8 @@ Artifact identity:
 - `cemu-arm64-test`
 - executable: `Cemu-Test.exe`
 
+`main`, Release, and Diagnostics are not to be modified in this stage.
+
 ## LAST VALIDATED NON-DOCUMENTATION CHECKPOINT
 
 - code commit: `04b5626c77503aceed1fb712e45563bf620262fc`
@@ -32,7 +34,37 @@ Artifact identity:
 - artifact ID: `10184443139`
 - artifact digest: `sha256:7294b62139b1f53aa56205a5a060dbd54d6dea62963a710125dbf03aa22efb82`
 
-Documentation commits may advance the branch HEAD beyond this code checkpoint. Always fetch the real HEAD before continuing.
+## CURRENT P1 EXPERIMENT — BUILD FAILED
+
+Experiment:
+- `arm64-rname-ldp`
+
+Behavior-changing code commit:
+- `f929fa8007d6ef17f90a3c166b5d248d2ee30e3d`
+- message: `jit: pair adjacent ARM64 state loads`
+
+Changed source:
+- `src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp`
+
+Intent:
+- pair two consecutive non-GPR `ImlOperation::R_NAME` loads when the second `PPCInterpreter_t` state offset is exactly `+8`
+- result registers must differ
+- positive scaled `LDP` immediate must be legal/aligned
+- otherwise fall back to the existing single-instruction lowering
+- no guest memory load/store semantics, query path, Vulkan path, or RA/liveness policy is intentionally changed
+
+GitHub Actions result for this code commit:
+- workflow: `ARM64 Windows Test Build`
+- run ID: `34576700718`
+- job ID: `103190682420`
+- result: **FAILURE**
+- failing step: **Build Cemu**
+- checkout/configure/vcpkg steps succeeded
+- artifact upload was skipped
+
+The exact compiler error line was **not recovered before handoff** because the job-log download endpoint did not decode successfully through the current connector. Do not guess the cause from the source diff. The next tab must recover the actual compiler diagnostic first (GitHub UI/API/local reproduction are all acceptable), then make the smallest P1-only compile fix.
+
+Documentation commits after `f929fa8...` may advance the branch HEAD. Always fetch the real branch HEAD before continuing.
 
 ## TEST CONTRACT
 
@@ -59,9 +91,9 @@ Rules:
 
 A reusable BOTW performance harness is present. `perf-log` records 10-second windows including average FPS/frame time, p99, approximate 1% low, barriers/frame and renderpasses/frame.
 
-Controlled BOTW benchmark protocol currently used:
+Controlled BOTW benchmark protocol:
 - same save/location/camera
-- no movement for the first-pass static benchmark
+- no movement for first-pass static benchmark
 - same graphics/FPS++ settings
 - weather fixed by graphic pack
 - restart Cemu for each preset
@@ -69,7 +101,7 @@ Controlled BOTW benchmark protocol currently used:
 
 ### Closed / non-winning directions for this scene
 
-Do not repeat these without new evidence:
+Do not repeat without new evidence:
 - timer `UDIV64`
 - `NO_EXTRA_FENCE`
 - ARM64 timer serialize
@@ -79,71 +111,60 @@ Do not repeat these without new evidence:
 - ARM64 NEON texture-hash experiment
 - historical `perf-arm64-jit-ab` compare/branch-fusion and direct-dispatch variants
 
-These either matched baseline poorly or regressed the controlled BOTW scene.
+## PPC PROFILER / P0 EVIDENCE
 
-## PPC PROFILER
+Current profiler uses RUNNING-only sampling at 10 ms cadence. The earlier 1 ms cadence materially perturbed FPS and must not be restored casually.
 
-Current in-app PPC thread profiler is diagnostic-only:
-- selected thread: typically `0E001800 / Default Core 1`
-- samples only after observing guest thread in `RUNNING`
-- profiler-induced suspend/resume is used to materialize PPC context
-- outer sampling cadence is **10 ms** (`aa2eba94f6ca6b7ce46b1e7dfc970f3e923fd511`)
-- the earlier 1 ms cadence materially perturbed FPS and must not be restored casually
+Latest important guest hotspots:
+- `0x0420CB80` — 5.56%
+- `0x02A281A0` — 4.12%
+- `0x03B84854` — 3.68%
+- `0x0399B4DC` — 1.77%
 
-Latest compare-reuse profile (`04b5626` build):
-- observations: 5058
-- RUNNING: 3564 (70.46%)
-- WAITING: 1463 (28.92%)
-- top guest/runtime samples:
-  - `coreinit.OSWaitEvent` 12.93%
-  - guest `0x0420CB80` 5.56%
-  - guest `0x02A281A0` 4.12%
-  - `gx2.GX2SetAlphaToMaskReg` 3.73%
-  - guest `0x03B84854` 3.68%
-  - `coreinit.OSWaitSemaphore` 3.17%
-  - guest `0x0399B4DC` 1.77%
+P0 analysis of `0x0420CB80` established a concrete backend pattern:
+- pre-RA and post-RA IML show repeated non-GPR `R_NAME` state reads
+- examples include contiguous 64-bit pairs such as `SPR::LR + SPR::CTR` and `SPR::XER + temporaryFPR`
+- native lowering emits separate `LDR` instructions for these adjacent `PPCInterpreter_t` fields
+- examples observed:
+  - `F940A546  ldr x6, [x10,#328]`
+  - `F940A942  ldr x2, [x10,#336]`
+  - `F9410146  ldr x6, [x10,#512]`
+  - `F9410542  ldr x2, [x10,#520]`
+- these are state loads, not guest-memory loads
+- RA does not merge/remove them
+- this evidence motivated the `arm64-rname-ldp` P1 experiment
 
-HLE wait functions are observations, not automatic JIT optimization targets.
+For `0x02A281A0`, the mapped native entry begins with an AArch64 branch/thunk. Do not interpret trailing raw words as a straight-line body until the first branch destination is resolved.
 
-## FIRST POSITIVE JIT CANDIDATE — ARM64 CONSECUTIVE COMPARE REUSE
+See `DEBUG_HISTORY_20260911_ARM64_JIT_PERF.md` for detailed evidence.
+
+## PRESERVED POSITIVE CANDIDATE — ARM64 COMPARE REUSE
 
 Experiment token:
 - `arm64-compare-reuse`
 
-Launcher:
-- `ARM64_COMPARE_REUSE.cmd`
+Controlled same-build BOTW A/B (`t=70..260s`):
+- baseline: 52.091 FPS
+- compare-reuse: 52.968 FPS
+- delta: +1.68%
+- average frame time: -1.65%
+- mean p99: -3.58%
+- mean 1% low: +3.34%
 
-Implementation commits:
-- `bafc464ce0a4b88b20b74c04f66b55899185a576` — add consecutive identical compare flag reuse
-- `04b5626c77503aceed1fb712e45563bf620262fc` — fix patch ordering against diagnostics instrumentation
-
-Static/native-code evidence:
-- hotspot `0x03B84854` previously emitted repeated identical compare sequences
-- with the experiment enabled, native words include `6b05009f 1a9f27ea 1a9f97eb 1a9f17ec`
-- this corresponds to one compare feeding three conditional-set results instead of repeating the same compare for each result
-
-Controlled same-build A/B, `t=70..260s`:
-
-| metric | BASELINE | ARM64_COMPARE_REUSE | delta |
-|---|---:|---:|---:|
-| avg FPS | 52.091 | 52.968 | +1.68% |
-| avg frame time | 19.200 ms | 18.883 ms | -1.65% |
-| mean p99 | 23.636 ms | 22.790 ms | -3.58% |
-| mean 1% low | 42.482 FPS | 43.900 FPS | +3.34% |
-
-Interpretation:
-- direction is positive and the generated-code reduction is real
-- effect size is small enough that it is **not yet a FIX**
-- user runtime impression after direct A/B was “minor or possibly no visible difference”
-- do **not** promote to Release/Diagnostics yet
-- keep as a preserved positive candidate while continuing hotspot discovery
+Generated-code reduction is real, but this is still a **candidate, not a FIX**. Do not promote it yet.
 
 ## CURRENT NEXT ACTION
 
-Read `NEXT_ACTION.md` and `DEBUG_HISTORY_20260911_ARM64_JIT_PERF.md`.
+Read `NEXT_ACTION.md`, `HANDOFF_PROMPT.md`, `DEBUG_HISTORY_20260911_ARM64_JIT_PERF.md`, and `PERFORMANCE_OPTIMIZATION_PLAN.md`.
 
-Immediate priority is **analysis before another behavior change**:
-1. inspect guest hotspot `0x0420CB80` and its exact IML/native sequence; determine why the mapped block is load-heavy
-2. inspect `0x02A281A0`; its mapped entry starts as a branch/thunk, so follow the branch target before interpreting trailing words as executable code
-3. only after one concrete redundant ARM64 JIT pattern is proven, create one new runtime-gated experiment
-4. benchmark that experiment alone against same-build BASELINE; do not silently combine it with compare-reuse
+Immediate order:
+1. fetch actual Test branch HEAD and confirm `f929fa8...` remains the latest behavior-changing code commit beneath any handoff docs
+2. recover the exact compiler diagnostic from failed run `34576700718` / job `103190682420`, or reproduce the same build error locally
+3. determine whether the failure is caused by the `arm64-rname-ldp` source change; do not infer without the diagnostic
+4. if it is P1-local, make the smallest compile-only correction on Test branch; do not broaden the optimization
+5. static-inspect the corrected diff and rerun Test CI
+6. **only after CI is green**, verify the target native sequence actually becomes legal `LDP` without changing branch/control structure
+7. then run controlled BOTW BASELINE vs `arm64-rname-ldp` A/B
+8. if neutral/negative/unstable, reject the experiment; if repeatably positive and correct, reprofile before considering promotion
+
+No runtime A/B is meaningful until the current build failure is resolved.
