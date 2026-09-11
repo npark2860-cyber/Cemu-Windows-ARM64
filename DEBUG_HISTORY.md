@@ -2,6 +2,27 @@
 
 > 날짜별 실험 결과를 누적한다. 현재 이어서 할 일은 `CURRENT_HANDOFF.md`를 본다.
 
+## 2026-09-10 ~ 2026-09-11 — ARM64 JIT performance profiling / first positive candidate
+
+상세 기록:
+- `DEBUG_HISTORY_20260911_ARM64_JIT_PERF.md`
+
+핵심 결과:
+- BOTW `perf-log` 정량 벤치마크 구축
+- RUNNING-only PPC profiler 구축
+- 1 ms profiler cadence의 큰 측정 교란을 확인하고 10 ms로 축소
+- guest hotspot -> ARM64 native code mapping 추가
+- `0x03B84854`에서 동일 CMP 반복 생성을 확인
+- `arm64-compare-reuse`로 동일 비교의 NZCV를 재사용해 중복 CMP 제거
+- same-build BOTW `t=70..260s` A/B에서 52.091 -> 52.968 FPS (+1.68%)
+- generated-code 개선은 확인됐지만 effect가 작아 아직 FIX/Release promotion은 하지 않음
+
+현재 우선순위:
+- `0x0420CB80` exact IML/native 분석
+- `0x02A281A0` branch/thunk target 해석
+
+---
+
 ## 2026-08-16 — VS DEFAULT_VAL synthesize
 
 ### Problem
