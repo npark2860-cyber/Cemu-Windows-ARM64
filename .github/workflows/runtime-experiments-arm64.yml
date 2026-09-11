@@ -85,6 +85,9 @@ jobs:
       - name: Apply generic ARM64 Diagnostic Edition
         run: python ./tools/diagnostics/Add-PipelineDiagnostics.py
 
+      - name: Extend JIT IML diagnostics to 0x02A281A0
+        run: python ./tools/diagnostics/Extend-ARM64JitRootCause02A.py
+
       - name: Deduplicate preserved query loader declaration
         shell: pwsh
         run: |
