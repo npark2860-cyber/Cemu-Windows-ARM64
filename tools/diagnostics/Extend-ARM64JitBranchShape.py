@@ -52,10 +52,10 @@ new = '''\t\tconst uint32 diagPpc = segIt->ppcAddress;
 '''
 t = replace_once(t, old, new, "ARM64 JIT native expanded hotspot set")
 
-# Add a compile-time-only branch-shape summary for any compiled function that
-# contains one of the established hotspots. Anchor only on the generation
-# comment because earlier diagnostic transforms intentionally insert runtime
-# gates immediately after aarch64GenContext construction.
+# Add compile-time-only branch-shape and BL target distribution summaries for
+# any compiled function that contains one of the established hotspots. Anchor
+# only on the generation comment because earlier diagnostic transforms insert
+# runtime gates immediately after aarch64GenContext construction.
 anchor = '''\t// generate iml instruction code
 '''
 block = '''\tif (RuntimeExperiments::Enabled("jit-iml-ra-hotspot"))
@@ -83,6 +83,7 @@ block = '''\tif (RuntimeExperiments::Enabled("jit-iml-ra-hotspot"))
 \t\t\tuint32 cycleCheck = 0;
 \t\t\tuint32 branchToReg = 0;
 \t\t\tuint32 branchLink = 0;
+\t\t\tstd::map<uint32, uint32> blTargetCounts;
 \t\t\tuint32 branchFar = 0;
 \t\t\tuint32 leave = 0;
 \t\t\tuint32 hle = 0;
@@ -100,7 +101,11 @@ block = '''\tif (RuntimeExperiments::Enabled("jit-iml-ra-hotspot"))
 \t\t\t\t\telse if (inst.type == PPCREC_IML_TYPE_MACRO)
 \t\t\t\t\t{
 \t\t\t\t\t\tif (inst.operation == PPCREC_IML_MACRO_B_TO_REG) ++branchToReg;
-\t\t\t\t\t\telse if (inst.operation == PPCREC_IML_MACRO_BL) ++branchLink;
+\t\t\t\t\t\telse if (inst.operation == PPCREC_IML_MACRO_BL)
+\t\t\t\t\t\t{
+\t\t\t\t\t\t\t++branchLink;
+\t\t\t\t\t\t\t++blTargetCounts[inst.op_macro.param2];
+\t\t\t\t\t\t}
 \t\t\t\t\t\telse if (inst.operation == PPCREC_IML_MACRO_B_FAR) ++branchFar;
 \t\t\t\t\t\telse if (inst.operation == PPCREC_IML_MACRO_LEAVE) ++leave;
 \t\t\t\t\t\telse if (inst.operation == PPCREC_IML_MACRO_HLE) ++hle;
@@ -111,6 +116,37 @@ block = '''\tif (RuntimeExperiments::Enabled("jit-iml-ra-hotspot"))
 \t\t\t\t"[JIT_BRANCH_SHAPE] func=0x{:08x} segments={} iml={} direct_jump={} conditional_jump={} cycle_check={} table_b_to_reg={} table_bl={} table_b_far={} leave={} hle={}",
 \t\t\t\tPPCRecFunction->ppcAddress, ppcImlGenContext->segmentList2.size(), totalIml,
 \t\t\t\tdirectJump, conditionalJump, cycleCheck, branchToReg, branchLink, branchFar, leave, hle);
+
+\t\t\tuint32 duplicateBlSites = 0;
+\t\t\tuint32 maxSitesPerTarget = 0;
+\t\t\tfor (const auto& [target, sites] : blTargetCounts)
+\t\t\t{
+\t\t\t\tif (sites > 1)
+\t\t\t\t\tduplicateBlSites += sites - 1;
+\t\t\t\tif (sites > maxSitesPerTarget)
+\t\t\t\t\tmaxSitesPerTarget = sites;
+\t\t\t}
+\t\t\tcemuLog_log(LogType::Force,
+\t\t\t\t"[JIT_BL_TARGET_SUMMARY] func=0x{:08x} bl_sites={} unique_targets={} duplicate_sites={} max_sites_per_target={}",
+\t\t\t\tPPCRecFunction->ppcAddress, branchLink, blTargetCounts.size(), duplicateBlSites, maxSitesPerTarget);
+\t\t\tfor (const auto& [target, sites] : blTargetCounts)
+\t\t\t{
+\t\t\t\tcemuLog_log(LogType::Force,
+\t\t\t\t\t"[JIT_BL_TARGET] func=0x{:08x} target=0x{:08x} sites={}",
+\t\t\t\t\tPPCRecFunction->ppcAddress, target, sites);
+\t\t\t}
+\t\t\tfor (IMLSegment* seg : ppcImlGenContext->segmentList2)
+\t\t\t{
+\t\t\t\tfor (const IMLInstruction& inst : seg->imlList)
+\t\t\t\t{
+\t\t\t\t\tif (inst.type == PPCREC_IML_TYPE_MACRO && inst.operation == PPCREC_IML_MACRO_BL)
+\t\t\t\t\t{
+\t\t\t\t\t\tcemuLog_log(LogType::Force,
+\t\t\t\t\t\t\t"[JIT_BL_SITE] func=0x{:08x} source=0x{:08x} target=0x{:08x}",
+\t\t\t\t\t\t\tPPCRecFunction->ppcAddress, inst.op_macro.param, inst.op_macro.param2);
+\t\t\t\t\t}
+\t\t\t\t}
+\t\t\t}
 \t\t}
 \t}
 
@@ -119,4 +155,4 @@ block = '''\tif (RuntimeExperiments::Enabled("jit-iml-ra-hotspot"))
 t = replace_once(t, anchor, block, "ARM64 JIT branch-shape summary")
 p.write_text(t, encoding="utf-8", newline="\n")
 
-print("[arm64-jit-branch-shape] expanded report-only hotspot/branch-shape diagnostics")
+print("[arm64-jit-branch-shape] expanded report-only hotspot/branch-shape/BL-target diagnostics")
