@@ -9,7 +9,7 @@ Branch:
 
 ## Benchmark harness
 
-`perf-log`는 10초 window마다 다음을 남긴다.
+`perf-log` records 10-second windows:
 - average FPS
 - average frame time
 - p99 frame time
@@ -17,16 +17,15 @@ Branch:
 - Vulkan barriers/frame
 - renderpasses/frame
 
-Controlled first-pass rule:
+Primary scene protocol:
 - same save/location/camera
 - static scene
 - same graphics/FPS++ settings
-- weather fixed
+- fixed weather
 - restart Cemu per preset
-- ignore startup/warmup
 - compare `t=70..260s`
 
-## Closed / non-winning first-pass directions
+## Closed / non-winning historical directions
 
 Do not repeat without new evidence:
 - timer UDIV64
@@ -36,77 +35,35 @@ Do not repeat without new evidence:
 - skip RT-load barrier
 - force render-pass reuse
 - ARM64 NEON texture hash
-- historical `perf-arm64-jit-ab` compare/branch fusion
+- historical compare/branch fusion
 - historical direct dispatch
 
-Barrier/render-pass count reductions alone are not performance proof.
+Barrier/render-pass reductions alone are not performance proof.
 
-## Host/PPC profiling path
+## Host/PPC profiling
 
-Relevant commits:
-- `3a97333e79f1addacc1f3865f9d5b8dec96a1145` — automated BOTW CPU sampling launcher
-- `f89d814b72264013ec5a4813a9431f1a3e0cbe77` — symbolized CPU hotspot profiling build
-- `1f766b2eeec243c761c8c4e1622ac3c57e27cd91` — sampled CPU stacks
-- `0ac53af14598a8c549980e0a7cc18d83aaff3f16` — sample only actively RUNNING PPC thread
-- `e1ec8d30d3fd09ae01b4cf5f5ddaf7ad8644f82d` — keep profiler diff scoped to sampling logic
-- `aa2eba94f6ca6b7ce46b1e7dfc970f3e923fd511` — reduce outer profiler cadence to 10 ms
-
-1 ms outer sampling materially perturbed FPS. 10 ms is the current diagnostic cadence.
-
-Latest important RUNNING-only guest samples from the established profile:
+Important guest samples from the established RUNNING-only profile:
 - `0x0420CB80` — 5.56%
 - `0x02A281A0` — 4.12%
 - `0x03B84854` — 3.68%
 - `0x0399B4DC` — 1.77%
 
-HLE waits are observations, not automatic JIT targets.
-
-## Native hotspot mapping
-
-Relevant commits:
-- `25f423ab9bb11139b084057546f39df39cb5a215` — map sampled guest hotspots to ARM64 JIT code
-- `4c456c6b07ba3d0ef8e35a598dc2b88ca1ebe6b4` — add BOTW JIT hotspot launcher
-- `09c4de42fe1b48b6d8fa656f02b9b8612eb3c7e9` — targeted ARM64 JIT root-cause tracing
-- `9d649811653c5e4391e80cf8d32df45e8b5bfb26` — include IML debug declarations
-
-### `0x03B84854`
-
-This hotspot exposed repeated identical comparisons for separate boolean results.
-
-With compare reuse enabled, native sequence includes:
-
-```text
-6b05009f  1a9f27ea  1a9f97eb  1a9f17ec
-```
-
-One compare feeds three conditional-result materializations instead of repeating the same compare.
-
-### `0x02A281A0`
-
-Mapped entry begins with:
-
-```text
-17ffff66 d503201f
-```
-
-Treat this as branch/thunk-like. Follow the first branch target before interpreting later words as a straight-line body.
+The PPC profiler outer sampling cadence is 10 ms. The earlier 1 ms cadence materially perturbed FPS and must not be restored casually.
 
 ## ARM64 consecutive compare reuse
 
 Experiment:
 - `arm64-compare-reuse`
 
-Relevant commits:
-- `bafc464ce0a4b88b20b74c04f66b55899185a576`
-- `04b5626c77503aceed1fb712e45563bf620262fc`
-
 Validated CI:
-- run `34558962681`
-- SUCCESS
+- run `34558962681` — SUCCESS
 
-Controlled same-build `t=70..260s` result:
+Static evidence:
+- repeated identical compares at `0x03B84854` were reduced so one compare feeds multiple condition-result materializations
 
-| metric | BASELINE | ARM64_COMPARE_REUSE | delta |
+One-order controlled result:
+
+| metric | BASELINE | CANDIDATE | delta |
 |---|---:|---:|---:|
 | avg FPS | 52.09095 | 52.96810 | +1.6839% |
 | avg frame time | 19.1998 ms | 18.8834 ms | -1.6479% |
@@ -114,95 +71,73 @@ Controlled same-build `t=70..260s` result:
 | mean 1% low | 42.4818 FPS | 43.8995 FPS | +3.3372% |
 
 Status:
-- generated-code reduction confirmed
-- positive candidate
-- not a FIX
-- keep separate from later experiments until each is independently measured
+- code reduction confirmed
+- preserve as candidate
+- **not a FIX**
+- because later P1 work exposed a strong run-order effect, compare-reuse also requires order-balanced revalidation before promotion
 
-## `0x0420CB80` targeted IML/RA tracing
+## `0x0420CB80` targeted diagnostics
 
-`Apply-ARM64JitRootCause.py` logs the target segment before/after RA move insertion and correlates post-RA IML instructions with emitted native byte ranges.
+Relevant diagnostics correlated IML/RA/native offsets at the hot entry path.
 
-Pre-P1 repository history only established that `0x0420CB80` was load-heavy and required exact IML mapping. It did **not** contain the later handoff's claimed detailed non-GPR `LR+CTR` / `XER+temporaryFPR` proof.
+Important correction:
+- pre-P1 repository history did **not** establish the later stale handoff claim about non-GPR 64-bit LR+CTR / XER+temporaryFPR pairs
+- those claims were documentation error and must not be resurrected as captured evidence
 
-## ARM64 R_NAME LDP P1 — actual implementation
+## P1 — ARM64 R_NAME GPR LDP
 
 Experiment:
 - `arm64-rname-ldp`
 
-Implementation commit:
+Implementation:
 - `f929fa8007d6ef17f90a3c166b5d248d2ee30e3d`
-- actual message: `perf: add ARM64 R_NAME LDP experiment`
+- `perf: add ARM64 R_NAME LDP experiment`
 
-Implementation mechanism:
-- build-time installer `tools/diagnostics/Apply-ARM64RNameLdp.py`
-- runtime gate `arm64-rname-ldp`
-
-Actual helper semantics:
+Actual semantics:
 - only `PPCREC_IML_TYPE_R_NAME`
-- IML base format must be `I64`
-- only names `PPCREC_NAME_R0 .. PPCREC_NAME_R0+31`
-- contiguous run of `R_NAME` instructions is scanned
-- each guest GPR must occur exactly once in the run
-- guest GPR `n` may pair with `n+1`
-- destination host registers must differ
-- emits one `LDP` into two `WReg`s from `PPCInterpreter_t::gpr[]`
-- unmatched GPR and all non-GPR R_NAME instructions retain normal lowering
+- IML base format `I64`
+- only guest GPR names `R0..R31`
+- contiguous `R_NAME` run
+- pair guest GPR `n` with `n+1` when each appears exactly once and host destinations differ
+- emit one `LDP Wreg,Wreg` from adjacent `PPCInterpreter_t::gpr[]` uint32 fields
+- unmatched GPR/non-GPR operations retain existing lowering
 
-Baseline backend source confirms integer R_NAME GPR loads normally use `ldr(WReg, ...)`, and `PPCInterpreter_t::gpr` is `uint32 gpr[32]`.
+### Initial CI failure
 
-### Correction of stale handoff evidence
-
-After the initial build failure, handoff documents incorrectly described P1 as:
-- non-GPR 64-bit fields
-- adjacent +8 byte state offsets
-- `SPR::LR + SPR::CTR`
-- `SPR::XER + temporaryFPR`
-- `F940A546`, `F940A942`, `F9410146`, `F9410542`
-
-This text conflicts with the actual `f929fa8...` implementation, the baseline `r_name()` lowering, `PPCInterpreter_t` field widths, and the pre-P1 debug-history state. It is therefore classified as a documentation error and must not be treated as captured evidence.
-
-## P1 initial CI failure and compile-only repair
-
-Initial P1 CI:
-- run `34576700718`
+Failed run:
+- `34576700718`
 - job `103190682420`
-- failed during C++ compile
 
-Recovered compiler diagnostic showed generated source lines beginning with literal `\t`, producing repeated `expected expression` errors in `BackendAArch64.cpp`.
+Compiler diagnostic:
+- generated C++ contained literal `\t`
+- repeated `expected expression` errors in `BackendAArch64.cpp`
 
 Root cause:
-- P1 helper C++ was stored in a Python raw triple-quoted string
-- `\t` remained literal rather than becoming indentation
+- Python raw triple-quoted helper string preserved `\t`
 
-Minimal repair:
-- commit `fc330d1c7c29e68042208337ac6e46eb21c69421`
-- `helper_block = r'''` -> `helper_block = '''`
-- no optimization-scope change
+Compile-only repair:
+- `fc330d1c7c29e68042208337ac6e46eb21c69421`
+- removed raw-string prefix only
+- optimization scope unchanged
 
-Rebuilt Test CI:
+Green Test CI:
 - run `34591462835`
 - job `103237476096`
-- result **SUCCESS**
+- SUCCESS
 - artifact `cemu-arm64-test`
 - artifact ID `10262500252`
 - digest `sha256:7fb8e3f213818d4f0cc46067bd02ff6cd1fd4be37553564e9105a111f037d8fe`
 
-## P1 runtime VERIFY result
-
-Launcher:
-- `ARM64_RNAME_LDP_VERIFY.cmd`
+## P1 runtime VERIFY
 
 Target entry:
 - `0x0420CB80`
 
-Target segment itself contains only cycle accounting/check IML and reports:
-- `pairs=0`
-- `native_bytes_saved=0`
+Enterable state-restore segment:
+- `ppc=0x00000000`
+- `enter=0x0420CB80`
 
-Its enterable state-restore segment (`ppc=0`, `enter=0x0420CB80`) contains the R_NAME run.
-
-Post-RA run exposes these six pairs:
+Observed pairs:
 - r3+r4
 - r5+r6
 - r24+r25
@@ -210,30 +145,27 @@ Post-RA run exposes these six pairs:
 - r28+r29
 - r30+r31
 
-Runtime diagnostic:
+Diagnostic:
 
 ```text
 [ARM64_RNAME_LDP] ppc=0x00000000 enter=0x0420cb80 pairs=6 native_bytes_saved=24
 ```
 
-Interpretation:
+Acceptance:
 - runtime gate active: PASS
-- intended GPR pair planning active: PASS
 - six pair emissions: PASS
-- exact code-size saving 24 bytes: PASS
-- unrelated CR/XER.SO R_NAME entries still emit normal loads: PASS
-- control-flow tail retained: PASS
+- 24-byte native size saving: PASS
+- unrelated CR/XER.SO loads preserved: PASS
+- final JUMP retained: PASS
 - BOTW stable-gameplay smoke: PASS
 
-## P1 first controlled A/B — 2026-09-11
+So pair-load generation is technically valid and does reduce generated code size.
 
-Run order:
-1. `ARM64_RNAME_LDP_BASELINE`
-2. `ARM64_RNAME_LDP_CANDIDATE`
+## P1 performance pair 1 — BASELINE -> CANDIDATE
 
 Primary window:
 - `t=70..260s`
-- 20 samples per run
+- 20 samples each
 
 | metric | BASELINE | CANDIDATE | delta |
 |---|---:|---:|---:|
@@ -244,33 +176,92 @@ Primary window:
 | barriers/frame | 203.99550 | 200.17105 | -1.8748% |
 | renderpasses/frame | 287.09810 | 283.18290 | -1.3637% |
 
-Aligned-window behavior:
-- CANDIDATE FPS wins 19 of 20 windows
-- only `t=170s` is lower by about 0.328 FPS
+Candidate won 19/20 aligned FPS windows. Trimming the baseline drop at `t=250..260s` still left about +1.7~1.8% candidate advantage.
 
-Drift check:
-- BASELINE falls to 48.382 / 47.541 FPS at `t=250/260s`
-- CANDIDATE stays at 50.998 / 50.827 FPS
-- however the result does not depend on those final two windows
-- `t=70..240s`: CANDIDATE avg FPS advantage about **+1.7869%**
-- `t=70..230s`: advantage about **+1.7369%**
+At this point P1 was provisionally classified positive and a reverse-order confirmation was required.
+
+## P1 performance pair 2 — CANDIDATE -> BASELINE
+
+Primary window:
+- `t=70..260s`
+- 20 samples each
+
+| metric | BASELINE | CANDIDATE | delta |
+|---|---:|---:|---:|
+| avg FPS | 49.90825 | 48.12405 | **-3.5750%** |
+| avg frame time | 20.03850 ms | 20.78095 ms | **+3.7051%** |
+| mean p99 | 21.87960 ms | 23.03175 ms | **+5.2659%** |
+| mean 1% low | 45.71635 FPS | 43.58540 FPS | **-4.6612%** |
+| barriers/frame | 207.02825 | 200.50005 | -3.1533% |
+| renderpasses/frame | 290.03925 | 283.49895 | -2.2550% |
+
+Candidate lost 20/20 aligned FPS windows.
+
+This is not an edge-window artifact:
+- `t=90..260s`: candidate remains about **-3.38%**
+- `t=100..260s`: about **-3.40%**
+- `t=120..260s`: about **-3.44%**
+- `t=160..260s`: about **-3.76%**
+
+## P1 two-order crossover interpretation
+
+Condition means across both complete pairs:
+
+| metric | BASELINE mean | CANDIDATE mean | candidate delta |
+|---|---:|---:|---:|
+| avg FPS | 49.78785 | 49.44420 | **-0.6902%** |
+| avg frame time | 20.08805 ms | 20.24075 ms | **+0.7602%** |
+| mean p99 | 22.06915 ms | 22.27635 ms | **+0.9389%** |
+| mean 1% low | 45.41025 FPS | 45.04263 FPS | **-0.8096%** |
+| barriers/frame | 205.51188 | 200.33555 | -2.5187% |
+| renderpasses/frame | 288.56868 | 283.34092 | -1.8116% |
+
+Execution-period means:
+- first run of each pair: `48.89575 FPS`
+- second run of each pair: `50.33630 FPS`
+- second-run advantage: **+2.9462%**
 
 Interpretation:
-- first P1 A/B is a clear positive direction
-- this agrees with independently verified code-size reduction
-- one pair is insufficient for FIX classification
-- preserve `arm64-rname-ldp` as a positive candidate
-- next required action is one reverse-order confirmation using the same artifact: CANDIDATE then BASELINE
+- whichever preset ran second won strongly
+- the period/order effect is larger than the alleged LDP performance effect
+- two-order condition mean is slightly negative for candidate
+- lower barriers/renderpasses on candidate do not translate into a repeatable FPS win and must not be treated as proof
 
-## Current decision gate
+## P1 final decision
 
-Do not build another optimization yet.
+`arm64-rname-ldp` is **closed as a non-winning performance optimization** for the current BOTW harness.
 
-Reverse-order confirmation only:
-1. `ARM64_RNAME_LDP_CANDIDATE.cmd`
-2. `ARM64_RNAME_LDP_BASELINE.cmd`
-3. same scene/settings and `t=70..260s`
+Keep the following distinction:
+- static/correctness validity: PASS
+- generated-code reduction: REAL
+- repeatable runtime performance gain: NOT CONFIRMED
+- promotion: DO NOT PROMOTE
+- combination with compare-reuse: DO NOT COMBINE
+- further P1 runtime repetitions: not justified without new evidence or a materially improved benchmark protocol
 
-If positive again with correctness intact, classify P1 as a repeatable positive candidate and reprofile before promotion consideration.
+## Benchmark protocol finding
 
-Do not combine with `arm64-compare-reuse` yet. Do not move to `0x02A281A0` until P1 is resolved.
+The crossover exposed a significant period bias that can create false positives for small effects.
+
+For future sub-3% candidates:
+- never classify from one A->B pair alone
+- prefer a sacrificial preconditioning launch before measured runs plus AB/BA
+- or use ABBA
+- at minimum collect both orderings
+- continue the established `t=70..260s` comparison unless a documented reason changes it
+
+## Next target — `0x02A281A0`
+
+Mapped entry begins with:
+
+```text
+17ffff66 d503201f
+```
+
+Treat it as branch/thunk-like. The next task is report-only analysis:
+1. decode/follow the first AArch64 `B imm26`
+2. dump at least 128 bytes from the actual branch target
+3. correlate the target body to guest block/IML
+4. identify one concrete redundant code-generation pattern before any behavior-changing experiment
+
+Do not start by writing optimization code.
