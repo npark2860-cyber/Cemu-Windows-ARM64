@@ -15,11 +15,12 @@ Primary records:
 - `CURRENT_HANDOFF.md`
 - `NEXT_ACTION.md`
 - `DEBUG_HISTORY_20260911_ARM64_JIT_PERF.md`
+- `DEBUG_HISTORY_20260912_ARM64_CYCLECHECK_REUSE.md`
 - `BRANCH_POLICY.md`
 
 ## 2. Current evidence
 
-Previously closed/non-winning directions:
+Closed/non-winning directions — do not repeat without new evidence:
 - timer UDIV64
 - `NO_EXTRA_FENCE`
 - ARM64 timer serialize
@@ -29,20 +30,12 @@ Previously closed/non-winning directions:
 - ARM64 NEON texture hash
 - historical compare/branch fusion
 - historical direct dispatch
-- `arm64-rname-ldp` as a performance optimization
+- `arm64-rname-ldp`
+- `arm64-cyclecheck-reuse`
 
-The most promising area remains AArch64 JIT generated-code quality, but small wins are vulnerable to run-order bias.
+The most promising remaining area is still AArch64 JIT generated-code quality, but small code-size reductions are not automatically useful at runtime.
 
-### Preserved candidate: `arm64-compare-reuse`
-
-One-order result:
-- baseline `52.09095 FPS`
-- candidate `52.96810 FPS`
-- `+1.6839%`
-
-Generated-code reduction is real, but the result is still only a candidate because later crossover testing exposed a strong second-run advantage. Revalidate compare-reuse with order-balanced testing before promotion.
-
-### Closed P1: `arm64-rname-ldp`
+### Closed: `arm64-rname-ldp`
 
 Static/runtime VERIFY:
 - six pair loads emitted at the `0x0420CB80` enterable state-restore path
@@ -53,70 +46,73 @@ Performance:
 - BASELINE -> CANDIDATE: candidate `+2.2085%`
 - CANDIDATE -> BASELINE: candidate `-3.5750%`
 - two-order condition mean: candidate `-0.6902%`
-- second-run period advantage: about `+2.9462%`
 
 Decision:
-- codegen reduction is valid
-- repeatable performance gain is not established
-- do not promote or combine
+- generated-code reduction valid
+- repeatable performance gain not established
+- CLOSED / DO NOT PROMOTE / DO NOT COMBINE
+
+### Closed: `arm64-cyclecheck-reuse`
+
+Evidence chain:
+- `0x02A281A0` was resolved from its branch/thunk into the real native body
+- IML proved exact `COUNT_CYCLES -> CYCLE_CHECK` adjacency
+- backend source proved the second `LDR remainingCycles` redundant for that adjacency
+- runtime VERIFY reduced `CYCLE_CHECK` from 12 bytes to 8 bytes at both `0x02A281A0` and `0x0420CB80`
+- BOTW correctness smoke PASS
+
+Order-balanced performance (`t=70..260s`, B -> C -> C -> B):
+- pair 1 candidate: `-2.3571%` FPS
+- pair 2 candidate: `-0.5587%` FPS
+- two-order baseline mean: `53.22655 FPS`
+- two-order candidate mean: `52.44823 FPS`
+- candidate delta: **-1.4623%**
+- avg frame time: **+1.4708%** candidate
+- p99: **+1.0912%** candidate
+- 1% low: **-0.4124%** candidate
+
+Decision:
+- semantic/static optimization valid
+- native code-size reduction real
+- repeatable runtime performance gain absent
+- CLOSED / DO NOT PROMOTE / DO NOT COMBINE
+
+### Preserved candidate: `arm64-compare-reuse`
+
+One-order result:
+- baseline `52.09095 FPS`
+- candidate `52.96810 FPS`
+- `+1.6839%`
+
+Generated-code simplification is real, but this result predates the strengthened order-bias protocol. It requires order-balanced revalidation before any promotion.
 
 ## 3. Priority queue
 
 | Priority | Work item | Evidence | Feasibility | Risk | Decision |
 | --- | --- | ---: | ---: | ---: | --- |
-| P0 | Resolve branch/thunk target for `0x02A281A0` | 5/5 | 5/5 | 1/5 | **Do now** |
-| P1 | One evidence-derived AArch64 JIT optimization from resolved target | pending P0 | 3-4/5 | 2-3/5 | **Next experiment only if proven** |
-| P2 | Order-balanced revalidation of `arm64-compare-reuse` | 4/5 | 5/5 | 1/5 | **Retain candidate** |
+| P0 | Order-balanced revalidation of `arm64-compare-reuse` | 4/5 | 5/5 | 1/5 | **Do now** |
+| P1 | Reprofile JIT hotspots if compare-reuse fails or wins | 4/5 | 5/5 | 1/5 | **Next after P0** |
+| P2 | One evidence-derived JIT optimization from a newly proven hotspot | pending profile | 3-4/5 | 2-3/5 | **Only if proven** |
 | P3 | Descriptor/update/bind/allocation and submit/wait profiling | 2/5 | 4/5 | 1/5 | **After JIT pass** |
 | P4 | Cross-title runtime validation of proven winners | required for generalization | 5/5 | 1/5 | **Promotion gate** |
 | P5 | Toolchain PGO/LTO/compiler-flag campaign | weak current attribution | 3/5 | 2/5 | **Late-stage only** |
 
-## 4. P0 — `0x02A281A0` branch-target resolution
+## 4. Immediate P0 — compare-reuse balanced revalidation
 
-The mapped native entry begins with:
+Experiment:
+- `arm64-compare-reuse`
 
-```text
-17ffff66 d503201f
-```
+Use exactly one behavior variable.
 
-Do not interpret later raw words as the straight-line body until the initial branch is resolved.
+Required order:
+1. BASELINE
+2. COMPARE_REUSE
+3. COMPARE_REUSE
+4. BASELINE
 
-Required diagnostic:
-- decode the first AArch64 `B imm26`
-- resolve the actual native target
-- dump at least 128 bytes from that target
-- correlate the target body to the guest block/IML
-- classify repeated work as compare/load/state movement/branch glue/ABI mechanics/required guest semantics
-
-Success condition:
-- identify one provably redundant generated-code pattern, or prove the target has no actionable redundancy and close it.
-
-Use report-only diagnostics first.
-
-## 5. P1 — exactly one optimization from P0 evidence
-
-Do not bundle hypotheses.
-
-Possible next experiments only after proof:
-- equivalent load reuse/peephole
-- redundant compare elimination
-- scoped branch glue reduction
-- state restore/load reduction with proven liveness safety
-- ABI-preservation/reload reduction when exact call-boundary evidence supports it
-
-Every P1 experiment must:
-- remain Test-branch only
-- be one behavior variable
-- have an exact static/native expectation
-- be runtime-gated or otherwise isolated
-- be diff-inspected before CI
-- pass Test CI and correctness smoke before performance testing
-
-## 6. Benchmark protocol — order bias control
-
-The primary BOTW measurement window remains:
+Primary window:
 - `t=70..260s`
-- 10-second windows
+- 10-second samples
 
 Fixed scene requirements:
 - same save/location/camera
@@ -125,49 +121,52 @@ Fixed scene requirements:
 - fixed weather
 - restart Cemu per preset
 
-### New requirement from P1 crossover
-
-A single BASELINE -> CANDIDATE result is **not sufficient** for small effects.
-
-Observed on P1:
-- first run mean across two sequences: `48.89575 FPS`
-- second run mean across two sequences: `50.33630 FPS`
-- second-run advantage: about `+2.9462%`
-
-This is large enough to create a false positive for a ~1-3% optimization.
-
-For future sub-3% candidates, use one of these:
-1. sacrificial preconditioning launch, then measured AB and BA
-2. ABBA sequence
-3. at minimum both AB and BA orders before positive classification
-
-Always record:
-- exact branch/HEAD
-- preset/order
-- experiment token
+Primary metrics:
 - average FPS
 - average frame time
-- p99
-- 1% low
-- barriers/frame and renderpasses/frame as supporting data only
-- correctness result
-- static/native-code result for JIT experiments
+- p99 frame time
+- approximate 1% low
 
-Do not interpret lower barrier/render-pass counts by themselves as a performance win.
+Supporting only:
+- barriers/frame
+- renderpasses/frame
 
-## 7. P2 — compare-reuse promotion gate
+Promotion condition:
+- positive direction must survive both orderings
+- no correctness regression
+- a sub-3% gain that crosses over is not a promotion candidate
 
-`arm64-compare-reuse` remains disabled by default and preserved as a candidate.
+## 5. Benchmark protocol — order bias control
 
-Before any promotion:
-- use the strengthened order-balanced benchmark protocol
-- verify the candidate remains positive across orderings
-- verify no correctness regression
-- reprofile after any confirmed win
+The primary BOTW measurement window remains `t=70..260s`.
 
-A single +1.68% one-order result is not enough after the P1 order-bias finding.
+A single BASELINE -> CANDIDATE pair is not sufficient for small effects.
 
-## 8. P3 — host/Vulkan work after JIT
+The R_NAME LDP campaign demonstrated that execution order can create a false positive of several percent. The cycle-check campaign then showed the value of balanced testing: despite a structurally valid optimization, the candidate was slower in both orderings.
+
+For future sub-3% candidates:
+1. use sacrificial preconditioning when practical
+2. use AB/BA or ABBA-style balancing
+3. never classify from one pair only
+4. record exact branch/HEAD, order, experiment token, FPS, avg frame time, p99, 1% low, and supporting counters
+
+Barrier/render-pass reductions alone are not performance proof.
+
+## 6. After compare-reuse
+
+If compare-reuse passes balanced validation:
+- retain it as the first independently proven JIT performance winner
+- reprofile BOTW because hotspot distribution may move
+- cross-title validate before promotion
+- do not combine it with another candidate until that candidate independently passes
+
+If compare-reuse fails:
+- close it
+- reprofile current JIT hotspots
+- choose the next target only from measured evidence
+- do not resurrect closed code-size-only optimizations
+
+## 7. Host/Vulkan work after the JIT pass
 
 If JIT analysis stops producing concrete leads, profile:
 - descriptor allocation/update/bind frequency and CPU cost
@@ -178,7 +177,7 @@ If JIT analysis stops producing concrete leads, profile:
 
 Do not return to barrier/render-pass speculation without new profile evidence.
 
-## 9. P4 — cross-title validation
+## 8. Cross-title validation
 
 A BOTW-only win is not enough for a general ARM64 optimization.
 
@@ -188,26 +187,24 @@ After a candidate survives repeated order-balanced BOTW validation:
 - reprofile because hotspot distribution may move
 - combine winners only after each has independently passed
 
-## 10. P5 — toolchain optimization
+## 9. Toolchain optimization
 
 PGO, LTO, compiler flags, and broad build tuning remain late-stage work because they weaken attribution.
 
-## 11. Stop rules
+## 10. Stop rules
 
 Stop an optimization path when:
-- alleged redundancy is proven semantically required
+- alleged redundancy is semantically required
 - order-balanced performance is neutral/negative
-- the measured gain is smaller than uncontrolled period bias and does not survive crossover
+- the measured gain does not survive crossover
 - correctness risk increases without a measured bottleneck
 - the experiment duplicates a closed path
+- code-size reduction is real but runtime benefit is absent
 
-## 12. Immediate execution order
+## 11. Immediate execution order
 
-1. Resolve/follow the initial branch for `0x02A281A0` with report-only diagnostics.
-2. Dump/correlate the actual target body.
-3. Classify any redundant-looking code.
-4. If and only if one redundant pattern is proven, design one new JIT experiment.
-5. Static verify -> diff inspect -> Test CI -> correctness smoke.
-6. Performance test with order-balanced protocol.
-7. Reprofile after any real win.
-8. Revalidate `arm64-compare-reuse` separately before promotion/combination.
+1. Revalidate `arm64-compare-reuse` with B -> C -> C -> B.
+2. If it wins, reprofile and cross-title validate before promotion.
+3. If it loses, close it and reprofile current JIT hotspots.
+4. Only design another behavior-changing JIT experiment after a new redundancy is proven by IML/native evidence.
+5. Move to host/Vulkan profiling if the JIT pass stops yielding measured wins.
