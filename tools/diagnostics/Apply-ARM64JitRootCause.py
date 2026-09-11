@@ -115,6 +115,12 @@ p = Path("src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp")
 t = p.read_text(encoding="utf-8")
 t = ensure_include(
     t,
+    '#include "BackendAArch64.h"\n',
+    '#include "HW/Espresso/Recompiler/IML/IML.h"\n',
+    "ARM64 JIT root-cause IML debug declaration include",
+)
+t = ensure_include(
+    t,
     '#include "HW/Espresso/PPCState.h"\n',
     '#include "diagnostics/RuntimeExperiments.h"\n',
     "ARM64 JIT root-cause backend include",
