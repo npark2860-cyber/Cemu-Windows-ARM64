@@ -20,12 +20,8 @@ if include_line not in t:
         raise RuntimeError("ARM64 compare reuse: include anchor not found")
     t = t.replace(anchor, anchor + include_line, 1)
 
-func_anchor = '''bool PPCRecompiler_generateAArch64Code(struct PPCRecFunction_t* PPCRecFunction, struct ppcImlGenContext_t* ppcImlGenContext)
-{
-\tAArch64Allocator allocator;
-\tAArch64GenContext_t aarch64GenContext{&allocator};
-'''
-func_block = '''static bool PPCRecompilerAArch64Gen_IsSameCompare(const IMLInstruction* a, const IMLInstruction* b)
+func_signature = 'bool PPCRecompiler_generateAArch64Code(struct PPCRecFunction_t* PPCRecFunction, struct ppcImlGenContext_t* ppcImlGenContext)\n'
+helper_block = '''static bool PPCRecompilerAArch64Gen_IsSameCompare(const IMLInstruction* a, const IMLInstruction* b)
 {
 \tif (a->type != b->type)
 \t\treturn false;
@@ -36,13 +32,12 @@ func_block = '''static bool PPCRecompilerAArch64Gen_IsSameCompare(const IMLInstr
 \treturn false;
 }
 
-bool PPCRecompiler_generateAArch64Code(struct PPCRecFunction_t* PPCRecFunction, struct ppcImlGenContext_t* ppcImlGenContext)
-{
-\tAArch64Allocator allocator;
-\tAArch64GenContext_t aarch64GenContext{&allocator};
-\tconst bool expCompareReuse = RuntimeExperiments::Enabled("arm64-compare-reuse");
 '''
-t = replace_once(t, func_anchor, func_block, "ARM64 compare reuse function setup")
+t = replace_once(t, func_signature, helper_block + func_signature, "ARM64 compare reuse helper")
+
+context_anchor = '\tAArch64GenContext_t aarch64GenContext{&allocator};\n'
+context_block = context_anchor + '\tconst bool expCompareReuse = RuntimeExperiments::Enabled("arm64-compare-reuse");\n'
+t = replace_once(t, context_anchor, context_block, "ARM64 compare reuse runtime gate")
 
 compare_anchor = '''\t\t\telse if (imlInstruction->type == PPCREC_IML_TYPE_COMPARE)
 \t\t\t{
