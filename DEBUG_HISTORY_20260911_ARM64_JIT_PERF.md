@@ -193,11 +193,6 @@ Rebuilt Test CI:
 Launcher:
 - `ARM64_RNAME_LDP_VERIFY.cmd`
 
-Active tokens:
-- `arm64-rname-ldp`
-- `jit-iml-ra-hotspot`
-- `perf-log`
-
 Target entry:
 - `0x0420CB80`
 
@@ -207,7 +202,7 @@ Target segment itself contains only cycle accounting/check IML and reports:
 
 Its enterable state-restore segment (`ppc=0`, `enter=0x0420CB80`) contains the R_NAME run.
 
-Post-RA run exposes guest GPRs permitting these six pairs:
+Post-RA run exposes these six pairs:
 - r3+r4
 - r5+r6
 - r24+r25
@@ -221,8 +216,6 @@ Runtime diagnostic:
 [ARM64_RNAME_LDP] ppc=0x00000000 enter=0x0420cb80 pairs=6 native_bytes_saved=24
 ```
 
-The six partner IML entries emit `bytes=0` because the earlier member of each IML-position pair emitted the combined load. Their indices match the exact six planned pairs. The final `JUMP` still emits 8 bytes.
-
 Interpretation:
 - runtime gate active: PASS
 - intended GPR pair planning active: PASS
@@ -232,18 +225,52 @@ Interpretation:
 - control-flow tail retained: PASS
 - BOTW stable-gameplay smoke: PASS
 
-The VERIFY run is not a controlled performance result; its early FPS samples must not be compared to prior baseline data.
+## P1 first controlled A/B — 2026-09-11
+
+Run order:
+1. `ARM64_RNAME_LDP_BASELINE`
+2. `ARM64_RNAME_LDP_CANDIDATE`
+
+Primary window:
+- `t=70..260s`
+- 20 samples per run
+
+| metric | BASELINE | CANDIDATE | delta |
+|---|---:|---:|---:|
+| avg FPS | 49.66745 | 50.76435 | **+2.2085%** |
+| avg frame time | 20.13760 ms | 19.70055 ms | **-2.1703%** |
+| mean p99 | 22.25870 ms | 21.52095 ms | **-3.3144%** |
+| mean 1% low | 45.10415 FPS | 46.49985 FPS | **+3.0944%** |
+| barriers/frame | 203.99550 | 200.17105 | -1.8748% |
+| renderpasses/frame | 287.09810 | 283.18290 | -1.3637% |
+
+Aligned-window behavior:
+- CANDIDATE FPS wins 19 of 20 windows
+- only `t=170s` is lower by about 0.328 FPS
+
+Drift check:
+- BASELINE falls to 48.382 / 47.541 FPS at `t=250/260s`
+- CANDIDATE stays at 50.998 / 50.827 FPS
+- however the result does not depend on those final two windows
+- `t=70..240s`: CANDIDATE avg FPS advantage about **+1.7869%**
+- `t=70..230s`: advantage about **+1.7369%**
+
+Interpretation:
+- first P1 A/B is a clear positive direction
+- this agrees with independently verified code-size reduction
+- one pair is insufficient for FIX classification
+- preserve `arm64-rname-ldp` as a positive candidate
+- next required action is one reverse-order confirmation using the same artifact: CANDIDATE then BASELINE
 
 ## Current decision gate
 
-P1 is now ready for its first independent controlled A/B.
+Do not build another optimization yet.
 
-Use existing successful artifact:
-1. `ARM64_RNAME_LDP_BASELINE.cmd`
-2. `ARM64_RNAME_LDP_CANDIDATE.cmd`
+Reverse-order confirmation only:
+1. `ARM64_RNAME_LDP_CANDIDATE.cmd`
+2. `ARM64_RNAME_LDP_BASELINE.cmd`
+3. same scene/settings and `t=70..260s`
 
-Same scene/settings, restart per preset, stationary player/camera, run through at least `t=260s`, compare `t=70..260s`.
-
-If first pair is meaningfully positive, repeat once in reverse order before calling it a repeatable candidate. If neutral/negative without benchmark invalidation evidence, reject P1.
+If positive again with correctness intact, classify P1 as a repeatable positive candidate and reprofile before promotion consideration.
 
 Do not combine with `arm64-compare-reuse` yet. Do not move to `0x02A281A0` until P1 is resolved.
