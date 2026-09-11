@@ -43,7 +43,6 @@ Validated Test CI:
 - run ID: `34591462835`
 - job ID: `103237476096`
 - result: **SUCCESS**
-- `Build Cemu once`: SUCCESS
 - artifact: `cemu-arm64-test`
 - artifact ID: `10262500252`
 - artifact digest: `sha256:7fb8e3f213818d4f0cc46067bd02ff6cd1fd4be37553564e9105a111f037d8fe`
@@ -54,7 +53,7 @@ Documentation commits may advance branch HEAD beyond `fc330d1...`. Always fetch 
 
 Older handoff text written after the failed build incorrectly described P1 as pairing non-GPR 64-bit `R_NAME` loads such as `SPR::LR + SPR::CTR` at `+8` offsets and cited `F940...` examples.
 
-That description is **not supported by the actual P1 implementation or the pre-P1 debug history** and must not be used as source of truth.
+That description is not supported by the actual P1 implementation or the pre-P1 debug history and must not be used as source of truth.
 
 Actual `f929fa8...` implementation:
 - considers only `PPCREC_IML_TYPE_R_NAME`
@@ -65,19 +64,13 @@ Actual `f929fa8...` implementation:
 - emits one AArch64 `LDP` to two `WReg` destinations from adjacent `PPCInterpreter_t::gpr[]` uint32 fields
 - leaves unpaired GPR and all non-GPR `R_NAME` lowering unchanged
 
-This matches the actual baseline AArch64 backend, where integer `R_NAME` values are loaded into `WReg`; `PPCInterpreter_t::gpr[]` is a `uint32[32]` array.
-
-The stale claims about non-GPR +8-byte pairs, `LR+CTR`, `XER+temporaryFPR`, and the cited `F940...` sequence must not be resurrected unless new independently captured evidence proves them.
-
 ## RUNTIME VERIFY — PASS
-
-User runtime verification used `ARM64_RNAME_LDP_VERIFY.cmd` on the successful `fc330d1...` artifact.
 
 Hotspot:
 - guest entry: `0x0420CB80`
 - enterable post-RA segment: `ppc=0x00000000`, `enter=0x0420CB80`
 
-Observed post-RA GPR `R_NAME` set allowed six adjacent guest-GPR pairs:
+Observed pairs:
 - `r3 + r4`
 - `r5 + r6`
 - `r24 + r25`
@@ -86,22 +79,49 @@ Observed post-RA GPR `R_NAME` set allowed six adjacent guest-GPR pairs:
 - `r30 + r31`
 
 Runtime diagnostic:
-- `[ARM64_RNAME_LDP] ... pairs=6 native_bytes_saved=24`
+- `pairs=6`
+- `native_bytes_saved=24`
 
-The six partner IML instructions show `bytes=0`, exactly matching six pair emissions replacing twelve individual 4-byte GPR loads with six 4-byte pair loads.
-
-The actual `0x0420CB80` cycle-check segment itself reports `pairs=0`; the optimization acts on its enterable state-restore segment. The final `JUMP` remains present and is still 8 bytes in the IML/native correlation log.
-
-Static/runtime acceptance for pair formation is therefore **PASS**:
-- runtime gate is active
-- expected GPR pair planning occurs
-- six pair loads are emitted
-- native size reduction is exactly 24 bytes
+Static/runtime acceptance for pair formation is **PASS**:
+- runtime gate active
+- six pair loads emitted
+- native size reduction exactly 24 bytes
 - unrelated non-GPR `R_NAME` entries still emit normally
-- no branch/control-flow removal is indicated
-- BOTW reaches stable gameplay without correctness failure in the verify smoke
+- final JUMP retained
+- BOTW stable-gameplay smoke passed
 
-Do not use the VERIFY run's early FPS samples as a performance result; it was a correctness/static verification run, not the controlled `t=70..260s` A/B.
+## FIRST CONTROLLED A/B — CLEAR POSITIVE DIRECTION
+
+Run order:
+1. BASELINE
+2. CANDIDATE
+
+Established comparison window:
+- `t=70..260s`
+- 20 windows per run
+
+| metric | BASELINE | CANDIDATE | delta |
+|---|---:|---:|---:|
+| avg FPS | 49.66745 | 50.76435 | **+2.2085%** |
+| avg frame time | 20.13760 ms | 19.70055 ms | **-2.1703%** |
+| mean p99 | 22.25870 ms | 21.52095 ms | **-3.3144%** |
+| mean 1% low | 45.10415 FPS | 46.49985 FPS | **+3.0944%** |
+| barriers/frame | 203.99550 | 200.17105 | -1.8748% |
+| renderpasses/frame | 287.09810 | 283.18290 | -1.3637% |
+
+Supporting evidence:
+- CANDIDATE FPS is higher in 19 of 20 aligned windows
+- only `t=170s` is lower
+- BASELINE degrades at `t=250..260s`, but trimming those late samples does not remove the win
+- `t=70..240s`: approximately **+1.7869% FPS**
+- `t=70..230s`: approximately **+1.7369% FPS**
+
+Interpretation:
+- first independent A/B is meaningfully positive
+- code-size reduction was already independently verified
+- P1 is preserved as a **positive candidate**
+- P1 is **not yet a FIX** because only BASELINE->CANDIDATE order has been measured
+- one reverse-order confirmation is required before any promotion/combination decision
 
 ## TEST CONTRACT
 
@@ -110,7 +130,7 @@ All behavior-changing experiments happen here only.
 Rules:
 - change one behavior variable at a time
 - static-verify the diff before CI
-- do not call an experiment a FIX until CI + runtime + controlled A/B validation pass
+- do not call an experiment a FIX until CI + runtime + controlled repeat validation pass
 - do not repeat rejected experiments without new evidence
 - never promote the whole Test branch into Release
 - `main` must not be touched
@@ -123,9 +143,9 @@ Rules:
 - existing Adreno / pre-e834 verified fixes
 - XCX query behavior remains separate
 
-## PRESERVED POSITIVE CANDIDATE — ARM64 COMPARE REUSE
+## PRESERVED SEPARATE CANDIDATE — ARM64 COMPARE REUSE
 
-`arm64-compare-reuse` remains separate and must not be mixed into the first R_NAME LDP A/B.
+`arm64-compare-reuse` remains separate and must not be mixed into the P1 confirmation.
 
 Previous controlled same-build result:
 - baseline: 52.091 FPS
@@ -136,18 +156,18 @@ Generated-code reduction is real, but it is still a candidate, not a FIX.
 
 ## CURRENT NEXT ACTION
 
-P1 build and verify gates are cleared.
+Do **not** build new code.
 
-Next action is one controlled same-build BOTW A/B pair using the existing artifact:
-1. `ARM64_RNAME_LDP_BASELINE.cmd`
-2. `ARM64_RNAME_LDP_CANDIDATE.cmd`
-3. same save/location/camera/weather/graphics/FPS++ settings
-4. keep player/camera still
-5. restart Cemu for each preset
-6. collect through at least `t=260s`
-7. compare established `t=70..260s` window
-8. upload both PERF logs for analysis
+Use the same validated artifact for a reverse-order confirmation:
+1. `ARM64_RNAME_LDP_CANDIDATE.cmd`
+2. close Cemu
+3. `ARM64_RNAME_LDP_BASELINE.cmd`
+4. same save/location/camera/weather/graphics/FPS++ settings
+5. stationary player/camera
+6. restart Cemu for each preset
+7. collect through at least `t=260s`
+8. compare `t=70..260s`
 
-First pass should be BASELINE then CANDIDATE. If the first pair is meaningfully positive, repeat in reverse order before treating it as repeatable.
+If the reverse pair is positive again with correctness intact, classify P1 as a repeatable positive candidate and reprofile before promotion consideration.
 
-Do not enable `arm64-compare-reuse` during this measurement. Do not start `0x02A281A0` work until this P1 experiment is validated or rejected.
+Do not enable `arm64-compare-reuse` during this confirmation. Do not start `0x02A281A0` work until P1 is resolved.
