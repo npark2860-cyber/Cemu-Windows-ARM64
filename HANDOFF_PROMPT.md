@@ -21,86 +21,106 @@ GitHub를 source of truth로 사용하고 이전 대화를 추측해서 복원�
 
 `main`은 건드리지 않는다. Release/Diagnostics도 이번 단계에서는 수정하지 않는다.
 
-## 기준점
+## 현재 P1 — ARM64 R_NAME GPR LDP
 
-마지막 검증 성공 non-documentation code checkpoint:
-`04b5626c77503aceed1fb712e45563bf620262fc`
+Experiment:
+`arm64-rname-ldp`
 
-- CI run `34558962681`
-- SUCCESS
-- artifact `cemu-arm64-test`
-- artifact ID `10184443139`
-
-현재 P1 behavior-changing code commit:
+Implementation commit:
 `f929fa8007d6ef17f90a3c166b5d248d2ee30e3d`
 
-- message: `jit: pair adjacent ARM64 state loads`
-- experiment: `arm64-rname-ldp`
-- changed source: `src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp`
+실제 commit message:
+`perf: add ARM64 R_NAME LDP experiment`
 
-인수인계 문서 커밋으로 실제 branch HEAD는 위 코드 커밋보다 앞서 있을 수 있으므로 시작 즉시 실제 HEAD를 다시 조회한다.
+Build-time installer:
+`tools/diagnostics/Apply-ARM64RNameLdp.py`
 
-## 현재 막힌 지점 — BUILD FAILURE
+Compile-only repair:
+`fc330d1c7c29e68042208337ac6e46eb21c69421`
 
-`f929fa8...` 대상 Test CI가 실패했다.
+- Python raw triple-quoted helper string 때문에 생성 C++에 literal `\t`가 들어간 문제만 수정
+- 최적화 의미/범위는 변경하지 않음
 
-- workflow: `ARM64 Windows Test Build`
-- run ID: `34576700718`
-- job ID: `103190682420`
-- result: FAILURE
-- failed step: `Build Cemu`
-- checkout/configure/vcpkg는 성공
-- artifact 없음
+검증 CI:
+- run `34591462835`
+- job `103237476096`
+- SUCCESS
+- artifact `cemu-arm64-test`
+- artifact ID `10262500252`
+- digest `sha256:7fb8e3f213818d4f0cc46067bd02ff6cd1fd4be37553564e9105a111f037d8fe`
 
-현재 connector에서는 job log 다운로드가 정상 decode되지 않아 **정확한 compiler error line은 아직 확보하지 못했다.**
+## 반드시 기억할 정정 사항
 
-따라서 다음 작업의 첫 단계는 소스 추측이 아니라:
-1. 실패 run/job의 실제 compiler diagnostic을 확보하거나 동일 빌드를 로컬 재현한다.
-2. 그 에러가 `arm64-rname-ldp` 변경 때문인지 확정한다.
-3. P1 변경 때문이면 해당 컴파일 문제만 최소 수정한다.
-4. 최적화 범위를 넓히지 않는다.
-5. Test CI를 다시 통과시킨다.
+빌드 실패 뒤 작성된 이전 handoff에는 P1을 다음처럼 잘못 설명한 부분이 있었다.
+- non-GPR 64-bit R_NAME
+- +8 byte adjacent fields
+- LR+CTR / XER+temporaryFPR
+- `F940...` native examples
 
-CI가 green이 되기 전에는 BOTW A/B, 새 최적화, candidate 조합, Release promote를 하지 않는다.
+이 설명은 실제 `f929fa8...` 구현과 맞지 않으며, pre-P1 `DEBUG_HISTORY`에도 그 상세 근거가 기록되어 있지 않다. 다시 source of truth로 사용하지 않는다.
 
-## P1의 근거
+실제 P1은 다음과 같다.
+- `PPCREC_IML_TYPE_R_NAME`
+- IML base format `I64`
+- 이름은 `PPCREC_NAME_R0..R31`만
+- contiguous `R_NAME` run 안에서 guest GPR n/n+1을 찾음
+- 각 GPR이 run 안에 정확히 한 번 있고 목적 host register가 서로 다를 때만 pair
+- `PPCInterpreter_t::gpr[]`는 `uint32[32]`
+- 기존 개별 `ldr W...` 두 개 대신 `ldp W...,W...` 하나를 emit
+- unmatched GPR과 non-GPR R_NAME은 기존 lowering 그대로
 
-P0 분석은 `0x0420CB80`에서 다음을 확정했다.
+## VERIFY 결과 — PASS
 
-- pre/post RA IML에서 non-GPR `R_NAME` state loads가 남는다.
-- `PPCInterpreter_t`의 인접한 64-bit field pair가 각각 `LDR`로 내려간다.
-- 예:
-  - `SPR::LR + SPR::CTR`: offsets 328 / 336
-  - `SPR::XER + temporaryFPR`: offsets 512 / 520
-- native examples:
-  - `F940A546  ldr x6, [x10,#328]`
-  - `F940A942  ldr x2, [x10,#336]`
-  - `F9410146  ldr x6, [x10,#512]`
-  - `F9410542  ldr x2, [x10,#520]`
-- guest memory semantics가 아니라 emulator state load다.
-- RA가 merge/remove하지 않으며 AArch64 lowering이 개별 `LDR`를 낸다.
+성공 artifact에서 `ARM64_RNAME_LDP_VERIFY.cmd` 실행 로그 확인 완료.
 
-그래서 `arm64-rname-ldp`는 다음 경우만 인접 load 둘을 `LDP`로 묶는 단일 변수 실험이다.
+Hot entry:
+- `0x0420CB80`
 
-- consecutive `ImlOperation::R_NAME`
-- both non-GPR
-- distinct destination registers
-- second offset = first offset + 8
-- legal/aligned positive scaled LDP immediate
-- 나머지는 기존 lowering으로 fallback
+Enterable post-RA state-restore segment:
+- `ppc=0x00000000`
+- `enter=0x0420CB80`
 
-## 빌드 복구 후 검증 순서
+관찰된 pair:
+- r3+r4
+- r5+r6
+- r24+r25
+- r26+r27
+- r28+r29
+- r30+r31
 
-1. native dump에서 실제 target pair가 `LDP`가 되었는지 확인
-2. branch/control flow와 unrelated lowering이 바뀌지 않았는지 확인
-3. GPR special-load behavior와 protected paths가 그대로인지 확인
-4. 같은 빌드에서 BASELINE vs `arm64-rname-ldp` BOTW A/B
-5. `t=70..260s`, avg FPS/frame time/p99/1% low 비교
-6. repeatable positive + correctness OK일 때만 candidate로 보존하고 reprofile
-7. neutral/negative/unstable/correctness regression이면 reject
+Runtime diagnostic:
+- `pairs=6`
+- `native_bytes_saved=24`
 
-`arm64-compare-reuse`는 약 +1.68%의 별도 positive candidate지만 아직 FIX가 아니며 이번 `arm64-rname-ldp` 측정에 섞지 않는다.
+여섯 partner IML은 추가 native bytes가 0으로 기록되어 pair emission과 정확히 일치한다. 마지막 JUMP도 유지된다. BOTW stable gameplay smoke도 통과했다.
 
-현재 실험이 validate/reject되기 전에는 `0x02A281A0` 등 다음 hotspot 작업으로 넘어가지 않는다.
+VERIFY 실행의 초기 FPS 숫자는 성능 판정에 사용하지 않는다.
 
-이미 종료/비승리 판정한 timer, Vulkan barrier/render-pass, NEON texture hash, historical compare/branch fusion/direct-dispatch 실험은 새 근거 없이 반복하지 않는다.
+## 지금 바로 할 일
+
+새 코드를 작성하거나 새 빌드를 만들지 않는다.
+
+기존 성공 artifact로 첫 controlled A/B를 실행한다.
+
+순서:
+1. `ARM64_RNAME_LDP_BASELINE.cmd`
+2. Cemu 종료
+3. `ARM64_RNAME_LDP_CANDIDATE.cmd`
+
+조건:
+- 동일 save/location/camera
+- 정지 scene
+- 동일 graphics/FPS++ settings
+- weather fixed
+- 각 preset마다 Cemu 재시작
+- 최소 `t=260s`까지 실행
+- 비교 구간 `t=70..260s`
+- `arm64-compare-reuse`는 섞지 않음
+
+두 PERF log를 받아 avg FPS, avg frame time, p99, 1% low를 비교한다.
+
+첫 pair가 의미 있게 positive면 역순으로 한 번 더 반복한 뒤 candidate 보존 여부를 판단한다. Neutral/negative면 benchmark invalidation 증거가 없는 한 P1을 reject한다.
+
+`arm64-compare-reuse`는 별도의 약 +1.68% positive candidate이며 아직 FIX가 아니다.
+
+P1이 validate/reject되기 전에는 `0x02A281A0` 등 다음 hotspot으로 넘어가지 않는다.
