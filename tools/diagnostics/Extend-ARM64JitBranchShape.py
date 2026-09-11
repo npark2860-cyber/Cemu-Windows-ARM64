@@ -53,18 +53,12 @@ new = '''\t\tconst uint32 diagPpc = segIt->ppcAddress;
 t = replace_once(t, old, new, "ARM64 JIT native expanded hotspot set")
 
 # Add a compile-time-only branch-shape summary for any compiled function that
-# contains one of the established hotspots. This classifies IML edges into
-# in-function direct branches vs jump-table/indirect exits without inserting
-# any instructions into generated guest code.
-anchor = '''\tAArch64Allocator allocator;
-\tAArch64GenContext_t aarch64GenContext{&allocator};
-
-\t// generate iml instruction code
+# contains one of the established hotspots. Anchor only on the generation
+# comment because earlier diagnostic transforms intentionally insert runtime
+# gates immediately after aarch64GenContext construction.
+anchor = '''\t// generate iml instruction code
 '''
-block = '''\tAArch64Allocator allocator;
-\tAArch64GenContext_t aarch64GenContext{&allocator};
-
-\tif (RuntimeExperiments::Enabled("jit-iml-ra-hotspot"))
+block = '''\tif (RuntimeExperiments::Enabled("jit-iml-ra-hotspot"))
 \t{
 \t\tbool diagBranchShapeFunction = false;
 \t\tfor (IMLSegment* seg : ppcImlGenContext->segmentList2)
@@ -80,7 +74,8 @@ block = '''\tAArch64Allocator allocator;
 \t\t\t\tbreak;
 \t\t\t}
 \t\t}
-\n\t\tif (diagBranchShapeFunction)
+
+\t\tif (diagBranchShapeFunction)
 \t\t{
 \t\t\tuint32 totalIml = 0;
 \t\t\tuint32 directJump = 0;
@@ -113,8 +108,8 @@ block = '''\tAArch64Allocator allocator;
 \t\t\t\t}
 \t\t\t}
 \t\t\tcemuLog_log(LogType::Force,
-\t\t\t\t"[JIT_BRANCH_SHAPE] func=0x{:08x} ppc_size={} segments={} iml={} direct_jump={} conditional_jump={} cycle_check={} table_b_to_reg={} table_bl={} table_b_far={} leave={} hle={}",
-\t\t\t\tPPCRecFunction->ppcAddress, PPCRecFunction->ppcSize, ppcImlGenContext->segmentList2.size(), totalIml,
+\t\t\t\t"[JIT_BRANCH_SHAPE] func=0x{:08x} segments={} iml={} direct_jump={} conditional_jump={} cycle_check={} table_b_to_reg={} table_bl={} table_b_far={} leave={} hle={}",
+\t\t\t\tPPCRecFunction->ppcAddress, ppcImlGenContext->segmentList2.size(), totalIml,
 \t\t\t\tdirectJump, conditionalJump, cycleCheck, branchToReg, branchLink, branchFar, leave, hle);
 \t\t}
 \t}
