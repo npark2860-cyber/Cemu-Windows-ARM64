@@ -1,4 +1,4 @@
-# DEBUG HISTORY — 2026-09-10~11 ARM64 JIT performance profiling / compare reuse
+# DEBUG HISTORY — 2026-09-10~11 ARM64 JIT performance work
 
 ## Scope
 
@@ -6,9 +6,6 @@ Windows ARM64 / Snapdragon X Elite / Adreno X1-85에서 BOTW의 host/JIT 병목�
 
 Branch:
 - `runtime-experiments-arm64`
-
-Last validated non-documentation code checkpoint:
-- `04b5626c77503aceed1fb712e45563bf620262fc`
 
 ## Benchmark harness
 
@@ -20,18 +17,18 @@ Last validated non-documentation code checkpoint:
 - Vulkan barriers/frame
 - renderpasses/frame
 
-현재 1차 비교 규칙:
-- 같은 save/location/camera
-- 정지 scene
-- 같은 graphics/FPS++ settings
+Controlled first-pass rule:
+- same save/location/camera
+- static scene
+- same graphics/FPS++ settings
 - weather fixed
-- Cemu 재시작
-- startup/warmup 제외
-- `t=70..260s`를 비교 구간으로 사용
+- restart Cemu per preset
+- ignore startup/warmup
+- compare `t=70..260s`
 
-## Closed / non-winning first-pass experiments
+## Closed / non-winning first-pass directions
 
-다음 방향은 현재 BOTW 정지 scene에서 승자가 아니었다.
+Do not repeat without new evidence:
 - timer UDIV64
 - no-extra-fence
 - ARM64 serialize
@@ -39,14 +36,12 @@ Last validated non-documentation code checkpoint:
 - skip RT-load barrier
 - force render-pass reuse
 - ARM64 NEON texture hash
+- historical `perf-arm64-jit-ab` compare/branch fusion
+- historical direct dispatch
 
-Barrier 수나 render-pass 수 자체를 크게 줄여도 FPS가 개선되지 않은 경우가 있었으므로, 숫자 감소를 곧바로 성능 향상으로 해석하지 않는다.
-
-Historical branch `perf-arm64-jit-ab`의 compare/branch fusion 및 direct-dispatch variants도 baseline과 비슷하거나 불리하여 종료했다. 동일 실험을 새 근거 없이 반복하지 않는다.
+Barrier/render-pass count reductions alone are not performance proof.
 
 ## Host/PPC profiling path
-
-CPU sampling/WPR launcher와 symbolized build를 추가했고, 이후 guest PPC execution을 직접 좁히기 위해 `Debug -> View PPC threads -> Profile thread` 경로를 사용했다.
 
 Relevant commits:
 - `3a97333e79f1addacc1f3865f9d5b8dec96a1145` — automated BOTW CPU sampling launcher
@@ -56,113 +51,60 @@ Relevant commits:
 - `e1ec8d30d3fd09ae01b4cf5f5ddaf7ad8644f82d` — keep profiler diff scoped to sampling logic
 - `aa2eba94f6ca6b7ce46b1e7dfc970f3e923fd511` — reduce outer profiler cadence to 10 ms
 
-### Profiler perturbation finding
+1 ms outer sampling materially perturbed FPS. 10 ms is the current diagnostic cadence.
 
-1 ms outer sampling repeatedly suspended/resumed the guest thread and materially reduced FPS during profiling.
-
-The outer cadence was changed to 10 ms while keeping 1 ms polling only for suspend completion. This preserved thousands of RUNNING samples while removing the large profiler-induced FPS drop seen with the 1 ms version.
-
-Profiler percentages are therefore diagnostic execution-sample distributions, not final FPS measurements.
-
-## Latest RUNNING-only guest profile
-
-Build: `04b5626`
-
-Selected thread:
-- `0E001800 / Default Core 1`
-
-State counts:
-- observations: 5058
-- RUNNING: 3564 (70.46%)
-- READY: 31 (0.61%)
-- WAITING: 1463 (28.92%)
-
-Top entries:
-- `coreinit.OSWaitEvent` — 12.93%
+Latest important RUNNING-only guest samples from the established profile:
 - `0x0420CB80` — 5.56%
 - `0x02A281A0` — 4.12%
-- `gx2.GX2SetAlphaToMaskReg` — 3.73%
 - `0x03B84854` — 3.68%
-- `coreinit.OSWaitSemaphore` — 3.17%
-- `coreinit.OSFastMutex_Lock` — 2.02%
 - `0x0399B4DC` — 1.77%
 
-HLE waits are not automatically JIT optimization targets.
+HLE waits are observations, not automatic JIT targets.
 
 ## Native hotspot mapping
 
 Relevant commits:
 - `25f423ab9bb11139b084057546f39df39cb5a215` — map sampled guest hotspots to ARM64 JIT code
 - `4c456c6b07ba3d0ef8e35a598dc2b88ca1ebe6b4` — add BOTW JIT hotspot launcher
-
-The mapper logs direct jump-table entrypoints for selected guest PCs and dumps 128 bytes of native code.
+- `09c4de42fe1b48b6d8fa656f02b9b8612eb3c7e9` — targeted ARM64 JIT root-cause tracing
+- `9d649811653c5e4391e80cf8d32df45e8b5bfb26` — include IML debug declarations
 
 ### `0x03B84854`
 
-This hotspot exposed a concrete redundant-code pattern: identical comparisons were being emitted repeatedly for separate boolean results.
+This hotspot exposed repeated identical comparisons for separate boolean results.
 
-With compare reuse enabled, the relevant native sequence includes:
+With compare reuse enabled, native sequence includes:
 
 ```text
 6b05009f  1a9f27ea  1a9f97eb  1a9f17ec
 ```
 
-Interpretation:
-- one `CMP`
-- three condition-result materializations (`CSET`-family)
-
-The prior behavior repeated the same compare for each result. This is a real generated-code reduction, not only a benchmark correlation.
-
-### `0x0420CB80`
-
-Current mapped code is dominated by loads before a branch. It is not yet known whether these loads are:
-- required guest semantics
-- register allocator spill/reload
-- state restore
-- block-entry/exit mechanics
-
-No optimization should be written until exact IML/basic-block mapping identifies redundancy.
+One compare feeds three conditional-result materializations instead of repeating the same compare.
 
 ### `0x02A281A0`
 
-Current mapped entry begins with:
+Mapped entry begins with:
 
 ```text
 17ffff66 d503201f
 ```
 
-The first instruction is branch-like and is followed by padding. Later words in the raw 128-byte dump may not be straight-line executable code. The next diagnostic should resolve/follow the branch destination before drawing conclusions from those bytes.
+Treat this as branch/thunk-like. Follow the first branch target before interpreting later words as a straight-line body.
 
-## ARM64 consecutive compare reuse experiment
+## ARM64 consecutive compare reuse
 
-Experiment token:
+Experiment:
 - `arm64-compare-reuse`
 
 Relevant commits:
-- `bafc464ce0a4b88b20b74c04f66b55899185a576` — implement flag reuse
-- `04b5626c77503aceed1fb712e45563bf620262fc` — fix patch ordering against existing diagnostic instrumentation
+- `bafc464ce0a4b88b20b74c04f66b55899185a576`
+- `04b5626c77503aceed1fb712e45563bf620262fc`
 
-### CI history
+Validated CI:
+- run `34558962681`
+- SUCCESS
 
-Run #55 failed **before compile** while applying Diagnostic Edition:
-- `Apply-ARM64CompareReuse.py` expected an exact function-body anchor
-- the base diagnostic performance patch had already inserted `RuntimeDiagnostics::ScopedJitCompile`
-- result: `expected 1 anchor, found 0`
-
-Fix:
-- stop anchoring on the whole untouched function prefix
-- patch around stable signature/context locations compatible with existing instrumentation
-
-Run #56:
-- ID `34558962681`
-- result: **SUCCESS**
-- artifact `cemu-arm64-test`
-- artifact ID `10184443139`
-- artifact digest `sha256:7294b62139b1f53aa56205a5a060dbd54d6dea62963a710125dbf03aa22efb82`
-
-## Controlled same-build A/B result
-
-Comparison window: `t=70..260s`, 20 samples each.
+Controlled same-build `t=70..260s` result:
 
 | metric | BASELINE | ARM64_COMPARE_REUSE | delta |
 |---|---:|---:|---:|
@@ -170,32 +112,138 @@ Comparison window: `t=70..260s`, 20 samples each.
 | avg frame time | 19.1998 ms | 18.8834 ms | -1.6479% |
 | mean p99 | 23.6361 ms | 22.7896 ms | -3.5814% |
 | mean 1% low | 42.4818 FPS | 43.8995 FPS | +3.3372% |
-| barriers/frame | 200.0892 | 201.2699 | +0.5901% |
-| renderpasses/frame | 283.2197 | 284.3660 | +0.4047% |
-
-### Interpretation
-
-Confirmed:
-- generated ARM64 code is smaller for the proven identical-compare pattern
-- same-build benchmark direction is positive
-- this is the first clearly positive optimization candidate in the current performance campaign
-
-Not confirmed:
-- it is **not yet a FIX**
-- magnitude is small and may not be visually obvious
-- the baseline run trends down late (`t=240..260s`), so part of the observed gap could be temporal drift
-- no Release/Diagnostics promotion yet
 
 Status:
-- **PRESERVE AS POSITIVE CANDIDATE**
-- continue looking for larger JIT wins
-- if promotion is considered later, repeat controlled A/B (preferably with reversed order / another fresh pair) first
+- generated-code reduction confirmed
+- positive candidate
+- not a FIX
+- keep separate from later experiments until each is independently measured
 
-## Next action
+## `0x0420CB80` targeted IML/RA tracing
 
-See `NEXT_ACTION.md`.
+`Apply-ARM64JitRootCause.py` logs the target segment before/after RA move insertion and correlates post-RA IML instructions with emitted native byte ranges.
 
-Priority:
-1. exact IML/native analysis of `0x0420CB80`
-2. branch-target resolution for `0x02A281A0`
-3. only then create one new single-variable JIT experiment
+Pre-P1 repository history only established that `0x0420CB80` was load-heavy and required exact IML mapping. It did **not** contain the later handoff's claimed detailed non-GPR `LR+CTR` / `XER+temporaryFPR` proof.
+
+## ARM64 R_NAME LDP P1 — actual implementation
+
+Experiment:
+- `arm64-rname-ldp`
+
+Implementation commit:
+- `f929fa8007d6ef17f90a3c166b5d248d2ee30e3d`
+- actual message: `perf: add ARM64 R_NAME LDP experiment`
+
+Implementation mechanism:
+- build-time installer `tools/diagnostics/Apply-ARM64RNameLdp.py`
+- runtime gate `arm64-rname-ldp`
+
+Actual helper semantics:
+- only `PPCREC_IML_TYPE_R_NAME`
+- IML base format must be `I64`
+- only names `PPCREC_NAME_R0 .. PPCREC_NAME_R0+31`
+- contiguous run of `R_NAME` instructions is scanned
+- each guest GPR must occur exactly once in the run
+- guest GPR `n` may pair with `n+1`
+- destination host registers must differ
+- emits one `LDP` into two `WReg`s from `PPCInterpreter_t::gpr[]`
+- unmatched GPR and all non-GPR R_NAME instructions retain normal lowering
+
+Baseline backend source confirms integer R_NAME GPR loads normally use `ldr(WReg, ...)`, and `PPCInterpreter_t::gpr` is `uint32 gpr[32]`.
+
+### Correction of stale handoff evidence
+
+After the initial build failure, handoff documents incorrectly described P1 as:
+- non-GPR 64-bit fields
+- adjacent +8 byte state offsets
+- `SPR::LR + SPR::CTR`
+- `SPR::XER + temporaryFPR`
+- `F940A546`, `F940A942`, `F9410146`, `F9410542`
+
+This text conflicts with the actual `f929fa8...` implementation, the baseline `r_name()` lowering, `PPCInterpreter_t` field widths, and the pre-P1 debug-history state. It is therefore classified as a documentation error and must not be treated as captured evidence.
+
+## P1 initial CI failure and compile-only repair
+
+Initial P1 CI:
+- run `34576700718`
+- job `103190682420`
+- failed during C++ compile
+
+Recovered compiler diagnostic showed generated source lines beginning with literal `\t`, producing repeated `expected expression` errors in `BackendAArch64.cpp`.
+
+Root cause:
+- P1 helper C++ was stored in a Python raw triple-quoted string
+- `\t` remained literal rather than becoming indentation
+
+Minimal repair:
+- commit `fc330d1c7c29e68042208337ac6e46eb21c69421`
+- `helper_block = r'''` -> `helper_block = '''`
+- no optimization-scope change
+
+Rebuilt Test CI:
+- run `34591462835`
+- job `103237476096`
+- result **SUCCESS**
+- artifact `cemu-arm64-test`
+- artifact ID `10262500252`
+- digest `sha256:7fb8e3f213818d4f0cc46067bd02ff6cd1fd4be37553564e9105a111f037d8fe`
+
+## P1 runtime VERIFY result
+
+Launcher:
+- `ARM64_RNAME_LDP_VERIFY.cmd`
+
+Active tokens:
+- `arm64-rname-ldp`
+- `jit-iml-ra-hotspot`
+- `perf-log`
+
+Target entry:
+- `0x0420CB80`
+
+Target segment itself contains only cycle accounting/check IML and reports:
+- `pairs=0`
+- `native_bytes_saved=0`
+
+Its enterable state-restore segment (`ppc=0`, `enter=0x0420CB80`) contains the R_NAME run.
+
+Post-RA run exposes guest GPRs permitting these six pairs:
+- r3+r4
+- r5+r6
+- r24+r25
+- r26+r27
+- r28+r29
+- r30+r31
+
+Runtime diagnostic:
+
+```text
+[ARM64_RNAME_LDP] ppc=0x00000000 enter=0x0420cb80 pairs=6 native_bytes_saved=24
+```
+
+The six partner IML entries emit `bytes=0` because the earlier member of each IML-position pair emitted the combined load. Their indices match the exact six planned pairs. The final `JUMP` still emits 8 bytes.
+
+Interpretation:
+- runtime gate active: PASS
+- intended GPR pair planning active: PASS
+- six pair emissions: PASS
+- exact code-size saving 24 bytes: PASS
+- unrelated CR/XER.SO R_NAME entries still emit normal loads: PASS
+- control-flow tail retained: PASS
+- BOTW stable-gameplay smoke: PASS
+
+The VERIFY run is not a controlled performance result; its early FPS samples must not be compared to prior baseline data.
+
+## Current decision gate
+
+P1 is now ready for its first independent controlled A/B.
+
+Use existing successful artifact:
+1. `ARM64_RNAME_LDP_BASELINE.cmd`
+2. `ARM64_RNAME_LDP_CANDIDATE.cmd`
+
+Same scene/settings, restart per preset, stationary player/camera, run through at least `t=260s`, compare `t=70..260s`.
+
+If first pair is meaningfully positive, repeat once in reverse order before calling it a repeatable candidate. If neutral/negative without benchmark invalidation evidence, reject P1.
+
+Do not combine with `arm64-compare-reuse` yet. Do not move to `0x02A281A0` until P1 is resolved.
