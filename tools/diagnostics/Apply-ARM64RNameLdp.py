@@ -12,7 +12,7 @@ p = Path("src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp")
 t = p.read_text(encoding="utf-8")
 
 func_signature = 'bool PPCRecompiler_generateAArch64Code(struct PPCRecFunction_t* PPCRecFunction, struct ppcImlGenContext_t* ppcImlGenContext)\n'
-helper_block = r'''static bool PPCRecompilerAArch64Gen_GetPairableRNameGpr(const IMLInstruction* ins, uint32& guestGpr)
+helper_block = '''static bool PPCRecompilerAArch64Gen_GetPairableRNameGpr(const IMLInstruction* ins, uint32& guestGpr)
 {
 \tif (ins->type != PPCREC_IML_TYPE_R_NAME)
 \t\treturn false;
