@@ -1,149 +1,105 @@
-# NEXT ACTION — ARM64 cycle-check TEMP_GPR1 reuse
+# NEXT ACTION — revalidate `arm64-compare-reuse`
 
 Repository: `npark2860-cyber/Cemu-Windows-ARM64`
 
 Branch: `runtime-experiments-arm64`
 
-## CLOSED P1 — `arm64-rname-ldp`
+## CLOSED — `arm64-rname-ldp`
 
-P1 remains closed as a non-winning performance direction.
-
+Status remains unchanged:
 - static/correctness: PASS
 - native code-size reduction: REAL
 - repeatable performance gain: NOT CONFIRMED
 - promotion: DO NOT PROMOTE
-- do not combine with `arm64-compare-reuse`
+- do not combine with other candidates
 
-Future sub-3% candidates require order-balanced validation because the P1 crossover exposed a strong second-run bias.
+## CLOSED — `arm64-cyclecheck-reuse`
 
-## `0x02A281A0` ROOT CAUSE — PROVEN
-
-Fresh diagnostic run from Test build `5dd260c1...` captured:
-- `0x02A281A0`: `5.59%` (`185/3312` RUNNING samples)
-- actual entry first word: `17ffff64`
-- runtime-decoded branch: `imm26=-156`, `byte_off=-624` (`-0x270`)
-- resolved target: `0x00000143973bc9e0`
-
-Resolved target begins:
-
-```text
-ldr  w25, [x29, #remainingCycles]
-sub  w25, w25, #5
-str  w25, [x29, #remainingCycles]
-ldr  w25, [x29, #remainingCycles]
-tbnz w25, #31, ...
-```
-
-The report-only IML/RA extension proved exact adjacency for guest `0x02A281A0`:
-
-```text
-00 MACRO COUNT_CYCLES cycles: 5
-01 CYCLE_CHECK
-```
-
-This survives PREMOVE, REWRITTEN, and POSTMOVE unchanged.
-
-The same structural pair is present at `0x0420CB80` with `COUNT_CYCLES cycles: 2` followed immediately by `CYCLE_CHECK`.
-
-Safety observation:
-- branch targets enter at the IML segment start, not directly at instruction 1
-- therefore a qualifying `CYCLE_CHECK` cannot execute without its immediately preceding `COUNT_CYCLES`
-- `COUNT_CYCLES` leaves the decremented value in `TEMP_GPR1.WReg` (`w25`)
-- there is no generated instruction between the pair that clobbers `w25`
-
-Conclusion: the second `LDR remainingCycles` is a concrete AArch64 backend redundancy for this exact adjacency pattern.
-
-## SINGLE-VARIABLE EXPERIMENT — `arm64-cyclecheck-reuse`
-
-Experiment token:
-- `arm64-cyclecheck-reuse`
-
-Implementation installer:
-- `tools/diagnostics/Apply-ARM64CycleCheckReuse.py`
-
-Implementation rule:
-- only for `PPCREC_IML_TYPE_CJUMP_CYCLE_CHECK`
-- only when the immediately preceding IML in the same segment is `PPCREC_IML_TYPE_MACRO / PPCREC_IML_MACRO_COUNT_CYCLES`
-- candidate skips the cycle-check reload and directly uses `TEMP_GPR1.WReg`
-- all other cycle checks keep the existing `conditionalJumpCycleCheck()` path unchanged
-- token absent => baseline behavior unchanged
-
-Implementation/composition commit:
+Implementation/composition:
 - `f311e5e2644f71dea03e680819e3399ad96a37f3`
 
 Validated Test CI:
 - run `34618642312`
 - job `103326770490`
-- conclusion: SUCCESS
-- artifact `cemu-arm64-test`
+- SUCCESS
 - artifact ID `10273002162`
-- artifact digest `sha256:9378dbac17b2457aa2f1e0f76bdf301c4c6fb4ae65f3785af9a52a3eb2284da9`
 
-## VERIFY — PASS
+Runtime VERIFY:
+- `0x0420CB80`: `COUNT_CYCLES` 12B, reuse marker present, `CYCLE_CHECK` 8B
+- `0x02A281A0`: `COUNT_CYCLES` 12B, reuse marker present, `CYCLE_CHECK` 8B
+- structural safety: PASS
+- BOTW gameplay smoke: PASS
+- static saving: one 4-byte AArch64 `LDR` removed per qualifying pair
 
-Runtime VERIFY used build `f311e5e` with:
+Order-balanced performance protocol:
+- fixed BOTW scene
+- primary window `t=70..260s`
+- order `BASELINE -> CANDIDATE -> CANDIDATE -> BASELINE`
+- 20 samples per run
 
-```text
-[EXPERIMENT] Active: arm64-cyclecheck-reuse,jit-iml-ra-hotspot,perf-log
-[PERF_META] preset=ARM64_CYCLECHECK_REUSE_VERIFY
-```
+Pair 1, BASELINE -> CANDIDATE:
+- FPS: `53.48815 -> 52.22740` = **-2.3571%**
+- avg frame time: `18.69960 -> 19.14780 ms` = **+2.3968%**
+- p99: `23.26915 -> 23.16470 ms` = `-0.4489%`
+- 1% low: `42.98695 -> 43.21690 FPS` = `+0.5349%`
+- candidate lost 19/20 aligned FPS windows
 
-Target `0x0420CB80`:
+Pair 2, CANDIDATE -> BASELINE:
+- FPS: `52.96495 baseline` vs `52.66905 candidate` = **-0.5587%** candidate
+- avg frame time: `18.88255 baseline` vs `18.98710 ms candidate` = **+0.5537%** candidate
+- p99: `23.67365 baseline` vs `24.29035 ms candidate` = **+2.6050%** candidate
+- 1% low: `42.37405 baseline` vs `41.79210 FPS candidate` = **-1.3734%** candidate
+- candidate lost 13/20 aligned FPS windows
 
-```text
-[JIT_IML_NATIVE] ... iml=0 native=0x000->0x00c bytes=12 MACRO COUNT_CYCLES cycles: 2
-[ARM64_CYCLECHECK_REUSE] ppc=0x0420cb80 iml=1 reuse=TEMP_GPR1
-[JIT_IML_NATIVE] ... iml=1 native=0x00c->0x014 bytes=8 CYCLE_CHECK
-```
+Two-order condition means:
+- baseline: `53.22655 FPS`
+- candidate: `52.44823 FPS`
+- candidate delta: **-1.4623%**
+- avg frame time delta: **+1.4708%**
+- p99 delta: **+1.0912%**
+- 1% low delta: **-0.4124%**
 
-Target `0x02A281A0`:
+Execution-position check:
+- first run of each pair: `53.07860 FPS`
+- second run of each pair: `52.59618 FPS`
+- second-run delta: `-0.9089%`
 
-```text
-[JIT_IML_NATIVE] ... iml=0 native=0x000->0x00c bytes=12 MACRO COUNT_CYCLES cycles: 5
-[ARM64_CYCLECHECK_REUSE] ppc=0x02a281a0 iml=1 reuse=TEMP_GPR1
-[JIT_IML_NATIVE] ... iml=1 native=0x00c->0x014 bytes=8 CYCLE_CHECK
-```
+Conclusion:
+- the generated-code reduction is real
+- the candidate is slower in both orderings
+- this is not a promotion candidate
+- `arm64-cyclecheck-reuse` is CLOSED / DO NOT PROMOTE / DO NOT COMBINE
 
-VERIFY result:
-- reuse marker: PASS on both targeted pairs
-- `COUNT_CYCLES`: unchanged at 12 bytes
-- `CYCLE_CHECK`: 12 bytes -> 8 bytes
-- static saving: exactly 4 bytes / one AArch64 `LDR` per qualifying pair
-- BOTW reaches gameplay under the candidate without an observed correctness regression in the VERIFY run
+Full record:
+- `DEBUG_HISTORY_20260912_ARM64_CYCLECHECK_REUSE.md`
 
-The optimization hypothesis is therefore validated structurally and by runtime generated-code inspection. It is now eligible for performance validation, but it is not yet a promoted optimization.
+## PRESERVED CANDIDATE — `arm64-compare-reuse`
 
-## NEXT ACTION — ORDER-BALANCED PERFORMANCE VALIDATION
+Previous one-order result:
+- baseline `52.09095 FPS`
+- candidate `52.96810 FPS`
+- candidate `+1.6839%`
 
-Run only the fixed BOTW benchmark scene. Keep player/camera/settings/weather identical and restart Cemu for every preset.
+Generated-code simplification was confirmed, but this result predates the strengthened order-bias protocol. It is still only a candidate.
 
-Use:
-- `ARM64_CYCLECHECK_REUSE_BASELINE.cmd`
-- `ARM64_CYCLECHECK_REUSE_CANDIDATE.cmd`
+## NEXT ACTION
 
-Primary comparison window:
-- `t=70..260s`
+Perform the missing order-balanced revalidation of `arm64-compare-reuse` before starting another JIT behavior experiment.
 
-Required ordering because the previous P1 test exposed a strong order/period effect:
-1. first pair: BASELINE -> CANDIDATE
-2. second pair: CANDIDATE -> BASELINE
+Protocol:
+1. use the same fixed BOTW scene/settings/weather
+2. restart Cemu for every run
+3. primary comparison window remains `t=70..260s`
+4. measure `BASELINE -> COMPARE_REUSE -> COMPARE_REUSE -> BASELINE`
+5. keep `arm64-compare-reuse` as the only behavior-changing token
+6. record FPS, avg frame time, p99, 1% low; barriers/renderpasses remain supporting only
 
-Prefer a sacrificial warm-up/preconditioning run before the measured pairs if practical. Do not classify from one pair only.
-
-Primary decision metrics:
-- average FPS
-- average frame time
-- p99 frame time
-- approximate 1% low
-
-Supporting only:
-- barriers/frame
-- renderpasses/frame
-
-Promotion rule:
+Promotion requirement:
+- candidate must retain a consistent advantage across both orderings
+- a sub-3% gain is not sufficient if direction crosses over
 - correctness must remain clean
-- candidate must show a repeatable advantage after both orderings, not merely a second-run advantage
-- if gain is sub-3%, treat it as noise-sensitive and require especially consistent direction across the balanced runs
 
-Do not combine `arm64-cyclecheck-reuse` with `arm64-compare-reuse` or any other behavior experiment during this validation.
+If compare-reuse also fails balanced validation, move to the next evidence-based JIT hotspot or host/Vulkan profiling rather than combining failed/neutral candidates.
+
+Do not reopen `arm64-rname-ldp` or `arm64-cyclecheck-reuse` without new evidence.
 Do not touch `main`, Release, or Diagnostics.
