@@ -2,7 +2,7 @@
 
 > Canonical policy: `BRANCH_POLICY.md`
 > Active-role manifest: `ACTIVE_BRANCH_ROLES.md`
-> Do **not** trust a hardcoded branch HEAD in a handoff. Before every write/build, fetch the actual branch HEAD/workflow/source from GitHub.
+> Do **not** trust a hardcoded HEAD. Before every write/build, fetch the actual Test branch HEAD/workflow/source from GitHub.
 
 ## ROLE
 
@@ -24,81 +24,78 @@ Artifact identity:
 
 `main`, Release, and Diagnostics are not to be modified in this stage.
 
-## CURRENT VALIDATED CODE CHECKPOINT
+## P1 — ARM64 R_NAME GPR LDP
 
-Current behavior-changing experiment:
-- token: `arm64-rname-ldp`
-- implementation commit: `f929fa8007d6ef17f90a3c166b5d248d2ee30e3d`
-- actual commit message: `perf: add ARM64 R_NAME LDP experiment`
-- implementation is applied at Test build time by `tools/diagnostics/Apply-ARM64RNameLdp.py`
-- launchers: `ARM64_RNAME_LDP_BASELINE.cmd`, `ARM64_RNAME_LDP_CANDIDATE.cmd`, `ARM64_RNAME_LDP_VERIFY.cmd`
+Experiment token:
+- `arm64-rname-ldp`
+
+Implementation:
+- `f929fa8007d6ef17f90a3c166b5d248d2ee30e3d`
+- actual message: `perf: add ARM64 R_NAME LDP experiment`
+- installer: `tools/diagnostics/Apply-ARM64RNameLdp.py`
 
 Compile-only repair:
 - `fc330d1c7c29e68042208337ac6e46eb21c69421`
-- `fix: decode ARM64 R_NAME LDP helper indentation`
-- root cause was a Python raw triple-quoted helper string preserving literal `\t` in generated C++
-- repair only removed the raw-string prefix; optimization scope was unchanged
+- fixed literal `\t` produced by a Python raw triple-quoted helper string
+- optimization scope unchanged
 
 Validated Test CI:
-- run ID: `34591462835`
-- job ID: `103237476096`
-- result: **SUCCESS**
-- artifact: `cemu-arm64-test`
-- artifact ID: `10262500252`
-- artifact digest: `sha256:7fb8e3f213818d4f0cc46067bd02ff6cd1fd4be37553564e9105a111f037d8fe`
+- run `34591462835`
+- job `103237476096`
+- **SUCCESS**
+- artifact `cemu-arm64-test`
+- artifact ID `10262500252`
+- digest `sha256:7fb8e3f213818d4f0cc46067bd02ff6cd1fd4be37553564e9105a111f037d8fe`
 
-Documentation commits may advance branch HEAD beyond `fc330d1...`. Always fetch the actual branch HEAD before writing.
+## P1 SEMANTICS — CORRECT DEFINITION
 
-## IMPORTANT CORRECTION — P1 SEMANTICS
+Ignore the stale post-failure handoff text that described non-GPR 64-bit/+8-byte pairs such as LR+CTR or XER+temporaryFPR. That was a documentation error.
 
-Older handoff text written after the failed build incorrectly described P1 as pairing non-GPR 64-bit `R_NAME` loads such as `SPR::LR + SPR::CTR` at `+8` offsets and cited `F940...` examples.
+Actual implementation:
+- only `PPCREC_IML_TYPE_R_NAME`
+- IML base format `I64`
+- only guest GPR names `R0..R31`
+- scan a contiguous `R_NAME` run
+- pair guest GPR `n` with `n+1` if each occurs exactly once and host destinations differ
+- replace two individual `ldr W...` loads from adjacent `PPCInterpreter_t::gpr[]` uint32 fields with one `ldp W...,W...`
+- unmatched GPR and all non-GPR `R_NAME` lowering remain unchanged
 
-That description is not supported by the actual P1 implementation or the pre-P1 debug history and must not be used as source of truth.
+## STATIC/RUNTIME VERIFY — PASS
 
-Actual `f929fa8...` implementation:
-- considers only `PPCREC_IML_TYPE_R_NAME`
-- requires `I64` IML destination format
-- considers only names `PPCREC_NAME_R0 .. R31`
-- groups a contiguous run of `R_NAME` IML instructions
-- pairs guest GPR `n` with guest GPR `n+1` when each appears exactly once in the run and destinations differ
-- emits one AArch64 `LDP` to two `WReg` destinations from adjacent `PPCInterpreter_t::gpr[]` uint32 fields
-- leaves unpaired GPR and all non-GPR `R_NAME` lowering unchanged
+Target entry:
+- `0x0420CB80`
 
-## RUNTIME VERIFY — PASS
-
-Hotspot:
-- guest entry: `0x0420CB80`
-- enterable post-RA segment: `ppc=0x00000000`, `enter=0x0420CB80`
+Enterable state-restore segment:
+- `ppc=0x00000000`
+- `enter=0x0420CB80`
 
 Observed pairs:
-- `r3 + r4`
-- `r5 + r6`
-- `r24 + r25`
-- `r26 + r27`
-- `r28 + r29`
-- `r30 + r31`
+- `r3+r4`
+- `r5+r6`
+- `r24+r25`
+- `r26+r27`
+- `r28+r29`
+- `r30+r31`
 
 Runtime diagnostic:
 - `pairs=6`
 - `native_bytes_saved=24`
 
-Static/runtime acceptance for pair formation is **PASS**:
-- runtime gate active
-- six pair loads emitted
-- native size reduction exactly 24 bytes
-- unrelated non-GPR `R_NAME` entries still emit normally
-- final JUMP retained
-- BOTW stable-gameplay smoke passed
+Acceptance:
+- runtime gate active: PASS
+- six pair loads emitted: PASS
+- native code-size reduction 24 bytes: PASS
+- unrelated non-GPR lowering preserved: PASS
+- final JUMP retained: PASS
+- BOTW stable-gameplay smoke: PASS
 
-## FIRST CONTROLLED A/B — CLEAR POSITIVE DIRECTION
+## CONTROLLED PERFORMANCE RESULT — NOT REPEATABLE
 
-Run order:
-1. BASELINE
-2. CANDIDATE
-
-Established comparison window:
+Primary comparison window for all runs:
 - `t=70..260s`
-- 20 windows per run
+- 20 ten-second windows per run
+
+### Pair 1 — BASELINE -> CANDIDATE
 
 | metric | BASELINE | CANDIDATE | delta |
 |---|---:|---:|---:|
@@ -109,65 +106,88 @@ Established comparison window:
 | barriers/frame | 203.99550 | 200.17105 | -1.8748% |
 | renderpasses/frame | 287.09810 | 283.18290 | -1.3637% |
 
-Supporting evidence:
-- CANDIDATE FPS is higher in 19 of 20 aligned windows
-- only `t=170s` is lower
-- BASELINE degrades at `t=250..260s`, but trimming those late samples does not remove the win
-- `t=70..240s`: approximately **+1.7869% FPS**
-- `t=70..230s`: approximately **+1.7369% FPS**
+Candidate won 19/20 aligned FPS windows. This initially looked positive.
 
-Interpretation:
-- first independent A/B is meaningfully positive
-- code-size reduction was already independently verified
-- P1 is preserved as a **positive candidate**
-- P1 is **not yet a FIX** because only BASELINE->CANDIDATE order has been measured
-- one reverse-order confirmation is required before any promotion/combination decision
+### Pair 2 — CANDIDATE -> BASELINE
 
-## TEST CONTRACT
+| metric | BASELINE | CANDIDATE | delta |
+|---|---:|---:|---:|
+| avg FPS | 49.90825 | 48.12405 | **-3.5750%** |
+| avg frame time | 20.03850 ms | 20.78095 ms | **+3.7051%** |
+| mean p99 | 21.87960 ms | 23.03175 ms | **+5.2659%** |
+| mean 1% low | 45.71635 FPS | 43.58540 FPS | **-4.6612%** |
+| barriers/frame | 207.02825 | 200.50005 | -3.1533% |
+| renderpasses/frame | 290.03925 | 283.49895 | -2.2550% |
 
-All behavior-changing experiments happen here only.
+Candidate lost all 20/20 aligned FPS windows. Trimming early/late windows does not remove the negative direction; for example `t=90..260s` is still about `-3.38%` FPS.
 
-Rules:
-- change one behavior variable at a time
-- static-verify the diff before CI
-- do not call an experiment a FIX until CI + runtime + controlled repeat validation pass
-- do not repeat rejected experiments without new evidence
-- never promote the whole Test branch into Release
-- `main` must not be touched
+### Two-order crossover interpretation
 
-## PROTECTED / DO NOT REGRESS
+Condition means across the two complete pairs:
+- BASELINE avg FPS: `49.78785`
+- CANDIDATE avg FPS: `49.44420`
+- candidate delta: **-0.6902%**
+- avg frame time: **+0.7602%** candidate regression
+- mean p99: **+0.9389%** candidate regression
+- mean 1% low: **-0.8096%** candidate regression
 
-- Bayonetta 2 / Star Fox Zero `vkGetQueryPoolResults` direct query readback FIX
-- VS `DEFAULT_VAL` synthesize/linkage FIX
-- FidelityFX FSR1 EASU + RCAS
-- existing Adreno / pre-e834 verified fixes
-- XCX query behavior remains separate
+Execution-period means:
+- first run of each pair: `48.89575 FPS`
+- second run of each pair: `50.33630 FPS`
+- second-run advantage: about **+2.9462%**
+
+This order/period effect is larger than the apparent optimization effect and reverses which preset wins.
+
+## P1 FINAL STATUS
+
+`arm64-rname-ldp` is **NOT a repeatable performance winner** under the current controlled BOTW harness.
+
+Classification:
+- correctness/static codegen experiment: PASS
+- code-size reduction: REAL
+- repeatable FPS improvement: NOT CONFIRMED
+- promotion: **DO NOT PROMOTE**
+- combination with `arm64-compare-reuse`: **DO NOT COMBINE**
+- further P1 reruns: not justified without new evidence or a materially improved benchmark method
+
+Treat P1 as a closed/non-winning performance direction, while preserving the diagnostic evidence that AArch64 pair-load formation itself works.
+
+## BENCHMARK METHOD FINDING
+
+The two-order crossover exposed a strong second-run advantage. Future small-effect experiments must not rely on one BASELINE->CANDIDATE pair.
+
+For future sub-3% candidates, prefer one of:
+- a sacrificial preconditioning launch before measured runs, then AB/BA
+- an ABBA-style sequence
+- at minimum both orderings before calling a result positive
+
+Continue to compare the established `t=70..260s` window unless a documented reason changes it.
 
 ## PRESERVED SEPARATE CANDIDATE — ARM64 COMPARE REUSE
 
-`arm64-compare-reuse` remains separate and must not be mixed into the P1 confirmation.
+`arm64-compare-reuse` remains a separate candidate, not a FIX.
 
-Previous controlled same-build result:
-- baseline: 52.091 FPS
-- compare-reuse: 52.968 FPS
-- delta: +1.68%
+Previous one-order result:
+- baseline `52.09095 FPS`
+- candidate `52.96810 FPS`
+- `+1.6839%`
 
-Generated-code reduction is real, but it is still a candidate, not a FIX.
+Because P1 exposed a strong order effect, compare-reuse also requires a fresh order-balanced revalidation before any promotion.
 
 ## CURRENT NEXT ACTION
 
-Do **not** build new code.
+P1 is resolved as non-winning for performance. Do not spend another run on it now.
 
-Use the same validated artifact for a reverse-order confirmation:
-1. `ARM64_RNAME_LDP_CANDIDATE.cmd`
-2. close Cemu
-3. `ARM64_RNAME_LDP_BASELINE.cmd`
-4. same save/location/camera/weather/graphics/FPS++ settings
-5. stationary player/camera
-6. restart Cemu for each preset
-7. collect through at least `t=260s`
-8. compare `t=70..260s`
+Return to the next evidence-backed hotspot:
+- guest `0x02A281A0`
+- mapped native entry starts with branch/thunk-like words `17ffff66 d503201f`
 
-If the reverse pair is positive again with correctness intact, classify P1 as a repeatable positive candidate and reprofile before promotion consideration.
+Next task:
+1. fetch actual Test branch HEAD/source
+2. use the existing report-only JIT diagnostics
+3. decode/follow the first AArch64 `B imm26`
+4. dump the actual branch target body
+5. correlate that body to guest block/IML
+6. identify one concrete redundant code-generation pattern before writing any new optimization
 
-Do not enable `arm64-compare-reuse` during this confirmation. Do not start `0x02A281A0` work until P1 is resolved.
+Do not start by writing a behavior-changing patch. Do not touch `main`, Release, or Diagnostics.
