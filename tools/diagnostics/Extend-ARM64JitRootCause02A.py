@@ -43,4 +43,7 @@ new = '''\t\tconst bool diagJitHotspot = RuntimeExperiments::Enabled("jit-iml-ra
 t = replace_once(t, old, new, "ARM64 JIT native hotspot set")
 p.write_text(t, encoding="utf-8", newline="\n")
 
+branch_shape = Path(__file__).with_name("Extend-ARM64JitBranchShape.py")
+exec(compile(branch_shape.read_text(encoding="utf-8"), str(branch_shape), "exec"))
+
 print("[arm64-jit-root-cause-02a] extended report-only IML/RA/native correlation")
