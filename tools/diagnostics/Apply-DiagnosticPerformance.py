@@ -145,4 +145,54 @@ t = replace_once(
 )
 p.write_text(t, encoding="utf-8", newline="\n")
 
+# Map the stable BOTW guest-PC hotspots to their exact AArch64 JIT entrypoints.
+# This is report-only and runs only when jit-hotspot-native is explicitly enabled.
+p = Path("src/gui/wxgui/windows/PPCThreadsViewer/DebugPPCThreadsWindow.cpp")
+t = p.read_text(encoding="utf-8")
+t = ensure_include(
+    t,
+    '#include "Cafe/OS/RPL/rpl_symbol_storage.h"\n',
+    '#include "DebugPPCThreadsWindow.h"\n',
+    '#include "Cafe/HW/Espresso/Recompiler/PPCRecompiler.h"\n#include "diagnostics/RuntimeExperiments.h"\n',
+    "PPC profiler JIT hotspot includes",
+)
+hotspot_anchor = '''\t\tcemuLog_log(LogType::Force, "[{:08x}] {:8.2f}% (Samples: {:5}) Symbol: {}", sample.first,
+\t\t\t\t\t(double)(sample.second * 100) / (double)totalSampleCount, sample.second, strName);
+'''
+hotspot_block = '''\t\tcemuLog_log(LogType::Force, "[{:08x}] {:8.2f}% (Samples: {:5}) Symbol: {}", sample.first,
+\t\t\t\t\t(double)(sample.second * 100) / (double)totalSampleCount, sample.second, strName);
+
+\t\tif (RuntimeExperiments::Enabled("jit-hotspot-native") &&
+\t\t\t(sample.first == 0x0420CB80 || sample.first == 0x02A281A0 || sample.first == 0x03B84854 ||
+\t\t\t sample.first == 0x0399B4DC || sample.first == 0x03818C6C))
+\t\t{
+\t\t\tPPCREC_JUMP_ENTRY nativeEntry = nullptr;
+\t\t\tif (ppcRecompilerInstanceData != nullptr && sample.first < PPC_REC_CODE_AREA_END)
+\t\t\t\tnativeEntry = ppcRecompilerInstanceData->ppcRecompilerDirectJumpTable[sample.first / 4];
+
+\t\t\tconst bool nativeValid = nativeEntry != nullptr &&
+\t\t\t\tnativeEntry != PPCRecompiler_leaveRecompilerCode_unvisited &&
+\t\t\t\tnativeEntry != PPCRecompiler_leaveRecompilerCode_visited;
+\t\t\tcemuLog_log(LogType::Force,
+\t\t\t\t"[JIT_HOTSPOT_MAP] guest=0x{:08x} native=0x{:016x} valid={}",
+\t\t\t\tsample.first, (uint64)(uintptr_t)nativeEntry, nativeValid);
+
+\t\t\tif (nativeValid)
+\t\t\t{
+\t\t\t\tconst uint32* nativeWords = reinterpret_cast<const uint32*>(nativeEntry);
+\t\t\t\tfor (uint32 nativeOffset = 0; nativeOffset < 128; nativeOffset += 16)
+\t\t\t\t{
+\t\t\t\t\tconst uint32 wordIndex = nativeOffset / 4;
+\t\t\t\t\tcemuLog_log(LogType::Force,
+\t\t\t\t\t\t"[JIT_HOTSPOT_CODE] guest=0x{:08x} native_off=0x{:03x} {:08x} {:08x} {:08x} {:08x}",
+\t\t\t\t\t\tsample.first, nativeOffset,
+\t\t\t\t\t\tnativeWords[wordIndex + 0], nativeWords[wordIndex + 1],
+\t\t\t\t\t\tnativeWords[wordIndex + 2], nativeWords[wordIndex + 3]);
+\t\t\t\t}
+\t\t\t}
+\t\t}
+'''
+t = replace_once(t, hotspot_anchor, hotspot_block, "PPC profiler JIT hotspot native mapping")
+p.write_text(t, encoding="utf-8", newline="\n")
+
 print("[diagnostics-performance] installed")
