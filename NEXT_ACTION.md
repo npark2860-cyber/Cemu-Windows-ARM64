@@ -1,4 +1,4 @@
-# NEXT ACTION — ARM64 R_NAME LDP controlled A/B
+# NEXT ACTION — ARM64 R_NAME LDP reverse-order confirmation
 
 Repository: `npark2860-cyber/Cemu-Windows-ARM64`
 
@@ -35,11 +35,10 @@ Green CI:
 - artifact `cemu-arm64-test`
 - artifact ID `10262500252`
 
-Runtime VERIFY is also **PASS** at the intended hot entry path:
+Runtime VERIFY is **PASS**:
 - hotspot entry `0x0420CB80`
 - enterable state-restore segment reports `pairs=6`
 - `native_bytes_saved=24`
-- six partner GPR `R_NAME` IML entries emit zero additional bytes because their partner already emitted one pair load
 - final JUMP remains present
 - BOTW reaches stable gameplay
 
@@ -47,7 +46,7 @@ Runtime VERIFY is also **PASS** at the intended hot entry path:
 
 Ignore stale post-failure handoff text claiming non-GPR 64-bit `R_NAME` +8-byte field pairing.
 
-Actual implementation, confirmed directly from `Apply-ARM64RNameLdp.py`:
+Actual implementation:
 - only GPR names `R0..R31`
 - contiguous `R_NAME` run only
 - pair guest GPR `n` with `n+1`
@@ -64,16 +63,46 @@ Observed pairs in VERIFY:
 - r28+r29
 - r30+r31
 
-The stale `LR+CTR`, `XER+temporaryFPR`, `F940...`, non-GPR/+8 description is not supported by the actual implementation or pre-P1 debug history.
+## 3. FIRST CONTROLLED A/B — POSITIVE
 
-## 3. NEXT ACTION — FIRST CONTROLLED A/B PAIR
+Run order:
+1. BASELINE
+2. CANDIDATE
 
-Use the already downloaded successful artifact. No new build is needed.
+Primary comparison window:
+- `t=70..260s`
+- 20 ten-second windows each
+
+| metric | BASELINE | CANDIDATE | delta |
+|---|---:|---:|---:|
+| avg FPS | 49.66745 | 50.76435 | **+2.2085%** |
+| avg frame time | 20.13760 ms | 19.70055 ms | **-2.1703%** |
+| mean p99 | 22.25870 ms | 21.52095 ms | **-3.3144%** |
+| mean 1% low | 45.10415 FPS | 46.49985 FPS | **+3.0944%** |
+| barriers/frame | 203.99550 | 200.17105 | -1.8748% |
+| renderpasses/frame | 287.09810 | 283.18290 | -1.3637% |
+
+Supporting checks:
+- CANDIDATE FPS is higher in **19 of 20** aligned windows
+- only `t=170s` is lower (`49.379` vs `49.707`)
+- BASELINE drops sharply at `t=250..260s`, but this does not create the result by itself
+- trimming the comparison to `t=70..240s` still gives about **+1.7869% FPS**
+- trimming to `t=70..230s` still gives about **+1.7369% FPS**
+
+Interpretation:
+- first pair is a **clear positive direction**
+- generated-code reduction was already verified independently
+- this is **not yet a FIX** because only one order was measured
+- preserve P1 and perform one reverse-order confirmation before any promotion or combination
+
+## 4. NEXT ACTION — REVERSE ORDER
+
+Use the same already validated artifact. No new build is needed.
 
 Run in this order:
-1. `ARM64_RNAME_LDP_BASELINE.cmd`
+1. `ARM64_RNAME_LDP_CANDIDATE.cmd`
 2. close Cemu after the benchmark run
-3. `ARM64_RNAME_LDP_CANDIDATE.cmd`
+3. `ARM64_RNAME_LDP_BASELINE.cmd`
 
 For both runs:
 - exact same BOTW save/location/camera
@@ -86,36 +115,25 @@ For both runs:
 
 Upload both generated PERF logs.
 
-Primary comparison window:
+Primary comparison remains:
 - `t=70..260s`
 
-Compare:
-- average FPS
-- average frame time
-- mean p99
-- mean approximate 1% low
-- barriers/frame and renderpasses/frame as supporting data only
-
-## 4. DECISION AFTER FIRST PAIR
-
-- clear positive direction: repeat once in reverse order (`CANDIDATE` then `BASELINE`) before preserving as repeatable candidate
-- neutral/negative: reject P1 unless logs show obvious benchmark invalidation
-- unstable/drifting: repeat only if the drift prevents a fair conclusion
-- correctness regression: reject immediately
-
-Do not call P1 a FIX from one positive A/B pair.
+Decision after reverse pair:
+- positive again with correctness intact -> classify `arm64-rname-ldp` as a repeatable positive candidate and reprofile before promotion decision
+- neutral/negative -> investigate order/drift; do not promote
+- correctness regression -> reject immediately
 
 ## 5. PRESERVED SEPARATE CANDIDATE
 
 `arm64-compare-reuse` remains separate:
 - prior controlled result: about +1.68% average FPS
 - still candidate, not FIX
-- do not combine with P1 until P1 has an independent result
+- do not combine with P1 until P1 has an independent repeat result
 
 ## 6. AFTER P1 IS RESOLVED
 
-Only after P1 is accepted or rejected:
+Only after the reverse-order confirmation resolves P1:
 - return to `0x02A281A0`
 - resolve its initial branch/thunk target before interpreting later native words
 
-Do not start another optimization in parallel with this A/B.
+Do not start another optimization in parallel with this confirmation.
