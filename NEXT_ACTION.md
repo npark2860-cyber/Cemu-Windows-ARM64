@@ -1,4 +1,4 @@
-# NEXT ACTION — ARM64 JIT hotspot `0x02A281A0`
+# NEXT ACTION — ARM64 cycle-check TEMP_GPR1 reuse
 
 Repository: `npark2860-cyber/Cemu-Windows-ARM64`
 
@@ -16,78 +16,93 @@ P1 remains closed as a non-winning performance direction.
 
 Future sub-3% candidates require order-balanced validation because the P1 crossover exposed a strong second-run bias.
 
-## `0x02A281A0` BRANCH TARGET — CAPTURED
+## `0x02A281A0` ROOT CAUSE — PROVEN
 
-Fresh RUNNING-only profile:
+Fresh diagnostic run from Test build `5dd260c1...` captured:
 - `0x02A281A0`: `5.59%` (`185/3312` RUNNING samples)
-- `0x0420CB80`: `5.40%`
-- `0x03B84854`: `3.80%`
+- actual entry first word: `17ffff64`
+- runtime-decoded branch: `imm26=-156`, `byte_off=-624` (`-0x270`)
+- resolved target: `0x00000143973bc9e0`
 
-Actual direct-jump entry in this run:
-
-```text
-17ffff64 d503201f
-```
-
-Runtime branch diagnostic resolved:
-- signed `imm26 = -156`
-- byte displacement `-624` (`-0x270`)
-- `nativeEntry = 0x00000143973bcc50`
-- target body `= 0x00000143973bc9e0`
-
-The earlier `17ffff66 / -0x268` value was from an older build/layout and must not be hardcoded. Always trust the runtime-decoded branch instruction for the current build.
-
-## RESOLVED BODY — IMPORTANT PATTERN
-
-The first instructions at the resolved body are:
+Resolved target begins:
 
 ```text
-b942b3b9  ldr  w25, [x29, #0x2b0]   ; remainingCycles
-51001739  sub  w25, w25, #5
-b902b3b9  str  w25, [x29, #0x2b0]
-b942b3b9  ldr  w25, [x29, #0x2b0]   ; same value reloaded
-37f810b9  tbnz w25, #31, ...         ; cycle check
+ldr  w25, [x29, #remainingCycles]
+sub  w25, w25, #5
+str  w25, [x29, #remainingCycles]
+ldr  w25, [x29, #remainingCycles]
+tbnz w25, #31, ...
 ```
 
-Source correlation confirms:
-- `PPCREC_IML_MACRO_COUNT_CYCLES` emits `LDR -> SUB -> STR` through `TEMP_GPR1.WReg`
-- `PPCREC_IML_TYPE_CJUMP_CYCLE_CHECK` independently reloads `remainingCycles` into the same `TEMP_GPR1.WReg` before testing bit 31
+The report-only IML/RA extension then proved exact adjacency for guest `0x02A281A0`:
 
-This exposes a concrete AArch64-only peephole hypothesis:
-- when `COUNT_CYCLES` is immediately followed by `CYCLE_CHECK`, reuse the value already present in `TEMP_GPR1` and skip the second `LDR`
-- expected static saving: one 4-byte AArch64 load for each qualifying pair
-- do not implement as a performance candidate until IML/RA adjacency is captured on the target block
+```text
+00 MACRO COUNT_CYCLES cycles: 5
+01 CYCLE_CHECK
+```
 
-Other body instructions decode as normal guest semantics/state handling, including guest-memory load+endian swap, compare/CSET, CR writeback, GPR updates, conditional branch, and successor/state restore loads. They are not classified redundant yet.
+This survives PREMOVE, REWRITTEN, and POSTMOVE unchanged.
 
-## REPORT-ONLY IML/RA EXTENSION — BUILDING
+Native correlation is exact:
+- `COUNT_CYCLES`: `native 0x000 -> 0x00c`, 12 bytes
+- `CYCLE_CHECK`: `native 0x00c -> 0x018`, 12 bytes
 
-Test branch diagnostic extension:
-- `8017b9d9f7a44f4ba226343db1cc38c9868b4496` — add `Extend-ARM64JitRootCause02A.py`
-- `5dd260c1cd6be9915085ff7b6e0553d7859b06e4` — run the extension after generic diagnostics in the Test workflow
+The same structural pair is also present at `0x0420CB80` with `COUNT_CYCLES cycles: 2` followed immediately by `CYCLE_CHECK`.
 
-Scope:
-- report-only
-- expands existing `jit-iml-ra-hotspot` coverage from `0x0420CB80` to `0x02A281A0`
-- no behavior-changing code
+Safety observation:
+- branch targets enter at the IML segment start, not directly at instruction 1
+- therefore a qualifying `CYCLE_CHECK` cannot execute without its immediately preceding `COUNT_CYCLES`
+- `COUNT_CYCLES` leaves the decremented value in `TEMP_GPR1.WReg` (`w25`)
+- there is no generated instruction between the pair that clobbers `w25`
 
-CI:
-- run `34611534661`
-- job `103303192396`
-- diagnostic extension step already PASS
-- full build/artifact validation still required before runtime capture
+Conclusion: the second `LDR remainingCycles` is a concrete AArch64 backend redundancy for this exact adjacency pattern.
 
-## NEXT RUNTIME CAPTURE
+## NEW SINGLE-VARIABLE EXPERIMENT
 
-After the new Test artifact is green, use:
-- `JIT_IML_RA_HOTSPOT.cmd`
+Experiment token:
+- `arm64-cyclecheck-reuse`
 
-Same BOTW scene, then:
-1. `Debug > View PPC threads`
-2. profile `0E001800 / Default Core 1`
-3. capture the `0x02A281A0` `JIT_IML_RA_PREMOVE`, `JIT_IML_RA_REWRITTEN`, `JIT_IML_RA_POSTMOVE`, `JIT_IML_NATIVE_SEG`, and `JIT_IML_NATIVE` lines
-4. verify whether `MACRO COUNT_CYCLES cycles: 5` and `CYCLE_CHECK` are consecutive in the relevant segment and map to the native `LDR/SUB/STR/LDR/TBNZ` sequence
+Implementation installer:
+- `tools/diagnostics/Apply-ARM64CycleCheckReuse.py`
 
-If adjacency is proven with no intervening clobber, design exactly one runtime-gated candidate to reuse `TEMP_GPR1` for the cycle check.
+Implementation rule:
+- only for `PPCREC_IML_TYPE_CJUMP_CYCLE_CHECK`
+- only when the immediately preceding IML in the same segment is `PPCREC_IML_TYPE_MACRO / PPCREC_IML_MACRO_COUNT_CYCLES`
+- candidate skips the cycle-check reload and directly uses `TEMP_GPR1.WReg`
+- all other cycle checks keep the existing `conditionalJumpCycleCheck()` path unchanged
+- token absent => baseline behavior unchanged
 
-Do not implement another optimization in parallel. Do not touch `main`, Release, or Diagnostics.
+Expected static result for each qualifying pair:
+- `COUNT_CYCLES`: remains 12 bytes
+- `CYCLE_CHECK`: 12 bytes -> 8 bytes
+- saving: 4 bytes / one AArch64 `LDR`
+
+Launchers:
+- `ARM64_CYCLECHECK_REUSE_BASELINE.cmd`
+- `ARM64_CYCLECHECK_REUSE_CANDIDATE.cmd`
+- `ARM64_CYCLECHECK_REUSE_VERIFY.cmd`
+
+Implementation/composition commits through:
+- `f311e5e2644f71dea03e680819e3399ad96a37f3`
+
+Current Test CI:
+- run `34618642312`
+- compile/build validation in progress
+- source composition and diagnostic-diff steps already PASS
+
+## NEXT ACTION
+
+Do not performance-benchmark until the new Test CI is green.
+
+Once the artifact is green, run `ARM64_CYCLECHECK_REUSE_VERIFY.cmd` first.
+
+VERIFY acceptance for both targeted pairs where emitted:
+1. `[ARM64_CYCLECHECK_REUSE]` confirms reuse
+2. `COUNT_CYCLES` remains 12 bytes
+3. `CYCLE_CHECK` becomes 8 bytes
+4. BOTW reaches stable gameplay without regression
+
+Only after VERIFY passes, run order-balanced performance validation using the fixed BOTW scene and established `t=70..260s` window. Because expected effect may be small, use both orderings or ABBA/preconditioning; do not classify from a single BASELINE -> CANDIDATE pair.
+
+Do not combine this candidate with `arm64-compare-reuse` or any other behavior experiment during validation.
+Do not touch `main`, Release, or Diagnostics.
