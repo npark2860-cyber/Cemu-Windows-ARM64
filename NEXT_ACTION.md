@@ -1,4 +1,4 @@
-# NEXT ACTION — ARM64 JIT hotspot optimization
+# NEXT ACTION — ARM64 R_NAME LDP build recovery
 
 Repository: `npark2860-cyber/Cemu-Windows-ARM64`
 
@@ -6,70 +6,129 @@ Branch: `runtime-experiments-arm64`
 
 ## 0. SOURCE-OF-TRUTH CHECK
 
-Before any write or build:
+Before any write/build:
 1. fetch actual `runtime-experiments-arm64` HEAD
 2. read `CURRENT_HANDOFF.md`
-3. read `DEBUG_HISTORY_20260911_ARM64_JIT_PERF.md`
-4. confirm `.github/workflows/runtime-experiments-arm64.yml`
-5. confirm no requested change touches `main`, Release, or Diagnostics
+3. read `HANDOFF_PROMPT.md`
+4. read `DEBUG_HISTORY_20260911_ARM64_JIT_PERF.md`
+5. read `PERFORMANCE_OPTIMIZATION_PLAN.md`
+6. confirm `.github/workflows/runtime-experiments-arm64.yml`
+7. confirm no requested change touches `main`, Release, or Diagnostics
 
-Last validated non-documentation checkpoint is `04b5626c77503aceed1fb712e45563bf620262fc`, but documentation may have advanced branch HEAD.
+Last validated non-documentation checkpoint:
+- `04b5626c77503aceed1fb712e45563bf620262fc`
+- CI run `34558962681` — SUCCESS
 
-## 1. DO NOT PROMOTE COMPARE-REUSE YET
+Current behavior-changing P1 code commit:
+- `f929fa8007d6ef17f90a3c166b5d248d2ee30e3d`
+- `jit: pair adjacent ARM64 state loads`
 
-`arm64-compare-reuse` is the first clearly positive candidate, but not a FIX.
+Handoff documentation commits may advance branch HEAD beyond this code commit.
 
-Same-build controlled BOTW A/B (`t=70..260s`):
-- baseline: 52.091 FPS
-- compare-reuse: 52.968 FPS
-- delta: +1.68%
+## 1. BUILD-FAILURE RECOVERY GATE — DO THIS FIRST
 
-Generated-code simplification is confirmed, but effect size is small and baseline shows some late-run drift. Preserve the candidate; do not merge it into Release/Diagnostics yet.
+Current experiment:
+- `arm64-rname-ldp`
 
-## 2. NEXT TARGET: `0x0420CB80`
+Failed CI:
+- workflow: `ARM64 Windows Test Build`
+- run ID: `34576700718`
+- job ID: `103190682420`
+- conclusion: **FAILURE**
+- failed step: **Build Cemu**
+- earlier checkout/configure/vcpkg steps succeeded
+- no build artifact was produced
 
-Current sampled share: about 5.56% of RUNNING-only samples in the latest profile.
+The exact compiler diagnostic was not recovered before handoff. Do **not** guess the compiler error from the diff.
 
-The current native dump is load-heavy. Do **not** assume the loads are redundant.
+Required next sequence:
+1. retrieve the actual compiler error from the failed job log, or reproduce the same Test build locally
+2. map the error to `f929fa8...`
+3. if the failure is caused by the P1 patch, make the smallest compile-only correction
+4. do not change the optimization scope while repairing compilation
+5. inspect the corrected diff before pushing
+6. rerun Test CI
+7. stop if the failure is unrelated and document the actual cause before changing anything else
 
-Required analysis before code changes:
-- map the exact guest basic block / IML corresponding to `0x0420CB80`
-- identify whether the loads are guest semantics, register allocator spill/reload, state restore, or block-entry/exit mechanics
-- compare repeated register/state loads within the exact block
-- look for a concrete redundant instruction pattern that can be removed without changing guest semantics
+Until CI is green:
+- no BOTW A/B
+- no promotion
+- no second optimization
+- no combination with `arm64-compare-reuse`
 
-If current logging cannot answer this, add report-only diagnostics first.
+## 2. WHY `arm64-rname-ldp` EXISTS
 
-## 3. SECOND TARGET: `0x02A281A0`
+P0 analysis of hotspot `0x0420CB80` showed adjacent non-GPR `R_NAME` state loads surviving RA and lowering as independent `LDR`s.
 
-Current sampled share: about 4.12%.
+Observed examples:
+- `SPR::LR + SPR::CTR`
+  - `F940A546  ldr x6, [x10,#328]`
+  - `F940A942  ldr x2, [x10,#336]`
+- `SPR::XER + temporaryFPR`
+  - `F9410146  ldr x6, [x10,#512]`
+  - `F9410542  ldr x2, [x10,#520]`
 
-Mapped native entry begins with:
-- `17ffff66`
-- `d503201f`
+Classification:
+- contiguous 64-bit fields in `PPCInterpreter_t`
+- not guest-memory loads
+- RA does not merge them
+- backend currently emits individual loads
 
-This looks like a branch/thunk followed by padding. The later 32-bit words in the 128-byte dump must **not** be treated as a straight-line instruction stream until the branch destination is resolved.
+P1 therefore attempts only this evidence-derived transformation:
+- two consecutive `ImlOperation::R_NAME` operations
+- both non-GPR
+- distinct destination registers
+- second state offset exactly first offset + 8
+- legal/aligned positive AArch64 `LDP` scaled immediate
+- emit one `LDP`
+- otherwise use existing lowering unchanged
 
-Preferred next diagnostic if needed:
-- decode/follow the first branch target
-- log another 128 bytes from the actual target
-- keep this report-only and runtime-gated
+## 3. AFTER CI TURNS GREEN — STATIC/NATIVE ACCEPTANCE
 
-## 4. EXPERIMENT RULE
+Before runtime performance testing, verify at the target hotspot that:
+- expected adjacent state-load pair becomes `LDP`
+- the relevant pair no longer emits two separate `LDR`s
+- branch/control-flow structure is unchanged
+- unrelated `R_NAME` operations still use existing lowering
+- GPR special-load behavior remains untouched
+- protected query/Vulkan paths are untouched
 
-When one new optimization candidate is proven:
-- add exactly one runtime token
-- keep default behavior unchanged
-- make one behavior variable change
-- static-verify source diff
-- build Test branch only
-- runtime smoke BOTW first
-- same-build BASELINE vs candidate benchmark using the controlled static scene
-- compare `t=70..260s`
+If the expected `LDP` is not present, do not benchmark; diagnose why first.
 
-Do not enable `arm64-compare-reuse` automatically while measuring a different candidate. Measure each candidate independently first; combinations come only after individual wins.
+## 4. RUNTIME ACCEPTANCE
 
-## 5. CLOSED DIRECTIONS
+Only after green CI + static/native acceptance:
+- benchmark same-build BASELINE vs `arm64-rname-ldp`
+- BOTW fixed save/location/camera/weather/settings
+- restart Cemu for each preset
+- ignore warmup
+- compare established `t=70..260s`
+- record average FPS, average frame time, p99 and 1% low
+- ideally test both ordering directions
+
+Decision:
+- repeatably positive + no correctness regression → preserve candidate, reprofile, then decide promotion
+- neutral/negative/unstable → reject and restore the experiment
+- any correctness regression → reject immediately
+
+## 5. PRESERVED CANDIDATE — DO NOT MIX YET
+
+`arm64-compare-reuse` remains a separate candidate, not a FIX.
+
+Previous same-build BOTW A/B:
+- baseline 52.091 FPS
+- compare-reuse 52.968 FPS
+- approximately +1.68%
+
+Do not silently enable it while measuring `arm64-rname-ldp`.
+
+## 6. SECOND HOTSPOT AFTER THIS EXPERIMENT IS RESOLVED
+
+`0x02A281A0` begins at a branch/thunk-like native entry (`17ffff66`, `d503201f`). Follow the initial AArch64 branch target before interpreting later words as executable straight-line code.
+
+Do not start this work until the current P1 experiment is either validated or rejected.
+
+## 7. CLOSED DIRECTIONS
 
 Do not re-run without new evidence:
 - timer UDIV64
@@ -81,13 +140,3 @@ Do not re-run without new evidence:
 - ARM64 NEON texture hash
 - historical compare/branch fusion
 - historical direct dispatch
-
-## 6. DECISION POINT
-
-The next tab should **not start by writing optimization code**.
-
-First deliverable is an evidence-based answer to:
-
-> What exactly is expensive/redundant in the native JIT path for `0x0420CB80` (or, if that is not actionable, the resolved branch target of `0x02A281A0`)?
-
-Only then choose the next single-variable experiment.
