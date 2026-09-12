@@ -46,4 +46,7 @@ p.write_text(t, encoding="utf-8", newline="\n")
 branch_shape = Path(__file__).with_name("Extend-ARM64JitBranchShape.py")
 exec(compile(branch_shape.read_text(encoding="utf-8"), str(branch_shape), "exec"))
 
+descriptor_stats = Path(__file__).with_name("Extend-VulkanDescriptorStats.py")
+exec(compile(descriptor_stats.read_text(encoding="utf-8"), str(descriptor_stats), "exec"))
+
 print("[arm64-jit-root-cause-02a] extended report-only IML/RA/native correlation")
