@@ -67,8 +67,20 @@ bind_patterns = [
     'vkCmdBindDescriptorSets(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkObjPipeline->m_pipelineLayout, dsArrayBase, dsArraySize, dsArray, numDynOffsets, dynamicOffsets);',
 ]
 for pattern in bind_patterns:
-    if pattern in t:
-        t = t.replace(pattern, pattern + '\n\t\tif (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::DescriptorStats)) RuntimeDiagnostics::g_descriptorBinds.fetch_add(1, std::memory_order_relaxed);')
+    rewritten = []
+    active_count = 0
+    for line in t.splitlines(keepends=True):
+        rewritten.append(line)
+        stripped = line.lstrip()
+        if pattern not in line or stripped.startswith('//'):
+            continue
+        newline = '\r\n' if line.endswith('\r\n') else '\n'
+        indent = line[:len(line) - len(stripped)]
+        rewritten.append(indent + 'if (RuntimeDiagnostics::Enabled(RuntimeDiagnostics::Flag::DescriptorStats)) RuntimeDiagnostics::g_descriptorBinds.fetch_add(1, std::memory_order_relaxed);' + newline)
+        active_count += 1
+    if active_count == 0:
+        raise RuntimeError(f"descriptor bind pattern has no active call site: {pattern}")
+    t = ''.join(rewritten)
 
 t = t.replace(
     '\tLatteGPUState.drawCallCounter++;\n',
