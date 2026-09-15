@@ -6,6 +6,7 @@ on:
       - exp/dualsense-gamepad-core-arm64
     paths:
       - 'dependencies/Gamepad-Core/**'
+      - 'tools/dualsense_haptic_lab/**'
       - '.gitmodules'
       - '.github/workflows/dualsense-gamepad-core-arm64.yml'
   workflow_dispatch:
@@ -73,3 +74,32 @@ jobs:
           $libs = Get-ChildItem build/gamepad-core-arm64 -Recurse -File | Where-Object { $_.Name -match 'GamepadCore.*\.(lib|a)$' }
           if (-not $libs) { throw 'GamepadCore library output not found' }
           $libs | ForEach-Object { Write-Host $_.FullName }
+
+      - name: Configure Haptic Lab GUI
+        shell: pwsh
+        run: |
+          cmake -S tools/dualsense_haptic_lab -B build/dualsense-haptic-lab -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Haptic Lab GUI
+        shell: pwsh
+        run: cmake --build build/dualsense-haptic-lab --target CemuDualSenseHapticLab --parallel
+
+      - name: Verify native ARM64 GUI executable
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem build/dualsense-haptic-lab -Recurse -Filter CemuDualSenseHapticLab.exe | Select-Object -First 1
+          if (-not $exe) { throw 'CemuDualSenseHapticLab.exe not found' }
+          Write-Host "GUI EXE: $($exe.FullName)"
+          $headers = (& dumpbin /headers $exe.FullName | Out-String)
+          Write-Host $headers
+          if ($headers -notmatch 'AA64|ARM64') { throw 'GUI executable is not ARM64' }
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Copy-Item $exe.FullName artifact/CemuDualSenseHapticLab.exe
+
+      - name: Upload Haptic Lab ARM64 GUI
+        uses: actions/upload-artifact@v4
+        with:
+          name: CemuDualSenseHapticLab-ARM64
+          path: artifact/CemuDualSenseHapticLab.exe
+          if-no-files-found: error
