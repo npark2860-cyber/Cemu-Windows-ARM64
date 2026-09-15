@@ -15,6 +15,12 @@ namespace
 constexpr UINT_PTR kTimerId = 1;
 constexpr int kPollMs = 16;
 
+// DualSense valid_flag0 bits (USB/BT common output payload)
+constexpr std::uint8_t kEnableCompatibleVibration = 0x01;
+constexpr std::uint8_t kEnableHapticsSelect = 0x02;
+constexpr std::uint8_t kEnableRightTrigger = 0x04;
+constexpr std::uint8_t kEnableLeftTrigger = 0x08;
+
 enum ControlId
 {
     ID_STATUS = 100,
@@ -110,6 +116,26 @@ void RefreshController()
     gWasConnected = true;
 }
 
+void PrepareTriggerOnlyOutput(IGamepadBase* gamepad, EDSGamepadHand hand)
+{
+    if (!gamepad)
+        return;
+
+    auto* ctx = gamepad->GetMutableDeviceContext();
+    if (!ctx)
+        return;
+
+    // Gamepad-Core defaults valid_flag0 to 0xFF. For a trigger-only test this is
+    // too broad: it also marks compatible rumble, haptics/audio and unrelated
+    // controls as valid. Restrict the packet to the trigger motor actually being
+    // tested so USB output cannot accidentally alter the body-haptics state.
+    ctx->Output.Feature.VibrationMode =
+        (hand == EDSGamepadHand::Left) ? kEnableLeftTrigger : kEnableRightTrigger;
+    ctx->Output.Feature.FeatureMode = 0x00;
+    ctx->Output.Rumbles.Left = 0;
+    ctx->Output.Rumbles.Right = 0;
+}
+
 bool ApplyTrigger(const std::array<uint8_t, 10>& bytes, EDSGamepadHand hand)
 {
     auto* gamepad = CurrentGamepad();
@@ -125,6 +151,11 @@ bool ApplyTrigger(const std::array<uint8_t, 10>& bytes, EDSGamepadHand hand)
         SetStatus(L"Adaptive trigger interface unavailable.");
         return false;
     }
+
+    // Clear previous trigger state first so each preset is an isolated A/B test.
+    trigger->StopTrigger(EDSGamepadHand::Left);
+    trigger->StopTrigger(EDSGamepadHand::Right);
+    PrepareTriggerOnlyOutput(gamepad, hand);
 
     std::vector<uint8_t> data(bytes.begin(), bytes.end());
     trigger->SetCustomTrigger(hand, data);
@@ -148,6 +179,14 @@ void ApplyRumble()
         return;
     }
 
+    auto* ctx = gamepad->GetMutableDeviceContext();
+    if (!ctx)
+        return;
+
+    // For a rumble test only the two compatible-vibration bits are valid.
+    ctx->Output.Feature.VibrationMode = kEnableCompatibleVibration | kEnableHapticsSelect;
+    ctx->Output.Feature.FeatureMode = 0x00;
+
     const auto left = static_cast<uint8_t>(SendMessageW(gLeftRumble, TBM_GETPOS, 0, 0));
     const auto right = static_cast<uint8_t>(SendMessageW(gRightRumble, TBM_GETPOS, 0, 0));
     rumble->SetVibration(left, right);
@@ -160,6 +199,10 @@ void StopAll()
     if (!gamepad || !gamepad->IsConnected())
         return;
 
+    auto* ctx = gamepad->GetMutableDeviceContext();
+    if (!ctx)
+        return;
+
     if (auto* rumble = gamepad->GetIGamepadRumbles())
         rumble->SetVibration(0, 0);
 
@@ -169,6 +212,10 @@ void StopAll()
         trigger->StopTrigger(EDSGamepadHand::Right);
     }
 
+    // Explicitly tell the controller to update both trigger motors to OFF, but
+    // do not re-enable compatible rumble/haptics while doing so.
+    ctx->Output.Feature.VibrationMode = kEnableRightTrigger | kEnableLeftTrigger;
+    ctx->Output.Feature.FeatureMode = 0x00;
     gamepad->UpdateOutput();
 }
 
