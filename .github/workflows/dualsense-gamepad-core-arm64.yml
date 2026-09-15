@@ -18,10 +18,18 @@ jobs:
   build-gamepad-core-arm64:
     runs-on: windows-11-arm
     steps:
-      - name: Checkout repo and nested submodules
+      - name: Checkout repo only
         uses: actions/checkout@v6
         with:
-          submodules: recursive
+          submodules: false
+
+      - name: Checkout Gamepad-Core only
+        shell: pwsh
+        run: |
+          git submodule sync -- dependencies/Gamepad-Core
+          git submodule update --init --depth=1 dependencies/Gamepad-Core
+          git -C dependencies/Gamepad-Core submodule sync --recursive
+          git -C dependencies/Gamepad-Core submodule update --init --recursive --depth=1
 
       - name: Verify pinned Gamepad-Core revision
         shell: pwsh
