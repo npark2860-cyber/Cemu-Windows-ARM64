@@ -1,0 +1,1 @@
+Next action: pin the current upstream Gamepad-Core/Dualsense-Multiplatform revision as a git submodule under `dependencies/Gamepad-Core`, then add a standalone Windows ARM64 smoke build without linking it into Cemu yet.
