@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(GAMEPAD_CORE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/Gamepad-Core")
+set(BUILD_TESTS OFF CACHE BOOL "Disable upstream integration tests for Haptic Lab" FORCE)
+set(AUTOMATED_TESTS OFF CACHE BOOL "Disable upstream automated tests" FORCE)
 
 add_subdirectory("${GAMEPAD_CORE_ROOT}" "${CMAKE_BINARY_DIR}/gamepad-core" EXCLUDE_FROM_ALL)
 
