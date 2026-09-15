@@ -39,32 +39,76 @@ Cemu already has separate audio objects:
 
 The DRC path is generated separately in `snd_core/ax_out.cpp` and fed into `g_padAudio` through `AIInitDRCDMA()` / `AXOut_SubmitDRCFrame()`.
 
-Current format is 48 kHz, 16-bit PCM, with the DRC path supporting stereo output.
+Current DRC format is 48 kHz, 16-bit PCM. Cemu's UI currently exposes Stereo only for GamePad audio and the default `pad_channels` value is Stereo.
 
 Cemu settings already expose a dedicated GamePad output selector:
 
 - `config.pad_device`
 - UI tooltip: `Select the active audio output device for Wii U GamePad`
 
-This means the first DualSense speaker test should require **no source modification**:
+On Windows, the XAudio2 backend enumerates `AudioEndpoint` devices and creates a mastering voice for the selected device ID. It then accepts the DRC stereo blocks through the existing `FeedBlock()` path. No new Cemu audio transport is required for a normal Windows render endpoint.
+
+### DualSense USB audio endpoint
+
+A physical DualSense connected by USB exposes a standard USB Audio Class render interface. Public descriptor dumps identify the output stream as:
+
+- 48 kHz
+- 16-bit PCM
+- 4 channels
+- front L/R = ordinary controller audio path
+- surround L/R = DualSense voice-coil haptic actuators
+
+The internal speaker is fed from the ordinary front-channel audio path; speaker/headset routing and volume are controlled by DualSense output settings.
+
+This is highly compatible with Cemu's existing 48 kHz DRC path. Cemu currently supplies stereo rather than an authored 4-channel DualSense stream, which is appropriate for the speaker-only baseline because Stage 1 must not accidentally feed the haptic actuator channels.
+
+XAudio2 permits an explicit input-channel count on the mastering voice and handles device-side format/sample-rate conversion. Therefore a direct stereo-to-DualSense render-endpoint test is the cheapest first step. Physical validation is still required because the final Windows channel routing depends on the controller endpoint/driver configuration.
+
+### Important Cemu headphone-state finding
+
+Cemu's `VPADStatus` contains `headphoneStatus` at offset `0x90`, but no code path was found that sets it. `VPADRead()` zero-initializes the status structure, so the emulated Wii U GamePad currently reports no connected headphones unless another path is added later.
+
+This matters for BOTW.
+
+Historical Wii U user reports consistently indicate that BOTW behaves roughly as follows:
+
+- normal TV play: GamePad speaker is normally silent / not used as the main game mix;
+- headphones connected to the Wii U GamePad: the full BOTW audio mix is available through the GamePad headphone path;
+- in at least some configurations, activating that headphone path changes or disables TV audio simultaneously.
+
+Therefore a silent BOTW DRC stream in the first DualSense test must **not** immediately be interpreted as a failed DualSense/Cemu audio bridge. It may be the correct result for the no-headphone BOTW state.
+
+Do not force `headphoneStatus = 1` as a production shortcut. That would emulate a plugged-in headset, not the original GamePad speaker, and may change BOTW's TV mix/routing.
+
+### Consequence for the project
+
+There are two separate goals that must not be confused:
+
+1. **Generic Cemu fidelity:** preserve each game's actual Wii U DRC/GamePad audio and route it to DualSense where useful. This is broadly valuable across Wii U titles that deliberately use the GamePad speaker.
+2. **BOTW DualSense enhancement:** BOTW appears to have little or no unique GamePad-speaker content during normal TV play. Its DualSense speaker experience may therefore need to be added later from semantic game events rather than treated as recovered Wii U speaker effects.
+
+For BOTW, routing the headphone-mode full game mix into the tiny DualSense speaker would be technically possible but is probably not the desired final design.
+
+### Cheapest USB validation
+
+No source modification first:
 
 1. Connect DualSense by USB.
-2. Confirm Windows exposes the controller speaker audio endpoint.
+2. Confirm Windows exposes a `DualSense` / `Wireless Controller` render endpoint.
 3. In Cemu Audio settings, set Wii U GamePad output to that endpoint.
-4. Run BOTW and check the DRC audio stream.
+4. Set GamePad volume above zero (Cemu's default pad volume can be zero).
+5. Run a Wii U title known to emit GamePad-specific audio to validate the transport independently of BOTW.
+6. Then test BOTW and classify the actual DRC content.
 
-If this succeeds, the USB GamePad-speaker bridge is already effectively implemented by Cemu/Windows.
+If the endpoint is visible but sound is routed incorrectly, the smallest likely addition is DualSense HID speaker-route/volume control through Gamepad-Core. Do not replace Cemu's PCM pipeline unless direct XAudio2 routing fails.
 
-### Important BOTW behavior
+### Bluetooth
 
-Public Wii U user reports indicate BOTW can send the full game mix to the GamePad/headphone path, depending on TV/off-TV/headphone state. Therefore the DRC stream must be inspected before deciding that it should always be routed to the small DualSense speaker.
+Bluetooth is deliberately deferred.
 
-Possible final policy:
+A stock DualSense does not expose the same standard USB Audio Class render endpoint to Windows over ordinary Bluetooth. Recent open-source projects demonstrate controller-speaker audio over Bluetooth through the proprietary DualSense HID audio transport using Opus framing, and the pinned Gamepad-Core upstream documents a Bluetooth audio-to-speaker path as well.
 
-- faithful optional mode: route original DRC stream directly to DualSense speaker;
-- enhanced mode: use selected semantic/event audio only, if the raw DRC stream is mostly a full game mix.
-
-Do not design an audio-effects system until the no-code DRC routing test is complete.
+That path is materially more complex than USB and may require additional audio/codec dependencies. It should not block Stage 1 USB completion.
 
 ## B. Wii U GamePad rumble
 
@@ -130,48 +174,59 @@ Pinned Gamepad-Core upstream already exposes:
 - audio-to-haptics support
 - documented audio-to-speaker pipeline
 
-For USB, prefer the simplest path first: let Cemu's existing `g_padAudio` use the Windows DualSense speaker endpoint. Do not add Gamepad-Core audio dependencies unless this path fails or speaker routing mode must be controlled by HID.
+For USB, prefer the simplest path first: let Cemu's existing `g_padAudio` use the Windows DualSense audio endpoint. Gamepad-Core should initially be limited to speaker route/volume control only if Windows defaults do not expose the desired internal-speaker path.
 
-For Bluetooth, defer until USB Stage 1 is proven. Bluetooth controller-speaker transport is more complicated and may require the library's Opus/HID speaker path or equivalent handling. It should not block the first usable implementation.
+For Bluetooth, defer until USB Stage 1 is proven.
 
 ## Cheapest validation order
 
-### Test A — zero-code GamePad audio
+### Test A — zero-code USB audio transport
 
-USB DualSense -> Cemu Audio settings -> Wii U GamePad output -> DualSense speaker endpoint.
+Use a Wii U title with known GamePad-speaker output:
+
+USB DualSense -> Cemu Audio settings -> Wii U GamePad output -> DualSense render endpoint.
 
 Pass condition: DRC audio reaches the controller with stable playback.
 
-### Test B — inspect BOTW DRC content
+This validates the transport independently of BOTW's unusual GamePad-audio policy.
 
-Determine whether BOTW sends:
+### Test B — BOTW DRC classification
 
-- full mix,
-- special GamePad-only effects,
-- or different content depending on off-TV/headphone mode.
+With the USB transport already proven, determine whether BOTW sends:
 
-This decides final speaker policy.
+- silence during normal TV mode,
+- any GamePad-only effects,
+- full mix only in off-TV/headphone-like states,
+- or another pattern.
 
-### Test C — original VPAD rumble baseline
+Do not alter `headphoneStatus` for this baseline test.
+
+### Test C — optional speaker-route control
+
+Only if Test A reaches the DualSense endpoint but not the internal speaker, use the existing Gamepad-Core audio mode/volume controls to select the internal speaker. Keep PCM transport in Cemu/XAudio2.
+
+### Test D — original VPAD rumble baseline
 
 Capture/log a few raw `VPADControlMotor` patterns in BOTW and confirm current Cemu playback timing.
 
 No action recognition needed.
 
-### Test D — direct DualSense replay
+### Test E — direct DualSense rumble replay
 
 Feed the same existing 60 Hz ON/OFF sequence into the native DualSense backend. Compare feel with the ordinary SDL path.
 
-Only after A-D pass should Stage 2 semantic work resume.
+Only after the Stage 1 baseline is understood should Stage 2 semantic work resume.
 
 ## Work-saving decision
 
 Do **not**:
 
 - scan BOTW RAM for Stage 1;
-- synthesize new speaker sound effects yet;
-- redesign the VPAD rumble API;
+- synthesize new BOTW speaker sound effects yet;
+- force Wii U headphone-connected state merely to get audio;
+- redesign Cemu's existing DRC audio pipeline;
 - implement Bluetooth speaker transport before USB works;
+- redesign the VPAD rumble API;
 - replace original rumble with semantic haptics.
 
 Stage 1 should be an adapter, not a new feedback engine.
