@@ -8,7 +8,6 @@
 #define DEBUGGER_BP_T_MEMORY_READ	2 // memory breakpoint
 #define DEBUGGER_BP_T_MEMORY_WRITE	3 // memory breakpoint
 #define DEBUGGER_BP_T_LOGGING		4 // logging breakpoint, prints the breakpoint comment and stack trace whenever hit
-#define DEBUGGER_BP_T_HAPTIC_PROBE	5 // diagnostic execute probe; records a semantic hit without pausing or log spam
 
 #define DEBUGGER_BP_T_GDBSTUB		1 // breakpoint created by GDBStub
 #define DEBUGGER_BP_T_DEBUGGER		2 // breakpoint created by Cemu's debugger
@@ -117,7 +116,7 @@ struct DebuggerBreakpoint
 
 	bool isExecuteBP() const
 	{
-		return bpType == DEBUGGER_BP_T_NORMAL || bpType == DEBUGGER_BP_T_LOGGING || bpType == DEBUGGER_BP_T_ONE_SHOT || bpType == DEBUGGER_BP_T_HAPTIC_PROBE;
+		return bpType == DEBUGGER_BP_T_NORMAL || bpType == DEBUGGER_BP_T_LOGGING || bpType == DEBUGGER_BP_T_ONE_SHOT;
 	}
 
 	bool isMemBP() const
@@ -144,14 +143,6 @@ struct PPCSnapshot
 	uint32 spr_lr{};
 };
 
-struct BotwHapticProbeSnapshot
-{
-	uint64 bowHitCount{};
-	uint64 masterCycleHitCount{};
-	uint64 bowLastHitUs{};
-	uint64 masterCycleLastHitUs{};
-};
-
 enum class DebuggerStepCommand : uint8
 {
 	None,
@@ -171,11 +162,6 @@ std::vector<DebuggerBreakpoint*>& debugger_lockBreakpoints();
 DebuggerBreakpoint* debugger_getFirstBP(uint32 address);
 DebuggerBreakpoint* debugger_getBreakpointById(BreakpointId bpId);
 void debugger_unlockBreakpoints();
-
-// BOTW diagnostic semantic probes. v208-only addresses are sourced from public Cemu graphic-pack patches.
-bool debugger_installBotwV208HapticProbes();
-void debugger_removeBotwHapticProbes();
-BotwHapticProbeSnapshot debugger_getBotwHapticProbeSnapshot();
 
 // patch API
 void debugger_createPatch(uint32 address, std::span<uint8> patchData);
