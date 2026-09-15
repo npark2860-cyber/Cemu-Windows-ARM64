@@ -1,6 +1,6 @@
 # DualSense Audio Physical Validation
 
-Status: physical test partially confirmed; routing persistence under test
+Status: USB PCM transport PASS; fresh-connection speaker routing still to validate
 Branch: `diag/botw-haptic-state-logger`
 
 ## Confirmed observation
@@ -9,47 +9,57 @@ On the user's physical DualSense over USB:
 
 1. Initially, with DSX not running, the controller speaker was silent.
 2. Starting DSX caused the controller speaker to produce audio.
-3. After DSX was then closed, the controller speaker **continued producing audio**.
+3. DSX was then closed.
+4. Cemu was launched after DSX had been closed.
+5. Cemu audio played normally through the DualSense internal speaker.
 
-This is an important correction to the earlier interpretation. DSX does not appear to be required as a continuously running audio bridge once the speaker path has been activated.
+This confirms that DSX is **not** required as the ongoing PCM transport once the controller speaker path has been activated.
 
-The most likely explanations are now:
+## Confirmed architecture
 
-- DSX sends a DualSense HID audio-routing / speaker-enable state that remains latched in the controller after the DSX process exits; or
-- a DSX-related background component remains active; or
-- DSX changes a Windows/controller endpoint state that persists beyond the foreground app lifetime.
+The USB audio path is physically validated:
 
-The next physical test must distinguish these cases.
+`Wii U DRC/GamePad audio -> Cemu g_padAudio -> Windows audio backend -> DualSense USB audio endpoint -> DualSense internal speaker`
+
+Therefore Cemu's existing GamePad audio pipeline should be preserved. A separate custom PCM engine is not needed for the USB baseline.
+
+## Remaining unknown
+
+The only remaining Stage 1 USB-audio question is what initialization is required after a fresh DualSense connection.
+
+Most likely:
+
+- DSX sends a HID audio-routing / speaker-enable command and usable speaker volume;
+- that state remains latched in the controller after DSX exits.
+
+Still possible:
+
+- a DSX background component remains active;
+- Windows retains a route state beyond the foreground DSX process.
 
 ## Next minimum test
 
 1. Fully close DSX.
-2. Disconnect the DualSense USB cable or power-cycle the controller.
+2. Disconnect the DualSense USB cable or fully power-cycle the controller.
 3. Reconnect by USB.
-4. Do **not** launch DSX.
-5. Send a normal Windows test sound to the DualSense render endpoint.
+4. Do not launch DSX.
+5. Launch Cemu with Wii U GamePad audio assigned to the DualSense endpoint.
+6. Check whether the controller speaker is already active.
 
 Interpretation:
 
-- If the speaker is silent after reconnect, but becomes active after one DSX launch and stays active after DSX exits, this strongly confirms a controller-side latched speaker-routing state.
-- If the speaker is already active immediately after reconnect without DSX, investigate a persistent Windows/driver setting or a still-running DSX background service/component.
-
-## Implication
-
-The preferred implementation path remains:
-
-`Cemu g_padAudio / XAudio2 PCM -> Windows DualSense USB audio endpoint`
-
-with the native DualSense backend responsible only for the minimal speaker route / volume initialization needed after a fresh connection.
-
-Do not replace Cemu's PCM pipeline unless this minimal route-control approach fails.
+- Silent after reconnect, then works after one DSX launch: speaker-route initialization is the missing step.
+- Already works after reconnect without DSX: investigate persistent Windows/controller state or a DSX background component.
 
 ## Gamepad-Core match
 
-Pinned Gamepad-Core already exposes `DualSenseSettings(...)` with separate `bIsHeadset` and `bIsSpeaker` controls. Its implementation selects speaker mode when `bIsHeadset == 0 && bIsSpeaker == 1`, and the HID output buffer uses a distinct speaker audio-mode value.
+Pinned Gamepad-Core already exposes `DualSenseSettings(...)` with separate `bIsHeadset` and `bIsSpeaker` controls. Its implementation selects speaker mode when `bIsHeadset == 0 && bIsSpeaker == 1`, and its HID output buffer uses a distinct speaker audio-mode value.
 
-If the reconnect test confirms a latched controller-side route, the cheapest native implementation is likely a one-time initialization on DualSense connection/reconnection rather than continuous audio routing logic.
+If the reconnect test confirms route reset, the cheapest native implementation is a one-time speaker-route/volume initialization on DualSense connect/reconnect, while Cemu continues to own PCM transport.
 
 ## Decision
 
-DSX remains a diagnostic A/B reference only. The target runtime remains fully native ARM64 with no DSX dependency.
+- USB Cemu -> DualSense speaker PCM transport: **PASS**.
+- DSX: diagnostic A/B reference only.
+- Target runtime: fully native ARM64 with no DSX dependency.
+- Do not replace Cemu's existing DRC audio pipeline.
