@@ -22,12 +22,12 @@ EVT_CLOSE(AudioDebuggerWindow::OnClose)
 wxEND_EVENT_TABLE()
 
 AudioDebuggerWindow::AudioDebuggerWindow(wxFrame& parent)
-	: wxFrame(&parent, wxID_ANY, _("AX voice viewer"), wxDefaultPosition, wxSize(1126, 580), wxCLOSE_BOX | wxCLIP_CHILDREN | wxCAPTION | wxRESIZE_BORDER)
+	: wxFrame(&parent, wxID_ANY, _("AX voice viewer"), wxDefaultPosition, wxSize(1320, 580), wxCLOSE_BOX | wxCLIP_CHILDREN | wxCAPTION | wxRESIZE_BORDER)
 {
 	wxPanel* mainPane = new wxPanel(this);
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	
-	voiceListbox = new wxListCtrl(mainPane, VOICELIST_ID, wxPoint(0, 0), wxSize(1126, 570), wxLC_REPORT);
+	voiceListbox = new wxListCtrl(mainPane, VOICELIST_ID, wxPoint(0, 0), wxSize(1320, 570), wxLC_REPORT);
 	voiceListbox->SetFont(wxFont(8, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Courier New"));
 	// add columns
 	wxListItem col0;
@@ -116,11 +116,16 @@ AudioDebuggerWindow::AudioDebuggerWindow(wxFrame& parent)
 	col1.SetText("bqa2");
 	col1.SetWidth(46);
 	voiceListbox->InsertColumn(16, col1);
-	// device mix
+	// TV device mix
 	col1.SetId(17);
-	col1.SetText("deviceMix");
+	col1.SetText("tvMix");
 	col1.SetWidth(186);
 	voiceListbox->InsertColumn(17, col1);
+	// DRC/GamePad device mix
+	col1.SetId(18);
+	col1.SetText("drcMix");
+	col1.SetWidth(100);
+	voiceListbox->InsertColumn(18, col1);
 
 	sizer->Add(voiceListbox, 1, wxEXPAND | wxBOTTOM, 0);
 
@@ -206,6 +211,7 @@ void AudioDebuggerWindow::RefreshVoiceList_sndgeneric()
 			voiceListbox->SetItem(i, 15, "");
 			voiceListbox->SetItem(i, 16, "");
 			voiceListbox->SetItem(i, 17, "");
+			voiceListbox->SetItem(i, 18, "");
 			continue;
 		}
 		// format
@@ -264,20 +270,31 @@ void AudioDebuggerWindow::RefreshVoiceList_sndgeneric()
 			voiceListbox->SetItem(i, 15, "");
 			voiceListbox->SetItem(i, 16, "");
 		}
-		wxString label;
-		// device mix
+
+		// TV device mix
+		wxString tvLabel;
 		for (uint32 f = 0; f < snd_core::AX_TV_CHANNEL_COUNT*snd_core::AX_MAX_NUM_BUS; f++)
 		{
-			sint32 busIndex = f% snd_core::AX_MAX_NUM_BUS;
+			sint32 busIndex = f % snd_core::AX_MAX_NUM_BUS;
 			sint32 channelIndex = f / snd_core::AX_MAX_NUM_BUS;
-
-			//debug_printf("DeviceMix TV Voice %08x b%02d/c%02d vol %04x delta %04x\n", hCPU->gpr[3], busIndex, channelIndex, _swapEndianU16(mixArrayBE[f].vol), _swapEndianU16(mixArrayBE[f].volDelta));
 			uint32 mixVol = internal->deviceMixTV[channelIndex * 4 + busIndex].vol;
-			mixVol = (mixVol + 0x0FFF) >> (12);
-			label += wxString::Format("%x", mixVol);
-			//ax.voiceInternal[voiceIndex].deviceMixTVChannel[channelIndex].bus[busIndex].vol = _swapEndianU16(mixArrayBE[f].vol);
+			mixVol = (mixVol + 0x0FFF) >> 12;
+			tvLabel += wxString::Format("%x", mixVol);
 		}
-		voiceListbox->SetItem(i, 17, label);
+		voiceListbox->SetItem(i, 17, tvLabel);
+
+		// Wii U GamePad (DRC0) device mix. The active mixer consumes the first
+		// DRC block using the same channel-major/bus-minor layout as TV.
+		wxString drcLabel;
+		for (uint32 f = 0; f < snd_core::AX_DRC_CHANNEL_COUNT*snd_core::AX_MAX_NUM_BUS; f++)
+		{
+			sint32 busIndex = f % snd_core::AX_MAX_NUM_BUS;
+			sint32 channelIndex = f / snd_core::AX_MAX_NUM_BUS;
+			uint32 mixVol = internal->deviceMixDRC[channelIndex * 4 + busIndex].vol;
+			mixVol = (mixVol + 0x0FFF) >> 12;
+			drcLabel += wxString::Format("%x", mixVol);
+		}
+		voiceListbox->SetItem(i, 18, drcLabel);
 	}
 	voiceListbox->Thaw();
 }
