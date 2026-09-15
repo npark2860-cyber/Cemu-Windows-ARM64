@@ -7,11 +7,13 @@
 #include <wx/combobox.h>
 #include "wxgui/components/wxLogCtrl.h"
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <iosfwd>
 #include <memory>
 #include <string>
+#include <vector>
 
 class wxLogEvent;
 class wxTimer;
@@ -38,6 +40,9 @@ class LoggingWindow : public wxFrame, public LoggingCallbacks
 	void OnHapticTimer(wxTimerEvent& event);
 	void WriteHapticSample();
 	void UpdateHapticStatus(std::string_view message);
+	bool InstallBotwV208SemanticProbes();
+	void RemoveBotwSemanticProbes();
+	bool HandleBotwSemanticProbeLog(std::string_view message);
 
 	wxComboBox* m_filter;
 	wxLogCtrl* m_log_list;
@@ -50,4 +55,11 @@ class LoggingWindow : public wxFrame, public LoggingCallbacks
 	std::string m_haptic_marker{"Idle"};
 	std::string m_haptic_output_path;
 	uint64_t m_haptic_sample_index{};
+
+	bool m_botw_probes_installed{};
+	std::vector<uint64_t> m_botw_probe_ids;
+	std::atomic<uint64_t> m_bow_probe_hits{};
+	std::atomic<uint64_t> m_mastercycle_probe_hits{};
+	std::atomic<uint64_t> m_bow_probe_last_hit_us{};
+	std::atomic<uint64_t> m_mastercycle_probe_last_hit_us{};
 };
