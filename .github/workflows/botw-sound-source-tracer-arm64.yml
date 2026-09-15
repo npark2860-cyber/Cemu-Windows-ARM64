@@ -1,0 +1,149 @@
+name: BOTW Sound Source Tracer ARM64
+
+on:
+  push:
+    branches:
+      - diag/botw-sound-source-tracer
+    paths:
+      - 'src/Cafe/OS/common/BotWSoundSourceTracer.h'
+      - 'tools/botw_sound_source_tracer_patch.py'
+      - 'src/Cafe/OS/libs/coreinit/coreinit_FS.cpp'
+      - 'src/Cafe/OS/libs/snd_core/ax_voice.cpp'
+      - '.github/workflows/botw-sound-source-tracer-arm64.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: botw-sound-source-tracer-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup release mode parameters
+        shell: pwsh
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Apply BOTW sound source tracer hooks
+        shell: pwsh
+        run: python tools/botw_sound_source_tracer_patch.py
+
+      - name: Show tracer diff
+        shell: pwsh
+        run: git diff -- src/Cafe/OS/libs/coreinit/coreinit_FS.cpp src/Cafe/OS/libs/snd_core/ax_voice.cpp
+
+      - name: Ensure clang-cl toolset is installed
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          Write-Host $headers
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Diagnostic Cemu executable is not ARM64' }
+
+      - name: Prepare sound source tracer artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-BOTW-SoundSourceTracer-ARM64.exe
+          @'
+          BOTW Sound Source Tracer ARM64
+
+          Purpose:
+          - Correlates AX voice sample pointers with Wii U FS reads from Sound resources.
+          - Writes exact .bars/.bfwav/.bfstp source paths when correlation succeeds.
+          - For BARS reads loaded directly in memory, also attempts to resolve the embedded track/cue name from AMTA STRG metadata.
+          - Captures short voices at AXSetVoiceOffsets and AXSetVoiceState(ON); no 100 ms GUI polling dependency.
+
+          Output:
+          - botw_sound_source_trace.csv in the Cemu working directory.
+          - Columns include voice index, sample base, format, offsets, TV/DRC masks, source path and track name.
+
+          First physical test:
+          1. Put this executable in your normal Cemu folder.
+          2. Delete or rename an old botw_sound_source_trace.csv if present.
+          3. Launch BOTW and load a quiet area.
+          4. Swing one melee weapon in empty air 5 times without hitting anything.
+          5. Trigger one clear Link voice action 5 times.
+          6. Let Link receive one weak hit 5 times.
+          7. Exit Cemu normally and inspect/send botw_sound_source_trace.csv.
+
+          Notes:
+          - AX voice indexes are reusable. Identity comes from sample/source correlation, not the voice slot number.
+          - A blank source path means that voice sample was not inside a tracked direct FS-read range. That is diagnostic evidence, not proof the sound has no BARS source.
+          - This is a diagnostic build. It does not reroute audio yet.
+          '@ | Set-Content artifact/README-BOTW-SOUND-SOURCE-TRACER.txt
+
+      - name: Upload diagnostic Cemu
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-BOTW-SoundSourceTracer-ARM64
+          path: artifact/*
+          if-no-files-found: error
