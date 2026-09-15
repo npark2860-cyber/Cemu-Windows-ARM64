@@ -1,6 +1,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+TRACER_HEADER = ROOT / "src/Cafe/OS/common/BotWSoundSourceTracer.h"
 CORE_FS = ROOT / "src/Cafe/OS/libs/coreinit/coreinit_FS.cpp"
 AX_VOICE = ROOT / "src/Cafe/OS/libs/snd_core/ax_voice.cpp"
 
@@ -10,6 +11,65 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     if count != 1:
         raise RuntimeError(f"{label}: expected exactly one anchor, found {count}")
     return text.replace(old, new, 1)
+
+
+def patch_tracer_header() -> None:
+    text = TRACER_HEADER.read_text(encoding="utf-8-sig")
+
+    include_anchor = '#include "Cafe/HW/MMU/MMU.h"\n'
+    if 'BotWSoundFingerprintCatalog.h' not in text:
+        text = replace_once(
+            text,
+            include_anchor,
+            include_anchor + '#include "Cafe/OS/common/BotWSoundFingerprintCatalog.h"\n',
+            "tracer fingerprint include",
+        )
+
+    register_anchor = (
+        '\tinline void TraceVoice(std::string_view eventName, uint32 voiceIndex, uint32 sampleBase,\n'
+    )
+    if 'RegisterReadCompleted' not in text:
+        register_impl = (
+            '\tinline void RegisterReadCompleted(uint32 fileHandle, uint32 destination, uint32 size)\n'
+            '\t{\n'
+            '\t\tif (destination == 0 || size == 0)\n'
+            '\t\t\treturn;\n'
+            '\t\tstd::string path;\n'
+            '\t\t{\n'
+            '\t\t\tstd::scoped_lock lock(s_mutex);\n'
+            '\t\t\tauto it = s_openSoundFiles.find(fileHandle);\n'
+            '\t\t\tif (it == s_openSoundFiles.end())\n'
+            '\t\t\t\treturn;\n'
+            '\t\t\tpath = it->second;\n'
+            '\t\t}\n'
+            '\t\tif (ToLower(path).ends_with(".bars"))\n'
+            '\t\t\tBotWSoundFingerprintCatalog::RegisterBarsRead(path, destination, size);\n'
+            '\t}\n\n'
+        )
+        text = replace_once(text, register_anchor, register_impl + register_anchor, "tracer completed read hook")
+
+    source_anchor = '\t\tconst auto source = FindSourceLocked(sampleBase);\n'
+    if 'BotWSoundFingerprintCatalog::FindMatch(sampleBase)' not in text:
+        source_replacement = (
+            '\t\tauto source = FindSourceLocked(sampleBase);\n'
+            '\t\tif (!source)\n'
+            '\t\t{\n'
+            '\t\t\tconst auto fingerprintSource = BotWSoundFingerprintCatalog::FindMatch(sampleBase);\n'
+            '\t\t\tif (fingerprintSource)\n'
+            '\t\t\t{\n'
+            '\t\t\t\tSourceMatch match;\n'
+            '\t\t\t\tmatch.start = fingerprintSource->sourceStart;\n'
+            '\t\t\t\tmatch.size = fingerprintSource->sourceSize;\n'
+            '\t\t\t\tmatch.offset = fingerprintSource->dataOffset;\n'
+            '\t\t\t\tmatch.path = fingerprintSource->path;\n'
+            '\t\t\t\tmatch.trackName = fingerprintSource->trackName;\n'
+            '\t\t\t\tsource = std::move(match);\n'
+            '\t\t\t}\n'
+            '\t\t}\n'
+        )
+        text = replace_once(text, source_anchor, source_replacement, "tracer fingerprint fallback")
+
+    TRACER_HEADER.write_text(text, encoding="utf-8")
 
 
 def patch_core_fs() -> None:
@@ -52,6 +112,27 @@ def patch_core_fs() -> None:
             'static_cast<uint32>(transferSizeS64));\n\n' + read_anchor
         )
         text = replace_once(text, read_anchor, read_replacement, "FS read hook")
+
+    finish_read_anchor = (
+        '\t\tcase FSA_CMD_OPERATION_TYPE::READ:\n'
+        '\t\tcase FSA_CMD_OPERATION_TYPE::WRITE:'
+    )
+    if 'RegisterReadCompleted' not in text:
+        finish_read_replacement = (
+            '\t\tcase FSA_CMD_OPERATION_TYPE::READ:\n'
+            '\t\t{\n'
+            '\t\t\tif (result == FS_RESULT::SUCCESS)\n'
+            '\t\t\t{\n'
+            '\t\t\t\tconst auto& traceRead = fsCmdBlockBody->fsaShimBuffer.request.cmdReadFile;\n'
+            '\t\t\t\tconst uint64 traceSize64 = static_cast<uint64>((uint32)traceRead.size) * static_cast<uint64>((uint32)traceRead.count);\n'
+            '\t\t\t\tif (traceSize64 <= 0xFFFFFFFFull)\n'
+            '\t\t\t\t\tBotWSoundSourceTracer::RegisterReadCompleted((uint32)traceRead.fileHandle, traceRead.dest.GetMPTR(), static_cast<uint32>(traceSize64));\n'
+            '\t\t\t}\n'
+            '\t\t\tbreak;\n'
+            '\t\t}\n'
+            '\t\tcase FSA_CMD_OPERATION_TYPE::WRITE:'
+        )
+        text = replace_once(text, finish_read_anchor, finish_read_replacement, "FS read completion hook")
 
     close_anchor = (
         '\tsint32 FSCloseFileAsync(FSClient_t* fsClient, FSCmdBlock_t* fsCmdBlock, uint32 fileHandle, '
@@ -122,6 +203,7 @@ def patch_ax_voice() -> None:
 
 
 if __name__ == "__main__":
+    patch_tracer_header()
     patch_core_fs()
     patch_ax_voice()
     print("BOTW sound source tracer hooks applied")
