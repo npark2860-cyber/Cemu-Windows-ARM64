@@ -1,1 +1,1 @@
-Next action: pin the current upstream Gamepad-Core/Dualsense-Multiplatform revision as a git submodule under `dependencies/Gamepad-Core`, then add a standalone Windows ARM64 smoke build without linking it into Cemu yet.
+Next action: build a minimal Windows ARM64 hardware smoke executable against `dependencies/Gamepad-Core` and validate on a physical DualSense over USB in this order: device discovery -> adaptive trigger -> left/right haptic output -> audio haptics. Do not modify Cemu input/rumble routing until this hardware smoke passes.
