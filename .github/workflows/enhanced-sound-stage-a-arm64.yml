@@ -84,8 +84,12 @@ jobs:
           if ($diffText -notmatch 'Spear_Swing\*' -or $diffText -notmatch 'LSword_Swing\*' -or $diffText -notmatch 'Sword_Swing\*') { throw 'BOTW swing routes missing' }
           if ($diffText -notmatch 'LSword_AttackCharging\*' -or $diffText -notmatch 'LSword_DownSwingAttackStart' -or $diffText -notmatch 'LSword_DownSwingAttackEnd') { throw 'BOTW charged/down-swing routes missing' }
 
-          if ($diffText -notmatch 'DualSenseSettings\(0, 0, 1, 0, 180, 255, 0, 0\)') { throw 'Native DualSense speaker initialization command missing' }
-          if ($diffText -match 'SetVibration\(0, 0\)|StopTrigger') { throw 'Speaker initializer must not clear rumble/adaptive triggers' }
+          $dualSenseText = Get-Content 'src/Cafe/OS/common/EnhancedSoundDualSenseService.h' -Raw
+          $dualSenseCode = $dualSenseText -replace '(?m)//.*$', ''
+          $dualSenseCode = $dualSenseCode -replace '\s+', ''
+          if ($dualSenseCode -notmatch 'DualSenseSettings\(0,0,1,0,180,255,0,0\);') { throw 'Native DualSense speaker initialization command missing' }
+          if ($dualSenseCode -notmatch 'gamepad->UpdateOutput\(\);') { throw 'Native DualSense speaker initialization must flush output' }
+          if ($dualSenseCode -match 'SetVibration\(0,0\)|StopTrigger') { throw 'Speaker initializer must not clear rumble/adaptive triggers' }
 
       - name: Setup release mode parameters
         shell: pwsh
