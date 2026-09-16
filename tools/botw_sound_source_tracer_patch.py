@@ -24,6 +24,14 @@ def patch_tracer_header() -> None:
             include_anchor + '#include "Cafe/OS/common/BotWSoundFingerprintCatalog.h"\n',
             "tracer fingerprint include",
         )
+    if 'BotWSoundSourceTracerV3Support.h' not in text:
+        fingerprint_include = '#include "Cafe/OS/common/BotWSoundFingerprintCatalog.h"\n'
+        text = replace_once(
+            text,
+            fingerprint_include,
+            fingerprint_include + '#include "Cafe/OS/common/BotWSoundSourceTracerV3Support.h"\n',
+            "tracer v3 support include",
+        )
 
     register_anchor = (
         '\tinline void TraceVoice(std::string_view eventName, uint32 voiceIndex, uint32 sampleBase,\n'
@@ -43,15 +51,30 @@ def patch_tracer_header() -> None:
             '\t\t\tpath = it->second;\n'
             '\t\t}\n'
             '\t\tif (ToLower(path).ends_with(".bars"))\n'
-            '\t\t\tBotWSoundFingerprintCatalog::RegisterBarsRead(path, destination, size);\n'
+            '\t\t\tBotWSoundSourceTracerV3Support::RegisterBarsReadCompleted(path, destination, size);\n'
             '\t}\n\n'
         )
         text = replace_once(text, register_anchor, register_impl + register_anchor, "tracer completed read hook")
 
     source_anchor = '\t\tconst auto source = FindSourceLocked(sampleBase);\n'
-    if 'BotWSoundFingerprintCatalog::FindMatch(sampleBase)' not in text:
+    if 'FindMatchForPath(sampleBase' not in text:
         source_replacement = (
             '\t\tauto source = FindSourceLocked(sampleBase);\n'
+            '\t\t// v3: a direct FS range can identify the BARS file while the old nearest-track\n'
+            '\t\t// heuristic still fails to recover the cue. Use the already catalogued BFWAV\n'
+            '\t\t// sample fingerprint with the known BARS path as a disambiguation hint.\n'
+            '\t\tif (source && source->trackName.empty())\n'
+            '\t\t{\n'
+            '\t\t\tconst auto fingerprintSource = BotWSoundSourceTracerV3Support::FindMatchForPath(sampleBase, source->path);\n'
+            '\t\t\tif (fingerprintSource)\n'
+            '\t\t\t{\n'
+            '\t\t\t\tsource->start = fingerprintSource->sourceStart;\n'
+            '\t\t\t\tsource->size = fingerprintSource->sourceSize;\n'
+            '\t\t\t\tsource->offset = fingerprintSource->dataOffset;\n'
+            '\t\t\t\tsource->path = fingerprintSource->path;\n'
+            '\t\t\t\tsource->trackName = fingerprintSource->trackName;\n'
+            '\t\t\t}\n'
+            '\t\t}\n'
             '\t\tif (!source)\n'
             '\t\t{\n'
             '\t\t\tconst auto fingerprintSource = BotWSoundFingerprintCatalog::FindMatch(sampleBase);\n'
@@ -67,7 +90,7 @@ def patch_tracer_header() -> None:
             '\t\t\t}\n'
             '\t\t}\n'
         )
-        text = replace_once(text, source_anchor, source_replacement, "tracer fingerprint fallback")
+        text = replace_once(text, source_anchor, source_replacement, "tracer v3 fingerprint fallback")
 
     TRACER_HEADER.write_text(text, encoding="utf-8")
 
@@ -121,7 +144,7 @@ def patch_core_fs() -> None:
         finish_read_replacement = (
             '\t\tcase FSA_CMD_OPERATION_TYPE::READ:\n'
             '\t\t{\n'
-            '\t\t\tif (result == FS_RESULT::SUCCESS)\n'
+            '\t\t\tif (static_cast<sint32>(result) >= 0)\n'
             '\t\t\t{\n'
             '\t\t\t\tconst auto& traceRead = fsCmdBlockBody->fsaShimBuffer.request.cmdReadFile;\n'
             '\t\t\t\tconst uint64 traceSize64 = static_cast<uint64>((uint32)traceRead.size) * static_cast<uint64>((uint32)traceRead.count);\n'
@@ -206,4 +229,4 @@ if __name__ == "__main__":
     patch_tracer_header()
     patch_core_fs()
     patch_ax_voice()
-    print("BOTW sound source tracer hooks applied")
+    print("BOTW sound source tracer v3 hooks applied")
