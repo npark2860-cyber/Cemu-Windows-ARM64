@@ -32,6 +32,7 @@ enum ControlId
     ID_GALLOP,
     ID_WEAPON,
     ID_MACHINE,
+    ID_ENABLE_SPEAKER,
     ID_STOP_ALL,
 };
 
@@ -219,6 +220,69 @@ void StopAll()
     gamepad->UpdateOutput();
 }
 
+void EnableSpeakerRoute()
+{
+    auto* gamepad = CurrentGamepad();
+    if (!gamepad || !gamepad->IsConnected())
+    {
+        SetStatus(L"No connected DualSense.");
+        return;
+    }
+
+    auto* ctx = gamepad->GetMutableDeviceContext();
+    if (!ctx)
+    {
+        SetStatus(L"Connected, but device context is unavailable.");
+        return;
+    }
+
+    if (ctx->DeviceType != EDSDeviceType::DualSense &&
+        ctx->DeviceType != EDSDeviceType::DualSenseEdge)
+    {
+        SetStatus(L"Speaker routing is only available for DualSense / DualSense Edge.");
+        return;
+    }
+
+    if (ctx->ConnectionType != EDSDeviceConnection::Usb)
+    {
+        SetStatus(L"Speaker route test is USB-only for this stage.");
+        return;
+    }
+
+    auto* settings = gamepad->GetIGamepadSettings();
+    if (!settings)
+    {
+        SetStatus(L"DualSense settings interface unavailable.");
+        return;
+    }
+
+    // Keep this as a transport-isolation test: clear body rumble and trigger
+    // state before asking Gamepad-Core to route audio to the internal speaker.
+    if (auto* rumble = gamepad->GetIGamepadRumbles())
+        rumble->SetVibration(0, 0);
+    if (auto* trigger = gamepad->GetIGamepadTrigger())
+    {
+        trigger->StopTrigger(EDSGamepadHand::Left);
+        trigger->StopTrigger(EDSGamepadHand::Right);
+    }
+
+    // Gamepad-Core maps (headset=0, speaker=1) to its internal speaker mode.
+    // AudioVolume applies to both speaker/headset fields; 180 gives a clearly
+    // audible but non-maximal baseline for the physical A/B test.
+    settings->DualSenseSettings(
+        0,   // mic state
+        0,   // headset disabled
+        1,   // internal speaker enabled
+        0,   // mic volume
+        180, // audio volume
+        255, // preserve Gamepad-Core's native DualSense output mode
+        0,   // rumble reduction
+        0);  // trigger reduction
+    gamepad->UpdateOutput();
+
+    SetStatus(L"Speaker route command sent. Play Cemu/Windows audio through the DualSense endpoint now.");
+}
+
 HWND AddText(HWND parent, const wchar_t* text, int x, int y, int w, int h, int id = 0)
 {
     return CreateWindowExW(0, L"STATIC", text, WS_CHILD | WS_VISIBLE,
@@ -270,7 +334,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         AddButton(hwnd, L"Weapon  R2", 340, 230, 145, 48, ID_WEAPON);
         AddButton(hwnd, L"Machine  R2", 500, 230, 165, 48, ID_MACHINE);
 
-        AddButton(hwnd, L"STOP ALL", 20, 304, 645, 50, ID_STOP_ALL);
+        AddButton(hwnd, L"Enable speaker (USB)", 20, 304, 310, 50, ID_ENABLE_SPEAKER);
+        AddButton(hwnd, L"STOP ALL", 345, 304, 320, 50, ID_STOP_ALL);
         AddText(hwnd,
                 L"Native ARM64 / direct Gamepad-Core HID path. DSX is not required.",
                 20, 372, 645, 24);
@@ -322,6 +387,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case ID_MACHINE:
             ApplyTrigger({0x27, 0x80, 0x02, 0x3a, 0x0a, 0x04, 0x00, 0x00, 0x00, 0x00}, EDSGamepadHand::Right);
+            return 0;
+
+        case ID_ENABLE_SPEAKER:
+            EnableSpeakerRoute();
             return 0;
 
         case ID_STOP_ALL:
