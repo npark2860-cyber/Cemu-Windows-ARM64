@@ -89,8 +89,9 @@ jobs:
 
           git add -N -- $paths
           git diff --check -- $paths
-          $diffText = (git diff -- $paths | Out-String)
-          Write-Host $diffText
+          $generatedDiff = (git diff -- $paths | Out-String)
+          Write-Host $generatedDiff
+          $diffText = (($paths | ForEach-Object { Get-Content $_ -Raw }) -join "`n")
 
           if ($diffText -notmatch 'EnhancedSoundExperience') { throw 'Missing persisted Enhanced Sound Experience checkbox/setting' }
           if ($diffText -notmatch 'sound_routes\.ini') { throw 'GraphicPack2 must load active pack sound_routes.ini' }
