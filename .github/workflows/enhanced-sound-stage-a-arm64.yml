@@ -1,0 +1,167 @@
+name: Enhanced Sound Experience Stage A ARM64
+
+on:
+  push:
+    branches:
+      - feat/enhanced-sound-experience-v1
+    paths:
+      - 'tools/apply_enhanced_sound_stage_a.py'
+      - '.github/workflows/enhanced-sound-stage-a-arm64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: enhanced-sound-stage-a-arm64
+  cancel-in-progress: false
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  stage-a-build:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Guard branch and main isolation
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_name }}' -ne 'feat/enhanced-sound-experience-v1') {
+            throw 'Stage A workflow may run only on feat/enhanced-sound-experience-v1'
+          }
+          Write-Host "SOURCE_HEAD=$(git rev-parse HEAD)"
+
+      - name: Apply Stage A production changes
+        shell: pwsh
+        run: python tools/apply_enhanced_sound_stage_a.py
+
+      - name: Validate generated diff
+        shell: pwsh
+        run: |
+          git diff --check
+          git status --short
+          $diff = git diff -- src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/GraphicPack/GraphicPack2.h src/Cafe/GraphicPack/GraphicPack2.cpp src/Cafe/OS/common/EnhancedSoundSourceTracker.h src/Cafe/OS/common/EnhancedSoundDualSenseService.h src/Cafe/OS/libs/coreinit/coreinit_FS.cpp src/Cafe/OS/libs/snd_core/ax_voice.cpp CMakeLists.txt src/Cafe/CMakeLists.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          Write-Host $diff
+          if ($diff -notmatch 'EnhancedSoundExperience') { throw 'Generated diff is missing persisted EnhancedSoundExperience setting' }
+          if ($diff -notmatch 'ResolveEnhancedSoundPolicy') { throw 'Generated diff is missing generic GraphicPack2 resolver' }
+          if ($diff -notmatch 'drcAlreadyRouted') { throw 'Generated diff is missing existing DRC preservation guard' }
+          if ($diff -notmatch 'Spear_Swing1') { throw 'Generated diff is missing BOTW regression policy' }
+          if ($diff -match 'SetVibration\(0, 0\)' -or $diff -match 'StopTrigger') { throw 'Production DualSense service must not clear rumble or adaptive-trigger state' }
+
+      - name: Setup release mode parameters
+        shell: pwsh
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset is installed
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu Stage A
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          Write-Host $headers
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Enhanced Sound Stage A executable is not ARM64' }
+
+      - name: Commit Stage A source only after build PASS
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add CMakeLists.txt src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/GraphicPack/GraphicPack2.h src/Cafe/GraphicPack/GraphicPack2.cpp src/Cafe/OS/common/EnhancedSoundSourceTracker.h src/Cafe/OS/common/EnhancedSoundDualSenseService.h src/Cafe/OS/libs/coreinit/coreinit_FS.cpp src/Cafe/OS/libs/snd_core/ax_voice.cpp src/Cafe/CMakeLists.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          if (git diff --cached --quiet) { throw 'No Stage A source changes to commit' }
+          git commit -m 'feat: implement enhanced sound experience stage A'
+          git push origin HEAD:feat/enhanced-sound-experience-v1
+          "IMPLEMENTATION_HEAD=$(git rev-parse HEAD)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prepare Stage A artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-StageA-ARM64.exe
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          @"
+          Enhanced Sound Experience Stage A — Windows ARM64
+          implementation_head=$Env:IMPLEMENTATION_HEAD
+
+          Global Audio checkbox:
+          - OFF: stock routing behavior
+          - ON: data-driven Enhanced Sound routing is armed
+
+          BOTW regression Graphic Pack:
+          - only the seven previously physically confirmed empty-air weapon swing cues are selected
+          - TV mix is never removed
+          - existing authored DRC routes are never overwritten
+          - native USB DualSense / DualSense Edge speaker route is initialized once per connection
+          - rumble/adaptive-trigger state is not cleared by the speaker initializer
+          "@ | Set-Content artifact/STAGE-A.txt
+
+      - name: Upload Stage A artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-EnhancedSound-StageA-ARM64
+          path: artifact/**
+          if-no-files-found: error
