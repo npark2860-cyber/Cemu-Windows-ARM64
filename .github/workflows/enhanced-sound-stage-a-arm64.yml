@@ -50,6 +50,16 @@ jobs:
           if (-not $axText.Contains($old)) { throw 'Expected generated Enhanced Sound DRC memcpy anchor not found' }
           Set-Content -Path $axPath -Value ($axText.Replace($old, $new)) -Encoding utf8
 
+          $cmakePath = 'CMakeLists.txt'
+          $cmakeText = Get-Content $cmakePath -Raw
+          $gamepadAnchor = 'add_subdirectory("dependencies/Gamepad-Core" "${CMAKE_BINARY_DIR}/gamepad-core" EXCLUDE_FROM_ALL)'
+          $gamepadStatic = 'set_property(TARGET GamepadCore PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")'
+          if (-not $cmakeText.Contains($gamepadAnchor)) { throw 'Expected generated Gamepad-Core add_subdirectory anchor not found' }
+          if (-not $cmakeText.Contains($gamepadStatic)) {
+            $cmakeText = $cmakeText.Replace($gamepadAnchor, "$gamepadAnchor`n`t$gamepadStatic")
+          }
+          Set-Content -Path $cmakePath -Value $cmakeText -Encoding utf8
+
       - name: Validate generated diff
         shell: pwsh
         run: |
@@ -82,6 +92,7 @@ jobs:
           if ($diffText -notmatch 'EnhancedSoundRouter::Resolve') { throw 'AX voice path must resolve through generic EnhancedSoundRouter' }
           if ($diffText -notmatch 'memcpy\(enhancedDrcMix, &internal->deviceMixDRC\[0\]') { throw 'Enhanced DRC path must start from the complete native DRC0 mix' }
           if ($diffText -notmatch 'AXSetVoiceDeviceMix\(vpb, AX_DEV_DRC, 0, enhancedDrcMix\)') { throw 'Enhanced DRC path must write the native-plus-additive DRC0 mix' }
+          if ($diffText -notmatch 'set_property\(TARGET GamepadCore PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded\$<\$<CONFIG:Debug>:Debug>"\)') { throw 'GamepadCore must use the same static MSVC runtime as Cemu' }
           if ($diffText -match 'ResolveEnhancedSoundPolicy|drcAlreadyRouted') { throw 'Obsolete pre-router Enhanced Sound architecture detected' }
 
           if ($diffText -notmatch 'PlayerVoice\.bars') { throw 'BOTW routes must include PlayerVoice.bars policy' }
