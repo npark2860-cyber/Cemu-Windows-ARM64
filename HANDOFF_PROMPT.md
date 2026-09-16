@@ -1,91 +1,108 @@
-# HANDOFF PROMPT — Cemu ARM64 / BOTW DualSense Audio
+# HANDOFF PROMPT — Cemu ARM64 / Enhanced Sound Experience
 
-Continue the BOTW DualSense audio-routing work from GitHub source of truth.
+Continue the Enhanced Sound Experience implementation from GitHub source of truth.
 
 Repository:
 `npark2860-cyber/Cemu-Windows-ARM64`
 
-Audio proof branch:
-`diag/botw-dualsense-speaker-duplicate`
+Active implementation branch:
+`feat/enhanced-sound-experience-v1`
 
-At the start of the new chat/tab:
+At the start of the new tab:
 
-1. read `CURRENT_HANDOFF.md`
-2. read `NEXT_ACTION.md`
-3. read `docs/BOTW_DUALSENSE_SPEAKER_DUPLICATE.md`
-4. query actual branch HEADs before editing
-5. also inspect `diag/botw-sound-source-tracer` before continuing tracer v4
-6. treat GitHub branch/HEAD/workflow/source as source of truth
+1. read `CURRENT_HANDOFF.md`;
+2. read `NEXT_ACTION.md`;
+3. read `docs/BOTW_DUALSENSE_SPEAKER_DUPLICATE.md` and `docs/DUALSENSE_NATIVE_SPEAKER_INIT_VALIDATION.md`;
+4. query the actual `feat/enhanced-sound-experience-v1` HEAD before editing;
+5. treat GitHub branch/HEAD/source/workflow as source of truth;
+6. do not touch `main`;
+7. do not rerun already PASS/CLOSED experiments without a real regression.
 
-Do not touch `main`.
+## Agreed final architecture
 
-Do not re-run or re-investigate CLOSED/PASS items without an actual regression.
+Cemu has exactly one global Audio-page checkbox:
+
+`Enhanced Sound Experience`
+
+Its meaning is readiness/capability only.
+
+```text
+OFF -> stock Cemu behavior
+ON  -> Enhanced Sound infrastructure armed
+```
+
+It is NOT a weapon/hit/voice category selector.
+
+Game-specific sound selection belongs to a Graphic Pack/data policy, not emulator-core BOTW hardcoding.
+
+Native Wii U DRC/GamePad audio must remain authoritative and unchanged. Enhanced rules are additive only.
+
+Example:
+
+```text
+native Sheikah Slate sound already on DRC -> unchanged
+weapon swing normally TV-only
+BOTW Enhanced Sound policy -> add DRC -> TV + DRC
+```
 
 ## Already physically PASS
 
-### BOTW speaker Duplicate proof
+### BOTW weapon-swing duplicate proof
 
-`resolved BOTW weapon-swing AX voice -> added DRC0 -> Cemu GamePad PCM -> DualSense USB speaker`
+Known BOTW weapon swing voices were successfully duplicated to DRC0 while TV routing remained intact, and were physically heard from the DualSense internal speaker.
 
-Workflow run `35078312616` succeeded.
+CI run `35078312616` — SUCCESS.
 
-The user physically heard the original BOTW weapon swing/whoosh clearly from the DualSense speaker and reported a dramatically different feel.
+Do not copy the diagnostic C++ exact-name whitelist into production architecture.
 
-The proof currently uses a deliberately narrow exact-name whitelist. This whitelist is diagnostic only.
+### Native DualSense USB speaker initialization
 
-### Native DualSense speaker initialization
+Validated on `exp/dualsense-gamepad-core-arm64` at commit:
 
-Separate branch:
-`exp/dualsense-gamepad-core-arm64`
-
-Validated implementation commit:
 `638d19309f94acde70e9a0496c5a3bbe3027c25d`
 
-Workflow run:
-`35084659609` — PASS
+CI run `35084659609` — SUCCESS.
 
-Physical result: native speaker route/volume enable works without DSX.
+Native `Gamepad-Core -> DualSenseSettings(...) -> UpdateOutput()` enables the DualSense USB internal speaker route without DSX.
 
-Final design should initialize the speaker automatically on DualSense connect/reconnect. The diagnostic Enable Speaker button is not a final runtime requirement.
+In production, initialize on connection/reconnection only while Enhanced Sound is enabled. Do NOT clear rumble or trigger state; the validation tool did that only for test isolation.
 
-## Key architectural decision
+## Immediate implementation target
 
-Do NOT continue by hardcoding more individual sound names into C++.
+Implement Stage A on `feat/enhanced-sound-experience-v1`:
 
-The next problem is semantic identification, not output transport.
+1. persisted `Enhanced Sound Experience` boolean in `CemuConfig` + Audio UI;
+2. generic `GraphicPack2` Enhanced Sound policy parser/resolver;
+3. AX hook calls the generic resolver and only adds DRC when requested;
+4. TV route is never removed;
+5. existing authored DRC is never overwritten;
+6. first BOTW Graphic Pack policy contains only already physically confirmed weapon-swing regression rules;
+7. integrate the already-proven DualSense USB speaker route init/reconnect service.
 
-Preferred production identity order:
-
-```text
-SLink / GameROMPlayer semantic event or category
-> source/resource/path category
-> exact track-name fallback
-```
-
-A JSON/config mapping can hold routing policy and exceptions, but simply moving hundreds of exact track names from C++ into JSON is not considered a complete solution.
-
-## Immediate next work
-
-Continue packed PlayerVoice discovery:
+Preferred rule identity order:
 
 ```text
-TitleBG.pack
--> SARC
--> Sound/Resource/PlayerVoice.bars
--> embedded BFWAV/PVxxx_xx
--> runtime AX voice
--> SLink/GameROMPlayer semantic correlation
+semantic event/category
+> resource/path/category/prefix
+> exact track fallback
 ```
 
-Then design the generic semantic routing-policy layer:
+Exact names may exist in Graphic Pack data as a narrow fallback, but not as expanding C++ BOTW lists.
+
+## Important incomplete coverage
+
+BOTW `PlayerVoice.bars` is embedded in `TitleBG.pack`, so the current direct-BARS tracer is insufficient for broad PlayerVoice support.
+
+Required follow-up after Stage A framework works:
 
 ```text
-semantic sound identity
--> TV / DualSense / both
--> gain/policy
--> existing AX/DRC path
+TitleBG.pack -> SARC -> embedded PlayerVoice.bars -> BFWAV/PVxxx_xx -> runtime AX voice
 ```
 
-Do not mix the 46 TOTK BNVIB/Haptic Explorer implementation into this tab. That is a separate workstream.
+Finish packed-resource tracer v4 and correlate `SLink/GameROMPlayer` semantics where possible before claiming PlayerVoice support is complete.
 
-If a simple TV-vs-controller A/B is useful, the code intentionally preserves TV routing; the user only reported that the controller-local swing perceptually dominates. This check is optional and must not block semantic work.
+Do not let this block the first generic framework regression using already-confirmed weapon-swing voices, but do not forget it.
+
+## Workstream boundary
+
+Do not mix TOTK/Switch BNVIB / 46-pattern Haptic Explorer work into this branch. That is handled separately.
