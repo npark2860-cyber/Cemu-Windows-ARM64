@@ -6,136 +6,180 @@ Status snapshot: 2026-09-16
 
 Repository: `npark2860-cyber/Cemu-Windows-ARM64`
 
-Active experiment branch:
+Active audio experiment branch:
 
 `diag/botw-dualsense-speaker-duplicate`
 
-This branch was created from `diag/botw-sound-source-tracer` at:
+Branch HEAD before this handoff update was:
 
-`c7c42a16ca1382edc672a224417757dafe97d67b`
+`3f58054adad268e1ba25c59ada15c22316c57c8d`
 
 Always query the actual branch HEAD before changing anything. `main` is not part of this experiment.
 
-## Current objective
+## What is now physically proven
 
-Prove one original BOTW local sound can be duplicated to the Wii U DRC/GamePad mix while preserving the TV mix, then use the already-validated Cemu GamePad PCM -> DualSense USB speaker path.
+### 1. BOTW weapon-swing AX voice -> DualSense speaker: PASS
 
-Target proof:
+The narrow Duplicate-mode proof works on physical hardware.
+
+Current diagnostic whitelist:
+
+- `Spear_Swing1`
+- `Spear_Swing2`
+- `Spear_SwingFast1`
+- `Spear_SwingFast2`
+- `LSword_Swing1`
+- `LSword_Swing3`
+- `LSword_Swing5`
+
+Implementation:
+
+`tools/botw_speaker_duplicate_patch.py`
+
+The patch keeps the original TV device mix untouched and, when the resolved track matches the diagnostic whitelist, adds DRC0 stereo main-bus routing at nominal volume `0x6000` if DRC0 was not already authored.
+
+Physical result reported by the user:
+
+- weapon swing/whoosh is clearly audible from the DualSense internal speaker;
+- the controller-local presentation feels dramatically different from TV-only playback;
+- the TV copy is perceptually much less obvious because the controller speaker is close to the user and strongly exposes the swing transient.
+
+Important precision: code preserves the TV mix, but the user has not yet done a strict isolated A/B with the controller speaker muted to quantify how audible the TV swing remains. Do not misreport this as TV route removal.
+
+### 2. Native DualSense USB speaker route initialization: PASS / CLOSED
+
+This was validated on the separate branch:
+
+`exp/dualsense-gamepad-core-arm64`
+
+Validated implementation commit:
+
+`638d19309f94acde70e9a0496c5a3bbe3027c25d`
+
+CI:
+
+`35084659609` — PASS
+
+Validation doc branch HEAD after documentation:
+
+`af6fa6fb1abf7d426fb5572dfc1b0e04fa9fe015`
+
+Confirmed architecture:
+
+`Gamepad-Core DualSenseSettings(...) -> speaker route/volume -> UpdateOutput() -> DualSense USB HID`
+
+Cemu/Windows USB audio remains the PCM transport. DSX is no longer required in the target design. On connect/reconnect Cemu should initialize speaker route/volume automatically; there is no reason for the final user experience to require a manual Enable Speaker button.
+
+## CI for the BOTW Duplicate proof
+
+Workflow:
+
+`BOTW DualSense Speaker Duplicate ARM64`
+
+Run:
+
+`35078312616`
+
+Job:
+
+`104735889958`
+
+Result:
+
+**SUCCESS**
+
+Workflow head SHA:
+
+`3fc397d58e7765d96bb29088cbbbc8ccf202e00a`
+
+Do not duplicate this proof build without a regression or a new implementation change.
+
+## Architectural correction after physical proof
+
+The current exact-name whitelist is intentionally a proof-only hack. It must NOT become the production architecture.
+
+Do not keep growing C++ lists such as `Spear_Swing*`, `LSword_Swing*`, or hundreds of `PVxxx_xx` entries.
+
+Production direction:
 
 ```text
-resolved BOTW weapon-swing AX voice
-  -> TV remains unchanged
-  -> DRC0 stereo mix added
-  -> Cemu GamePad audio
-  -> DualSense speaker
+BOTW semantic sound identity
+  -> routing classifier / mapping policy
+  -> TV / DualSense / both + gain policy
+  -> existing AX/DRC audio path
 ```
 
-## Implemented on this branch
+Preferred identification order:
 
-Commit `d358496f422939ca09a219e0443df5f4275df491`
+1. SLink / GameROMPlayer semantic event/category if recoverable;
+2. source path/resource category/prefix as a fallback;
+3. exact track name only as a narrow fallback, not the main design.
 
-- added `tools/botw_speaker_duplicate_patch.py`
-- reuses the validated v3 sound-source tracer patch first
-- adds routing only after exact source/track resolution
-- whitelist is limited to already runtime-confirmed empty-air swing cues:
-  - `Spear_Swing1`
-  - `Spear_Swing2`
-  - `Spear_SwingFast1`
-  - `Spear_SwingFast2`
-  - `LSword_Swing1`
-  - `LSword_Swing3`
-  - `LSword_Swing5`
-- TV mix is untouched
-- if DRC0 already has a route, it is preserved
-- otherwise DRC0 stereo main bus is added at `0x6000` nominal volume on channels 0/1
-- CSV event `route_drc_duplicate` means the diagnostic hook added the route
-- CSV event `route_drc_existing` means the game already had DRC0 routing and the hook did not overwrite it
+A data-driven mapping file may still be useful for policy, but merely moving hundreds of exact names from C++ into JSON does not solve the semantic hardcoding problem by itself.
 
-Commit `3fc397d58e7765d96bb29088cbbbc8ccf202e00a`
+## Next technical target
 
-- added workflow `.github/workflows/botw-dualsense-speaker-duplicate-arm64.yml`
-- artifact target: `Cemu-BOTW-DualSense-SpeakerDuplicate-ARM64`
+Return to semantic source recovery rather than adding more hardcoded sound names.
 
-Commit `0d6b606b72066c217878afed7c2f679b3f92bb99`
+Priority:
 
-- added `docs/BOTW_DUALSENSE_SPEAKER_DUPLICATE.md`
-- records design, safety boundary and physical PASS criteria
+1. finish packed-resource tracer v4: `SARC -> embedded BARS`;
+2. physically recover runtime `TitleBG.pack::Sound/Resource/PlayerVoice.bars -> PVxxx_xx` provenance;
+3. correlate runtime player-voice playback with `SLink/GameROMPlayer` semantics where possible;
+4. determine whether routing can be driven by semantic event/category instead of exact track enumeration;
+5. build the generic routing-policy layer only after that evidence is available;
+6. integrate the already-proven native speaker init into the Cemu-side DualSense connect/reconnect path.
 
-## Current CI
+## Current audio path model
 
-Workflow: `BOTW DualSense Speaker Duplicate ARM64`
+```text
+BOTW sound event
+-> AX voice
+-> existing TV route remains
+-> selected local voice receives DRC0 route
+-> Cemu g_padAudio
+-> Windows DualSense USB audio endpoint
+-> DualSense internal speaker
+```
 
-Run: `35078312616`
+The actual PCM is not extracted to WAV and replayed separately. It is the same in-game AX voice routed to an additional Wii U DRC output bus.
 
-Job: `104735889958`
+## Final user-facing behavior target
 
-Workflow head SHA: `3fc397d58e7765d96bb29088cbbbc8ccf202e00a`
+No per-event runtime toggle is needed.
 
-Last verified status while preparing this handoff:
+Expected final behavior:
 
-- checkout PASS
-- patch application PASS
-- `git diff --check` / diagnostic diff step PASS
-- build environment setup in progress
-- final ARM64 build result not yet recorded in this snapshot
+```text
+DualSense connects
+-> speaker route initialized automatically once
 
-Do **not** start a duplicate run until this run is checked.
+BOTW local/player event occurs
+-> semantic classifier decides destination automatically
+-> target sound reaches DualSense speaker
+```
 
-## Physical prerequisites already proven
-
-Cemu DRC/GamePad PCM can reach the DualSense USB speaker.
-
-Known remaining transport limitation:
-
-- after a fresh DualSense USB reconnect, DSX currently has to initialize the speaker route once
-- DSX can then be closed and Cemu continues to use the speaker until reconnect
-
-This limitation is separate from the current AX routing proof. Do not mix native speaker-init work into the first duplicate-routing validation.
-
-## Physical PASS condition
-
-Use the new artifact after CI succeeds.
-
-1. Delete/rename previous `botw_sound_source_trace.csv`.
-2. Initialize the known DualSense USB speaker route and select DualSense speaker as Cemu GamePad audio output.
-3. Load BOTW in a quiet area.
-4. Swing a spear repeatedly in empty air; optionally test a two-handed sword.
-5. TV swing/whoosh must remain audible.
-6. The same local swing/whoosh must also be clearly audible from the DualSense speaker.
-7. Ambient/world sounds must not generally move to the controller.
-8. Fresh CSV should contain `route_drc_duplicate` for the corresponding resolved swing track.
-
-Primary PASS:
-
-`BOTW swing AX voice -> original TV + added DRC0 -> DualSense speaker`
+An optional global `DualSense speaker enhancement` preference may exist, but diagnostic `Enable speaker` UI is not part of the final runtime design.
 
 ## Closed / do not retest without regression
 
-- sound tracer v3 defect `bars_path known / track_name blank`: physical result 321 -> 0
+- BOTW weapon-swing -> DRC/DualSense narrow routing proof
+- native DualSense USB speaker route/volume enable proof
+- DSX initialization dependency for the target design
+- sound tracer v3 `bars_path known / track_name blank` defect
 - Haptic State Logger v0.1 baseline
 - DualSense generic Gamepad-Core output-flag bug
 - DualSense firmware/update path
-- normal BOTW GamePad authored sound hunting: no useful broad authored DRC effect set found
+- normal BOTW GamePad authored-sound hunting as a broad source of effects
 
-## Important parallel work boundary
+## Parallel work boundary
 
-TOTK BNVIB / 46-pattern Haptic Explorer work is being handled in another tab. Do not mix that implementation into this speaker branch.
-
-This tab/branch is now audio-routing first.
-
-## After speaker Duplicate PASS
-
-1. return to packed sound-source tracer v4: `SARC -> embedded BARS`
-2. physically prove `AX -> TitleBG.pack::Sound/Resource/PlayerVoice.bars -> PVxxx_xx`
-3. use SLink/GameROMPlayer metadata to recover semantic player-voice identity where possible
-4. route confirmed Link-local player voice/body reactions through the same semantic layer
-5. solve native DualSense USB speaker route initialization so DSX is no longer needed
-6. only then consider optional Move/TV attenuation
+TOTK BNVIB / 46-pattern Haptic Explorer work is being handled in another tab. Do not mix that implementation into this audio-routing branch.
 
 See also:
 
+- `NEXT_ACTION.md`
+- `HANDOFF_PROMPT.md`
 - `docs/BOTW_DUALSENSE_SPEAKER_DUPLICATE.md`
 - `docs/BOTW_SOUND_SOURCE_TRACER_FINDINGS.md`
 - `docs/BOTW_PLAYERVOICE_TRACK_LIST.md`
-- `docs/BOTW_DUALSENSE_TODO.md`
-- `docs/BOTW_HAPTICS_SOURCE_INDEX.md`
