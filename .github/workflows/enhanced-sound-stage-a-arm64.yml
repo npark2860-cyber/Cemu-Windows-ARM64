@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: enhanced-sound-stage-a-arm64
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
@@ -48,13 +48,29 @@ jobs:
         run: |
           git diff --check
           git status --short
-          $diff = git diff -- src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/GraphicPack/GraphicPack2.h src/Cafe/GraphicPack/GraphicPack2.cpp src/Cafe/OS/common/EnhancedSoundSourceTracker.h src/Cafe/OS/common/EnhancedSoundDualSenseService.h src/Cafe/OS/libs/coreinit/coreinit_FS.cpp src/Cafe/OS/libs/snd_core/ax_voice.cpp CMakeLists.txt src/Cafe/CMakeLists.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          $paths = @(
+            'src/config/CemuConfig.h', 'src/config/CemuConfig.cpp',
+            'src/gui/wxgui/GeneralSettings2.h', 'src/gui/wxgui/GeneralSettings2.cpp',
+            'src/Cafe/GraphicPack/GraphicPack2.h', 'src/Cafe/GraphicPack/GraphicPack2.cpp',
+            'src/Cafe/OS/common/EnhancedSoundSourceTracker.h',
+            'src/Cafe/OS/common/EnhancedSoundDualSenseService.h',
+            'src/Cafe/OS/libs/coreinit/coreinit_FS.cpp',
+            'src/Cafe/OS/libs/snd_core/ax_voice.cpp',
+            'CMakeLists.txt', 'src/Cafe/CMakeLists.txt',
+            'enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt',
+            'enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini'
+          )
+          $diff = git diff -- $paths
           Write-Host $diff
-          if ($diff -notmatch 'EnhancedSoundExperience') { throw 'Generated diff is missing persisted EnhancedSoundExperience setting' }
-          if ($diff -notmatch 'ResolveEnhancedSoundPolicy') { throw 'Generated diff is missing generic GraphicPack2 resolver' }
-          if ($diff -notmatch 'drcAlreadyRouted') { throw 'Generated diff is missing existing DRC preservation guard' }
-          if ($diff -notmatch 'Spear_Swing1') { throw 'Generated diff is missing BOTW regression policy' }
-          if ($diff -match 'SetVibration\(0, 0\)' -or $diff -match 'StopTrigger') { throw 'Production DualSense service must not clear rumble or adaptive-trigger state' }
+          if ($diff -notmatch 'EnhancedSoundExperience') { throw 'Missing persisted Enhanced Sound Experience checkbox/setting' }
+          if ($diff -notmatch 'sound_routes.ini') { throw 'GraphicPack2 must load active pack sound_routes.ini' }
+          if ($diff -notmatch 'ResolveEnhancedSoundPolicy') { throw 'Missing generic active-graphic-pack sound route resolver' }
+          if ($diff -notmatch 'drcAlreadyRouted') { throw 'Missing native DRC preservation guard' }
+          if ($diff -notmatch 'PlayerVoice.bars') { throw 'BOTW routes must include all PlayerVoice.bars cues' }
+          if ($diff -notmatch 'Bow_Draw\*' -or $diff -notmatch 'Bow_Release\*') { throw 'BOTW bow routes missing' }
+          if ($diff -notmatch 'Spear_Swing\*' -or $diff -notmatch 'LSword_Swing\*') { throw 'BOTW swing routes missing' }
+          if ($diff -notmatch 'LSword_AttackCharging\*' -or $diff -notmatch 'LSword_DownSwingAttackStart' -or $diff -notmatch 'LSword_DownSwingAttackEnd') { throw 'BOTW charged/down-swing routes missing' }
+          if ($diff -match 'SetVibration\(0, 0\)' -or $diff -match 'StopTrigger') { throw 'Speaker initializer must not clear rumble/adaptive triggers' }
 
       - name: Setup release mode parameters
         shell: pwsh
@@ -131,7 +147,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add CMakeLists.txt src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/GraphicPack/GraphicPack2.h src/Cafe/GraphicPack/GraphicPack2.cpp src/Cafe/OS/common/EnhancedSoundSourceTracker.h src/Cafe/OS/common/EnhancedSoundDualSenseService.h src/Cafe/OS/libs/coreinit/coreinit_FS.cpp src/Cafe/OS/libs/snd_core/ax_voice.cpp src/Cafe/CMakeLists.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          git add CMakeLists.txt src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/GraphicPack/GraphicPack2.h src/Cafe/GraphicPack/GraphicPack2.cpp src/Cafe/OS/common/EnhancedSoundSourceTracker.h src/Cafe/OS/common/EnhancedSoundDualSenseService.h src/Cafe/OS/libs/coreinit/coreinit_FS.cpp src/Cafe/OS/libs/snd_core/ax_voice.cpp src/Cafe/CMakeLists.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
           if (git diff --cached --quiet) { throw 'No Stage A source changes to commit' }
           git commit -m 'feat: implement enhanced sound experience stage A'
           git push origin HEAD:feat/enhanced-sound-experience-v1
@@ -143,20 +159,17 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
           Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-StageA-ARM64.exe
           Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
           @"
           Enhanced Sound Experience Stage A — Windows ARM64
           implementation_head=$Env:IMPLEMENTATION_HEAD
 
-          Global Audio checkbox:
-          - OFF: stock routing behavior
-          - ON: data-driven Enhanced Sound routing is armed
-
-          BOTW regression Graphic Pack:
-          - only the seven previously physically confirmed empty-air weapon swing cues are selected
-          - TV mix is never removed
-          - existing authored DRC routes are never overwritten
-          - native USB DualSense / DualSense Edge speaker route is initialized once per connection
-          - rumble/adaptive-trigger state is not cleared by the speaker initializer
+          - Global Audio checkbox gates all Enhanced Sound behavior.
+          - Active graphic packs supply sound_routes.ini.
+          - Matching AX voices keep TV and native DRC routing; Enhanced Sound only adds missing DRC send.
+          - Native USB DualSense / DualSense Edge speaker route initializes without clearing rumble or adaptive triggers.
+          - BOTW policy includes PlayerVoice.bars, bow draw/release, spear/long-sword swings, charge and down-swing start/end only.
+          - Throw/unnamed and post-release world impact/landing/collision/break sounds remain unlisted.
           "@ | Set-Content artifact/STAGE-A.txt
 
       - name: Upload Stage A artifact
