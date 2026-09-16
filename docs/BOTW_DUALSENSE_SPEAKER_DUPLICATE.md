@@ -1,6 +1,6 @@
 # BOTW DualSense Speaker Duplicate Proof
 
-Status: active physical-proof experiment
+Status: **PHYSICAL PASS / proof CLOSED**
 
 Branch: `diag/botw-dualsense-speaker-duplicate`
 Base branch snapshot: `diag/botw-sound-source-tracer` at `c7c42a16ca1382edc672a224417757dafe97d67b`
@@ -17,13 +17,13 @@ one already-identified BOTW local sound
   -> DualSense USB speaker
 ```
 
-This is **Duplicate mode** only. No TV attenuation/removal is attempted.
+This proof uses Duplicate mode only. No TV attenuation/removal is attempted.
 
-## Why weapon swing first
+## Proof whitelist
 
-The v3 physical tracer already resolved pure empty-air weapon swing cues by exact BARS/track name. Using those cues avoids mixing source-identification uncertainty with routing uncertainty.
+The v3 physical tracer had already resolved pure empty-air weapon swing cues by exact BARS/track name.
 
-Current proof whitelist:
+The diagnostic proof whitelist is:
 
 - `Spear_Swing1`
 - `Spear_Swing2`
@@ -33,7 +33,7 @@ Current proof whitelist:
 - `LSword_Swing3`
 - `LSword_Swing5`
 
-Do not expand this list from timing guesses. Add only runtime-confirmed local cues.
+This list is now frozen as a regression/proof fixture. Do not grow it into the production architecture.
 
 ## Diagnostic implementation
 
@@ -41,47 +41,95 @@ Do not expand this list from timing guesses. Add only runtime-confirmed local cu
 
 For a whitelisted resolved sample:
 
-1. Existing TV device mix is left untouched.
-2. If DRC0 already has an authored route, it is preserved.
-3. Otherwise DRC0 stereo main bus is added at nominal volume `0x6000` on channels 0/1.
-4. The CSV emits an additional event:
-   - `route_drc_duplicate`: diagnostic route added.
-   - `route_drc_existing`: DRC0 route already existed, so no overwrite was performed.
+1. existing TV device mix is left untouched;
+2. if DRC0 already has an authored route, it is preserved;
+3. otherwise DRC0 stereo main bus is added at nominal volume `0x6000` on channels 0/1;
+4. CSV emits `route_drc_duplicate` when the diagnostic hook adds the route;
+5. CSV emits `route_drc_existing` when the game already had DRC0 routing and no overwrite occurs.
 
 The experiment does not route impact, equip, landing, enemy-hit, ambience, explosions, or unresolved PlayerVoice cues.
 
-## Known transport prerequisite
+## CI result
 
-Cemu GamePad PCM -> DualSense USB speaker has already passed physically, but a fresh USB reconnect currently needs the DualSense speaker route initialized once by DSX. After that DSX can be closed and Cemu continues using the speaker until reconnect.
+Workflow:
+`BOTW DualSense Speaker Duplicate ARM64`
 
-That route-initialization defect is separate from this proof. Do not change firmware or re-investigate the already-closed generic output-flag bug during this experiment.
+Run:
+`35078312616`
 
-## Physical PASS
+Job:
+`104735889958`
 
-1. Use the ARM64 artifact from workflow `BOTW DualSense Speaker Duplicate ARM64`.
-2. Delete/rename any old `botw_sound_source_trace.csv`.
-3. Initialize the known DualSense USB speaker route and select it as Cemu GamePad audio output.
-4. Load BOTW in a quiet area.
-5. Swing a spear repeatedly in empty air; optionally test a two-handed sword.
-6. Confirm the original TV swing sound remains.
-7. Confirm the same local swing/whoosh is clearly audible from the DualSense speaker.
-8. Confirm ambient/world sounds did not generally move to the controller.
-9. Confirm fresh CSV contains `route_drc_duplicate` for the corresponding resolved swing track.
+Result:
+**SUCCESS**
 
-Primary PASS statement:
+## Physical result
+
+**PASS.**
+
+The user physically tested BOTW with the DualSense speaker path active and confirmed the weapon swing/whoosh is clearly emitted from the DualSense internal speaker. The controller-local presentation produces a much stronger and substantially different physical/spatial impression than the same effect buried in the TV mix.
+
+The user also observed that the TV swing can feel almost absent while the controller speaker is active. The implementation intentionally preserves the TV mix, so this is currently treated as a perceptual dominance/masking observation, not evidence that the TV route was removed. A strict speaker-muted TV A/B is optional if later documentation needs it.
+
+Primary proven primitive:
 
 ```text
-BOTW resolved weapon-swing AX voice -> original TV + added DRC0 -> DualSense speaker
+resolved BOTW weapon-swing AX voice
+-> original AX playback
+-> added DRC0 route
+-> Cemu g_padAudio
+-> DualSense speaker
 ```
 
-## After PASS
+No separate WAV extraction or secondary sound player is used.
 
-Do not broaden routing blindly. Next audio work is:
+## Native DualSense speaker init status
 
-1. finish packed-resource tracer v4 (`SARC -> embedded BARS`) for `PlayerVoice.bars`;
-2. correlate `PVxxx_xx` with SLink/GameROMPlayer semantics where possible;
-3. add Link-local player voice/body reactions to the same semantic routing layer;
-4. solve native DualSense USB speaker route initialization so DSX is no longer needed;
-5. only then evaluate optional Move/TV-attenuation policy.
+The old DSX one-time initialization limitation has separately been solved and physically validated.
 
-Haptics/BNVIB exploration is being handled independently and should not be mixed into this diagnostic branch.
+Branch:
+`exp/dualsense-gamepad-core-arm64`
+
+Validated implementation commit:
+`638d19309f94acde70e9a0496c5a3bbe3027c25d`
+
+CI run:
+`35084659609` — PASS
+
+Gamepad-Core can enable the DualSense internal speaker route/volume natively over USB HID. Cemu/Windows USB audio remains the PCM transport.
+
+Final integration should perform this initialization automatically on controller connect/reconnect. A manual Enable Speaker button is diagnostic-only.
+
+## Production architecture decision
+
+The exact-name whitelist is proof-only hardcoding.
+
+Do not scale the production feature by embedding hundreds of sound names in C++.
+
+Preferred production pipeline:
+
+```text
+BOTW semantic sound identity
+-> semantic routing classifier/policy
+-> TV | DualSense | both + gain
+-> existing AX/DRC path
+```
+
+Preferred identity hierarchy:
+
+1. `SLink` / `GameROMPlayer` semantic event or category;
+2. resource/path/category or stable prefix;
+3. exact track name only as a fallback/exception.
+
+A data-driven mapping file can hold policy, but simply relocating hundreds of exact names into JSON is not by itself a semantic solution.
+
+## Next work
+
+1. resume packed-resource tracer v4 (`SARC -> embedded BARS`);
+2. recover runtime `TitleBG.pack::Sound/Resource/PlayerVoice.bars` provenance;
+3. correlate `PVxxx_xx` playback with SLink/GameROMPlayer semantics;
+4. determine the least-hardcoded routing identity/category available at runtime;
+5. implement the generic routing-policy layer;
+6. integrate the already-proven native speaker route initialization into Cemu DualSense connect/reconnect.
+
+Haptics/BNVIB exploration remains a separate workstream and must not be mixed into this diagnostic branch.
