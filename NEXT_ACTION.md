@@ -1,62 +1,80 @@
-# NEXT ACTION — BOTW DualSense Speaker Duplicate
+# NEXT ACTION — BOTW DualSense Audio After Speaker PASS
 
-## Immediate action
+## Do not repeat the completed proof
 
-Check existing CI first. Do not start a duplicate build.
+The following are already PASS/CLOSED unless a regression appears:
 
-Workflow run:
+- BOTW whitelisted weapon-swing AX voice reaches DualSense speaker.
+- BOTW Duplicate ARM64 CI run `35078312616` succeeded.
+- native DualSense USB speaker route/volume initialization works without DSX on physical hardware.
+- native speaker-init CI run `35084659609` succeeded on `exp/dualsense-gamepad-core-arm64`.
 
-`35078312616`
+Do not spend the next cycle re-proving these.
 
-Job:
+## Immediate next action
 
-`104735889958`
+Do **not** add more exact sound names to the C++ whitelist.
 
-Branch:
+Continue the sound-source semantic work first:
 
-`diag/botw-dualsense-speaker-duplicate`
+1. inspect the current `diag/botw-sound-source-tracer` state and its handoff/findings;
+2. continue packed-resource tracer v4 (`SARC -> embedded BARS`);
+3. target `TitleBG.pack::Sound/Resource/PlayerVoice.bars` specifically;
+4. prove runtime provenance for `PVxxx_xx` playback;
+5. correlate the runtime voice with `SLink/GameROMPlayer` semantic events/categories where the game exposes them;
+6. decide the least-hardcoded production routing key from evidence.
 
-The run already passed:
+Preferred routing identity order:
 
-- checkout
-- `tools/botw_speaker_duplicate_patch.py` application
-- diagnostic diff / `git diff --check`
+```text
+semantic SLink/event/category
+> resource/path/category
+> exact track fallback
+```
 
-At handoff time the remaining ARM64 build pipeline was still in progress.
+The current `Spear_Swing*` / `LSword_Swing*` whitelist remains only as a known-good physical regression proof.
 
-## If CI succeeds
+## Production routing design constraint
 
-1. Confirm artifact name `Cemu-BOTW-DualSense-SpeakerDuplicate-ARM64` exists.
-2. Use that artifact for the first physical Duplicate-mode test.
-3. Delete/rename old `botw_sound_source_trace.csv` before launch.
-4. Use a spear in empty air as the primary test.
-5. Expected:
-   - TV swing remains
-   - same swing/whoosh appears from DualSense speaker
-   - CSV contains `route_drc_duplicate` with a whitelisted `Spear_Swing*` or `LSword_Swing*` track
-6. Keep ambient/world sounds as a negative control.
-7. Record physical result in `CURRENT_HANDOFF.md` and `docs/BOTW_DUALSENSE_SPEAKER_DUPLICATE.md`.
+Do not solve hardcoding merely by moving hundreds of exact names into JSON.
 
-## If CI fails
+The production layer should look like:
 
-Inspect only the first failing step.
+```text
+semantic identity / category
+-> routing policy
+-> destination = TV | DualSense | both
+-> gain / behavior
+```
 
-Priority:
+A mapping file is acceptable for policy and exceptions, but event/category classification should do most of the work.
 
-1. patch step / diagnostic diff: anchor or generated-code problem
-2. configure/build: compiler diagnostic from `ax_voice.cpp` or generated tracer helper
-3. packaging only after compile is clean
+## Native speaker integration
 
-Do not change unrelated emulator code.
+The one-time HID route initialization is already proven separately.
 
-## After physical PASS
+After semantic routing structure is stable, integrate this behavior into the Cemu-side DualSense connect/reconnect path:
 
-Return to audio semantic expansion, not haptics:
+```text
+DualSense USB detected
+-> speaker route + nonzero volume
+-> UpdateOutput()
+```
 
-1. implement tracer v4 packed-resource discovery (`SARC -> embedded BARS`)
-2. recover `PlayerVoice.bars` at runtime
-3. correlate `PVxxx_xx` with SLink/GameROMPlayer semantics
-4. extend Duplicate routing to confirmed Link-local voice/body cues
-5. solve native DualSense speaker route init later
+No final manual `Enable speaker` button is required.
 
-Do not work on the 46 TOTK BNVIB Haptic Explorer here; that is a separate tab/workstream.
+## Optional rigorous check
+
+The user reported that the controller-local swing is so perceptually dominant that the TV swing can feel absent. The code path intentionally leaves TV mix untouched.
+
+Only if needed for documentation, perform one simple A/B:
+
+- same swing with DualSense speaker enabled;
+- mute/disable controller speaker only;
+- confirm TV swing remains.
+
+Do not block semantic work on this check.
+
+## Workstream boundary
+
+The 46 TOTK BNVIB/Haptic Explorer work remains a separate tab. Do not mix it into this audio routing task.
