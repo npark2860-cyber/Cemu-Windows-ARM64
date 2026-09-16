@@ -2,30 +2,86 @@
 
 Purpose: preserve every external source currently being used for the BOTW Wii U -> DualSense haptics work, pinned by repository commit/path where possible. This file is a source-of-truth index; it does **not** vendor third-party raw files unless their license is explicitly checked.
 
-## 1. Switch BOTW real HD Rumble captures
+## 1. BOTW Switch rumble capture — useful transport evidence, not HD Rumble authoring proof
 
 Repository: `dekuNukem/Nintendo_Switch_Reverse_Engineering`
 Pinned master: `b354f21ae81f7b0d1d060b2b61e66ad0d9bc1756`
 
 Key files:
 - `logic_captures/left_grey_joycon_botw_rumble.logicdata`
-  - upstream blob SHA: `8da47a3fcd1c8c7ecec6f39c36b5c6056e517ec5`
-  - real logic-analyzer capture of BOTW rumble traffic to a left Joy-Con.
 - `logic_captures/left_grey_joycon_botw_rumble.txt`
-  - upstream blob SHA: `0375fe284a096d433c41e5d1d72534cbf3462b80`
-  - text transcript of the capture; comment states button press / rumble begins around line 358.
 - GitHub issue `#11` — `HD-rumble data`
-  - historical reverse-engineering discussion using BOTW data, including packet-field experiments and amplitude/frequency decoding work.
 - `bluetooth_hid_notes.md`
-  - Joy-Con/Pro Controller protocol notes including HD Rumble packet format/encoding background.
+
+Use:
+- confirms real BOTW Switch rumble traffic was captured at the Joy-Con transport level.
+- useful for packet timing/encoding validation and comparison with decoded vibration output.
+
+Important correction:
+- this capture must **not** be treated as proof that BOTW Switch shipped Nintendo-authored HD Rumble patterns.
+- official pre-release statements from Eiji Aonuma said BOTW would not use Switch HD Rumble because the Switch and Wii U versions were intended to provide the same gameplay experience.
 
 Research status:
-- [x] Source located and pinned.
-- [x] Raw BOTW capture confirmed to exist.
-- [ ] Parse complete capture into timestamped `(low amp, low freq, high amp, high freq)` samples.
-- [ ] Label individual BOTW actions contained in the capture.
+- [x] Public BOTW Joy-Con rumble capture located.
+- [x] Reclassified as transport/reference evidence rather than a source of authored BOTW HD Rumble assets.
+- [ ] Decode enough of the capture to compare ordinary BOTW rumble transport with Cemu/Wii U timing.
 
-## 2. Switch HD Rumble API semantics
+## 2. Official BOTW HD Rumble limitation
+
+Source family:
+- 2017 Eiji Aonuma interviews reported by Nintendo-focused press.
+
+Confirmed conclusion:
+- BOTW Switch did not use the Switch-specific HD Rumble feature.
+- rationale given: preserve essentially the same gameplay experience between Wii U and Switch.
+
+Project consequence:
+- the previous plan "recover native Switch BOTW HD Rumble and replay it on DualSense" is invalid as a primary source strategy.
+- BOTW Switch may still emit ordinary rumble, and its runtime packets remain useful as a timing/transport reference.
+- for rich Nintendo-authored frequency/amplitude patterns, use a later Nintendo Zelda title that actually ships HD Rumble data.
+
+## 3. TOTK `.bnvib` — preferred Nintendo-authored rich haptic donor source
+
+Public research source:
+- `TotkMods/Research`
+  - identifies `.bnvib` as `Binary Vibration`
+  - describes it as the HD Rumble data format used by Tears of the Kingdom resources.
+
+Format reference:
+- SwitchBrew `BNVIB`
+  - BNVIB = Binary NX Vibration
+  - sample payload uses 4-byte samples
+  - sample interval is stored in milliseconds
+  - vibration types include one-shot, loop, and loop+wait variants
+
+Important distinction:
+- the on-disk BNVIB sample encoding is not simply four IEEE float fields per sample.
+- at the Switch API/service level, vibration values are represented as low/high band frequency and amplitude components.
+- therefore the decoder pipeline is:
+
+```text
+BNVIB binary encoding
+  -> decoded vibration timeline
+  -> low/high frequency + amplitude representation
+  -> DualSense renderer
+```
+
+Planned use:
+1. enumerate `.bnvib` files from a user-owned TOTK RomFS dump.
+2. record path, file size, type, sample interval, loop metadata, sample count and hashes.
+3. decode several representative files to a normalized timeline.
+4. correlate filenames / SLink / action metadata to semantic events where possible.
+5. use those Nintendo-authored patterns as donor haptics for semantically equivalent BOTW actions.
+
+Research status:
+- [x] `.bnvib` format existence and purpose confirmed from public research.
+- [x] public binary format reference located.
+- [ ] enumerate actual TOTK `.bnvib` files from a user-owned RomFS dump.
+- [ ] determine exact count and naming taxonomy in the target dump revision.
+- [ ] implement/validate a decoder.
+- [ ] build semantic donor catalog for weapon, player damage, movement, horse, environmental and ability events.
+
+## 4. Switch vibration API semantics
 
 Repository: `switchbrew/libnx`
 Pinned master: `dbcc1beafc6b47b5ffbeb8ba82463a7d45da40bb`
@@ -35,14 +91,14 @@ Key file:
   - `HidVibrationValue` exposes `amp_low`, `freq_low`, `amp_high`, `freq_high`.
 
 Use:
-- authoritative public API-level representation for Nintendo Switch vibration values.
-- basis for a Switch HD Rumble -> DualSense translation layer.
+- authoritative public API-level representation for Switch vibration values.
+- normalized intermediate model for BNVIB -> DualSense translation.
 
 Research status:
 - [x] Field model confirmed.
-- [ ] Choose initial DualSense mapping function and validate physically.
+- [ ] choose the initial DualSense mapping function and validate physically.
 
-## 3. BOTW Switch-side semantic rumble actions
+## 5. BOTW Switch-side rumble action semantics
 
 Repository: `zeldaret/botw`
 Pinned master: `7c65472576f5857bbcca71697f5e71aa93af6f8c`
@@ -51,23 +107,20 @@ Target: BOTW Switch v1.5.0 decompilation.
 Key files:
 - `src/Game/AI/Action/actionControllerRumble.cpp`
 - `src/Game/AI/Action/actionControllerRumble.h`
-  - loads static `Pattern` and dynamic `Count`.
 - `src/Game/AI/Action/actionTimeSpecControllerRumble.cpp`
 - `src/Game/AI/Action/actionTimeSpecControllerRumble.h`
-  - loads `Pattern`, `Seconds`, `IsWait`.
-- `data/status_action.yml`
-- `data/aidef_action_vtables.yml`
 
 Use:
-- recover BOTW semantic event -> rumble pattern linkage.
-- correlate Nintendo-authored pattern IDs with captured HD Rumble output.
+- recover BOTW semantic rumble event timing and action identity.
+- do **not** assume `Pattern` resolves to an HD-Rumble BNVIB-like asset in BOTW.
+- use these actions as semantic anchors when mapping Wii U BOTW events to richer TOTK donor patterns.
 
 Research status:
 - [x] semantic rumble action classes confirmed.
-- [ ] locate pattern table / manager that resolves `Pattern` into vibration output.
-- [ ] build event/pattern catalog: bow, weapon swing, Link damage, horse, Master Cycle, environment, etc.
+- [ ] trace enough of the BOTW path to understand pattern/event identity and timing.
+- [ ] build semantic event catalog: bow, weapon swing, Link damage, horse, Master Cycle, environment, etc.
 
-## 4. Wii U GamePad rumble hardware baseline
+## 6. Wii U GamePad rumble hardware baseline
 
 Repository: `opencma/libdrc`
 Pinned master: `eb53344e4cd68500ca050c14c182ee3173c08848`
@@ -83,7 +136,7 @@ Use:
 Research status:
 - [x] GPIO motor control confirmed.
 
-## 5. Cemu Wii U VPAD rumble path
+## 7. Cemu Wii U VPAD rumble path
 
 Repository: this repository.
 Relevant files:
@@ -96,25 +149,22 @@ Confirmed behavior:
 - `VPADController::update()` consumes the sequence at ~60 Hz and calls `start_rumble()` / `stop_rumble()`.
 
 Use:
-- fallback/original Wii U rumble layer.
-- Nintendo Switch-derived haptics can be additive or preferred where a stable BOTW semantic mapping exists.
+- authoritative BOTW Wii U event/timing baseline.
+- compatibility/fallback output when no richer semantic donor mapping exists.
 
 Research status:
 - [x] temporal path confirmed.
 - [ ] native DualSense renderer for VPAD pattern not yet integrated.
 
-## 6. BetterVR precedent for intercepting BOTW/Cemu rumble
+## 8. BetterVR precedent for intercepting BOTW/Cemu rumble
 
 Repository: `Crementif/BotW-BetterVR`
 Pinned main: `2e06b31f062408d3293a392df418da0ab37b1f23`
 
 Key files:
 - `src/hooking/rumble.cpp`
-  - hooks `VPADControlMotor` / `VPADStopMotor` path.
 - `resources/BreathOfTheWild_BetterVR/patch_CTRL_Rumble.asm`
-  - BOTW v208 patch group routes to the custom rumble hook.
 - `src/hooking/cemu_hooks.h`
-  - registers custom rumble HLE hooks.
 
 Use:
 - proof that BOTW-specific rumble interception/rerouting is practical without rewriting the game's whole input system.
@@ -122,19 +172,21 @@ Use:
 Research status:
 - [x] precedent confirmed.
 
-## 7. Current project direction
+## 9. Current project direction
 
 Preferred hierarchy:
-1. Nintendo-authored Switch BOTW HD Rumble, when a reliable action/pattern mapping exists.
-2. Original Wii U `VPADControlMotor` temporal pattern as compatibility/fallback.
-3. DualSense-specific enhancements only after original/Nintendo-authored behavior is preserved.
+1. BOTW Wii U semantic event/timing remains the source of truth for **when** an effect happens.
+2. TOTK `.bnvib` is the preferred Nintendo-authored donor source for **how a rich Zelda haptic should feel**, when a semantically equivalent event can be justified.
+3. Original Wii U `VPADControlMotor` pattern remains fallback/compatibility behavior.
+4. Custom synthesized DualSense effects are last resort when neither a suitable TOTK donor nor useful Wii U pattern exists.
 
 Target architecture:
 
 ```text
-BOTW semantic event
-  -> Switch BOTW rumble Pattern (when mapped)
-  -> decoded low/high frequency + amplitude timeline
+BOTW Wii U semantic event
+  -> semantic category / action identity
+  -> matching TOTK BNVIB donor pattern (when justified)
+  -> decoded low/high band timeline
   -> DualSense haptic renderer
 
 fallback:
@@ -143,7 +195,10 @@ BOTW Wii U VPADControlMotor
   -> DualSense renderer
 ```
 
-## 8. Packed PlayerVoice / Linkle diagnostic reference
+Important labeling rule:
+- TOTK-derived effects must be documented as **Nintendo-authored donor mappings**, not as "original BOTW HD Rumble".
+
+## 10. Packed PlayerVoice / Linkle diagnostic reference
 
 A local Linkle mod package supplied for research was inspected to determine where player voice resources actually live at runtime. The third-party binary/audio assets are **not** committed to this repository.
 
@@ -173,24 +228,22 @@ Verified metadata from this sample:
 - all 267 AMTA names parsed successfully and follow the `PVxxx_xx` naming form.
 
 Implementation consequence:
-
-The v1-v3 tracer starts from standalone FS sound paths, so an embedded `PlayerVoice.bars` never appears as its own FS open. This materially changes the sound-source tracing direction: the next revision must parse SARC/pack contents and register embedded BARS with the existing BFWAV fingerprint catalog.
+- sound tracer v4 should parse SARC/pack contents and register embedded BARS with the existing BFWAV fingerprint catalog.
 
 Detailed record and v4 pass conditions:
-
 - `docs/BOTW_SOUND_SOURCE_TRACER_FINDINGS.md`
 
 Research status:
-
 - [x] PlayerVoice packed-resource location confirmed from supplied diagnostic sample.
 - [x] SARC structure and PlayerVoice BARS metadata confirmed.
 - [ ] add SARC/pack BARS discovery to tracer v4.
 - [ ] physically prove `AX voice -> TitleBG.pack::PlayerVoice.bars -> PVxxx_xx`.
 
-## 9. Data preservation rule
+## 11. Data preservation rule
 
 - Keep exact upstream repository, commit SHA, path/blob SHA for every research dependency.
 - Do not rely on mutable `master/main` URLs alone.
 - Do not vendor copyrighted game assets.
 - Do not vendor third-party source/captures until license compatibility is checked; pin them instead.
+- User-owned game dumps may be analyzed locally, but only structural metadata, hashes, decoder code and user-generated diagnostics belong in the repository.
 - When a new source materially changes implementation direction, add it here before coding against it.
