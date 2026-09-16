@@ -41,7 +41,14 @@ jobs:
 
       - name: Apply Stage A production changes
         shell: pwsh
-        run: python tools/apply_enhanced_sound_stage_a.py
+        run: |
+          python tools/apply_enhanced_sound_stage_a.py
+          $axPath = 'src/Cafe/OS/libs/snd_core/ax_voice.cpp'
+          $axText = Get-Content $axPath -Raw
+          $old = 'memcpy(enhancedDrcMix, internal->deviceMixDRC[0], sizeof(enhancedDrcMix));'
+          $new = 'memcpy(enhancedDrcMix, &internal->deviceMixDRC[0], sizeof(enhancedDrcMix));'
+          if (-not $axText.Contains($old)) { throw 'Expected generated Enhanced Sound DRC memcpy anchor not found' }
+          Set-Content -Path $axPath -Value ($axText.Replace($old, $new)) -Encoding utf8
 
       - name: Validate generated diff
         shell: pwsh
@@ -64,8 +71,6 @@ jobs:
             if (-not (Test-Path $path)) { throw "Stage A expected generated file missing: $path" }
           }
 
-          # Intent-to-add makes brand-new generated files visible to git diff without
-          # staging their contents. This keeps validation honest for Router/policy files.
           git add -N -- $paths
           git diff --check -- $paths
           $diffText = (git diff -- $paths | Out-String)
@@ -75,7 +80,7 @@ jobs:
           if ($diffText -notmatch 'sound_routes\.ini') { throw 'GraphicPack2 must load active pack sound_routes.ini' }
           if ($diffText -notmatch 'EnhancedSoundRouter::RegisterRouteTable') { throw 'GraphicPack2 must register generic Enhanced Sound route tables' }
           if ($diffText -notmatch 'EnhancedSoundRouter::Resolve') { throw 'AX voice path must resolve through generic EnhancedSoundRouter' }
-          if ($diffText -notmatch 'memcpy\(enhancedDrcMix, internal->deviceMixDRC\[0\]') { throw 'Enhanced DRC path must start from the complete native DRC0 mix' }
+          if ($diffText -notmatch 'memcpy\(enhancedDrcMix, &internal->deviceMixDRC\[0\]') { throw 'Enhanced DRC path must start from the complete native DRC0 mix' }
           if ($diffText -notmatch 'AXSetVoiceDeviceMix\(vpb, AX_DEV_DRC, 0, enhancedDrcMix\)') { throw 'Enhanced DRC path must write the native-plus-additive DRC0 mix' }
           if ($diffText -match 'ResolveEnhancedSoundPolicy|drcAlreadyRouted') { throw 'Obsolete pre-router Enhanced Sound architecture detected' }
 
