@@ -1,0 +1,157 @@
+name: BOTW DualSense Speaker Duplicate ARM64
+
+on:
+  push:
+    branches:
+      - diag/botw-dualsense-speaker-duplicate
+    paths:
+      - 'src/Cafe/OS/common/BotWSoundSourceTracer.h'
+      - 'src/Cafe/OS/common/BotWSoundFingerprintCatalog.h'
+      - 'src/Cafe/OS/common/BotWSoundSourceTracerV3Support.h'
+      - 'tools/botw_sound_source_tracer_patch.py'
+      - 'tools/botw_speaker_duplicate_patch.py'
+      - 'src/Cafe/OS/libs/coreinit/coreinit_FS.cpp'
+      - 'src/Cafe/OS/libs/snd_core/ax_voice.cpp'
+      - '.github/workflows/botw-dualsense-speaker-duplicate-arm64.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: botw-dualsense-speaker-duplicate-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup release mode parameters
+        shell: pwsh
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Apply BOTW speaker duplicate proof hooks
+        shell: pwsh
+        run: python tools/botw_speaker_duplicate_patch.py
+
+      - name: Show diagnostic diff
+        shell: pwsh
+        run: |
+          git diff --check
+          git diff -- src/Cafe/OS/common/BotWSoundSourceTracer.h src/Cafe/OS/libs/coreinit/coreinit_FS.cpp src/Cafe/OS/libs/snd_core/ax_voice.cpp
+
+      - name: Ensure clang-cl toolset is installed
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          Write-Host $headers
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Diagnostic Cemu executable is not ARM64' }
+
+      - name: Prepare speaker duplicate artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-BOTW-DualSense-SpeakerDuplicate-ARM64.exe
+          @'
+          BOTW DualSense Speaker Duplicate Proof — ARM64
+
+          Scope:
+          - Reuses the physically validated BOTW sound-source tracer v3 correlation path.
+          - Leaves the original TV mix untouched.
+          - Adds DRC0 stereo main-bus output only for already runtime-confirmed empty-air swing tracks:
+            Spear_Swing1, Spear_Swing2, Spear_SwingFast1, Spear_SwingFast2,
+            LSword_Swing1, LSword_Swing3, LSword_Swing5.
+          - Does not route impact, equip, landing, enemy-hit, inferred PlayerVoice, ambience, or explosions.
+          - If the game already authored a DRC route for the selected voice, this build preserves it instead of replacing it.
+
+          Diagnostic CSV:
+          - botw_sound_source_trace.csv
+          - route_drc_duplicate = diagnostic hook added DRC0 duplicate output.
+          - route_drc_existing = the selected voice already had a DRC0 route and was left unchanged.
+
+          Physical test:
+          1. Put this executable in the normal Cemu folder.
+          2. Delete/rename old botw_sound_source_trace.csv.
+          3. Connect DualSense by USB and select its speaker as Cemu GamePad audio output.
+          4. Known current limitation: after a fresh USB reconnect, initialize the DualSense speaker route once with DSX, then close DSX. This proof does not yet solve native route initialization.
+          5. Load BOTW in a quiet area.
+          6. Swing a spear repeatedly in empty air. If available, also test a two-handed sword.
+          7. PASS = original TV swing sound remains AND the same local swing/whoosh is clearly audible from the DualSense speaker.
+          8. Control check: ambient/world sounds should not suddenly move to the controller speaker.
+          9. Exit Cemu normally and keep/send the fresh CSV.
+
+          This is a narrow diagnostic proof. Do not treat it as final routing policy.
+          '@ | Set-Content artifact/README-BOTW-DUALSENSE-SPEAKER-DUPLICATE.txt
+
+      - name: Upload diagnostic Cemu
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-BOTW-DualSense-SpeakerDuplicate-ARM64
+          path: artifact/*
+          if-no-files-found: error
