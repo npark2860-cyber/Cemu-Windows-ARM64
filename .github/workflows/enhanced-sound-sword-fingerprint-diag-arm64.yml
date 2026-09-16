@@ -1,0 +1,151 @@
+name: Enhanced Sound Sword Fingerprint Diagnostic ARM64
+
+on:
+  push:
+    branches:
+      - diag/enhanced-sound-sword-fingerprint
+    paths:
+      - 'src/Cafe/OS/common/EnhancedSoundSourceTracker.h'
+      - '.github/workflows/enhanced-sound-sword-fingerprint-diag-arm64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: enhanced-sound-sword-fingerprint-diag-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  sword-fingerprint-diag:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout exact diagnostic commit
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Guard diagnostic provenance
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_name }}' -ne 'diag/enhanced-sound-sword-fingerprint') {
+            throw 'Sword fingerprint diagnostic may run only on its diagnostic branch'
+          }
+          $head = (git rev-parse HEAD).Trim()
+          Write-Host "SOURCE_HEAD=$head"
+          "SOURCE_HEAD=$head" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+          $changed = @(git diff --name-only 24e2f8427f2599fa29899267be7b33a14c48fd2a..HEAD)
+          Write-Host ($changed -join "`n")
+          foreach ($path in $changed) {
+            if ($path -ne 'src/Cafe/OS/common/EnhancedSoundSourceTracker.h' -and
+                $path -ne '.github/workflows/enhanced-sound-sword-fingerprint-diag-arm64.yml') {
+              throw "Unexpected diagnostic change: $path"
+            }
+          }
+
+          $tracker = Get-Content 'src/Cafe/OS/common/EnhancedSoundSourceTracker.h' -Raw
+          if ($tracker -notmatch 'enhanced_sound_fingerprint_diag\.csv') { throw 'Diagnostic CSV output missing' }
+          if ($tracker -notmatch 'no_candidate') { throw 'No-candidate diagnostic missing' }
+          if ($tracker -notmatch 'ambiguous') { throw 'Ambiguous diagnostic missing' }
+          if ($tracker -notmatch 'TraceUnresolvedFingerprint') { throw 'Unresolved fingerprint probe missing' }
+
+      - name: Ensure clang-cl toolset is installed
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=release `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu sword fingerprint diagnostic
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Diagnostic executable is not ARM64' }
+
+      - name: Prepare diagnostic artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-SwordFingerprint-Diag-ARM64.exe
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
+          @"
+          Enhanced Sound one-handed sword fingerprint diagnostic — Windows ARM64
+          source_head=$Env:SOURCE_HEAD
+          base_head=24e2f8427f2599fa29899267be7b33a14c48fd2a
+
+          This build does not change routing decisions.
+          When an Enhanced Sound source remains unresolved, it writes:
+            enhanced_sound_fingerprint_diag.csv
+
+          Key status values:
+            no_candidate  = runtime sample has zero fingerprint candidates
+            ambiguous     = runtime sample matches multiple path/track candidates
+            single_candidate_rejected = unexpected diagnostic edge case
+
+          Test only the one-handed sword a few times, then upload the CSV.
+          "@ | Set-Content artifact/DIAGNOSTIC.txt
+
+      - name: Upload diagnostic artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-EnhancedSound-SwordFingerprint-Diag-ARM64
+          path: artifact/**
+          if-no-files-found: error
