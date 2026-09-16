@@ -1,0 +1,178 @@
+name: Enhanced Sound Packed BARS ARM64
+
+on:
+  push:
+    branches:
+      - feat/enhanced-sound-experience-v1
+    paths:
+      - 'tools/fix_enhanced_sound_packed_bars.py'
+      - '.github/workflows/enhanced-sound-packed-bars-arm64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: enhanced-sound-packed-bars-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  packed-bars-build:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Guard branch and source provenance
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_name }}' -ne 'feat/enhanced-sound-experience-v1') {
+            throw 'Packed BARS workflow may run only on feat/enhanced-sound-experience-v1'
+          }
+          Write-Host "SOURCE_HEAD=$(git rev-parse HEAD)"
+
+      - name: Apply packed SARC BARS discovery
+        shell: pwsh
+        run: python tools/fix_enhanced_sound_packed_bars.py
+
+      - name: Validate packed BARS generated source
+        shell: pwsh
+        run: |
+          $tracker = 'src/Cafe/OS/common/EnhancedSoundSourceTracker.h'
+          $packed = 'src/Cafe/OS/common/EnhancedSoundPackedBars.h'
+          if (-not (Test-Path $tracker)) { throw 'EnhancedSoundSourceTracker.h missing' }
+          if (-not (Test-Path $packed)) { throw 'EnhancedSoundPackedBars.h missing' }
+
+          git diff --check -- $tracker $packed
+          $status = (git status --short | Out-String)
+          Write-Host $status
+          if ($status -match 'EnhancedSoundRouter|EnhancedSoundDualSenseService|ax_voice.cpp') {
+            throw 'Packed BARS stage must not modify the proven router, DualSense service, or AX routing path'
+          }
+
+          $trackerText = Get-Content $tracker -Raw
+          $packedText = Get-Content $packed -Raw
+          if ($trackerText -notmatch 's_openPackedFiles') { throw 'Packed archive file-handle tracking missing' }
+          if ($trackerText -notmatch 'RegisterSarcReadCompleted') { throw 'Packed archive completed-read hook missing' }
+          if ($packedText -notmatch 'HasMagic\(base, "SARC"\)') { throw 'SARC detection missing' }
+          if ($packedText -notmatch 'HasMagic\(sfat, "SFAT"\)') { throw 'SFAT parser missing' }
+          if ($packedText -notmatch 'HasMagic\(sfnt, "SFNT"\)') { throw 'SFNT parser missing' }
+          if ($packedText -notmatch 'nameField & 0x00FFFFFFu') { throw 'SARC name-offset decode missing' }
+          if ($packedText -notmatch 'BotWSoundFingerprintCatalog::RegisterBarsRead') { throw 'Embedded BARS must feed the existing fingerprint catalog' }
+          if ($packedText -notmatch 'parentPath.*"::".*name') { throw 'Packed BARS provenance path must preserve parent archive and embedded name' }
+          if ($packedText -match 'PlayerVoice\.bars') { throw 'Packed BARS parser must remain generic and not hardcode PlayerVoice' }
+
+      - name: Setup release mode parameters
+        shell: pwsh
+        run: |
+          echo "BUILD_MODE=release" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "BUILD_FLAGS=" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Ensure clang-cl toolset is installed
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_MODE }} `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu packed BARS
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          Write-Host $headers
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Packed BARS executable is not ARM64' }
+
+      - name: Commit packed BARS source only after build PASS
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/Cafe/OS/common/EnhancedSoundSourceTracker.h src/Cafe/OS/common/EnhancedSoundPackedBars.h
+          if (git diff --cached --quiet) { throw 'No packed BARS source changes to commit' }
+          git commit -m 'feat: discover packed BARS for enhanced sound'
+          git push origin HEAD:feat/enhanced-sound-experience-v1
+          "IMPLEMENTATION_HEAD=$(git rev-parse HEAD)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prepare packed BARS artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-PackedBars-ARM64.exe
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
+          @"
+          Enhanced Sound packed SARC/BARS coverage — Windows ARM64
+          implementation_head=$Env:IMPLEMENTATION_HEAD
+
+          - Existing Enhanced Sound routing and DualSense output paths are unchanged.
+          - .pack/.sarc handles are tracked separately from standalone sound files.
+          - Complete in-memory SARC archives are parsed through SARC/SFAT/SFNT.
+          - Embedded .bars entries feed the existing BARS/BFWAV fingerprint catalog.
+          - Provenance is preserved as parent.pack::embedded/path.bars.
+          - No BOTW-specific resource name is hardcoded in the parser.
+          "@ | Set-Content artifact/PACKED-BARS.txt
+
+      - name: Upload packed BARS artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-EnhancedSound-PackedBars-ARM64
+          path: artifact/**
+          if-no-files-found: error
