@@ -46,12 +46,12 @@ jobs:
       - name: Validate generated diff
         shell: pwsh
         run: |
-          git diff --check
           git status --short
           $paths = @(
             'src/config/CemuConfig.h', 'src/config/CemuConfig.cpp',
             'src/gui/wxgui/GeneralSettings2.h', 'src/gui/wxgui/GeneralSettings2.cpp',
             'src/Cafe/GraphicPack/GraphicPack2.h', 'src/Cafe/GraphicPack/GraphicPack2.cpp',
+            'src/Cafe/OS/common/EnhancedSoundRouter.h',
             'src/Cafe/OS/common/EnhancedSoundSourceTracker.h',
             'src/Cafe/OS/common/EnhancedSoundDualSenseService.h',
             'src/Cafe/OS/libs/coreinit/coreinit_FS.cpp',
@@ -60,17 +60,32 @@ jobs:
             'enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt',
             'enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini'
           )
-          $diff = git diff -- $paths
-          Write-Host $diff
-          if ($diff -notmatch 'EnhancedSoundExperience') { throw 'Missing persisted Enhanced Sound Experience checkbox/setting' }
-          if ($diff -notmatch 'sound_routes.ini') { throw 'GraphicPack2 must load active pack sound_routes.ini' }
-          if ($diff -notmatch 'ResolveEnhancedSoundPolicy') { throw 'Missing generic active-graphic-pack sound route resolver' }
-          if ($diff -notmatch 'drcAlreadyRouted') { throw 'Missing native DRC preservation guard' }
-          if ($diff -notmatch 'PlayerVoice.bars') { throw 'BOTW routes must include all PlayerVoice.bars cues' }
-          if ($diff -notmatch 'Bow_Draw\*' -or $diff -notmatch 'Bow_Release\*') { throw 'BOTW bow routes missing' }
-          if ($diff -notmatch 'Spear_Swing\*' -or $diff -notmatch 'LSword_Swing\*') { throw 'BOTW swing routes missing' }
-          if ($diff -notmatch 'LSword_AttackCharging\*' -or $diff -notmatch 'LSword_DownSwingAttackStart' -or $diff -notmatch 'LSword_DownSwingAttackEnd') { throw 'BOTW charged/down-swing routes missing' }
-          if ($diff -match 'SetVibration\(0, 0\)' -or $diff -match 'StopTrigger') { throw 'Speaker initializer must not clear rumble/adaptive triggers' }
+          foreach ($path in $paths) {
+            if (-not (Test-Path $path)) { throw "Stage A expected generated file missing: $path" }
+          }
+
+          # Intent-to-add makes brand-new generated files visible to git diff without
+          # staging their contents. This keeps validation honest for Router/policy files.
+          git add -N -- $paths
+          git diff --check -- $paths
+          $diffText = (git diff -- $paths | Out-String)
+          Write-Host $diffText
+
+          if ($diffText -notmatch 'EnhancedSoundExperience') { throw 'Missing persisted Enhanced Sound Experience checkbox/setting' }
+          if ($diffText -notmatch 'sound_routes\.ini') { throw 'GraphicPack2 must load active pack sound_routes.ini' }
+          if ($diffText -notmatch 'EnhancedSoundRouter::RegisterRouteTable') { throw 'GraphicPack2 must register generic Enhanced Sound route tables' }
+          if ($diffText -notmatch 'EnhancedSoundRouter::Resolve') { throw 'AX voice path must resolve through generic EnhancedSoundRouter' }
+          if ($diffText -notmatch 'memcpy\(enhancedDrcMix, internal->deviceMixDRC\[0\]') { throw 'Enhanced DRC path must start from the complete native DRC0 mix' }
+          if ($diffText -notmatch 'AXSetVoiceDeviceMix\(vpb, AX_DEV_DRC, 0, enhancedDrcMix\)') { throw 'Enhanced DRC path must write the native-plus-additive DRC0 mix' }
+          if ($diffText -match 'ResolveEnhancedSoundPolicy|drcAlreadyRouted') { throw 'Obsolete pre-router Enhanced Sound architecture detected' }
+
+          if ($diffText -notmatch 'PlayerVoice\.bars') { throw 'BOTW routes must include PlayerVoice.bars policy' }
+          if ($diffText -notmatch 'Bow_Draw\*' -or $diffText -notmatch 'Bow_Release\*') { throw 'BOTW bow routes missing' }
+          if ($diffText -notmatch 'Spear_Swing\*' -or $diffText -notmatch 'LSword_Swing\*' -or $diffText -notmatch 'Sword_Swing\*') { throw 'BOTW swing routes missing' }
+          if ($diffText -notmatch 'LSword_AttackCharging\*' -or $diffText -notmatch 'LSword_DownSwingAttackStart' -or $diffText -notmatch 'LSword_DownSwingAttackEnd') { throw 'BOTW charged/down-swing routes missing' }
+
+          if ($diffText -notmatch 'DualSenseSettings\(0, 0, 1, 0, 180, 255, 0, 0\)') { throw 'Native DualSense speaker initialization command missing' }
+          if ($diffText -match 'SetVibration\(0, 0\)|StopTrigger') { throw 'Speaker initializer must not clear rumble/adaptive triggers' }
 
       - name: Setup release mode parameters
         shell: pwsh
@@ -147,7 +162,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add CMakeLists.txt src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/GraphicPack/GraphicPack2.h src/Cafe/GraphicPack/GraphicPack2.cpp src/Cafe/OS/common/EnhancedSoundSourceTracker.h src/Cafe/OS/common/EnhancedSoundDualSenseService.h src/Cafe/OS/libs/coreinit/coreinit_FS.cpp src/Cafe/OS/libs/snd_core/ax_voice.cpp src/Cafe/CMakeLists.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
+          git add CMakeLists.txt src/config/CemuConfig.h src/config/CemuConfig.cpp src/gui/wxgui/GeneralSettings2.h src/gui/wxgui/GeneralSettings2.cpp src/Cafe/GraphicPack/GraphicPack2.h src/Cafe/GraphicPack/GraphicPack2.cpp src/Cafe/OS/common/EnhancedSoundRouter.h src/Cafe/OS/common/EnhancedSoundSourceTracker.h src/Cafe/OS/common/EnhancedSoundDualSenseService.h src/Cafe/OS/libs/coreinit/coreinit_FS.cpp src/Cafe/OS/libs/snd_core/ax_voice.cpp src/Cafe/CMakeLists.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
           if (git diff --cached --quiet) { throw 'No Stage A source changes to commit' }
           git commit -m 'feat: implement enhanced sound experience stage A'
           git push origin HEAD:feat/enhanced-sound-experience-v1
@@ -166,9 +181,9 @@ jobs:
 
           - Global Audio checkbox gates all Enhanced Sound behavior.
           - Active graphic packs supply sound_routes.ini.
-          - Matching AX voices keep TV and native DRC routing; Enhanced Sound only adds missing DRC send.
+          - Matching AX voices keep TV and the complete native DRC mix; Enhanced Sound adds an additive DRC main-bus send only.
           - Native USB DualSense / DualSense Edge speaker route initializes without clearing rumble or adaptive triggers.
-          - BOTW policy includes PlayerVoice.bars, bow draw/release, spear/long-sword swings, charge and down-swing start/end only.
+          - BOTW policy includes PlayerVoice.bars, bow draw/release, spear/long-sword/sword swings, charge and down-swing start/end only.
           - Throw/unnamed and post-release world impact/landing/collision/break sounds remain unlisted.
           "@ | Set-Content artifact/STAGE-A.txt
 
