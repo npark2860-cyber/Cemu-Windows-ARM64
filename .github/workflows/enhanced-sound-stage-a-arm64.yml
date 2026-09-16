@@ -6,6 +6,7 @@ on:
       - feat/enhanced-sound-experience-v1
     paths:
       - 'tools/apply_enhanced_sound_stage_a.py'
+      - 'tools/fix_enhanced_sound_route_refresh.py'
       - '.github/workflows/enhanced-sound-stage-a-arm64.yml'
   workflow_dispatch:
 
@@ -47,8 +48,13 @@ jobs:
           $axText = Get-Content $axPath -Raw
           $old = 'memcpy(enhancedDrcMix, internal->deviceMixDRC[0], sizeof(enhancedDrcMix));'
           $new = 'memcpy(enhancedDrcMix, &internal->deviceMixDRC[0], sizeof(enhancedDrcMix));'
-          if (-not $axText.Contains($old)) { throw 'Expected generated Enhanced Sound DRC memcpy anchor not found' }
-          Set-Content -Path $axPath -Value ($axText.Replace($old, $new)) -Encoding utf8
+          if ($axText.Contains($old)) {
+            $axText = $axText.Replace($old, $new)
+          } elseif (-not $axText.Contains($new) -and -not $axText.Contains('AXApplyEnhancedSoundRoute')) {
+            throw 'Expected generated Enhanced Sound DRC memcpy/helper anchor not found'
+          }
+          Set-Content -Path $axPath -Value $axText -Encoding utf8
+          python tools/fix_enhanced_sound_route_refresh.py
 
           $cmakePath = 'CMakeLists.txt'
           $cmakeText = Get-Content $cmakePath -Raw
@@ -90,7 +96,11 @@ jobs:
           if ($diffText -notmatch 'sound_routes\.ini') { throw 'GraphicPack2 must load active pack sound_routes.ini' }
           if ($diffText -notmatch 'EnhancedSoundRouter::RegisterRouteTable') { throw 'GraphicPack2 must register generic Enhanced Sound route tables' }
           if ($diffText -notmatch 'EnhancedSoundRouter::Resolve') { throw 'AX voice path must resolve through generic EnhancedSoundRouter' }
-          if ($diffText -notmatch 'memcpy\(enhancedDrcMix, &internal->deviceMixDRC\[0\]') { throw 'Enhanced DRC path must start from the complete native DRC0 mix' }
+          if ($diffText -notmatch 'struct EnhancedSoundDrcState') { throw 'Enhanced Sound must track per-voice native DRC0 state' }
+          if ($diffText -notmatch 'AXApplyEnhancedSoundRoute\(vpb, sampleBase\)') { throw 'Running voice sample changes must re-resolve Enhanced Sound routes' }
+          if ($diffText -notmatch 'memcpy\(nativeDrcMix, &internal->deviceMixDRC\[0\]') { throw 'Enhanced DRC path must capture the complete native DRC0 mix' }
+          if ($diffText -notmatch 'memcpy\(enhancedDrcMix, nativeDrcMix') { throw 'Enhanced DRC path must derive from the native DRC0 baseline' }
+          if ($diffText -notmatch '_swapEndianU16\(static_cast<uint16>\(mixed\)\)') { throw 'Enhanced DRC gain must be written in AX big-endian format' }
           if ($diffText -notmatch 'AXSetVoiceDeviceMix\(vpb, AX_DEV_DRC, 0, enhancedDrcMix\)') { throw 'Enhanced DRC path must write the native-plus-additive DRC0 mix' }
           if ($diffText -notmatch 'set_property\(TARGET GamepadCore PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded\$<\$<CONFIG:Debug>:Debug>"\)') { throw 'GamepadCore must use the same static MSVC runtime as Cemu' }
           if ($diffText -match 'ResolveEnhancedSoundPolicy|drcAlreadyRouted') { throw 'Obsolete pre-router Enhanced Sound architecture detected' }
@@ -202,6 +212,7 @@ jobs:
           - Global Audio checkbox gates all Enhanced Sound behavior.
           - Active graphic packs supply sound_routes.ini.
           - Matching AX voices keep TV and the complete native DRC mix; Enhanced Sound adds an additive DRC main-bus send only.
+          - Running AX voices re-resolve their route when the sample source changes.
           - Native USB DualSense / DualSense Edge speaker route initializes without clearing rumble or adaptive triggers.
           - BOTW policy includes PlayerVoice.bars, bow draw/release, spear/long-sword/sword swings, charge and down-swing start/end only.
           - Throw/unnamed and post-release world impact/landing/collision/break sounds remain unlisted.
