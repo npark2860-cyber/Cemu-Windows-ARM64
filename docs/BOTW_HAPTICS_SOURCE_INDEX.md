@@ -143,7 +143,51 @@ BOTW Wii U VPADControlMotor
   -> DualSense renderer
 ```
 
-## 8. Data preservation rule
+## 8. Packed PlayerVoice / Linkle diagnostic reference
+
+A local Linkle mod package supplied for research was inspected to determine where player voice resources actually live at runtime. The third-party binary/audio assets are **not** committed to this repository.
+
+Reproducibility hashes:
+
+- archive: `BreathOfTheWild_Linkle.zip`
+  - SHA-256: `ae9cb068fc2f3e71347d6b151e8076301cc04e03ee5e3ec35d17c1b4843d0a83`
+- `BreathOfTheWild_LinkleMod/content/Pack/TitleBG.pack`
+  - SHA-256: `ebb2e9681de9aac5991cfb6d2a10f1025bdc5c0d73a7f16a32b4fee775af1b64`
+- embedded `TitleBG.pack::Sound/Resource/PlayerVoice.bars`
+  - SHA-256: `8aed11b65f4523636152343e921ff88e6f08fe0391291d30a63f4503ebc7dc09`
+
+Verified structure:
+
+```text
+BreathOfTheWild_LinkleMod/content/Pack/TitleBG.pack
+└─ Sound/Resource/PlayerVoice.bars
+```
+
+Verified metadata from this sample:
+
+- `TitleBG.pack` is SARC.
+- SARC entry count: 410.
+- embedded `.bars` entry count: 35.
+- `PlayerVoice.bars` size: 2,336,032 bytes.
+- BARS track count: 267.
+- all 267 AMTA names parsed successfully and follow the `PVxxx_xx` naming form.
+
+Implementation consequence:
+
+The v1-v3 tracer starts from standalone FS sound paths, so an embedded `PlayerVoice.bars` never appears as its own FS open. This materially changes the sound-source tracing direction: the next revision must parse SARC/pack contents and register embedded BARS with the existing BFWAV fingerprint catalog.
+
+Detailed record and v4 pass conditions:
+
+- `docs/BOTW_SOUND_SOURCE_TRACER_FINDINGS.md`
+
+Research status:
+
+- [x] PlayerVoice packed-resource location confirmed from supplied diagnostic sample.
+- [x] SARC structure and PlayerVoice BARS metadata confirmed.
+- [ ] add SARC/pack BARS discovery to tracer v4.
+- [ ] physically prove `AX voice -> TitleBG.pack::PlayerVoice.bars -> PVxxx_xx`.
+
+## 9. Data preservation rule
 
 - Keep exact upstream repository, commit SHA, path/blob SHA for every research dependency.
 - Do not rely on mutable `master/main` URLs alone.
