@@ -3,6 +3,10 @@
 #include "Cafe/HW/Espresso/PPCCallback.h"
 #include "Cafe/OS/libs/snd_core/ax.h"
 #include "Cafe/OS/libs/snd_core/ax_internal.h"
+#include "Cafe/OS/common/EnhancedSoundRouter.h"
+#include "Cafe/OS/common/EnhancedSoundSourceTracker.h"
+#include "Cafe/OS/common/EnhancedSoundDualSenseService.h"
+#include "config/CemuConfig.h"
 #include "Cafe/OS/libs/coreinit/coreinit_Thread.h"
 #include "util/helpers/fspinlock.h"
 
@@ -615,6 +619,34 @@ namespace snd_core
 			internal->playbackState = _swapEndianU16(voiceState);
 			AXSetSyncFlag(vpb, AX_SYNCFLAG_PLAYBACKSTATE);
 			AXVoiceProtection_Acquire(vpb);
+			if (voiceState == 1 && GetConfig().enhanced_sound_experience)
+			{
+				EnhancedSoundDualSenseService::EnsureRunning();
+				const MPTR enhancedSampleBase = _swapEndianU32(vpb->offsets.samples);
+				if (enhancedSampleBase != MPTR_NULL)
+				{
+					const auto source = EnhancedSoundSourceTracker::ResolveSource(enhancedSampleBase);
+					if (source)
+					{
+						const auto route = EnhancedSoundRouter::Resolve(source->path, source->trackName);
+						if (route && route->mode == EnhancedSoundRouter::Mode::AddDRC)
+						{
+							AXCHMIX_DEPR enhancedDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
+							memcpy(enhancedDrcMix, &internal->deviceMixDRC[0], sizeof(enhancedDrcMix));
+							for (uint32 channel = 0; channel < 2 && channel < AX_DRC_CHANNEL_COUNT; ++channel)
+							{
+								const uint32 index = channel * AX_BUS_COUNT;
+								const uint32 current = static_cast<uint16>(enhancedDrcMix[index].vol);
+								const uint32 mixed = std::min<uint32>(0xFFFFu, current + route->gain);
+								enhancedDrcMix[index].vol = static_cast<uint16>(mixed);
+							}
+							// AXSetVoiceDeviceMix rewrites DRC0, so feed it a copy of the complete
+							// native mix plus our main-bus send. TV and every native DRC entry survive.
+							AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, enhancedDrcMix);
+						}
+					}
+				}
+			}
 			if (voiceState == 0)
 			{
 				vpb->depop = (uint32be)1;
@@ -1228,3 +1260,4 @@ namespace snd_core
 		return vpbLoopTracker_loopCount[voiceIndex];
 	}
 }
+

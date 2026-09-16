@@ -1,0 +1,7 @@
+[Definition]
+titleIds = 00050000101C9300,00050000101C9400,00050000101C9500
+name = Enhanced Sound Experience
+path = "The Legend of Zelda: Breath of the Wild/Enhancements/Enhanced Sound Experience"
+description = "Adds selected player-local sounds to Wii U GamePad output without removing native TV or DRC audio."
+version = 8
+default = true

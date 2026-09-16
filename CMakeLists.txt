@@ -268,6 +268,37 @@ endif()
 
 add_subdirectory("dependencies/ih264d" EXCLUDE_FROM_ALL)
 
+if(WIN32)
+	set(BUILD_TESTS OFF CACHE BOOL "Disable Gamepad-Core upstream tests in Cemu" FORCE)
+	set(AUTOMATED_TESTS OFF CACHE BOOL "Disable Gamepad-Core automated tests in Cemu" FORCE)
+	add_subdirectory("dependencies/Gamepad-Core" "${CMAKE_BINARY_DIR}/gamepad-core" EXCLUDE_FROM_ALL)
+	set_property(TARGET GamepadCore PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+	add_library(CemuGamepadCoreWindowsSupport STATIC
+		"dependencies/Gamepad-Core/Tests/Common/Platform/windows/windows_device_info.cpp"
+	)
+	target_include_directories(CemuGamepadCoreWindowsSupport PUBLIC
+		"dependencies/Gamepad-Core/Source/Public"
+		"dependencies/Gamepad-Core/Tests/Common"
+	)
+	target_compile_definitions(CemuGamepadCoreWindowsSupport PUBLIC
+		BUILD_GAMEPAD_CORE_TESTS
+		GAMEPAD_CORE_HAS_AUDIO=0
+		UNICODE
+		_UNICODE
+	)
+	target_link_libraries(CemuGamepadCoreWindowsSupport PUBLIC
+		GamepadCore
+		Setupapi
+		Hid
+		ole32
+		oleaut32
+		uuid
+		winmm
+	)
+	set_property(TARGET CemuGamepadCoreWindowsSupport PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
+
 if (CMAKE_OSX_ARCHITECTURES)
 	set(CEMU_ARCHITECTURE ${CMAKE_OSX_ARCHITECTURES})
 elseif (WIN32 AND (CMAKE_GENERATOR_PLATFORM MATCHES "(ARM64|arm64)" OR "$ENV{VSCMD_ARG_TGT_ARCH}" STREQUAL "arm64"))
@@ -306,3 +337,4 @@ if (NOT ZArchive_FOUND)
 endif()
 
 add_subdirectory(src)
+

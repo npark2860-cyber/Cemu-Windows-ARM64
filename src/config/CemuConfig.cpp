@@ -203,6 +203,7 @@ XMLConfigParser CemuConfig::Load(XMLConfigParser& parser)
 	input_channels = audio.get("InputChannels", kMono);
 	tv_volume = audio.get("TVVolume", 20);
 	pad_volume = audio.get("PadVolume", 0);
+	enhanced_sound_experience = audio.get("EnhancedSoundExperience", false);
 	input_volume = audio.get("InputVolume", 20);
 	portal_volume = audio.get("PortalVolume", 20);
 
@@ -408,6 +409,7 @@ XMLConfigParser CemuConfig::Save(XMLConfigParser& parser)
 	audio.set("InputChannels", input_channels);
 	audio.set("TVVolume", tv_volume);
 	audio.set("PadVolume", pad_volume);
+	audio.set("EnhancedSoundExperience", enhanced_sound_experience);
 	audio.set("InputVolume", input_volume);
 	audio.set("PortalVolume", portal_volume);
 	audio.set("TVDevice", boost::nowide::narrow(tv_device).c_str());

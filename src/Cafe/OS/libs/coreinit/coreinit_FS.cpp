@@ -4,6 +4,8 @@
 #include "Cafe/OS/common/OSCommon.h"
 #include "Cafe/OS/libs/coreinit/coreinit_Thread.h"
 #include "Cafe/OS/libs/coreinit/coreinit_FS.h"
+#include "Cafe/OS/common/EnhancedSoundSourceTracker.h"
+#include "config/CemuConfig.h"
 #include "Cafe/OS/libs/coreinit/coreinit_MessageQueue.h"
 #include "util/helpers/Semaphore.h"
 #include "Cafe/HW/Espresso/PPCCallback.h"
@@ -516,6 +518,8 @@ namespace coreinit
 		case FSA_CMD_OPERATION_TYPE::OPENFILE:
 		{
 			*fsCmdBlockBody->returnValues.cmdOpenFile.handlePtr = fsCmdBlockBody->fsaShimBuffer.response.cmdOpenFile.fileHandleOutput;
+			if (GetConfig().enhanced_sound_experience)
+				EnhancedSoundSourceTracker::RegisterFileOpen((uint32)fsCmdBlockBody->fsaShimBuffer.response.cmdOpenFile.fileHandleOutput, reinterpret_cast<const char*>(fsCmdBlockBody->fsaShimBuffer.request.cmdOpenFile.path));
 			break;
 		}
 
@@ -572,6 +576,16 @@ namespace coreinit
 		case FSA_CMD_OPERATION_TYPE::RENAME:
 		case FSA_CMD_OPERATION_TYPE::CLOSEDIR:
 		case FSA_CMD_OPERATION_TYPE::READ:
+		{
+			if (GetConfig().enhanced_sound_experience && static_cast<sint32>(result) >= 0)
+			{
+				const auto& enhancedRead = fsCmdBlockBody->fsaShimBuffer.request.cmdReadFile;
+				const uint64 enhancedSize64 = static_cast<uint64>((uint32)enhancedRead.size) * static_cast<uint64>((uint32)enhancedRead.count);
+				if (enhancedSize64 <= 0xFFFFFFFFull)
+					EnhancedSoundSourceTracker::RegisterReadCompleted((uint32)enhancedRead.fileHandle, enhancedRead.dest.GetMPTR(), static_cast<uint32>(enhancedSize64));
+			}
+			break;
+		}
 		case FSA_CMD_OPERATION_TYPE::WRITE:
 		case FSA_CMD_OPERATION_TYPE::SETPOS:
 		case FSA_CMD_OPERATION_TYPE::ISEOF:
@@ -971,6 +985,7 @@ namespace coreinit
 	sint32 FSCloseFileAsync(FSClient_t* fsClient, FSCmdBlock_t* fsCmdBlock, uint32 fileHandle, uint32 errorMask, FSAsyncParams* fsAsyncParams)
 	{
 		_FSCmdIntro();
+		EnhancedSoundSourceTracker::RegisterFileClose(fileHandle);
 
 		FSA_RESULT prepareResult = __FSPrepareCmd_CloseFile(&fsCmdBlockBody->fsaShimBuffer, fsClientBody->iosuFSAHandle, fileHandle);
 		if (prepareResult != FSA_RESULT::OK)
@@ -1075,6 +1090,9 @@ namespace coreinit
 		// callback for the __FSQueueCmd functions. Whenever a chunk is read, it's getting re-queued until the reading has been completed.
 		// For this it writes values into the fsCmdBlockBody->returnValues struct. At the moment we go the lazy route of just reading everything
 		// at once, so we can skip the initialization of these values.
+
+		if (GetConfig().enhanced_sound_experience)
+			EnhancedSoundSourceTracker::RegisterRead(fileHandle, memory_getVirtualOffsetFromPointer(dest), static_cast<uint32>(transferSizeS64));
 
 		if (usePos)
 			flag |= FSA_CMD_FLAG_SET_POS;
