@@ -58,6 +58,25 @@ jobs:
           if ($tracker -notmatch 'ambiguous') { throw 'Ambiguous diagnostic missing' }
           if ($tracker -notmatch 'inaccessible') { throw 'Inaccessible diagnostic missing' }
 
+      - name: Enable diagnostic source resolution when feature is off
+        shell: pwsh
+        run: |
+          $path = 'src/Cafe/OS/libs/snd_core/ax_voice.cpp'
+          $source = Get-Content $path -Raw
+          $needle = 'if (GetConfig().enhanced_sound_experience && sampleBase != MPTR_NULL)'
+          if (-not $source.Contains($needle)) {
+            throw 'Enhanced Sound route gate not found'
+          }
+          $probe = "if (!GetConfig().enhanced_sound_experience && sampleBase != MPTR_NULL)`n`t`t`t(void)EnhancedSoundSourceTracker::ResolveSource(sampleBase);`n`n`t`t$needle"
+          $source = $source.Replace($needle, $probe)
+          Set-Content -Path $path -Value $source -NoNewline
+
+          $patched = Get-Content $path -Raw
+          if ($patched -notmatch '!GetConfig\(\)\.enhanced_sound_experience') {
+            throw 'Diagnostic-only source-resolution probe was not injected'
+          }
+          git diff --check -- $path
+
       - name: Ensure clang-cl toolset is installed
         shell: pwsh
         run: |
@@ -134,7 +153,8 @@ jobs:
           base_head=24e2f8427f2599fa29899267be7b33a14c48fd2a
 
           This build does not change routing decisions.
-          Every Enhanced Sound source resolution attempt writes unique rows to:
+          The diagnostic source resolver runs even when Enhanced Sound Experience is disabled.
+          Every source resolution attempt writes unique rows to:
             enhanced_sound_fingerprint_diag.csv
 
           Key status values:
