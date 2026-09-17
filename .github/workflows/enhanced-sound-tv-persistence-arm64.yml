@@ -39,7 +39,7 @@ jobs:
           }
           Write-Host "SOURCE_HEAD=$(git rev-parse HEAD)"
 
-      - name: Apply persistent TV balance patch
+      - name: Apply persistent TV and DRC routing patch
         shell: pwsh
         run: python tools/fix_enhanced_sound_tv_persistence.py
 
@@ -58,6 +58,7 @@ jobs:
           if ($ax -notmatch 'persistedDrcMix') { throw 'DRC persistence path missing' }
           if ($routes -notmatch 'SE_NSword_SwingPlayer\*') { throw 'Player one-hand swing route missing' }
           if ($routes -notmatch 'SE_ESf_SWING_SWORD_S') { throw 'Short one-hand swing route missing' }
+          if ($routes -notmatch 'SE_NSword_SwingMiddleEnemy') { throw 'Fourth one-hand swing route missing' }
           if ($routes -notmatch 'NSword_Charge_Lv1') { throw 'One-hand charge route missing' }
           if ($routes -notmatch 'SE_SW_KAITENGIRI') { throw 'One-hand spin route missing' }
           $dsCode = ($ds -replace '(?m)//.*$', '') -replace '\s+', ''
@@ -117,14 +118,16 @@ jobs:
           $headers = (& dumpbin /headers $exe | Out-String)
           if ($headers -notmatch 'AA64|ARM64') { throw 'Executable is not ARM64' }
 
-      - name: Commit validated source
+      - name: Commit validated source on latest feature branch
         shell: pwsh
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/Cafe/OS/libs/snd_core/ax_voice.cpp
           if (-not (git diff --cached --quiet)) {
-            git commit -m 'audio: persist enhanced sound TV attenuation'
+            git commit -m 'audio: persist enhanced sound TV and DRC routing'
+            git fetch origin feat/enhanced-sound-experience-v1
+            git rebase origin/feat/enhanced-sound-experience-v1
             git push origin HEAD:feat/enhanced-sound-experience-v1
           }
           "IMPLEMENTATION_HEAD=$(git rev-parse HEAD)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
@@ -133,21 +136,22 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
-          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-TV50-Persistent-ARM64.exe
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-TV50-DRCPersistent-ARM64.exe
           Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
           Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
           @"
-          Enhanced Sound TV Persistence — Windows ARM64
+          Enhanced Sound TV/DRC Persistence — Windows ARM64
           implementation_head=$Env:IMPLEMENTATION_HEAD
           - DualSense internal speaker volume: 255/255
           - Matched TV output: 50 percent, reapplied after native TV mix refreshes
-          - DRC additive routing persists after native DRC mix refreshes
-          - BOTW one-hand sword routes include player swing, short swing, charge Lv1 and spin slash cues
-          "@ | Set-Content artifact/TV-PERSISTENCE.txt
+          - DRC additive routing: immediately reapplied after native DRC mix refreshes
+          - Covers rapid route transitions such as one-hand sword finisher -> bow draw
+          - BOTW one-hand sword policy includes 1-4 swing coverage, charge Lv1 and spin slash cues
+          "@ | Set-Content artifact/TV-DRC-PERSISTENCE.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: Cemu-EnhancedSound-TV50-Persistent-ARM64
+          name: Cemu-EnhancedSound-TV50-DRCPersistent-ARM64
           path: artifact/**
           if-no-files-found: error
