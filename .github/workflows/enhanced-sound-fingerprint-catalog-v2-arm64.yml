@@ -1,0 +1,158 @@
+name: Enhanced Sound Fingerprint Catalog V2 ARM64
+
+on:
+  push:
+    branches:
+      - feat/enhanced-sound-experience-v1
+    paths:
+      - 'tools/fix_enhanced_sound_fingerprint_catalog_v2.py'
+      - '.github/workflows/enhanced-sound-fingerprint-catalog-v2-arm64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: enhanced-sound-fingerprint-catalog-v2-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Guard branch and record source head
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_name }}' -ne 'feat/enhanced-sound-experience-v1') {
+            throw 'This workflow may run only on feat/enhanced-sound-experience-v1'
+          }
+          $head = git rev-parse HEAD
+          Write-Host "SOURCE_HEAD=$head"
+          "SOURCE_HEAD=$head" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Apply fingerprint catalog v2 fix
+        shell: pwsh
+        run: python tools/fix_enhanced_sound_fingerprint_catalog_v2.py
+
+      - name: Validate fix structure
+        shell: pwsh
+        run: |
+          git diff --check -- src/Cafe/OS/common/BotWSoundFingerprintCatalog.h
+          $catalog = Get-Content 'src/Cafe/OS/common/BotWSoundFingerprintCatalog.h' -Raw
+
+          if ($catalog -notmatch 'version == 0x0100') { throw 'AMTA v1 handling missing' }
+          if ($catalog -notmatch 'version == 0x0300 \|\| version == 0x0400') { throw 'AMTA v3/v4 handling missing' }
+          if ($catalog -notmatch 'assetNameOffset') { throw 'AMTA asset-name offset handling missing' }
+          if ($catalog -match 'if \(trackName\.empty\(\)\)\s*continue;') { throw 'unnamed fingerprints are still discarded' }
+          if ($catalog -match 'static_cast<uint64>\(\(numSamples \+ 1\) / 2\) \+ 1ull') { throw 'old DSP ADPCM +1 size error remains' }
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=release `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Executable is not ARM64' }
+
+      - name: Commit validated source
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/Cafe/OS/common/BotWSoundFingerprintCatalog.h
+          if (-not (git diff --cached --quiet)) {
+            git commit -m 'audio: harden BARS fingerprint catalog parsing'
+            git fetch origin feat/enhanced-sound-experience-v1
+            git rebase origin/feat/enhanced-sound-experience-v1
+            git push origin HEAD:feat/enhanced-sound-experience-v1
+          }
+          "IMPLEMENTATION_HEAD=$(git rev-parse HEAD)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-FingerprintCatalogV2-ARM64.exe
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
+          @"
+          Enhanced Sound fingerprint catalog V2 — Windows ARM64
+          source_head=$Env:SOURCE_HEAD
+          implementation_head=$Env:IMPLEMENTATION_HEAD
+
+          Changes:
+          - parse AMTA DATA/STRG through the archive's real section offsets and version
+          - read the actual asset-name offset from DATA instead of treating the whole STRG body as one name
+          - retain fingerprint entries even when an AMTA name cannot be decoded
+          - correct DSP ADPCM raw-byte sizing (14 samples use one header byte + seven data bytes)
+          - no BOTW cue-name hardcoding
+
+          Physical regression target:
+          1. rapid repeated jump/player voice
+          2. rapid repeated bow draw/release
+          3. unrelated TV/BGM/environment audio remains unchanged
+          "@ | Set-Content artifact/FINGERPRINT-CATALOG-V2.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-EnhancedSound-FingerprintCatalogV2-ARM64
+          path: artifact/**
+          if-no-files-found: error
