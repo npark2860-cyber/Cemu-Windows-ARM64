@@ -1,265 +1,132 @@
 # CURRENT HANDOFF — Enhanced Sound Experience v1
 
-Status snapshot: 2026-09-16
+Status snapshot: 2026-09-17
 
 ## Source of truth
 
 Repository: `npark2860-cyber/Cemu-Windows-ARM64`
 
-Active implementation branch:
+Active branch: `feat/enhanced-sound-experience-v1`
 
-`feat/enhanced-sound-experience-v1`
+Do not touch `main`. Query the actual branch HEAD at the start of the next tab because the documentation commits that create this handoff advance the branch after the validated implementation commit below.
 
-Branch HEAD at the start of this handoff session:
+Validated implementation HEAD before handoff documentation:
 
-`f0d87acccba81819e8019d3eeb67bdf4f97ab411`
+`731a6a0fb5533f254feca3538f67881eded70e4b`
 
-This branch was created from the latest BOTW DualSense speaker-duplicate work. Always query the actual branch HEAD before changing anything. `main` is not part of this work.
+Commit message: `audio: add spatial DRC routing mode`
 
-No production Enhanced Sound implementation was committed in this session before this handoff. The work performed was architecture/code-path inspection only.
+## Latest CI — PASS
 
-## Already physically proven — do not repeat without regression
+Workflow: `Enhanced Sound Spatial DRC ARM64`
 
-### BOTW AX voice -> DualSense speaker Duplicate proof: PASS
+Run: `35212129171` — SUCCESS
 
-Known-good diagnostic path:
+Job: `105171882774` — SUCCESS
 
-```text
-BOTW AX voice
--> existing TV mix preserved
--> selected voice receives DRC0 stereo main-bus route
--> Cemu GamePad PCM
--> Windows DualSense USB audio endpoint
--> DualSense internal speaker
+Workflow input HEAD: `13d65a38dbda97e0350fece15ae80fa330bd4cf1`
+
+Workflow-generated validated source HEAD: `731a6a0fb5533f254feca3538f67881eded70e4b`
+
+Artifact: `Cemu-EnhancedSound-SpatialDRC-ARM64`
+
+Artifact ID: `10495075044`
+
+This proves native Windows ARM64 configure/build and structural validation only. `spatial_drc` has NOT yet received a physical BOTW gameplay PASS.
+
+## Current implementation chain
+
+Important recent commits:
+
+- `06bcc9580cddd3ffeff640f801abfa34c2a10253` — persist Enhanced Sound TV and DRC routing across later game `AXSetVoiceDeviceMix` writes.
+- `4eb95378c14ece344d15b6cbd33533567f97867d` — add `tools/add_enhanced_sound_spatial_drc.py`.
+- `13d65a38dbda97e0350fece15ae80fa330bd4cf1` — add dedicated Spatial DRC ARM64 validation workflow.
+- `731a6a0fb5533f254feca3538f67881eded70e4b` — workflow-generated validated implementation.
+
+## Implemented routing modes
+
+`EnhancedSoundRouter::Mode` now supports:
+
+- `add_drc`
+- `spatial_drc`
+
+`add_drc` keeps the existing enhanced-sound behavior:
+
+- matched sound receives additive DRC/controller send;
+- matched TV mix is reduced to 50 percent;
+- later native TV/DRC writes are captured and enhancement is reapplied persistently.
+
+`spatial_drc` is the new generic distance-aware mode:
+
+- native TV mix is left unchanged;
+- front L/R TV main-bus volume is used as the DRC distance envelope;
+- `0x8000` TV volume means full route gain;
+- controller send is approximately `routeGain * nativeTvVolume / 0x8000`;
+- TV `delta` is proportionally carried into DRC so fades/distance changes do not become static;
+- per-voice route mode/gain are retained for persistence when the game later rewrites TV/DRC mix.
+
+No BOTW bomb/explosion track was hardcoded. A confirmed trace identity is still required before adding the first `spatial_drc` game policy rule.
+
+## Physical evidence already PASS / CLOSED
+
+Do not repeat without regression:
+
+- narrow BOTW weapon swing -> DRC0 -> DualSense speaker physical proof; CI run `35078312616`.
+- native DualSense USB internal-speaker route initialization without DSX; commit `638d19309f94acde70e9a0496c5a3bbe3027c25d`, CI run `35084659609`.
+- packed `TitleBG.pack::Sound/Resource/PlayerVoice.bars` discovery and PlayerVoice controller-speaker output were later physically proven.
+
+Current DualSense production service uses:
+
+`DualSenseSettings(0, 0, 1, 0, 255, 255, 0, 0)`
+
+The source value is therefore 255. Whether `180 -> 255` produces a meaningful physical loudness increase has not yet been confirmed separately.
+
+## Latest physical regressions / unresolved behavior
+
+User reported on the pre-persistence build:
+
+1. matched sound TV volume did not audibly reduce despite intended 50 percent attenuation;
+2. one-handed sword combo routed only the 3rd hit to DualSense;
+3. 1st/2nd/4th hit and charge stages did not all route as intended;
+4. when several sounds overlap, some controller-speaker sounds can feel swallowed.
+
+`06bcc958...` is specifically intended to fix the first problem and also makes DRC enhancement persistent across later game mix writes. It has compiled, but the TV/DRC persistence change still needs physical confirmation.
+
+The one-handed policy was expanded using prior fingerprint evidence, but exact hit-by-hit mapping is NOT fully proven.
+
+## IMPORTANT policy inconsistency to resolve before trusting one-handed coverage
+
+Current `sound_routes.ini` at `731a6a0...` contains:
+
+```ini
+[Route.SwordSwingFourth]
+source = M_SceneStatic.bars
+track = SE_NSword_SwingMiddleEnemy
+mode = add_drc
+gain = 0x6000
 ```
 
-Physically confirmed weapon-swing tracks:
+Earlier fingerprint interpretation treated `SE_NSword_SwingMiddleEnemy` as an enemy sound and said it should remain excluded. The current workflow instead labels it as a confirmed fourth-hit route and explicitly validates its presence.
 
-- `Spear_Swing1`
-- `Spear_Swing2`
-- `Spear_SwingFast1`
-- `Spear_SwingFast2`
-- `LSword_Swing1`
-- `LSword_Swing3`
-- `LSword_Swing5`
+This is a contradiction, not a PASS. Do not assume the track is the player's 4th hit. Revalidate/remove this rule before claiming one-handed 1/2/3/4 coverage.
 
-Diagnostic implementation: `tools/botw_speaker_duplicate_patch.py`
+Other current evidence-backed one-hand candidates include:
 
-CI run `35078312616` — SUCCESS.
+- `SE_NSword_SwingPlayer*` — the physically observed previous match corresponded to the 3rd hit;
+- `SE_ESf_SWING_SWORD_S`;
+- `NSword_Charge_Lv1`;
+- `SE_SW_KAITENGIRI`.
 
-The diagnostic hook adds DRC only when no DRC route already exists and leaves TV routing untouched.
+If individual combo/charge stages remain missing, use a focused ordered diagnostic rather than broadening patterns blindly.
 
-### Native DualSense USB speaker route initialization: PASS / CLOSED
+## Architecture constraints
 
-Separate validation branch:
+- core Cemu remains game-agnostic;
+- game-specific selection stays in Graphic Pack `sound_routes.ini`;
+- no expanding BOTW exact-name whitelist in C++;
+- native Wii U DRC/GamePad audio remains authoritative;
+- feature OFF = stock behavior;
+- do not rerun old PASS workflows without a regression;
+- do not mix TOTK/Switch BNVIB/Haptic Explorer work into this branch.
 
-`exp/dualsense-gamepad-core-arm64`
-
-Validated implementation commit:
-
-`638d19309f94acde70e9a0496c5a3bbe3027c25d`
-
-CI run `35084659609` — SUCCESS.
-
-Proven call:
-
-```cpp
-settings->DualSenseSettings(
-    0,   // mic state
-    0,   // headset disabled
-    1,   // internal speaker enabled
-    0,   // mic volume
-    180, // audio volume
-    255, // preserve Gamepad-Core native DualSense output mode
-    0,   // rumble reduction
-    0);  // trigger reduction
-gamepad->UpdateOutput();
-```
-
-Important: the standalone Haptic Lab clears rumble/trigger state only for test isolation. Production Cemu integration must NOT copy those clearing calls. It should only initialize speaker route/volume and preserve all other controller output state.
-
-DSX is not required in the target design.
-
-## Final user-facing architecture — agreed
-
-### Cemu UI
-
-Cemu exposes exactly one global checkbox:
-
-`Enhanced Sound Experience`
-
-Meaning:
-
-- OFF = stock/native Cemu behavior;
-- ON = enhanced-sound capability is armed/ready;
-- the checkbox does NOT choose sound categories;
-- there are no Cemu-side checkboxes for weapon, hit, voice, etc.
-
-The setting should live on the Audio page and persist in Cemu config.
-
-### Native Wii U GamePad / DRC audio must be preserved
-
-Some Wii U games already author separate TV and GamePad audio. That behavior is authoritative and must continue to work.
-
-Example:
-
-```text
-BOTW native Sheikah Slate sound -> DRC already authored -> unchanged
-BOTW weapon swing -> TV only normally
-Enhanced Sound pack -> add DRC to selected weapon swing -> TV + DRC
-```
-
-Enhanced Sound is additive. It must not globally reinterpret or replace native DRC routing.
-
-### Responsibility split
-
-Cemu core is generic infrastructure only.
-
-Game-specific sound selection belongs to a Graphic Pack / data policy.
-
-```text
-Cemu:
-  Enhanced Sound enabled?
-  -> expose generic sound-routing policy engine
-  -> preserve existing TV/DRC routing
-  -> duplicate only when active game policy requests it
-
-Graphic Pack:
-  game-specific semantic/resource/track rules
-  -> destination/policy for selected sounds
-```
-
-Do NOT grow a BOTW exact-name whitelist inside C++.
-
-Preferred match order:
-
-```text
-semantic event/category
-> resource/path/category/prefix
-> exact track fallback
-```
-
-Exact track names are acceptable as a narrow data-driven fallback or regression rule, but not as hundreds of hardcoded C++ comparisons.
-
-## Proposed code-level hook
-
-The inspected GraphicPack2 path is suitable for a generic extension.
-
-Recommended production shape:
-
-1. extend `GraphicPack2` with an Enhanced Sound rule structure;
-2. parse one or more game-owned sound-routing sections from `rules.txt` during graphic-pack activation;
-3. provide a static resolver over active packs, e.g. optional semantic identity + source path + track name -> routing policy;
-4. call the resolver from the existing AX voice start/routing point;
-5. if policy requests controller duplication and the voice has no existing DRC route, add DRC0 stereo main bus;
-6. never remove or rewrite the existing TV route;
-7. if the game already authored DRC for that voice, leave it unchanged.
-
-The known-good DRC duplicate code in `tools/botw_speaker_duplicate_patch.py` is the reference for the actual AX device-mix operation, but the proof whitelist must not be copied into production C++.
-
-## Config/UI paths already inspected
-
-Relevant config fields are in:
-
-- `src/config/CemuConfig.h`
-- `src/config/CemuConfig.cpp`
-
-Audio UI is in:
-
-- `src/gui/wxgui/GeneralSettings2.h`
-- `src/gui/wxgui/GeneralSettings2.cpp`
-
-Add one persisted boolean such as `enhanced_sound_experience`, default false.
-
-Do not silently overwrite the user's existing GamePad audio volume/device settings merely because the checkbox is enabled. Native DRC audio compatibility is the reason the feature is opt-in.
-
-## DualSense production initialization direction
-
-When Enhanced Sound Experience is enabled, Cemu should run a small native DualSense USB speaker-route service using the already pinned `dependencies/Gamepad-Core` revision.
-
-Target behavior:
-
-```text
-Enhanced Sound OFF
--> no special DualSense speaker HID initialization
-
-Enhanced Sound ON
--> detect DualSense / DualSense Edge USB
--> on new connection or reconnect only
--> send proven speaker route/volume settings
--> UpdateOutput()
--> preserve rumble, trigger and other output state
-```
-
-Do not require a final manual `Enable speaker` button.
-
-The existing Cemu GamePad PCM path remains the actual audio transport; Gamepad-Core is only needed to initialize the controller's speaker route/volume.
-
-## Important unresolved coverage issue: packed PlayerVoice
-
-Current tracer v3 can fingerprint direct `.bars` reads, but BOTW `PlayerVoice.bars` lives inside `TitleBG.pack`.
-
-Required provenance chain:
-
-```text
-TitleBG.pack
--> SARC
--> Sound/Resource/PlayerVoice.bars
--> BARS
--> embedded BFWAV / PVxxx_xx
--> runtime AX voice
-```
-
-Therefore PlayerVoice coverage still needs packed-resource tracer v4 (`SARC -> embedded BARS`).
-
-This is NOT required to prove the generic framework with the already-confirmed weapon-swing tracks, but it IS required before claiming broad PlayerVoice support is complete.
-
-Do not omit this stage.
-
-## Suggested implementation staging
-
-Stage A — generic Enhanced Sound framework:
-
-- add persisted checkbox;
-- add generic GraphicPack2 routing-policy parser/resolver;
-- replace diagnostic C++ whitelist with generic policy lookup;
-- keep TV untouched and preserve existing DRC;
-- create a BOTW policy using already physically confirmed weapon-swing rules;
-- integrate native DualSense USB speaker init/reconnect behavior without rumble/trigger clearing.
-
-Stage B — build/physical regression:
-
-- native Windows ARM64 Cemu build;
-- verify OFF = stock behavior;
-- verify ON + BOTW pack = known weapon swing still reaches controller speaker;
-- verify native authored DRC sound remains intact;
-- verify reconnect reinitializes speaker route without DSX.
-
-Stage C — PlayerVoice expansion:
-
-- finish SARC -> embedded BARS tracer v4;
-- recover `TitleBG.pack::Sound/Resource/PlayerVoice.bars` runtime provenance;
-- correlate semantic SLink/GameROMPlayer identity where possible;
-- extend BOTW policy using semantic/resource categories first, exact tracks only as fallback.
-
-## Closed / do not retest without regression
-
-- BOTW weapon-swing -> DRC/DualSense narrow physical proof
-- CI run `35078312616`
-- native DualSense USB speaker route/volume physical proof
-- CI run `35084659609`
-- DSX requirement for target design
-- diagnostic speaker-enable button as a final UX requirement
-
-## Workstream boundary
-
-TOTK/Switch BNVIB / 46-pattern Haptic Explorer work is handled in another tab. Do not mix that implementation into this Enhanced Sound branch.
-
-See also:
-
-- `NEXT_ACTION.md`
-- `HANDOFF_PROMPT.md`
-- `docs/BOTW_DUALSENSE_SPEAKER_DUPLICATE.md`
-- `docs/BOTW_SOUND_SOURCE_TRACER_FINDINGS.md`
-- `docs/BOTW_PLAYERVOICE_TRACK_LIST.md`
-- `docs/DUALSENSE_NATIVE_SPEAKER_INIT_VALIDATION.md`
+See `NEXT_ACTION.md` and `HANDOFF_PROMPT.md`.
