@@ -14,6 +14,7 @@ namespace EnhancedSoundRouter
 	enum class Mode : uint8_t
 	{
 		AddDRC = 1,
+		SpatialDRC = 2,
 	};
 
 	struct RouteRule

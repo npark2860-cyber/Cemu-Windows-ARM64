@@ -994,9 +994,18 @@ void GraphicPack2::LoadEnhancedSoundRoutes()
 			rule.trackPattern = *track;
 
 		const auto mode = routes.FindOption("mode");
-		if (!mode || !boost::iequals(*mode, "add_drc"))
+		if (!mode)
 		{
-			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because Stage A mode must be add_drc", owner, section);
+			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because mode is missing", owner, section);
+			continue;
+		}
+		if (boost::iequals(*mode, "add_drc"))
+			rule.mode = EnhancedSoundRouter::Mode::AddDRC;
+		else if (boost::iequals(*mode, "spatial_drc"))
+			rule.mode = EnhancedSoundRouter::Mode::SpatialDRC;
+		else
+		{
+			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because mode must be add_drc or spatial_drc", owner, section);
 			continue;
 		}
 
