@@ -83,45 +83,59 @@ namespace BotWSoundFingerprintCatalog
 			return {};
 		const uint32 pairsOffset = 16 + count * 4;
 		const uint32 amtaOffset = ReadU32(base + pairsOffset + index * 8, barsBigEndian);
-		if (amtaOffset > archiveSize || archiveSize - amtaOffset < 36)
+		if (amtaOffset > archiveSize || archiveSize - amtaOffset < 24)
 			return {};
 
-		auto within = [archiveSize](uint64 pos, uint64 length) {
-			return pos <= archiveSize && length <= archiveSize - pos;
+		const uint8* amta = base + amtaOffset;
+		if (!HasMagic(amta, "AMTA"))
+			return {};
+		const bool amtaBigEndian = amta[4] == 0xFE;
+		if (!amtaBigEndian && amta[4] != 0xFF)
+			return {};
+
+		const uint16 version = ReadU16(amta + 6, amtaBigEndian);
+		const uint32 amtaSize = ReadU32(amta + 8, amtaBigEndian);
+		if (amtaSize < 24 || amtaSize > archiveSize - amtaOffset)
+			return {};
+
+		uint32 strgOffsetField = 0;
+		if (version == 0x0100)
+			strgOffsetField = 0x14;
+		else if (version == 0x0300 || version == 0x0400)
+			strgOffsetField = 0x18;
+		else
+			return {};
+		if (strgOffsetField + 4 > amtaSize)
+			return {};
+
+		const uint32 dataRel = ReadU32(amta + 0x0C, amtaBigEndian);
+		const uint32 strgRel = ReadU32(amta + strgOffsetField, amtaBigEndian);
+		auto withinAmta = [amtaSize](uint64 pos, uint64 length) {
+			return pos <= amtaSize && length <= amtaSize - pos;
 		};
 
-		uint64 pos = amtaOffset;
-		if (!within(pos, 6) || !HasMagic(base + pos, "AMTA"))
+		if (!withinAmta(dataRel, 12) || !HasMagic(amta + dataRel, "DATA"))
 			return {};
-		const bool amtaBigEndian = base[pos + 4] == 0xFE;
-		if (!amtaBigEndian && base[pos + 4] != 0xFF)
+		const uint32 dataBodySize = ReadU32(amta + dataRel + 4, amtaBigEndian);
+		if (dataBodySize < 4 || !withinAmta(static_cast<uint64>(dataRel) + 8, dataBodySize))
 			return {};
-		pos += 28;
+		const uint32 assetNameOffset = ReadU32(amta + dataRel + 8, amtaBigEndian);
 
-		auto skipChunk = [&](const char* magic) -> bool {
-			if (!within(pos, 8) || !HasMagic(base + pos, magic))
-				return false;
-			const uint32 length = ReadU32(base + pos + 4, amtaBigEndian);
-			pos += 8;
-			if (!within(pos, length))
-				return false;
-			pos += length;
-			return true;
-		};
-
-		if (!skipChunk("DATA") || !skipChunk("MARK") || !skipChunk("EXT_"))
+		if (!withinAmta(strgRel, 8) || !HasMagic(amta + strgRel, "STRG"))
 			return {};
-		if (!within(pos, 8) || !HasMagic(base + pos, "STRG"))
-			return {};
-		const uint32 stringLength = ReadU32(base + pos + 4, amtaBigEndian);
-		pos += 8;
-		if (stringLength == 0 || stringLength > 4096 || !within(pos, stringLength))
+		const uint32 stringBodySize = ReadU32(amta + strgRel + 4, amtaBigEndian);
+		if (stringBodySize == 0 || !withinAmta(static_cast<uint64>(strgRel) + 8, stringBodySize) ||
+			assetNameOffset >= stringBodySize)
 			return {};
 
-		std::string name(reinterpret_cast<const char*>(base + pos), stringLength);
-		while (!name.empty() && name.back() == '\0')
-			name.pop_back();
-		return name;
+		const char* name = reinterpret_cast<const char*>(amta + strgRel + 8 + assetNameOffset);
+		const uint32 maxLength = stringBodySize - assetNameOffset;
+		uint32 length = 0;
+		while (length < maxLength && name[length] != '\0')
+			++length;
+		if (length == 0 || length == maxLength)
+			return {};
+		return std::string(name, length);
 	}
 
 	inline uint32 CalculateRawChannelSize(uint8 sampleFormat, uint32 numSamples)
@@ -137,7 +151,7 @@ namespace BotWSoundFingerprintCatalog
 		{
 			// Nintendo DSP ADPCM: one predictor/scale byte per 14 samples plus packed nibbles.
 			const uint64 size = static_cast<uint64>((numSamples + 13) / 14) +
-				static_cast<uint64>((numSamples + 1) / 2) + 1ull;
+				static_cast<uint64>((numSamples + 1) / 2);
 			return size <= 0xFFFFFFFFull ? static_cast<uint32>(size) : 0;
 		}
 		return 0;
@@ -245,8 +259,6 @@ namespace BotWSoundFingerprintCatalog
 				continue;
 
 			const std::string trackName = ParseTrackName(base, archiveSize, barsBigEndian, count, i);
-			if (trackName.empty())
-				continue;
 
 			const uint8* channelBase = info + 28;
 			for (uint32 channel = 0; channel < channelCount; ++channel)
