@@ -685,5 +685,5 @@ if (ENABLE_LIBUSB)
 endif()
 
 if(WIN32)
-	target_link_libraries(CemuCafe PRIVATE iphlpapi)
+	target_link_libraries(CemuCafe PRIVATE iphlpapi CemuGamepadCoreWindowsSupport)
 endif()

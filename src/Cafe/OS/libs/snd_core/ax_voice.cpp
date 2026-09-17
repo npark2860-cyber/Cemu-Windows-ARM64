@@ -3,6 +3,10 @@
 #include "Cafe/HW/Espresso/PPCCallback.h"
 #include "Cafe/OS/libs/snd_core/ax.h"
 #include "Cafe/OS/libs/snd_core/ax_internal.h"
+#include "Cafe/OS/common/EnhancedSoundRouter.h"
+#include "Cafe/OS/common/EnhancedSoundSourceTracker.h"
+#include "Cafe/OS/common/EnhancedSoundDualSenseService.h"
+#include "config/CemuConfig.h"
 #include "Cafe/OS/libs/coreinit/coreinit_Thread.h"
 #include "util/helpers/fspinlock.h"
 
@@ -23,6 +27,64 @@ namespace snd_core
 
 	std::vector<AXVPB*> __AXVoicesPerPriority[AX_PRIORITY_MAX];
 	std::vector<AXVPB*> __AXFreeVoices;
+
+
+	struct EnhancedSoundDrcState
+	{
+		bool applied{};
+		bool internalMixWrite{};
+		uint16 routeGain{};
+		EnhancedSoundRouter::Mode routeMode{ EnhancedSoundRouter::Mode::AddDRC };
+		AXCHMIX_DEPR nativeTv0[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT]{};
+		AXCHMIX_DEPR nativeDrc0[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT]{};
+	};
+
+	EnhancedSoundDrcState s_enhancedSoundDrcState[AX_MAX_VOICES]{};
+
+	void AXApplyEnhancedSoundTvPolicy(AXCHMIX_DEPR* tvMix, EnhancedSoundRouter::Mode mode)
+	{
+		if (mode != EnhancedSoundRouter::Mode::AddDRC)
+			return;
+		for (uint32 i = 0; i < AX_TV_CHANNEL_COUNT * AX_BUS_COUNT; ++i)
+		{
+			const uint32 vol = _swapEndianU16(tvMix[i].vol);
+			const sint32 delta = _swapEndianS16(tvMix[i].delta);
+			tvMix[i].vol = _swapEndianU16(static_cast<uint16>(vol / 2u));
+			tvMix[i].delta = _swapEndianS16(static_cast<sint16>(delta / 2));
+		}
+	}
+
+	void AXApplyEnhancedSoundDrcPolicy(AXCHMIX_DEPR* drcMix, const AXCHMIX_DEPR* nativeTvMix,
+		EnhancedSoundRouter::Mode mode, uint16 routeGain)
+	{
+		for (uint32 channel = 0; channel < 2 && channel < AX_DRC_CHANNEL_COUNT; ++channel)
+		{
+			const uint32 index = channel * AX_BUS_COUNT;
+			uint32 send = routeGain;
+			sint32 sendDelta = 0;
+			if (mode == EnhancedSoundRouter::Mode::SpatialDRC)
+			{
+				if (channel >= AX_TV_CHANNEL_COUNT)
+					continue;
+				const uint32 tvVolume = std::min<uint32>(0x8000u, _swapEndianU16(nativeTvMix[index].vol));
+				send = static_cast<uint32>((static_cast<uint64_t>(routeGain) * tvVolume + 0x4000u) / 0x8000u);
+				const sint32 tvDelta = _swapEndianS16(nativeTvMix[index].delta);
+				const int64_t scaledDelta = (static_cast<int64_t>(tvDelta) * routeGain) / 0x8000;
+				sendDelta = static_cast<sint32>(std::clamp<int64_t>(scaledDelta, -32768, 32767));
+			}
+
+			const uint32 current = _swapEndianU16(drcMix[index].vol);
+			const uint32 mixed = std::min<uint32>(0xFFFFu, current + send);
+			drcMix[index].vol = _swapEndianU16(static_cast<uint16>(mixed));
+			if (mode == EnhancedSoundRouter::Mode::SpatialDRC)
+			{
+				const sint32 currentDelta = _swapEndianS16(drcMix[index].delta);
+				const sint32 mixedDelta = static_cast<sint32>(std::clamp<int64_t>(
+					static_cast<int64_t>(currentDelta) + sendDelta, -32768, 32767));
+				drcMix[index].delta = _swapEndianS16(static_cast<sint16>(mixedDelta));
+			}
+		}
+	}
 
 	void AXVoiceList_AddFreeVoice(AXVPB* vpb)
 	{
@@ -319,6 +381,7 @@ namespace snd_core
 	{
 		AXVPBInternal_t* internal = GetInternalVoice(vpb);
 		uint32 index = GetVoiceIndex(vpb);
+		s_enhancedSoundDrcState[index] = {};
 		vpb->playbackState = 0;
 		vpb->sync = 0;
 		AXSetSyncFlag(vpb, AX_SYNCFLAG_PLAYBACKSTATE);
@@ -559,6 +622,9 @@ namespace snd_core
 		if (r)
 			return r;
 		AXVPBInternal_t* internal = __AXVPBInternalVoiceArray + (sint32)vpb->index;
+		auto& enhancedState = s_enhancedSoundDrcState[(sint32)vpb->index];
+		const bool preserveEnhancedMix = !enhancedState.internalMixWrite && enhancedState.applied && deviceIndex == 0 &&
+			(device == AX_DEV_DRC || device == AX_DEV_TV);
 		sint32 channelCount;
 
 		uint16* deviceMixMask;
@@ -603,7 +669,118 @@ namespace snd_core
 		}
 		vpb->sync = (uint32)vpb->sync | (AX_SYNCFLAG_DEVICEMIXMASK | AX_SYNCFLAG_DEVICEMIX);
 		AXVoiceProtection_Acquire(vpb);
+
+		if (preserveEnhancedMix)
+		{
+			if (device == AX_DEV_TV)
+			{
+				memcpy(enhancedState.nativeTv0, &internal->deviceMixTV[0], sizeof(enhancedState.nativeTv0));
+				if (enhancedState.routeMode == EnhancedSoundRouter::Mode::AddDRC)
+				{
+					AXCHMIX_DEPR persistedTvMix[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT];
+					memcpy(persistedTvMix, enhancedState.nativeTv0, sizeof(persistedTvMix));
+					AXApplyEnhancedSoundTvPolicy(persistedTvMix, enhancedState.routeMode);
+					enhancedState.internalMixWrite = true;
+					AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, persistedTvMix);
+					enhancedState.internalMixWrite = false;
+				}
+				else if (enhancedState.routeMode == EnhancedSoundRouter::Mode::SpatialDRC)
+				{
+					// A spatial route follows the game's latest TV distance/pan envelope.
+					// TV stays native; only the controller send is refreshed here.
+					AXCHMIX_DEPR persistedDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
+					memcpy(persistedDrcMix, enhancedState.nativeDrc0, sizeof(persistedDrcMix));
+					AXApplyEnhancedSoundDrcPolicy(persistedDrcMix, enhancedState.nativeTv0,
+						enhancedState.routeMode, enhancedState.routeGain);
+					enhancedState.internalMixWrite = true;
+					AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, persistedDrcMix);
+					enhancedState.internalMixWrite = false;
+				}
+			}
+			else if (device == AX_DEV_DRC)
+			{
+				memcpy(enhancedState.nativeDrc0, &internal->deviceMixDRC[0], sizeof(enhancedState.nativeDrc0));
+				AXCHMIX_DEPR persistedDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
+				memcpy(persistedDrcMix, enhancedState.nativeDrc0, sizeof(persistedDrcMix));
+				AXApplyEnhancedSoundDrcPolicy(persistedDrcMix, enhancedState.nativeTv0,
+					enhancedState.routeMode, enhancedState.routeGain);
+				enhancedState.internalMixWrite = true;
+				AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, persistedDrcMix);
+				enhancedState.internalMixWrite = false;
+			}
+		}
 		return 0;
+	}
+
+	void AXApplyEnhancedSoundRoute(AXVPB* vpb, MPTR sampleBase)
+	{
+		if (vpb == nullptr)
+			return;
+
+		auto& state = s_enhancedSoundDrcState[(sint32)vpb->index];
+		std::optional<EnhancedSoundRouter::RouteMatch> route;
+
+		if (GetConfig().enhanced_sound_experience && sampleBase != MPTR_NULL)
+		{
+			EnhancedSoundDualSenseService::EnsureRunning();
+			const auto source = EnhancedSoundSourceTracker::ResolveSource(sampleBase);
+			if (source)
+			{
+				const auto resolved = EnhancedSoundRouter::Resolve(source->path, source->trackName);
+				if (resolved && (resolved->mode == EnhancedSoundRouter::Mode::AddDRC ||
+					resolved->mode == EnhancedSoundRouter::Mode::SpatialDRC))
+					route = resolved;
+			}
+		}
+
+		if (!route && !state.applied)
+			return;
+
+		AXVPBInternal_t* internal = __AXVPBInternalVoiceArray + (sint32)vpb->index;
+		AXCHMIX_DEPR nativeTvMix[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT];
+		AXCHMIX_DEPR nativeDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
+		if (state.applied)
+		{
+			memcpy(nativeTvMix, state.nativeTv0, sizeof(nativeTvMix));
+			memcpy(nativeDrcMix, state.nativeDrc0, sizeof(nativeDrcMix));
+		}
+		else
+		{
+			memcpy(nativeTvMix, &internal->deviceMixTV[0], sizeof(nativeTvMix));
+			memcpy(nativeDrcMix, &internal->deviceMixDRC[0], sizeof(nativeDrcMix));
+		}
+
+		if (!route)
+		{
+			// A reused voice no longer matches. Restore the exact native TV and DRC0
+			// mixes captured before enhancement without reapplying our persistence hook.
+			state.internalMixWrite = true;
+			AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, nativeTvMix);
+			AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, nativeDrcMix);
+			state.internalMixWrite = false;
+			state = {};
+			return;
+		}
+
+		AXCHMIX_DEPR enhancedTvMix[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT];
+		memcpy(enhancedTvMix, nativeTvMix, sizeof(enhancedTvMix));
+		AXApplyEnhancedSoundTvPolicy(enhancedTvMix, route->mode);
+
+		AXCHMIX_DEPR enhancedDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
+		memcpy(enhancedDrcMix, nativeDrcMix, sizeof(enhancedDrcMix));
+		AXApplyEnhancedSoundDrcPolicy(enhancedDrcMix, nativeTvMix, route->mode, route->gain);
+
+		// These writes are ours. Native game-side TV/DRC writes that arrive later are
+		// captured by AXSetVoiceDeviceMix and the enhancement is reapplied there.
+		state.internalMixWrite = true;
+		AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, enhancedTvMix);
+		AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, enhancedDrcMix);
+		state.internalMixWrite = false;
+		memcpy(state.nativeTv0, nativeTvMix, sizeof(state.nativeTv0));
+		memcpy(state.nativeDrc0, nativeDrcMix, sizeof(state.nativeDrc0));
+		state.routeGain = route->gain;
+		state.routeMode = route->mode;
+		state.applied = true;
 	}
 
 	void AXSetVoiceState(AXVPB* vpb, sint32 voiceState)
@@ -615,8 +792,13 @@ namespace snd_core
 			internal->playbackState = _swapEndianU16(voiceState);
 			AXSetSyncFlag(vpb, AX_SYNCFLAG_PLAYBACKSTATE);
 			AXVoiceProtection_Acquire(vpb);
+			if (voiceState == 1)
+			{
+				AXApplyEnhancedSoundRoute(vpb, _swapEndianU32(vpb->offsets.samples));
+			}
 			if (voiceState == 0)
 			{
+				AXApplyEnhancedSoundRoute(vpb, MPTR_NULL);
 				vpb->depop = (uint32be)1;
 			}
 		}
@@ -859,6 +1041,10 @@ namespace snd_core
 			return;
 		}
 		memcpy(&vpb->offsets, pbOffset, sizeof(AXPBOFFSET_t));
+		// BOTW and other games can reuse a running AX voice with a new sample.
+		// Re-resolve only in that reuse case; initial voices are resolved on start.
+		if (vpb->playbackState == (uint32be)1)
+			AXApplyEnhancedSoundRoute(vpb, sampleBase);
 		sampleBase = memory_virtualToPhysical(sampleBase);
 		uint16 format = _swapEndianU16(pbOffset->format);
 
@@ -1228,3 +1414,5 @@ namespace snd_core
 		return vpbLoopTracker_loopCount[voiceIndex];
 	}
 }
+
+

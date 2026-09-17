@@ -1,4 +1,5 @@
 #include "Cafe/GraphicPack/GraphicPack2.h"
+#include "Cafe/OS/common/EnhancedSoundRouter.h"
 #include "Cafe/Filesystem/fsc.h"
 #include "config/CemuConfig.h"
 #include "config/ActiveSettings.h"
@@ -964,6 +965,77 @@ void GraphicPack2::LoadReplacedFiles()
 	}
 }
 
+void GraphicPack2::LoadEnhancedSoundRoutes()
+{
+	const std::string owner = GetNormalizedPathString();
+	EnhancedSoundRouter::UnregisterRouteTable(owner);
+
+	fs::path routesPath = GetRulesPath();
+	routesPath.replace_filename("sound_routes.ini");
+	std::unique_ptr<FileStream> fsRoutes(FileStream::openFile2(routesPath));
+	if (!fsRoutes)
+		return;
+
+	std::vector<uint8> routeData;
+	fsRoutes->extract(routeData);
+	IniParser routes(routeData, _pathToUtf8(routesPath));
+	std::vector<EnhancedSoundRouter::RouteRule> routeRules;
+
+	while (routes.NextSection())
+	{
+		const auto section = routes.GetCurrentSectionName();
+		if (!boost::istarts_with(section, "Route"))
+			continue;
+
+		EnhancedSoundRouter::RouteRule rule;
+		if (const auto source = routes.FindOption("source"))
+			rule.sourcePattern = *source;
+		if (const auto track = routes.FindOption("track"))
+			rule.trackPattern = *track;
+
+		const auto mode = routes.FindOption("mode");
+		if (!mode)
+		{
+			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because mode is missing", owner, section);
+			continue;
+		}
+		if (boost::iequals(*mode, "add_drc"))
+			rule.mode = EnhancedSoundRouter::Mode::AddDRC;
+		else if (boost::iequals(*mode, "spatial_drc"))
+			rule.mode = EnhancedSoundRouter::Mode::SpatialDRC;
+		else
+		{
+			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because mode must be add_drc or spatial_drc", owner, section);
+			continue;
+		}
+
+		if (const auto gain = routes.FindOption("gain"))
+		{
+			try
+			{
+				const auto parsed = std::stoul(std::string(*gain), nullptr, 0);
+				if (parsed > 0xFFFFu)
+					throw std::out_of_range("gain");
+				rule.gain = static_cast<uint16_t>(parsed);
+			}
+			catch (const std::exception&)
+			{
+				cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because gain is invalid", owner, section);
+				continue;
+			}
+		}
+
+		if (rule.sourcePattern.empty() && rule.trackPattern.empty())
+		{
+			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because source/track are both empty", owner, section);
+			continue;
+		}
+		routeRules.emplace_back(std::move(rule));
+	}
+
+	EnhancedSoundRouter::RegisterRouteTable(owner, std::move(routeRules));
+}
+
 bool GraphicPack2::Activate()
 {
 	if (m_activated)
@@ -1078,6 +1150,9 @@ bool GraphicPack2::Activate()
 	// load replaced files
 	LoadReplacedFiles();
 
+	// Enhanced Sound policy is data owned by the active graphic pack.
+	LoadEnhancedSoundRoutes();
+
 	// set custom vsync
 	if (HasCustomVSyncFrequency())
 	{
@@ -1102,6 +1177,8 @@ bool GraphicPack2::Deactivate()
 {
 	if (!m_activated)
 		return false;
+
+	EnhancedSoundRouter::UnregisterRouteTable(GetNormalizedPathString());
 
 	UnloadPatches();
 

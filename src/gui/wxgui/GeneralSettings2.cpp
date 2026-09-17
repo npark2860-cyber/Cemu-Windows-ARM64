@@ -711,6 +711,15 @@ wxPanel* GeneralSettings2::AddAudioPage(wxNotebook* notebook)
 		audio_panel_sizer->Add(box_sizer, 0, wxEXPAND | wxALL, 5);
 	}
 
+	{
+		auto box = new wxStaticBox(audio_panel, wxID_ANY, _("Enhanced Sound"));
+		auto box_sizer = new wxStaticBoxSizer(box, wxVERTICAL);
+		m_enhanced_sound_experience = new wxCheckBox(box, wxID_ANY, _("Enhanced Sound Experience"));
+		m_enhanced_sound_experience->SetToolTip(_("Enable additive sound routes supplied by active graphic packs. Native TV and Wii U GamePad audio remain authoritative."));
+		box_sizer->Add(m_enhanced_sound_experience, 0, wxALL, 5);
+		audio_panel_sizer->Add(box_sizer, 0, wxEXPAND | wxALL, 5);
+	}
+
 	audio_panel->SetSizerAndFit(audio_panel_sizer);
 	return audio_panel;
 }
@@ -1190,6 +1199,7 @@ void GeneralSettings2::StoreConfig()
 
 	config.tv_volume = m_tv_volume->GetValue();
 	config.pad_volume = m_pad_volume->GetValue();
+	config.enhanced_sound_experience = m_enhanced_sound_experience->GetValue();
 	config.input_volume = m_input_volume->GetValue();
 	config.portal_volume = m_portal_volume->GetValue();
 
@@ -1989,6 +1999,7 @@ void GeneralSettings2::ApplyConfig()
 	else
 		m_tv_device->SetSelection(0);
 
+	m_enhanced_sound_experience->SetValue(config.enhanced_sound_experience);
 	SendSliderEvent(m_pad_volume, config.pad_volume);
 	if (!config.pad_device.empty() && m_pad_device->HasClientObjectData())
 	{
