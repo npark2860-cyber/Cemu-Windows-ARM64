@@ -1,0 +1,166 @@
+name: Enhanced Sound Ambiguous Route Fix ARM64
+
+on:
+  push:
+    branches:
+      - feat/enhanced-sound-experience-v1
+    paths:
+      - 'tools/fix_enhanced_sound_ambiguous_routes.py'
+      - '.github/workflows/enhanced-sound-ambiguous-route-fix-arm64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: enhanced-sound-ambiguous-route-fix-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Guard branch
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_name }}' -ne 'feat/enhanced-sound-experience-v1') {
+            throw 'This workflow may run only on feat/enhanced-sound-experience-v1'
+          }
+          Write-Host "SOURCE_HEAD=$(git rev-parse HEAD)"
+
+      - name: Apply shared-sample route fix
+        shell: pwsh
+        run: python tools/fix_enhanced_sound_ambiguous_routes.py
+
+      - name: Validate fix structure
+        shell: pwsh
+        run: |
+          git diff --check -- `
+            src/Cafe/OS/common/BotWSoundFingerprintCatalog.h `
+            src/Cafe/OS/common/EnhancedSoundSourceTracker.h `
+            src/Cafe/OS/common/EnhancedSoundRouter.h `
+            src/Cafe/OS/libs/snd_core/ax_voice.cpp
+
+          $catalog = Get-Content 'src/Cafe/OS/common/BotWSoundFingerprintCatalog.h' -Raw
+          $tracker = Get-Content 'src/Cafe/OS/common/EnhancedSoundSourceTracker.h' -Raw
+          $router = Get-Content 'src/Cafe/OS/common/EnhancedSoundRouter.h' -Raw
+          $ax = Get-Content 'src/Cafe/OS/libs/snd_core/ax_voice.cpp' -Raw
+
+          if ($catalog -notmatch 'FindMatches\(uint32 sampleBase') { throw 'fingerprint candidate API missing' }
+          if ($tracker -notmatch 'ResolveSourceCandidates') { throw 'source candidate API missing' }
+          if ($router -notmatch 'Normalize\(pattern\) == "\*"') { throw 'source-only wildcard routing missing' }
+          if ($ax -notmatch 'bool unanimousRoute = !sources.empty\(\)') { throw 'unanimous route guard missing' }
+          if ($ax -notmatch 'route->mode != resolved->mode \|\| route->gain != resolved->gain') { throw 'route agreement check missing' }
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=release `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Executable is not ARM64' }
+
+      - name: Commit validated source
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add `
+            src/Cafe/OS/common/BotWSoundFingerprintCatalog.h `
+            src/Cafe/OS/common/EnhancedSoundSourceTracker.h `
+            src/Cafe/OS/common/EnhancedSoundRouter.h `
+            src/Cafe/OS/libs/snd_core/ax_voice.cpp
+          if (-not (git diff --cached --quiet)) {
+            git commit -m 'audio: route unambiguous shared fingerprint candidates'
+            git fetch origin feat/enhanced-sound-experience-v1
+            git rebase origin/feat/enhanced-sound-experience-v1
+            git push origin HEAD:feat/enhanced-sound-experience-v1
+          }
+          "IMPLEMENTATION_HEAD=$(git rev-parse HEAD)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-SharedSampleFix-ARM64.exe
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
+          @"
+          Enhanced Sound shared-sample routing fix — Windows ARM64
+          implementation_head=$Env:IMPLEMENTATION_HEAD
+
+          Fix:
+          - preserves all exact fingerprint identities for shared sample bytes
+          - routes only when every plausible identity resolves to the same mode/gain
+          - source + track=* policies may use source-only identity without guessing a cue name
+          - no BOTW cue names are hardcoded in Cemu common routing code
+
+          Physical regression target:
+          1. rapid repeated bow draw/release
+          2. rapid repeated jump/player voice
+          3. verify unrelated TV/BGM/environment audio remains unchanged
+          "@ | Set-Content artifact/SHARED-SAMPLE-FIX.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-EnhancedSound-SharedSampleFix-ARM64
+          path: artifact/**
+          if-no-files-found: error
