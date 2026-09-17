@@ -6,6 +6,7 @@ on:
       - diag/enhanced-sound-sword-fingerprint
     paths:
       - 'src/Cafe/OS/common/EnhancedSoundSourceTracker.h'
+      - 'tools/enable_enhanced_sound_diag_fs.py'
       - '.github/workflows/enhanced-sound-sword-fingerprint-diag-arm64.yml'
   workflow_dispatch:
 
@@ -45,6 +46,7 @@ jobs:
           Write-Host ($changed -join "`n")
           foreach ($path in $changed) {
             if ($path -ne 'src/Cafe/OS/common/EnhancedSoundSourceTracker.h' -and
+                $path -ne 'tools/enable_enhanced_sound_diag_fs.py' -and
                 $path -ne '.github/workflows/enhanced-sound-sword-fingerprint-diag-arm64.yml') {
               throw "Unexpected diagnostic change: $path"
             }
@@ -57,6 +59,23 @@ jobs:
           if ($tracker -notmatch 'no_candidate') { throw 'No-candidate diagnostic missing' }
           if ($tracker -notmatch 'ambiguous') { throw 'Ambiguous diagnostic missing' }
           if ($tracker -notmatch 'inaccessible') { throw 'Inaccessible diagnostic missing' }
+
+      - name: Enable diagnostic FS source collection when feature is off
+        shell: pwsh
+        run: |
+          python tools/enable_enhanced_sound_diag_fs.py
+          $path = 'src/Cafe/OS/libs/coreinit/coreinit_FS.cpp'
+          $patched = Get-Content $path -Raw
+          if ($patched -match 'GetConfig\(\)\.enhanced_sound_experience\s*\)\s*\r?\n\s*EnhancedSoundSourceTracker::RegisterFileOpen') {
+            throw 'Diagnostic open hook is still feature-gated'
+          }
+          if ($patched -match 'GetConfig\(\)\.enhanced_sound_experience\s*&&\s*static_cast<sint32>\(result\)') {
+            throw 'Diagnostic read-complete hook is still feature-gated'
+          }
+          if ($patched -match 'GetConfig\(\)\.enhanced_sound_experience\s*\)\s*\r?\n\s*EnhancedSoundSourceTracker::RegisterRead') {
+            throw 'Diagnostic read-start hook is still feature-gated'
+          }
+          git diff --check -- $path
 
       - name: Enable diagnostic source resolution when feature is off
         shell: pwsh
@@ -153,7 +172,7 @@ jobs:
           base_head=24e2f8427f2599fa29899267be7b33a14c48fd2a
 
           This build does not change routing decisions.
-          The diagnostic source resolver runs even when Enhanced Sound Experience is disabled.
+          Diagnostic FS source collection and source resolution run even when Enhanced Sound Experience is disabled.
           Every source resolution attempt writes unique rows to:
             enhanced_sound_fingerprint_diag.csv
 
