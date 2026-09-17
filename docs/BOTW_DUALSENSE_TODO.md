@@ -13,6 +13,8 @@ Priority policy:
 5. Add adaptive-trigger behavior after semantic event identification is stable.
 6. Never describe TOTK-derived donor effects as "original BOTW HD Rumble"; BOTW Switch did not ship HD Rumble support.
 
+> Enhanced Sound current status, validated routing modes, unresolved loop issues, and lineage migration rules are tracked in `docs/ENHANCED_SOUND_CURRENT_STATUS.md`.
+
 ---
 
 ## P0 — Research / source capture
@@ -123,28 +125,30 @@ At least three BOTW actions trigger intentionally selected Nintendo-authored don
 ## P4 — DualSense speaker / original BOTW sound routing
 
 - [x] Confirm Cemu has independent TV and DRC/GamePad audio mixes per AX voice.
-- [x] Confirm DualSense USB speaker can receive Cemu GamePad PCM once speaker routing is initialized.
-- [x] Confirm Cemu Audio Debugger can be extended to expose TV vs DRC mix state.
-- [x] Build FS/BARS -> AX source tracer v1.
-- [x] Add copied BFWAV fingerprint recovery v2.
-- [x] Resolve known-path blank track names / fragmented standalone BARS reads v3.
-- [x] Confirm Linkle `TitleBG.pack` contains `Sound/Resource/PlayerVoice.bars` with 267 `PVxxx_xx` tracks.
-- [ ] v4: parse SARC/pack contents and register embedded BARS in the existing fingerprint catalog.
-- [ ] Physically prove `AX voice -> TitleBG.pack::PlayerVoice.bars -> PVxxx_xx`.
-- [ ] Use SLink/GameROMPlayer metadata to recover semantic player-voice names where possible.
-- [ ] Identify and validate Link-local sound groups:
-  - Link voice/grunts
-  - weapon swing/whoosh
-  - Link body hit/damage
-  - Link fall/landing/body reaction
-- [ ] First test in **Duplicate mode**: keep TV output and additionally enable DRC.
-- [ ] After validation, add optional **Move mode** or TV attenuation for selected sounds.
-- [ ] Keep world/external sounds on TV by default.
-- [ ] Initialize DualSense speaker route natively on USB connect/reconnect so DSX is never required.
+- [x] Confirm DualSense USB speaker can receive Cemu GamePad PCM.
+- [x] Confirm the existing Cemu GamePad/DRC PCM pipeline should remain the transport; no separate replacement PCM engine is required.
+- [x] Build FS/BARS -> AX source tracing and fingerprint recovery.
+- [x] Harden BARS fingerprint parsing for rapid/repeated one-shot resolution (`a8d5b5537bac09a7dcffaece724b205ec18f7a96`).
+- [x] Physically prove original BOTW player/effect audio can be selectively routed through DRC to the DualSense speaker.
+- [x] Add native DualSense USB speaker initialization through Gamepad-Core so DSX is not a runtime dependency.
+- [x] Add generic Graphic Pack-driven `sound_routes.ini` routing; keep BOTW-specific selection out of the common router.
+- [x] Add persistent TV/DRC enhancement across later game-side mix writes (`06bcc9580cddd3ffeff640f801abfa34c2a10253`).
+- [x] Add and physically validate `add_drc` for direct/player-local feedback.
+- [x] Add and physically validate `spatial_drc` for world-positioned sounds; Master Cycle and Remote Bomb distance-sensitive behavior confirmed in BOTW.
+- [x] Identify high-confidence Sheikah Sensor cue: `M_UI.bars / Sys_Item_SheikSensor`.
+- [x] Identify player paraglider family: `M_SceneStatic.bars / Pl_Parashawl_*` (Equip/Flap/Squeak/UnEquip observed).
+- [x] Capture player-specific footstep families using `_Pl_` naming; grass material physically heard through routed output.
+- [ ] Verify generalized player footstep wildcard coverage on stone/other terrain and verify multi-`*` glob behavior if needed.
+- [ ] Resolve Magnesis continuous active hum. Exact `SE_MagneCatch_Hold` routing did not solve it.
+- [ ] Resolve Stasis/Time Lock continuous active hum. Exact `BitaLock_Timer03` routing did not solve it.
+- [ ] Diagnose whether Magnesis/Stasis loop activation occurs through `AXSetVoiceVe()` / pre-existing loop volume-envelope changes rather than a new voice start.
+- [ ] Resolve player/enemy shared weapon-swing cue discrimination using contextual evidence rather than BOTW-specific hardcoding in the generic router.
+- [ ] Reproduce/classify the intermittent session where Ancient weapon routing disappeared until restart before changing the route definition.
+- [ ] Perform final production performance/soak validation after the Sound feature is transplanted onto the official ARM64 lineage.
 
 ### Exit condition
 
-Original BOTW Link-local effects play from the DualSense speaker at correct in-game timing while the world mix remains on the main audio output.
+The official Release+Sound edition preserves the validated ARM64/Adreno rendering baseline, Enhanced Sound OFF matches the original edition, and validated player-local/world-positioned BOTW effects route correctly to the DualSense speaker without a DSX runtime dependency.
 
 ---
 
@@ -216,12 +220,20 @@ Bow and Master Cycle have stable, action-aware adaptive-trigger behavior without
 
 ## Current next action
 
-**Do not spend more time trying to recover nonexistent BOTW Switch HD Rumble assets.**
+### Enhanced Sound lineage correction takes priority before additional sound feature work
 
-Next work order:
+`feat/enhanced-sound-experience-v1` is now a historical donor/reference branch, not an official product lineage.
 
-1. Obtain/list `.bnvib` files from a user-owned TOTK RomFS dump and build an inventory.
-2. Implement/validate BNVIB decoding on a few representative files before attempting Cemu integration.
-3. In parallel, continue sound-source tracer v4 (`SARC -> embedded BARS -> PlayerVoice`).
-4. After one BNVIB is physically reproduced on DualSense, begin semantic BOTW -> TOTK donor mapping.
-5. Keep Wii U BOTW rumble as timing/fallback, not as the target haptic quality source.
+Proceed **one edition at a time**:
+
+1. Start from an exact copy of the validated official Release edition, preserving its existing source/workflow/build behavior.
+2. Create only the Release+Sound derivative first.
+3. Transplant the validated Enhanced Sound **production** feature set from the donor branch; do not merge the donor branch wholesale.
+4. Exclude Cue Capture V2, route-loss diagnostics, temporary logging/probe workflows and failed exact-loop route experiments from the release production transplant.
+5. Diff Original Release vs Release+Sound and verify unrelated ARM64/Adreno/renderer behavior did not change.
+6. Build once and physically validate rendering regression targets first, including the previously fixed BOTW stable/tent texture behavior.
+7. After rendering passes, validate Enhanced Sound OFF and then the known speaker routes (`add_drc`, `spatial_drc`, PlayerVoice, weapon feedback, Remote Bomb, Master Cycle, footsteps/paraglider as applicable).
+8. Do not create Test+Sound or Diagnostic+Sound until Release+Sound is physically PASS.
+9. After lineage migration is stable, resume open sound investigations: Magnesis/Stasis VE-loop activation and player/enemy shared-cue discrimination.
+
+Haptics/BNVIB work remains separate and should not be mixed into the Sound lineage migration.
