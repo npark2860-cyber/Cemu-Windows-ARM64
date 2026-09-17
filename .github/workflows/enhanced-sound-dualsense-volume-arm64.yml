@@ -1,0 +1,131 @@
+name: Enhanced Sound DualSense Volume ARM64
+
+on:
+  push:
+    branches:
+      - feat/enhanced-sound-experience-v1
+    paths:
+      - 'src/Cafe/OS/common/EnhancedSoundDualSenseService.h'
+      - '.github/workflows/enhanced-sound-dualsense-volume-arm64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: enhanced-sound-dualsense-volume-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Guard branch and DualSense speaker volume
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_name }}' -ne 'feat/enhanced-sound-experience-v1') {
+            throw 'DualSense volume build may run only on feat/enhanced-sound-experience-v1'
+          }
+          $head = (git rev-parse HEAD).Trim()
+          Write-Host "SOURCE_HEAD=$head"
+          "SOURCE_HEAD=$head" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          $text = Get-Content 'src/Cafe/OS/common/EnhancedSoundDualSenseService.h' -Raw
+          $code = $text -replace '(?m)//.*$', ''
+          $code = $code -replace '\s+', ''
+          if ($code -notmatch 'DualSenseSettings\(0,0,1,0,255,255,0,0\);') {
+            throw 'DualSense internal speaker volume is not 255'
+          }
+
+      - name: Ensure clang-cl toolset is installed
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=release `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Executable is not ARM64' }
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-DualSenseVolume255-ARM64.exe
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
+          @"
+          Enhanced Sound Experience — DualSense internal speaker volume 255/255
+          source_head=$Env:SOURCE_HEAD
+          Routing logic is unchanged.
+          "@ | Set-Content artifact/BUILD_INFO.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-EnhancedSound-DualSenseVolume255-ARM64
+          path: artifact/**
+          if-no-files-found: error
