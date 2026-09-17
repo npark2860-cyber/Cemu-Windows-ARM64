@@ -102,7 +102,7 @@ namespace EnhancedSoundRouter
 		if (pattern.empty())
 			return true;
 		if (trackName.empty())
-			return false;
+			return Normalize(pattern) == "*";
 		return GlobMatch(pattern, trackName);
 	}
 

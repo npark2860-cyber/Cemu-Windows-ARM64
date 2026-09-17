@@ -278,42 +278,45 @@ namespace BotWSoundFingerprintCatalog
 		}
 	}
 
-	inline std::optional<Match> FindMatch(uint32 sampleBase)
+	inline std::vector<Match> FindMatches(uint32 sampleBase, std::string_view expectedPath = {})
 	{
+		std::vector<Match> matches;
 		if (sampleBase == 0 || !memory_isAddressRangeAccessible(sampleBase, 64))
-			return std::nullopt;
+			return matches;
 		const uint8* sample = memory_getPointerFromVirtualOffset(sampleBase);
 		const uint64 hashA = Hash32(sample);
 		const uint64 hashB = Hash32(sample + 32);
 
 		std::scoped_lock lock(s_mutex);
-		const FingerprintEntry* selected = nullptr;
-		std::string selectedKey;
 		for (auto it = s_entries.rbegin(); it != s_entries.rend(); ++it)
 		{
 			if (it->hashA != hashA || it->hashB != hashB)
 				continue;
-			const std::string key = it->path + "\n" + it->trackName;
-			if (!selected)
-			{
-				selected = &*it;
-				selectedKey = key;
-			}
-			else if (key != selectedKey)
-			{
-				// Ambiguous fingerprints are deliberately left unresolved.
-				return std::nullopt;
-			}
-		}
-		if (!selected)
-			return std::nullopt;
+			if (!expectedPath.empty() && it->path != expectedPath)
+				continue;
 
-		Match match;
-		match.sourceStart = selected->sourceStart;
-		match.sourceSize = selected->sourceSize;
-		match.dataOffset = selected->dataOffset;
-		match.path = selected->path;
-		match.trackName = selected->trackName;
-		return match;
+			const bool duplicate = std::any_of(matches.begin(), matches.end(), [&](const Match& match) {
+				return match.path == it->path && match.trackName == it->trackName;
+			});
+			if (duplicate)
+				continue;
+
+			Match match;
+			match.sourceStart = it->sourceStart;
+			match.sourceSize = it->sourceSize;
+			match.dataOffset = it->dataOffset;
+			match.path = it->path;
+			match.trackName = it->trackName;
+			matches.emplace_back(std::move(match));
+		}
+		return matches;
+	}
+
+	inline std::optional<Match> FindMatch(uint32 sampleBase)
+	{
+		const auto matches = FindMatches(sampleBase);
+		if (matches.size() != 1)
+			return std::nullopt;
+		return matches.front();
 	}
 }
