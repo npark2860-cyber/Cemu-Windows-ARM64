@@ -52,9 +52,11 @@ jobs:
 
           $tracker = Get-Content 'src/Cafe/OS/common/EnhancedSoundSourceTracker.h' -Raw
           if ($tracker -notmatch 'enhanced_sound_fingerprint_diag\.csv') { throw 'Diagnostic CSV output missing' }
+          if ($tracker -notmatch 'TraceFingerprintResolution') { throw 'Resolution diagnostic probe missing' }
+          if ($tracker -notmatch 'resolved') { throw 'Resolved diagnostic status missing' }
           if ($tracker -notmatch 'no_candidate') { throw 'No-candidate diagnostic missing' }
           if ($tracker -notmatch 'ambiguous') { throw 'Ambiguous diagnostic missing' }
-          if ($tracker -notmatch 'TraceUnresolvedFingerprint') { throw 'Unresolved fingerprint probe missing' }
+          if ($tracker -notmatch 'inaccessible') { throw 'Inaccessible diagnostic missing' }
 
       - name: Ensure clang-cl toolset is installed
         shell: pwsh
@@ -132,12 +134,14 @@ jobs:
           base_head=24e2f8427f2599fa29899267be7b33a14c48fd2a
 
           This build does not change routing decisions.
-          When an Enhanced Sound source remains unresolved, it writes:
+          Every Enhanced Sound source resolution attempt writes unique rows to:
             enhanced_sound_fingerprint_diag.csv
 
           Key status values:
+            resolved      = source path and track resolved
             no_candidate  = runtime sample has zero fingerprint candidates
             ambiguous     = runtime sample matches multiple path/track candidates
+            inaccessible  = runtime sample address cannot be fingerprinted
             single_candidate_rejected = unexpected diagnostic edge case
 
           Test only the one-handed sword a few times, then upload the CSV.
