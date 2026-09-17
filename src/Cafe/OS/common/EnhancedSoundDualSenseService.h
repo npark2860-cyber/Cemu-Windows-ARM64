@@ -67,7 +67,7 @@ namespace EnhancedSoundDualSenseService
 			0,   // headset disabled
 			1,   // internal speaker enabled
 			0,   // mic volume
-			180, // audio volume
+			255, // audio volume
 			255, // native DualSense output mode
 			0,   // rumble reduction
 			0);  // trigger reduction
