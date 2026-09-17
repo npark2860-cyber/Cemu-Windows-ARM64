@@ -1,0 +1,146 @@
+name: Enhanced Sound TV Balance ARM64
+
+on:
+  push:
+    branches:
+      - feat/enhanced-sound-experience-v1
+    paths:
+      - 'tools/fix_enhanced_sound_tv_balance.py'
+      - '.github/workflows/enhanced-sound-tv-balance-arm64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: enhanced-sound-tv-balance-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Guard branch
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_name }}' -ne 'feat/enhanced-sound-experience-v1') {
+            throw 'TV balance workflow may run only on feat/enhanced-sound-experience-v1'
+          }
+          Write-Host "SOURCE_HEAD=$(git rev-parse HEAD)"
+
+      - name: Apply TV balance patch
+        shell: pwsh
+        run: python tools/fix_enhanced_sound_tv_balance.py
+
+      - name: Validate patch
+        shell: pwsh
+        run: |
+          git diff --check -- src/Cafe/OS/libs/snd_core/ax_voice.cpp src/Cafe/OS/common/EnhancedSoundDualSenseService.h
+          $ax = Get-Content 'src/Cafe/OS/libs/snd_core/ax_voice.cpp' -Raw
+          $ds = Get-Content 'src/Cafe/OS/common/EnhancedSoundDualSenseService.h' -Raw
+          if ($ax -notmatch 'nativeTv0\[AX_TV_CHANNEL_COUNT \* AX_BUS_COUNT\]') { throw 'Native TV mix preservation missing' }
+          if ($ax -notmatch 'AXSetVoiceDeviceMix\(vpb, AX_DEV_TV, 0, enhancedTvMix\)') { throw 'Enhanced TV attenuation write missing' }
+          if ($ax -notmatch 'static_cast<uint16>\(vol / 2u\)') { throw 'TV 50 percent attenuation missing' }
+          if ($ax -notmatch 'AXSetVoiceDeviceMix\(vpb, AX_DEV_TV, 0, nativeTvMix\)') { throw 'Native TV restore missing' }
+          $dsCode = ($ds -replace '(?m)//.*$', '') -replace '\s+', ''
+          if ($dsCode -notmatch 'DualSenseSettings\(0,0,1,0,255,255,0,0\);') { throw 'DualSense internal speaker volume must be 255' }
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=release `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Executable is not ARM64' }
+
+      - name: Commit validated source
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/Cafe/OS/libs/snd_core/ax_voice.cpp src/Cafe/OS/common/EnhancedSoundDualSenseService.h
+          if (-not (git diff --cached --quiet)) {
+            git commit -m 'audio: balance enhanced sound TV output'
+            git push origin HEAD:feat/enhanced-sound-experience-v1
+          }
+          "IMPLEMENTATION_HEAD=$(git rev-parse HEAD)" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prepare artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-TV50-ARM64.exe
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
+          @"
+          Enhanced Sound TV Balance — Windows ARM64
+          implementation_head=$Env:IMPLEMENTATION_HEAD
+          - DualSense internal speaker volume: 255/255
+          - Enhanced Sound matched voices only: TV mix 50 percent
+          - DRC additive routing unchanged
+          - Non-matched TV audio unchanged
+          "@ | Set-Content artifact/TV-BALANCE.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-EnhancedSound-TV50-ARM64
+          path: artifact/**
+          if-no-files-found: error
