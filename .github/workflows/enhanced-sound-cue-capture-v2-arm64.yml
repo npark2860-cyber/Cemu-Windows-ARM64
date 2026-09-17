@@ -1,0 +1,149 @@
+name: Enhanced Sound Cue Capture V2 ARM64
+
+on:
+  push:
+    branches:
+      - feat/enhanced-sound-experience-v1
+    paths:
+      - 'tools/add_enhanced_sound_cue_capture_v2.py'
+      - '.github/workflows/enhanced-sound-cue-capture-v2-arm64.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: enhanced-sound-cue-capture-v2-arm64
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Guard branch and record source head
+        shell: pwsh
+        run: |
+          if ('${{ github.ref_name }}' -ne 'feat/enhanced-sound-experience-v1') {
+            throw 'Cue-capture diagnostic may run only on feat/enhanced-sound-experience-v1'
+          }
+          $head = git rev-parse HEAD
+          Write-Host "SOURCE_HEAD=$head"
+          "SOURCE_HEAD=$head" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Apply V2 cue-capture instrumentation
+        shell: pwsh
+        run: python tools/add_enhanced_sound_cue_capture_v2.py
+
+      - name: Validate diagnostic structure
+        shell: pwsh
+        run: |
+          git diff --check -- src/Cafe/OS/libs/snd_core/ax_voice.cpp src/Cafe/OS/common/EnhancedSoundCueDiagnostic.h
+          if (-not (Test-Path 'src/Cafe/OS/common/EnhancedSoundCueDiagnostic.h')) { throw 'cue diagnostic header missing' }
+          $ax = Get-Content 'src/Cafe/OS/libs/snd_core/ax_voice.cpp' -Raw
+          $diag = Get-Content 'src/Cafe/OS/common/EnhancedSoundCueDiagnostic.h' -Raw
+          if ($ax -notmatch 'EnhancedSoundCueDiagnostic::Record') { throw 'cue record hook missing' }
+          if ($ax -notmatch 'ResolveSourceCandidates') { throw 'V2 candidate source path missing' }
+          if ($diag -notmatch 'enhanced_sound_cue_capture\.csv') { throw 'cue CSV output missing' }
+          if ($diag -notmatch 'source_path,track_name,route_match') { throw 'cue CSV schema incomplete' }
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: Configure native ARM64 Cemu
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=release `
+            -DCMAKE_C_COMPILER=clang-cl `
+            -DCMAKE_CXX_COMPILER=clang-cl `
+            -DCMAKE_LINKER_TYPE=MSVC `
+            -DVCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+      - name: Build Cemu
+        shell: pwsh
+        run: cmake --build build --target CemuBin --parallel
+
+      - name: Verify native ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = 'bin/Cemu_release.exe'
+          if (-not (Test-Path $exe)) { throw 'Cemu_release.exe not found' }
+          $headers = (& dumpbin /headers $exe | Out-String)
+          if ($headers -notmatch 'AA64|ARM64') { throw 'Executable is not ARM64' }
+
+      - name: Prepare diagnostic artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience | Out-Null
+          Copy-Item bin/Cemu_release.exe artifact/Cemu-EnhancedSound-CueCaptureV2-ARM64.exe
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/rules.txt artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/rules.txt
+          Copy-Item enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini artifact/graphicPacks/BreathOfTheWild/EnhancedSoundExperience/sound_routes.ini
+          @"
+          Enhanced Sound Cue Capture V2 — Windows ARM64
+          source_head=$Env:SOURCE_HEAD
+
+          Based on the validated Fingerprint Catalog V2 source.
+          This build does not change routing policy; it only records source/cue identities seen by EnhancedSoundSourceTracker.
+
+          Output:
+          - enhanced_sound_cue_capture.csv in the Cemu working directory.
+          - Delete any old CSV before a focused capture.
+
+          Recommended capture order with 2-3 seconds idle between groups:
+          1. Fire weapon: 3-5 swings
+          2. Ice weapon: 3-5 swings
+          3. Electric weapon: 3-5 swings
+          4. Ancient weapon: 3-5 swings
+          5. Remote Bomb: create / throw / detonate
+          6. Magnesis: activate / grab / move / release
+          7. Stasis: activate / target / release
+          8. Cryonis: create / destroy
+          9. Camera: open / focus / capture
+          10. Sheikah Slate rune menu: open / switch / close
+
+          CSV fields include candidate_count, source_path, track_name and current route_match.
+          "@ | Set-Content artifact/README-CUE-CAPTURE-V2.txt
+
+      - name: Upload diagnostic artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-EnhancedSound-CueCaptureV2-ARM64
+          path: artifact/**
+          if-no-files-found: error
