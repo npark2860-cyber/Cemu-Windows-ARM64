@@ -32,6 +32,8 @@ namespace snd_core
 	struct EnhancedSoundDrcState
 	{
 		bool applied{};
+		bool internalMixWrite{};
+		uint16 routeGain{};
 		AXCHMIX_DEPR nativeTv0[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT]{};
 		AXCHMIX_DEPR nativeDrc0[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT]{};
 	};
@@ -574,8 +576,9 @@ namespace snd_core
 		if (r)
 			return r;
 		AXVPBInternal_t* internal = __AXVPBInternalVoiceArray + (sint32)vpb->index;
-		if ((device == AX_DEV_DRC || device == AX_DEV_TV) && deviceIndex == 0)
-			s_enhancedSoundDrcState[(sint32)vpb->index].applied = false;
+		auto& enhancedState = s_enhancedSoundDrcState[(sint32)vpb->index];
+		const bool preserveEnhancedMix = !enhancedState.internalMixWrite && enhancedState.applied && deviceIndex == 0 &&
+			(device == AX_DEV_DRC || device == AX_DEV_TV);
 		sint32 channelCount;
 
 		uint16* deviceMixMask;
@@ -620,6 +623,42 @@ namespace snd_core
 		}
 		vpb->sync = (uint32)vpb->sync | (AX_SYNCFLAG_DEVICEMIXMASK | AX_SYNCFLAG_DEVICEMIX);
 		AXVoiceProtection_Acquire(vpb);
+
+		if (preserveEnhancedMix)
+		{
+			if (device == AX_DEV_TV)
+			{
+				memcpy(enhancedState.nativeTv0, &internal->deviceMixTV[0], sizeof(enhancedState.nativeTv0));
+				AXCHMIX_DEPR persistedTvMix[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT];
+				memcpy(persistedTvMix, enhancedState.nativeTv0, sizeof(persistedTvMix));
+				for (uint32 i = 0; i < AX_TV_CHANNEL_COUNT * AX_BUS_COUNT; ++i)
+				{
+					const uint32 vol = _swapEndianU16(persistedTvMix[i].vol);
+					const sint32 delta = _swapEndianS16(persistedTvMix[i].delta);
+					persistedTvMix[i].vol = _swapEndianU16(static_cast<uint16>(vol / 2u));
+					persistedTvMix[i].delta = _swapEndianS16(static_cast<sint16>(delta / 2));
+				}
+				enhancedState.internalMixWrite = true;
+				AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, persistedTvMix);
+				enhancedState.internalMixWrite = false;
+			}
+			else if (device == AX_DEV_DRC)
+			{
+				memcpy(enhancedState.nativeDrc0, &internal->deviceMixDRC[0], sizeof(enhancedState.nativeDrc0));
+				AXCHMIX_DEPR persistedDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
+				memcpy(persistedDrcMix, enhancedState.nativeDrc0, sizeof(persistedDrcMix));
+				for (uint32 channel = 0; channel < 2 && channel < AX_DRC_CHANNEL_COUNT; ++channel)
+				{
+					const uint32 index = channel * AX_BUS_COUNT;
+					const uint32 current = _swapEndianU16(persistedDrcMix[index].vol);
+					const uint32 mixed = std::min<uint32>(0xFFFFu, current + enhancedState.routeGain);
+					persistedDrcMix[index].vol = _swapEndianU16(static_cast<uint16>(mixed));
+				}
+				enhancedState.internalMixWrite = true;
+				AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, persistedDrcMix);
+				enhancedState.internalMixWrite = false;
+			}
+		}
 		return 0;
 	}
 
@@ -663,9 +702,12 @@ namespace snd_core
 		if (!route)
 		{
 			// A reused voice no longer matches. Restore the exact native TV and DRC0
-			// mixes captured before enhancement.
+			// mixes captured before enhancement without reapplying our persistence hook.
+			state.internalMixWrite = true;
 			AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, nativeTvMix);
 			AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, nativeDrcMix);
+			state.internalMixWrite = false;
+			state = {};
 			return;
 		}
 
@@ -689,12 +731,15 @@ namespace snd_core
 			enhancedDrcMix[index].vol = _swapEndianU16(static_cast<uint16>(mixed));
 		}
 
-		// Public AXSetVoiceDeviceMix intentionally marks the previous enhancement
-		// stale. Re-arm the sidecar only after the attenuated TV and additive DRC0 writes.
+		// These writes are ours. Native game-side TV/DRC writes that arrive later are
+		// captured by AXSetVoiceDeviceMix and the enhancement is reapplied there.
+		state.internalMixWrite = true;
 		AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, enhancedTvMix);
 		AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, enhancedDrcMix);
+		state.internalMixWrite = false;
 		memcpy(state.nativeTv0, nativeTvMix, sizeof(state.nativeTv0));
 		memcpy(state.nativeDrc0, nativeDrcMix, sizeof(state.nativeDrc0));
+		state.routeGain = route->gain;
 		state.applied = true;
 	}
 
