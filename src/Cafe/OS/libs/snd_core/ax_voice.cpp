@@ -32,6 +32,7 @@ namespace snd_core
 	struct EnhancedSoundDrcState
 	{
 		bool applied{};
+		AXCHMIX_DEPR nativeTv0[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT]{};
 		AXCHMIX_DEPR nativeDrc0[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT]{};
 	};
 
@@ -573,7 +574,7 @@ namespace snd_core
 		if (r)
 			return r;
 		AXVPBInternal_t* internal = __AXVPBInternalVoiceArray + (sint32)vpb->index;
-		if (device == AX_DEV_DRC && deviceIndex == 0)
+		if ((device == AX_DEV_DRC || device == AX_DEV_TV) && deviceIndex == 0)
 			s_enhancedSoundDrcState[(sint32)vpb->index].applied = false;
 		sint32 channelCount;
 
@@ -646,18 +647,36 @@ namespace snd_core
 			return;
 
 		AXVPBInternal_t* internal = __AXVPBInternalVoiceArray + (sint32)vpb->index;
+		AXCHMIX_DEPR nativeTvMix[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT];
 		AXCHMIX_DEPR nativeDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
 		if (state.applied)
+		{
+			memcpy(nativeTvMix, state.nativeTv0, sizeof(nativeTvMix));
 			memcpy(nativeDrcMix, state.nativeDrc0, sizeof(nativeDrcMix));
+		}
 		else
+		{
+			memcpy(nativeTvMix, &internal->deviceMixTV[0], sizeof(nativeTvMix));
 			memcpy(nativeDrcMix, &internal->deviceMixDRC[0], sizeof(nativeDrcMix));
+		}
 
 		if (!route)
 		{
-			// A reused voice no longer matches. Remove only our additive send and
-			// restore the exact native DRC0 mix captured before enhancement.
+			// A reused voice no longer matches. Restore the exact native TV and DRC0
+			// mixes captured before enhancement.
+			AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, nativeTvMix);
 			AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, nativeDrcMix);
 			return;
+		}
+
+		AXCHMIX_DEPR enhancedTvMix[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT];
+		memcpy(enhancedTvMix, nativeTvMix, sizeof(enhancedTvMix));
+		for (uint32 i = 0; i < AX_TV_CHANNEL_COUNT * AX_BUS_COUNT; ++i)
+		{
+			const uint32 vol = _swapEndianU16(enhancedTvMix[i].vol);
+			const sint32 delta = _swapEndianS16(enhancedTvMix[i].delta);
+			enhancedTvMix[i].vol = _swapEndianU16(static_cast<uint16>(vol / 2u));
+			enhancedTvMix[i].delta = _swapEndianS16(static_cast<sint16>(delta / 2));
 		}
 
 		AXCHMIX_DEPR enhancedDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
@@ -671,8 +690,10 @@ namespace snd_core
 		}
 
 		// Public AXSetVoiceDeviceMix intentionally marks the previous enhancement
-		// stale. Re-arm the sidecar only after the native-plus-additive DRC0 write.
+		// stale. Re-arm the sidecar only after the attenuated TV and additive DRC0 writes.
+		AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, enhancedTvMix);
 		AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, enhancedDrcMix);
+		memcpy(state.nativeTv0, nativeTvMix, sizeof(state.nativeTv0));
 		memcpy(state.nativeDrc0, nativeDrcMix, sizeof(state.nativeDrc0));
 		state.applied = true;
 	}
