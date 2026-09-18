@@ -1,5 +1,10 @@
 #pragma once
 
+#include "Cafe/OS/common/EnhancedHapticEngine.h"
+
+#include <filesystem>
+#include <string>
+
 #ifdef _WIN32
 
 #include "config/CemuConfig.h"
@@ -10,6 +15,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -41,6 +47,7 @@ namespace EnhancedSoundDualSenseService
 
 	inline std::mutex s_startMutex;
 	inline std::unique_ptr<std::jthread> s_worker;
+	inline EnhancedHapticEngine::Player s_hapticPlayer;
 
 	inline bool IsEligibleUsbDualSense(IGamepadBase* gamepad)
 	{
@@ -52,7 +59,7 @@ namespace EnhancedSoundDualSenseService
 		return ctx->DeviceType == EDSDeviceType::DualSense || ctx->DeviceType == EDSDeviceType::DualSenseEdge;
 	}
 
-	inline bool InitializeSpeakerRoute(IGamepadBase* gamepad)
+	inline bool ConfigureOutputState(IGamepadBase* gamepad, bool speakerEnabled, bool hapticsEnabled)
 	{
 		if (!IsEligibleUsbDualSense(gamepad))
 			return false;
@@ -60,19 +67,38 @@ namespace EnhancedSoundDualSenseService
 		if (!settings)
 			return false;
 
-		// Exact command from the physically PASSed native USB speaker-route test.
-		// Test-only rumble/trigger clears are intentionally not carried into Cemu.
+		// Preserve the physically PASSed native USB speaker settings from Release+SE.
+		// Gamepad-Core maps any non-255 rumble mode to DualSense HapticsRumble (0xFC).
 		settings->DualSenseSettings(
-			0,   // mic state
-			0,   // headset disabled
-			1,   // internal speaker enabled
-			0,   // mic volume
-			255, // audio volume
-			255, // native DualSense output mode
-			0,   // rumble reduction
-			0);  // trigger reduction
+			0,                         // mic state
+			0,                         // headset disabled
+			speakerEnabled ? 1 : 0,    // internal speaker
+			0,                         // mic volume
+			255,                       // audio volume
+			hapticsEnabled ? 0 : 255,  // 0 -> HapticsRumble, 255 -> native/default rumble
+			0,                         // rumble reduction
+			0);                        // trigger reduction
 		gamepad->UpdateOutput();
 		return true;
+	}
+
+	inline void EnsureRunning();
+
+	inline bool PlayBnvib(const std::filesystem::path& path, float gain = 1.0f, std::string* error = nullptr)
+	{
+		EnhancedHapticEngine::Clip clip;
+		if (!EnhancedHapticEngine::LoadBnvib(path, clip, error))
+			return false;
+
+		EnsureRunning();
+		auto sharedClip = std::make_shared<EnhancedHapticEngine::Clip>(std::move(clip));
+		s_hapticPlayer.Play(std::move(sharedClip), gain);
+		return true;
+	}
+
+	inline void StopHaptics()
+	{
+		s_hapticPlayer.Stop();
 	}
 
 	inline void Worker(std::stop_token stopToken)
@@ -82,35 +108,67 @@ namespace EnhancedSoundDualSenseService
 			IPlatformHardware::SetInstance(std::make_unique<windows_platform::windows_hardware>());
 			Registry registry;
 			registry.RequestImmediateDetection();
-			bool initializedForConnection = false;
+
+			using Clock = std::chrono::steady_clock;
+			auto nextDevicePoll = Clock::now();
+			bool outputConfigured = false;
+			bool configuredSpeaker = false;
+			bool configuredHaptics = false;
 
 			while (!stopToken.stop_requested())
 			{
-				registry.PlugAndPlay(0.1f);
-				auto* gamepad = registry.GetLibrary(0);
-				const bool eligible = IsEligibleUsbDualSense(gamepad);
+				const auto now = Clock::now();
+				if (now >= nextDevicePoll)
+				{
+					registry.PlugAndPlay(0.1f);
+					auto* polledGamepad = registry.GetLibrary(0);
+					if (IsEligibleUsbDualSense(polledGamepad))
+						polledGamepad->UpdateInput(0.1f);
+					else
+						registry.RequestImmediateDetection();
+					nextDevicePoll = now + std::chrono::milliseconds(100);
+				}
 
-				if (!GetConfig().enhanced_sound_experience)
+				auto* gamepad = registry.GetLibrary(0);
+				if (!IsEligibleUsbDualSense(gamepad))
 				{
-					initializedForConnection = false;
+					outputConfigured = false;
+					std::this_thread::sleep_for(std::chrono::milliseconds(2));
+					continue;
 				}
-				else if (eligible)
+
+				const auto hapticFrame = s_hapticPlayer.Tick(now);
+				const bool hapticsEnabled = s_hapticPlayer.IsActive() || hapticFrame.has_value();
+				const bool speakerEnabled = GetConfig().enhanced_sound_experience;
+
+				if (!outputConfigured || configuredSpeaker != speakerEnabled || configuredHaptics != hapticsEnabled)
 				{
-					gamepad->UpdateInput(0.1f);
-					if (!initializedForConnection)
-						initializedForConnection = InitializeSpeakerRoute(gamepad);
+					outputConfigured = ConfigureOutputState(gamepad, speakerEnabled, hapticsEnabled);
+					if (outputConfigured)
+					{
+						configuredSpeaker = speakerEnabled;
+						configuredHaptics = hapticsEnabled;
+					}
 				}
-				else
+
+				if (hapticFrame)
 				{
-					initializedForConnection = false;
-					registry.RequestImmediateDetection();
+					if (auto* rumble = gamepad->GetIGamepadRumbles())
+					{
+						// Phase 1 backend: preserve the BNVIB low/high amplitudes and send them
+						// through Gamepad-Core's DualSense HapticsRumble transport. Frequency
+						// metadata remains available in Frame for the later USB audio-haptics backend.
+						rumble->SetVibration(hapticFrame->lowLevel, hapticFrame->highLevel);
+						gamepad->UpdateOutput();
+					}
 				}
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+				std::this_thread::sleep_for(std::chrono::milliseconds(2));
 			}
 		}
 		catch (...)
 		{
-			// Enhanced Sound is optional and must never make Cemu fatal.
+			// Enhanced Sound/Haptics are optional and must never make Cemu fatal.
 		}
 	}
 
@@ -126,5 +184,12 @@ namespace EnhancedSoundDualSenseService
 namespace EnhancedSoundDualSenseService
 {
 	inline void EnsureRunning() {}
+	inline bool PlayBnvib(const std::filesystem::path&, float = 1.0f, std::string* error = nullptr)
+	{
+		if (error)
+			*error = "DualSense BNVIB playback is only available on Windows";
+		return false;
+	}
+	inline void StopHaptics() {}
 }
 #endif
