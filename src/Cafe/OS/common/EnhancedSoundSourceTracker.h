@@ -10,6 +10,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace EnhancedSoundSourceTracker
 {
@@ -72,10 +73,22 @@ namespace EnhancedSoundSourceTracker
 			EnhancedSoundPackedBars::RegisterSarcReadCompleted(packedPath, destination, size);
 	}
 
-	inline std::optional<SourceMatch> ResolveSource(uint32 sampleBase)
+	inline SourceMatch ToSourceMatch(const BotWSoundFingerprintCatalog::Match& fingerprint)
 	{
+		SourceMatch match;
+		match.start = fingerprint.sourceStart;
+		match.size = fingerprint.sourceSize;
+		match.offset = fingerprint.dataOffset;
+		match.path = fingerprint.path;
+		match.trackName = fingerprint.trackName;
+		return match;
+	}
+
+	inline std::vector<SourceMatch> ResolveSourceCandidates(uint32 sampleBase)
+	{
+		std::vector<SourceMatch> candidates;
 		if (sampleBase == 0)
-			return std::nullopt;
+			return candidates;
 
 		std::optional<SourceMatch> source;
 		{
@@ -83,33 +96,34 @@ namespace EnhancedSoundSourceTracker
 			source = BotWSoundSourceTracer::FindSourceLocked(sampleBase);
 		}
 
-		if (source && source->trackName.empty())
+		if (source && !source->trackName.empty())
 		{
-			const auto fingerprint = BotWSoundSourceTracerV3Support::FindMatchForPath(sampleBase, source->path);
-			if (fingerprint)
-			{
-				source->start = fingerprint->sourceStart;
-				source->size = fingerprint->sourceSize;
-				source->offset = fingerprint->dataOffset;
-				source->path = fingerprint->path;
-				source->trackName = fingerprint->trackName;
-			}
+			candidates.emplace_back(std::move(*source));
+			return candidates;
 		}
 
-		if (!source)
+		const auto fingerprints = BotWSoundFingerprintCatalog::FindMatches(
+			sampleBase, source ? std::string_view(source->path) : std::string_view{});
+		if (!fingerprints.empty())
 		{
-			const auto fingerprint = BotWSoundFingerprintCatalog::FindMatch(sampleBase);
-			if (fingerprint)
-			{
-				SourceMatch match;
-				match.start = fingerprint->sourceStart;
-				match.size = fingerprint->sourceSize;
-				match.offset = fingerprint->dataOffset;
-				match.path = fingerprint->path;
-				match.trackName = fingerprint->trackName;
-				source = std::move(match);
-			}
+			candidates.reserve(fingerprints.size());
+			for (const auto& fingerprint : fingerprints)
+				candidates.emplace_back(ToSourceMatch(fingerprint));
+			return candidates;
 		}
-		return source;
+
+		// A direct BARS range can still provide useful source-only identity. This is
+		// sufficient for an explicit source + track=* policy and avoids guessing a cue.
+		if (source)
+			candidates.emplace_back(std::move(*source));
+		return candidates;
+	}
+
+	inline std::optional<SourceMatch> ResolveSource(uint32 sampleBase)
+	{
+		const auto candidates = ResolveSourceCandidates(sampleBase);
+		if (candidates.size() != 1)
+			return std::nullopt;
+		return candidates.front();
 	}
 }
