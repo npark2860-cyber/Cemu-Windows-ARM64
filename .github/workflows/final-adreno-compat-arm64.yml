@@ -3,7 +3,7 @@ name: "[Release] Cemu Windows ARM64"
 on:
   push:
     branches:
-      - final-adreno-compat-arm64
+      - build/release-se-once
   workflow_dispatch:
 
 concurrency:
@@ -27,7 +27,7 @@ jobs:
       - name: Assert Release branch role
         shell: pwsh
         run: |
-          if ("${{ github.ref }}" -ne "refs/heads/final-adreno-compat-arm64") {
+          if ("${{ github.ref }}" -ne "refs/heads/build/release-se-once") {
             throw "Release workflow ran on unexpected ref: ${{ github.ref }}"
           }
           $guard = Get-Content 'ROLE_GUARD_RELEASE.txt' -Raw
