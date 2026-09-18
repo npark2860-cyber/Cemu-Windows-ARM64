@@ -23,6 +23,7 @@ namespace EnhancedSoundRouter
 		std::string trackPattern;
 		Mode mode{ Mode::AddDRC };
 		uint16_t gain{ 0x6000 };
+		uint8_t tvVolume{ 50 };
 		uint8_t tvVolumePercent{ 50 };
 	};
 
