@@ -52,7 +52,7 @@ namespace EnhancedSoundDualSenseService
 		return ctx->DeviceType == EDSDeviceType::DualSense || ctx->DeviceType == EDSDeviceType::DualSenseEdge;
 	}
 
-	inline bool InitializeSpeakerRoute(IGamepadBase* gamepad)
+	inline bool ApplyAudioRoute(IGamepadBase* gamepad, bool headsetConnected)
 	{
 		if (!IsEligibleUsbDualSense(gamepad))
 			return false;
@@ -60,17 +60,17 @@ namespace EnhancedSoundDualSenseService
 		if (!settings)
 			return false;
 
-		// Exact command from the physically PASSed native USB speaker-route test.
-		// Test-only rumble/trigger clears are intentionally not carried into Cemu.
+		// Preserve the physically PASSed native USB audio setup, but follow the
+		// DualSense jack-detect state: headphones when inserted, speaker otherwise.
 		settings->DualSenseSettings(
-			0,   // mic state
-			0,   // headset disabled
-			1,   // internal speaker enabled
-			0,   // mic volume
-			255, // audio volume
-			255, // native DualSense output mode
-			0,   // rumble reduction
-			0);  // trigger reduction
+			0,                         // mic state
+			headsetConnected ? 1 : 0, // headset enabled only while inserted
+			headsetConnected ? 0 : 1, // internal speaker enabled only while unplugged
+			0,                         // mic volume
+			255,                       // audio volume
+			255,                       // native DualSense output mode
+			0,                         // rumble reduction
+			0);                        // trigger reduction
 		gamepad->UpdateOutput();
 		return true;
 	}
@@ -83,6 +83,7 @@ namespace EnhancedSoundDualSenseService
 			Registry registry;
 			registry.RequestImmediateDetection();
 			bool initializedForConnection = false;
+			bool lastHeadsetConnected = false;
 
 			while (!stopToken.stop_requested())
 			{
@@ -97,8 +98,15 @@ namespace EnhancedSoundDualSenseService
 				else if (eligible)
 				{
 					gamepad->UpdateInput(0.1f);
-					if (!initializedForConnection)
-						initializedForConnection = InitializeSpeakerRoute(gamepad);
+					auto* ctx = gamepad->GetMutableDeviceContext();
+					const auto* input = ctx ? ctx->GetInputState() : nullptr;
+					const bool headsetConnected = input && input->bHasPhoneConnected;
+					if (!initializedForConnection || headsetConnected != lastHeadsetConnected)
+					{
+						initializedForConnection = ApplyAudioRoute(gamepad, headsetConnected);
+						if (initializedForConnection)
+							lastHeadsetConnected = headsetConnected;
+					}
 				}
 				else
 				{
