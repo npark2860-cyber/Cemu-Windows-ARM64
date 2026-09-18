@@ -720,9 +720,11 @@ namespace snd_core
 		auto& state = s_enhancedSoundDrcState[(sint32)vpb->index];
 		std::optional<EnhancedSoundRouter::RouteMatch> route;
 
+		// Test-Haptic smoke service must start independently from SE route matching.
+		EnhancedSoundDualSenseService::EnsureRunning();
+
 		if (GetConfig().enhanced_sound_experience && sampleBase != MPTR_NULL)
 		{
-			EnhancedSoundDualSenseService::EnsureRunning();
 			const auto sources = EnhancedSoundSourceTracker::ResolveSourceCandidates(sampleBase);
 			bool unanimousRoute = !sources.empty();
 			for (const auto& source : sources)
