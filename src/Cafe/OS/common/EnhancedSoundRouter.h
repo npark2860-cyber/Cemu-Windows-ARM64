@@ -23,12 +23,14 @@ namespace EnhancedSoundRouter
 		std::string trackPattern;
 		Mode mode{ Mode::AddDRC };
 		uint16_t gain{ 0x6000 };
+		uint8_t tvVolumePercent{ 50 };
 	};
 
 	struct RouteMatch
 	{
 		Mode mode{ Mode::AddDRC };
 		uint16_t gain{ 0x6000 };
+		uint8_t tvVolumePercent{ 50 };
 	};
 
 	struct RouteTable
@@ -133,7 +135,7 @@ namespace EnhancedSoundRouter
 			{
 				if (!MatchSource(rule.sourcePattern, sourcePath) || !MatchTrack(rule.trackPattern, trackName))
 					continue;
-				return RouteMatch{ rule.mode, rule.gain };
+				return RouteMatch{ rule.mode, rule.gain, rule.tvVolumePercent };
 			}
 		}
 		return std::nullopt;

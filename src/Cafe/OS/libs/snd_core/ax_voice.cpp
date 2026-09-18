@@ -34,6 +34,7 @@ namespace snd_core
 		bool applied{};
 		bool internalMixWrite{};
 		uint16 routeGain{};
+		uint8 routeTvVolumePercent{ 50 };
 		EnhancedSoundRouter::Mode routeMode{ EnhancedSoundRouter::Mode::AddDRC };
 		AXCHMIX_DEPR nativeTv0[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT]{};
 		AXCHMIX_DEPR nativeDrc0[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT]{};
@@ -41,7 +42,7 @@ namespace snd_core
 
 	EnhancedSoundDrcState s_enhancedSoundDrcState[AX_MAX_VOICES]{};
 
-	void AXApplyEnhancedSoundTvPolicy(AXCHMIX_DEPR* tvMix, EnhancedSoundRouter::Mode mode)
+	void AXApplyEnhancedSoundTvPolicy(AXCHMIX_DEPR* tvMix, EnhancedSoundRouter::Mode mode, uint8 tvVolumePercent)
 	{
 		if (mode != EnhancedSoundRouter::Mode::AddDRC)
 			return;
@@ -49,8 +50,8 @@ namespace snd_core
 		{
 			const uint32 vol = _swapEndianU16(tvMix[i].vol);
 			const sint32 delta = _swapEndianS16(tvMix[i].delta);
-			tvMix[i].vol = _swapEndianU16(static_cast<uint16>(vol / 2u));
-			tvMix[i].delta = _swapEndianS16(static_cast<sint16>(delta / 2));
+			tvMix[i].vol = _swapEndianU16(static_cast<uint16>((vol * tvVolumePercent) / 100u));
+			tvMix[i].delta = _swapEndianS16(static_cast<sint16>((delta * static_cast<sint32>(tvVolumePercent)) / 100));
 		}
 	}
 
@@ -679,7 +680,7 @@ namespace snd_core
 				{
 					AXCHMIX_DEPR persistedTvMix[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT];
 					memcpy(persistedTvMix, enhancedState.nativeTv0, sizeof(persistedTvMix));
-					AXApplyEnhancedSoundTvPolicy(persistedTvMix, enhancedState.routeMode);
+					AXApplyEnhancedSoundTvPolicy(persistedTvMix, enhancedState.routeMode, enhancedState.routeTvVolumePercent);
 					enhancedState.internalMixWrite = true;
 					AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, persistedTvMix);
 					enhancedState.internalMixWrite = false;
@@ -736,7 +737,8 @@ namespace snd_core
 				}
 				if (!route)
 					route = resolved;
-				else if (route->mode != resolved->mode || route->gain != resolved->gain)
+				else if (route->mode != resolved->mode || route->gain != resolved->gain ||
+					route->tvVolumePercent != resolved->tvVolumePercent)
 				{
 					unanimousRoute = false;
 					break;
@@ -777,7 +779,7 @@ namespace snd_core
 
 		AXCHMIX_DEPR enhancedTvMix[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT];
 		memcpy(enhancedTvMix, nativeTvMix, sizeof(enhancedTvMix));
-		AXApplyEnhancedSoundTvPolicy(enhancedTvMix, route->mode);
+		AXApplyEnhancedSoundTvPolicy(enhancedTvMix, route->mode, route->tvVolumePercent);
 
 		AXCHMIX_DEPR enhancedDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
 		memcpy(enhancedDrcMix, nativeDrcMix, sizeof(enhancedDrcMix));
@@ -792,6 +794,7 @@ namespace snd_core
 		memcpy(state.nativeTv0, nativeTvMix, sizeof(state.nativeTv0));
 		memcpy(state.nativeDrc0, nativeDrcMix, sizeof(state.nativeDrc0));
 		state.routeGain = route->gain;
+		state.routeTvVolumePercent = route->tvVolumePercent;
 		state.routeMode = route->mode;
 		state.applied = true;
 	}

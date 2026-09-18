@@ -1025,6 +1025,22 @@ void GraphicPack2::LoadEnhancedSoundRoutes()
 			}
 		}
 
+		if (const auto tvVolume = routes.FindOption("tv_volume"))
+		{
+			try
+			{
+				const auto parsed = std::stoul(std::string(*tvVolume), nullptr, 10);
+				if (parsed > 100u)
+					throw std::out_of_range("tv_volume");
+				rule.tvVolumePercent = static_cast<uint8_t>(parsed);
+			}
+			catch (const std::exception&)
+			{
+				cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because tv_volume must be 0-100", owner, section);
+				continue;
+			}
+		}
+
 		if (rule.sourcePattern.empty() && rule.trackPattern.empty())
 		{
 			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because source/track are both empty", owner, section);
