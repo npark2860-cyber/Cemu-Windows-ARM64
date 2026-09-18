@@ -723,14 +723,27 @@ namespace snd_core
 		if (GetConfig().enhanced_sound_experience && sampleBase != MPTR_NULL)
 		{
 			EnhancedSoundDualSenseService::EnsureRunning();
-			const auto source = EnhancedSoundSourceTracker::ResolveSource(sampleBase);
-			if (source)
+			const auto sources = EnhancedSoundSourceTracker::ResolveSourceCandidates(sampleBase);
+			bool unanimousRoute = !sources.empty();
+			for (const auto& source : sources)
 			{
-				const auto resolved = EnhancedSoundRouter::Resolve(source->path, source->trackName);
-				if (resolved && (resolved->mode == EnhancedSoundRouter::Mode::AddDRC ||
-					resolved->mode == EnhancedSoundRouter::Mode::SpatialDRC))
+				const auto resolved = EnhancedSoundRouter::Resolve(source.path, source.trackName);
+				if (!resolved || (resolved->mode != EnhancedSoundRouter::Mode::AddDRC &&
+					resolved->mode != EnhancedSoundRouter::Mode::SpatialDRC))
+				{
+					unanimousRoute = false;
+					break;
+				}
+				if (!route)
 					route = resolved;
+				else if (route->mode != resolved->mode || route->gain != resolved->gain)
+				{
+					unanimousRoute = false;
+					break;
+				}
 			}
+			if (!unanimousRoute)
+				route.reset();
 		}
 
 		if (!route && !state.applied)
