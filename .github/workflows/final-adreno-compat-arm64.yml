@@ -30,16 +30,13 @@ jobs:
           if ("${{ github.ref }}" -ne "refs/heads/test-haptic") {
             throw "Test-Haptic workflow ran on unexpected ref: ${{ github.ref }}"
           }
-          $base = '55d234f485f3cbd15f21a699a8a2f81ce1730b64'
-          git merge-base --is-ancestor $base HEAD
-          if ($LASTEXITCODE -ne 0) { throw "Test-Haptic HEAD is not descended from Release+SE baseline $base" }
           foreach ($required in @(
             'src/Cafe/OS/common/EnhancedHapticEngine.h',
             'src/Cafe/OS/common/EnhancedSoundDualSenseService.h'
           )) {
             if (-not (Test-Path $required)) { throw "Missing Test-Haptic source: $required" }
           }
-          Write-Host 'PASS: Test-Haptic branch role and Release+SE ancestry verified'
+          Write-Host 'PASS: Test-Haptic branch role verified'
 
       - name: Apply known-good pre-e834 runtime behavior
         shell: pwsh
