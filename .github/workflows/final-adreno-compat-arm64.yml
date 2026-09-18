@@ -1,9 +1,9 @@
-name: "[Release] Cemu Windows ARM64"
+name: "[Test-Haptic] Cemu Windows ARM64"
 
 on:
   push:
     branches:
-      - final-adreno-compat-arm64
+      - test-haptic
   workflow_dispatch:
 
 concurrency:
@@ -24,22 +24,22 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Assert Release branch role
+      - name: Assert Test-Haptic branch role
         shell: pwsh
         run: |
-          if ("${{ github.ref }}" -ne "refs/heads/final-adreno-compat-arm64") {
-            throw "Release workflow ran on unexpected ref: ${{ github.ref }}"
+          if ("${{ github.ref }}" -ne "refs/heads/test-haptic") {
+            throw "Test-Haptic workflow ran on unexpected ref: ${{ github.ref }}"
           }
-          $guard = Get-Content 'ROLE_GUARD_RELEASE.txt' -Raw
+          $base = '55d234f485f3cbd15f21a699a8a2f81ce1730b64'
+          git merge-base --is-ancestor $base HEAD
+          if ($LASTEXITCODE -ne 0) { throw "Test-Haptic HEAD is not descended from Release+SE baseline $base" }
           foreach ($required in @(
-            'RELEASE_BRANCH=final-adreno-compat-arm64',
-            'WORKFLOW=.github/workflows/final-adreno-compat-arm64.yml',
-            'ARTIFACT=cemu-arm64-release',
-            'DIAGNOSTICS_ALLOWED=NO',
-            'TEST_EXPERIMENTS_ALLOWED=NO'
+            'src/Cafe/OS/common/EnhancedHapticEngine.h',
+            'src/Cafe/OS/common/EnhancedSoundDualSenseService.h'
           )) {
-            if (-not $guard.Contains($required)) { throw "Release role marker mismatch: $required" }
+            if (-not (Test-Path $required)) { throw "Missing Test-Haptic source: $required" }
           }
+          Write-Host 'PASS: Test-Haptic branch role and Release+SE ancestry verified'
 
       - name: Apply known-good pre-e834 runtime behavior
         shell: pwsh
@@ -201,5 +201,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-release
+          name: cemu-arm64-test-haptic
           path: ./bin/Cemu.exe
