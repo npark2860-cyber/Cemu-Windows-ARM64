@@ -17,13 +17,6 @@ namespace EnhancedSoundRouter
 		SpatialDRC = 2,
 	};
 
-	enum class AdaptiveTriggerAction : uint8_t
-	{
-		None = 0,
-		BotwBow = 1,
-		Stop = 2,
-	};
-
 	struct RouteRule
 	{
 		std::string sourcePattern;
@@ -36,10 +29,6 @@ namespace EnhancedSoundRouter
 		std::string hapticPath;
 		float hapticGain{ 1.0f };
 		bool hapticLoop{};
-		AdaptiveTriggerAction adaptiveTrigger{ AdaptiveTriggerAction::None };
-		uint8_t triggerMinPercent{ 40 };
-		uint8_t triggerMaxPercent{ 85 };
-		uint8_t triggerStartZone{ 2 };
 	};
 
 	struct RouteMatch
@@ -51,10 +40,6 @@ namespace EnhancedSoundRouter
 		std::string hapticPath;
 		float hapticGain{ 1.0f };
 		bool hapticLoop{};
-		AdaptiveTriggerAction adaptiveTrigger{ AdaptiveTriggerAction::None };
-		uint8_t triggerMinPercent{ 40 };
-		uint8_t triggerMaxPercent{ 85 };
-		uint8_t triggerStartZone{ 2 };
 	};
 
 	struct RouteTable
@@ -140,11 +125,7 @@ namespace EnhancedSoundRouter
 			a.tvVolumePercent == b.tvVolumePercent &&
 			a.hapticPath == b.hapticPath &&
 			a.hapticGain == b.hapticGain &&
-			a.hapticLoop == b.hapticLoop &&
-			a.adaptiveTrigger == b.adaptiveTrigger &&
-			a.triggerMinPercent == b.triggerMinPercent &&
-			a.triggerMaxPercent == b.triggerMaxPercent &&
-			a.triggerStartZone == b.triggerStartZone;
+			a.hapticLoop == b.hapticLoop;
 	}
 
 	inline void RegisterRouteTable(std::string owner, std::vector<RouteRule> rules)
@@ -181,11 +162,7 @@ namespace EnhancedSoundRouter
 					rule.tvVolumePercent,
 					rule.hapticPath,
 					rule.hapticGain,
-					rule.hapticLoop,
-					rule.adaptiveTrigger,
-					rule.triggerMinPercent,
-					rule.triggerMaxPercent,
-					rule.triggerStartZone
+					rule.hapticLoop
 				};
 			}
 		}

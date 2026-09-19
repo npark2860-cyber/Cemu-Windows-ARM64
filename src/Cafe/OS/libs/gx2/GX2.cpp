@@ -6,6 +6,7 @@
 #include "Cafe/OS/libs/coreinit/coreinit_Time.h"
 #include "Cafe/OS/libs/coreinit/coreinit_Thread.h"
 #include "Cafe/CafeSystem.h"
+#include "Cafe/GraphicPack/GraphicPack2.h"
 #include "Cafe/HW/Latte/Core/LattePM4.h"
 
 #include "GX2_Command.h"
@@ -86,6 +87,7 @@ void gx2Export_GX2SwapScanBuffers(PPCInterpreter_t* hCPU)
 		GX2::GX2WaitForFlip();
 	}
 
+	GraphicPack2::ExecuteFrameCallbacks();
 	osLib_returnFromFunction(hCPU, 0);
 }
 

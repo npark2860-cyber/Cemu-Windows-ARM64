@@ -794,24 +794,6 @@ namespace snd_core
 			clearHapticRouteState();
 		}
 
-
-		if (route)
-		{
-			switch (route->adaptiveTrigger)
-			{
-			case EnhancedSoundRouter::AdaptiveTriggerAction::BotwBow:
-				EnhancedSoundDualSenseService::ApplyBotwBowTrigger(
-					route->triggerMinPercent, route->triggerMaxPercent, route->triggerStartZone);
-				break;
-			case EnhancedSoundRouter::AdaptiveTriggerAction::Stop:
-				EnhancedSoundDualSenseService::StopAdaptiveTrigger();
-				break;
-			case EnhancedSoundRouter::AdaptiveTriggerAction::None:
-			default:
-				break;
-			}
-		}
-
 		const EnhancedSoundRouter::RouteMatch* audioRoute =
 			(route && route->audioEnabled) ? &(*route) : nullptr;
 

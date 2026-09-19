@@ -5,6 +5,7 @@
 #include "Cafe/OS/RPL/rpl_symbol_storage.h"
 #include "Cafe/HW/Espresso/Recompiler/PPCRecompiler.h"
 #include "Cafe/HW/Espresso/Debugger/DebugSymbolStorage.h"
+#include "Cafe/OS/common/EnhancedSoundDualSenseService.h"
 
 bool _relocateAddress(PatchGroup* group, PatchContext_t* ctx, uint32 addr, uint32& relocatedAddress)
 {
@@ -660,6 +661,22 @@ void GraphicPack2::ApplyPatchGroups(std::vector<PatchGroup*>& groups, const RPLM
                 return;
             }
 		}
+		
+		for (const auto& source : patchGroup->list_adaptiveTriggers)
+		{
+			auto it = patchContext.map_values.find(source.symbol);
+			if (it != patchContext.map_values.end())
+			{
+				m_adaptiveTriggerBindings.push_back({ it->second, source.hand, source.effect, source.startZone });
+			}
+			else
+			{
+				patchContext.errorHandler.printError(
+					patchGroup, -1, fmt::format("Failed to resolve .adaptiveTrigger state symbol: {}", source.symbol));
+				patchContext.errorHandler.showStageErrorMessageBox();
+				return;
+			}
+		}
 	}
 	// mark groups as applied
 	for (auto patchGroup : groups)
@@ -668,11 +685,15 @@ void GraphicPack2::ApplyPatchGroups(std::vector<PatchGroup*>& groups, const RPLM
 
 void GraphicPack2::UndoPatchGroups(std::vector<PatchGroup*>& groups, const RPLModule* rpl)
 {
-	// restore original data
+	bool removedCallbacks = false;
+	bool removedAdaptiveTriggers = false;
+
 	for (auto patchGroup : groups)
 	{
 		if (!patchGroup->isApplied())
 			continue;
+		removedCallbacks = removedCallbacks || !patchGroup->list_callbacks.empty();
+		removedAdaptiveTriggers = removedAdaptiveTriggers || !patchGroup->list_adaptiveTriggers.empty();
 		for (auto& patch : patchGroup->list_patches)
 		{
 			PatchEntryInstruction* patchInstruction = dynamic_cast<PatchEntryInstruction*>(patch);
@@ -681,7 +702,15 @@ void GraphicPack2::UndoPatchGroups(std::vector<PatchGroup*>& groups, const RPLMo
 			patchInstruction->undoPatch();
 		}
 	}
-	// mark groups as not applied
+
+	if (removedCallbacks)
+		m_callbacks.clear();
+	if (removedAdaptiveTriggers)
+	{
+		m_adaptiveTriggerBindings.clear();
+		EnhancedSoundDualSenseService::StopAdaptiveTrigger();
+	}
+
 	for (auto patchGroup : groups)
 		patchGroup->resetApplied();
 }
