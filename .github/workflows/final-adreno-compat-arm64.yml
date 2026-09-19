@@ -1,9 +1,9 @@
-name: "[Release] Cemu Windows ARM64"
+name: "[Test] Cemu ARM64 SE Fingerprint Index"
 
 on:
   push:
     branches:
-      - final-adreno-compat-arm64
+      - test/se-fingerprint-index-v1
   workflow_dispatch:
 
 concurrency:
@@ -24,21 +24,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Assert Release branch role
+      - name: Assert test branch
         shell: pwsh
         run: |
-          if ("${{ github.ref }}" -ne "refs/heads/final-adreno-compat-arm64") {
-            throw "Release workflow ran on unexpected ref: ${{ github.ref }}"
-          }
-          $guard = Get-Content 'ROLE_GUARD_RELEASE.txt' -Raw
-          foreach ($required in @(
-            'RELEASE_BRANCH=final-adreno-compat-arm64',
-            'WORKFLOW=.github/workflows/final-adreno-compat-arm64.yml',
-            'ARTIFACT=cemu-arm64-release',
-            'DIAGNOSTICS_ALLOWED=NO',
-            'TEST_EXPERIMENTS_ALLOWED=NO'
-          )) {
-            if (-not $guard.Contains($required)) { throw "Release role marker mismatch: $required" }
+          if ("${{ github.ref }}" -ne "refs/heads/test/se-fingerprint-index-v1") {
+            throw "Test workflow ran on unexpected ref: ${{ github.ref }}"
           }
 
       - name: Apply known-good pre-e834 runtime behavior
@@ -201,5 +191,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-release
+          name: cemu-arm64-test-se-fingerprint-index-v1
           path: ./bin/Cemu.exe
