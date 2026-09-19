@@ -1,71 +1,76 @@
-# CURRENT HANDOFF — Cemu Windows ARM64 / Adreno
+# CURRENT HANDOFF — [Test] SE / DualSense Haptics
 
-> Canonical policy: `BRANCH_POLICY.md`
-> Active-role manifest: `ACTIVE_BRANCH_ROLES.md`
-> Do **not** trust a hardcoded HEAD in a handoff. Before every write/build, fetch the actual branch HEAD and workflow from GitHub.
+Canonical policy:
+- `BRANCH_POLICY.md`
+- `ACTIVE_BRANCH_ROLES.md`
 
-## ROLE
+GitHub is the only source of truth. Fetch actual HEADs before any write/build.
 
-**[Release]**
+## Five active source-of-truth roles
 
-Repository:
-- `npark2860-cyber/Cemu-Windows-ARM64`
+- [Release] `final-adreno-compat-arm64`
+- [Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`
+- [Release+SE] `Release+SE`
+- [Diagnostics+SE] `feat/enhanced-sound-experience-v1`
+- [Test] `test/se-fingerprint-index-v1`
 
-Branch:
-- `final-adreno-compat-arm64`
+This branch is the current SE/haptic laboratory.
 
-Only active workflow on this branch:
-- `.github/workflows/final-adreno-compat-arm64.yml`
-- display name: `[Release] Cemu Windows ARM64`
+Historical `test-haptic`, `Final+SE`, and `runtime-experiments-arm64` are reference/archive only unless the user explicitly reactivates them.
 
-Only valid artifact identity:
-- `cemu-arm64-release`
-- executable: `Cemu.exe`
+## Current code state
 
-## RELEASE CONTRACT
+Validated test build/code HEAD:
+`9263604feff7d92cbe517cd75246ac97d15d853d`
 
-This branch is production/release only.
+Run:
+`35425264365`
 
-Allowed:
-- runtime-verified fixes
-- protected Adreno compatibility fixes
-- FSR1
-- release branding (`Cemu ARM64`)
+Result:
+SUCCESS
 
-Forbidden:
-- ARM64 Diagnostics UI
-- diagnostic checkbox persistence
-- logging-only instrumentation
-- `RuntimeDiagnostics` runtime hooks in the release binary
-- `[ADRENO_DIAG]`, `[CEMU_DIAG]`, `[GPU_QUERY_VIS]`, `[PS_INPUT_LINKAGE]` diagnostic markers in the release binary
-- unverified behavior experiments
+Artifact:
+`cemu-arm64-test-se-fingerprint-index-v1`
 
-The Release workflow contains branch-role and diagnostics-free guards and must fail if these constraints are violated.
+After that SUCCESS, only handoff/policy documentation commits were added. Fetch the actual current branch HEAD before work.
 
-## PROTECTED / DO NOT REGRESS
+## Fingerprint optimization
 
-- Bayonetta 2 / Star Fox Zero / Xenoblade Chronicles X `vkGetQueryPoolResults` direct query readback FIX for all JPN / USA / EUR application title IDs
-  - Bayonetta 2: `00050000-1011B900`, `00050000-10172600`, `00050000-10172700`
-  - Star Fox Zero: `00050000-101AFF00`, `00050000-101B0400`, `00050000-101B0500`
-  - Xenoblade Chronicles X: `00050000-10116100`, `00050000-101C4D00`, `00050000-101C4C00`
-- XCX historical `0 -> 1 force-visible` experiment is not part of Release
-- VS `DEFAULT_VAL` synthesize/linkage FIX
-- FidelityFX FSR1 EASU + RCAS
-- existing Adreno / pre-e834 verified fixes
-- `main` must not be touched
-- rejected query/workaround experiments are not repeated without new evidence
+The test branch contains the indexed fingerprint lookup now promoted to Release+SE.
 
-## PROMOTION RULE
+Release+SE implementation promotion commit:
+`f2a5ad15b191d30eb2c870db7626518628cd90a2`
 
-A Test change becomes a release FIX only after required static verification, CI and runtime validation.
+The implementation preserves existing matching semantics while avoiding a full scan of up to 32,768 entries on every lookup.
 
-When verified:
-1. promote only the verified FIX to Release
-2. apply the same FIX to Diagnostics
-3. do not carry Diagnostics/Test-only commits into Release
+Do not remove/regress this optimization during haptic work.
 
-## NEXT ACTION RULE
+## Current next work
 
-- investigation/logging -> **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**
-- behavior-changing experiment -> **[Test] `runtime-experiments-arm64`**
-- do not develop experiments directly on Release
+DualSense haptic experiments.
+
+User-approved exact mappings:
+- UI tab change -> `UIFadeIn.bnvib`
+- UI cursor movement -> `UiRollOver.bnvib`
+- elevator/lift -> `PresetDohoon.bnvib`
+- invalid/unavailable action -> `PresetPiton.bnvib`
+
+Also planned:
+- Master Cycle / motorbike vibration
+
+The old `test-haptic` branch contains prior haptic engine/smoke work and may be consulted as historical reference, but do not fast-forward/merge it wholesale. Port only reviewed haptic pieces into this current Test branch.
+
+## Important resolved issue
+
+A temporary workaround that called `g_tvAudio->Play()` after DualSense route changes was reverted. The user determined there was no real global TV mute problem.
+
+Do not re-add that workaround without new evidence.
+
+## Build discipline
+
+- check active/queued once;
+- one build only;
+- no automatic reruns;
+- no repeated polling;
+- preserve Release+SE CPU/Vulkan behavior;
+- haptic work stays on Test until runtime-validated and explicitly approved for promotion.
