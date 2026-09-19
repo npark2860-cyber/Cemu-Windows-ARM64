@@ -1,35 +1,34 @@
 # HANDOFF_PROMPT
 
-Continue the Cemu ARM64 Enhanced Sound / DualSense haptic work from GitHub.
+Continue the Cemu Windows ARM64 Enhanced Sound / DualSense haptic project.
 
 Repository:
 `npark2860-cyber/Cemu-Windows-ARM64`
 
-GitHub is the only source of truth. Do not infer current state from conversation memory.
+GitHub is the only source of truth. Do not infer live state from conversation memory.
 
-Read these files first from branch `test/se-fingerprint-index-v1`:
-1. `CURRENT_HANDOFF.md`
-2. `NEXT_ACTION.md`
-3. `DEBUG_HISTORY_20260919_SE_FINGERPRINT_INDEX.md`
+Start on:
+`test/se-fingerprint-index-v1`
 
-Then verify the actual current HEADs of:
+Read, in this order:
+1. `BRANCH_POLICY.md`
+2. `ACTIVE_BRANCH_ROLES.md`
+3. `CURRENT_HANDOFF.md`
+4. `NEXT_ACTION.md`
+5. `DEBUG_HISTORY_20260919_SE_FINGERPRINT_INDEX.md`
+
+Then fetch actual HEADs for all five active source-of-truth branches:
+- `final-adreno-compat-arm64`
+- `fix/arm64-diagnostics-ui-artifact-gate`
 - `Release+SE`
+- `feat/enhanced-sound-experience-v1`
 - `test/se-fingerprint-index-v1`
-- `final-adreno-compat-arm64` only as the base-release reference
 
-Expected handoff state:
-- Release+SE: `f2a5ad15b191d30eb2c870db7626518628cd90a2`
-- Test: `9263604feff7d92cbe517cd75246ac97d15d853d`
-- Base release reference: `d359c53da77dddac6c34554d3b894099896b070e`
+If documents and Git differ, actual Git wins and report the mismatch before changing source.
 
-If actual Git differs, actual Git wins and report the mismatch before changing anything.
+The indexed fingerprint lookup is already promoted to Release+SE and must be preserved.
 
-Important workstream rule:
-The user explicitly chose `Release+SE` as the SE production source and `test/se-fingerprint-index-v1` as the branch to keep for haptic experiments. This is a current user-directed exception to the older three-branch text in `BRANCH_POLICY.md`. Do not silently redirect this SE workstream to older branch roles.
-
-The fingerprint lookup optimization has already been promoted to Release+SE. Preserve it.
-
-Next work is HAPTIC TESTING ON THE TEST BRANCH ONLY.
+Next work is haptic testing on Test only.
 
 Exact mappings:
 - UI tab change = `UIFadeIn.bnvib`
@@ -37,8 +36,10 @@ Exact mappings:
 - elevator/lift = `PresetDohoon.bnvib`
 - invalid/unavailable action = `PresetPiton.bnvib`
 
-Also keep the goal of motorbike vibration.
+Also keep the Master Cycle / motorbike vibration target.
 
-Do not touch CPU/Vulkan sources for this task.
-Do not promote haptic experiments until the user runtime-verifies them and explicitly requests promotion.
-Before building, check active/queued once and run only one build.
+Historical `test-haptic` may be inspected for reusable haptic engine code but is not source of truth. Do not merge it wholesale.
+
+Do not touch CPU/Vulkan for this haptic task.
+Before a build, inspect active/queued once and trigger only one build.
+Do not promote any haptic experiment until user runtime validation plus explicit promotion approval.
