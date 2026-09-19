@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <deque>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -54,9 +55,12 @@ namespace BotWSoundFingerprintCatalog
 	};
 
 	inline std::mutex s_mutex;
-	inline std::vector<FingerprintEntry> s_entries;
+	inline std::deque<FingerprintEntry> s_entries;
 	// Lookup-only acceleration index. s_entries remains the source of truth.
 	inline std::unordered_map<FingerprintKey, std::vector<Match>, FingerprintKeyHasher> s_lookupIndex;
+	// deque preserves entry addresses across append/front eviction. This index
+	// accelerates registration only; retain all channels and the original identity.
+	inline std::unordered_multimap<FingerprintKey, const FingerprintEntry*, FingerprintKeyHasher> s_registrationIndex;
 
 	inline uint16 ReadU16(const uint8* p, bool bigEndian)
 	{
@@ -210,25 +214,34 @@ namespace BotWSoundFingerprintCatalog
 
 	inline void AddEntryLocked(FingerprintEntry entry)
 	{
-		for (const auto& existing : s_entries)
+		const FingerprintKey key{ entry.hashA, entry.hashB };
+		const auto [begin, end] = s_registrationIndex.equal_range(key);
+		for (auto it = begin; it != end; ++it)
 		{
-			if (existing.hashA == entry.hashA && existing.hashB == entry.hashB &&
-				existing.channel == entry.channel && existing.path == entry.path &&
-				existing.trackName == entry.trackName)
+			const auto& existing = *it->second;
+			if (existing.channel == entry.channel && existing.path == entry.path && existing.trackName == entry.trackName)
 				return;
 		}
 
-		const FingerprintKey key{ entry.hashA, entry.hashB };
 		s_lookupIndex[key].emplace_back(ToLookupMatch(entry));
 		s_entries.emplace_back(std::move(entry));
+		s_registrationIndex.emplace(key, &s_entries.back());
 
 		constexpr size_t kMaxEntries = 32768;
-		if (s_entries.size() > kMaxEntries)
+		while (s_entries.size() > kMaxEntries)
 		{
-			const size_t removeCount = s_entries.size() - kMaxEntries;
-			for (size_t i = 0; i < removeCount; ++i)
-				RemoveLookupEntryLocked(s_entries[i]);
-			s_entries.erase(s_entries.begin(), s_entries.begin() + removeCount);
+			const auto& oldest = s_entries.front();
+			RemoveLookupEntryLocked(oldest);
+			const auto [oldBegin, oldEnd] = s_registrationIndex.equal_range({ oldest.hashA, oldest.hashB });
+			for (auto it = oldBegin; it != oldEnd; ++it)
+			{
+				if (it->second == &oldest)
+				{
+					s_registrationIndex.erase(it);
+					break;
+				}
+			}
+			s_entries.pop_front();
 		}
 	}
 

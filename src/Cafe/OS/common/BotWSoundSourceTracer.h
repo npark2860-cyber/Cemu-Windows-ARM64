@@ -3,6 +3,7 @@
 #include "Cafe/HW/MMU/MMU.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cctype>
 #include <cstdint>
@@ -41,6 +42,16 @@ namespace BotWSoundSourceTracer
 	inline std::unordered_map<uint32, std::string> s_openSoundFiles;
 	inline std::vector<ReadRange> s_readRanges;
 	inline uint64 s_sequence = 0;
+	struct RangeLookup
+	{
+		uint64 sequence{};
+		uint32 sampleBase{};
+		size_t index{};
+		bool valid{};
+	};
+	// Cache only the immutable read-range selection, never guest memory or a cue.
+	// Every RegisterRead changes s_sequence, including overlapping/reused addresses.
+	inline std::array<RangeLookup, 1024> s_rangeLookup{};
 	inline std::ofstream s_csv;
 	inline uint32 s_linesSinceFlush = 0;
 
@@ -180,22 +191,38 @@ namespace BotWSoundSourceTracer
 
 	inline std::optional<SourceMatch> FindSourceLocked(uint32 sampleBase)
 	{
-		for (auto it = s_readRanges.rbegin(); it != s_readRanges.rend(); ++it)
+		// Mix address bits: sample bases are commonly aligned. A collision only
+		// replaces an acceleration entry; exact address + sequence validate a hit.
+		const uint32 slot = (sampleBase ^ (sampleBase >> 10) ^ (sampleBase >> 20)) % s_rangeLookup.size();
+		auto& cached = s_rangeLookup[slot];
+		if (!cached.valid || cached.sequence != s_sequence || cached.sampleBase != sampleBase)
 		{
-			const uint64 end = static_cast<uint64>(it->start) + it->size;
-			if (sampleBase < it->start || sampleBase >= end)
-				continue;
-
-			SourceMatch match;
-			match.start = it->start;
-			match.size = it->size;
-			match.offset = sampleBase - it->start;
-			match.path = it->path;
-			if (ToLower(it->path).ends_with(".bars"))
-				match.trackName = ParseBarsTrackName(*it, sampleBase);
-			return match;
+			cached = { s_sequence, sampleBase, s_readRanges.size(), true };
+			for (size_t i = s_readRanges.size(); i > 0; --i)
+			{
+				const auto& range = s_readRanges[i - 1];
+				const uint64 end = static_cast<uint64>(range.start) + range.size;
+				if (sampleBase >= range.start && sampleBase < end)
+				{
+					cached.index = i - 1;
+					break;
+				}
+			}
 		}
-		return std::nullopt;
+		if (cached.index == s_readRanges.size())
+			return std::nullopt;
+
+		const auto& range = s_readRanges[cached.index];
+		SourceMatch match;
+		match.start = range.start;
+		match.size = range.size;
+		match.offset = sampleBase - range.start;
+		match.path = range.path;
+		// Re-read BARS metadata even on a cache hit: guest writes and completed
+		// partial reads can change track identity without changing sampleBase.
+		if (ToLower(range.path).ends_with(".bars"))
+			match.trackName = ParseBarsTrackName(range, sampleBase);
+		return match;
 	}
 
 	inline std::string CsvQuote(std::string_view input)

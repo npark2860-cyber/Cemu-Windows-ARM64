@@ -42,6 +42,17 @@ namespace snd_core
 
 	EnhancedSoundDrcState s_enhancedSoundDrcState[AX_MAX_VOICES]{};
 
+	struct EnhancedSoundHapticState
+	{
+		uint32 sampleBase{};
+		std::string hapticPath;
+		float gain{ 1.0f };
+		uint64_t playbackId{};
+		bool loop{};
+	};
+
+	EnhancedSoundHapticState s_enhancedSoundHapticState[AX_MAX_VOICES]{};
+
 	void AXApplyEnhancedSoundTvPolicy(AXCHMIX_DEPR* tvMix, EnhancedSoundRouter::Mode mode, uint8 tvVolumePercent)
 	{
 		if (mode != EnhancedSoundRouter::Mode::AddDRC)
@@ -383,6 +394,7 @@ namespace snd_core
 		AXVPBInternal_t* internal = GetInternalVoice(vpb);
 		uint32 index = GetVoiceIndex(vpb);
 		s_enhancedSoundDrcState[index] = {};
+		s_enhancedSoundHapticState[index] = {};
 		vpb->playbackState = 0;
 		vpb->sync = 0;
 		AXSetSyncFlag(vpb, AX_SYNCFLAG_PLAYBACKSTATE);
@@ -719,6 +731,7 @@ namespace snd_core
 			return;
 
 		auto& state = s_enhancedSoundDrcState[(sint32)vpb->index];
+		auto& hapticState = s_enhancedSoundHapticState[(sint32)vpb->index];
 		std::optional<EnhancedSoundRouter::RouteMatch> route;
 
 		if (GetConfig().enhanced_sound_experience && sampleBase != MPTR_NULL)
@@ -729,16 +742,14 @@ namespace snd_core
 			for (const auto& source : sources)
 			{
 				const auto resolved = EnhancedSoundRouter::Resolve(source.path, source.trackName);
-				if (!resolved || (resolved->mode != EnhancedSoundRouter::Mode::AddDRC &&
-					resolved->mode != EnhancedSoundRouter::Mode::SpatialDRC))
+				if (!resolved)
 				{
 					unanimousRoute = false;
 					break;
 				}
 				if (!route)
 					route = resolved;
-				else if (route->mode != resolved->mode || route->gain != resolved->gain ||
-					route->tvVolumePercent != resolved->tvVolumePercent)
+				else if (!EnhancedSoundRouter::Equivalent(*route, *resolved))
 				{
 					unanimousRoute = false;
 					break;
@@ -748,7 +759,45 @@ namespace snd_core
 				route.reset();
 		}
 
-		if (!route && !state.applied)
+		auto clearHapticRouteState = [&]()
+		{
+			if (hapticState.loop && hapticState.playbackId != 0)
+				EnhancedSoundDualSenseService::StopHaptics(hapticState.playbackId);
+			hapticState = {};
+		};
+
+		if (route && !route->hapticPath.empty())
+		{
+			const bool hapticChanged =
+				hapticState.sampleBase != sampleBase ||
+				hapticState.hapticPath != route->hapticPath ||
+				hapticState.gain != route->hapticGain ||
+				hapticState.loop != route->hapticLoop;
+			if (hapticChanged)
+			{
+				clearHapticRouteState();
+				uint64_t playbackId = 0;
+				std::string error;
+				const bool played = EnhancedSoundDualSenseService::PlayBnvib(
+					route->hapticPath, route->hapticGain, route->hapticLoop, &playbackId, &error);
+				hapticState.sampleBase = sampleBase;
+				hapticState.hapticPath = route->hapticPath;
+				hapticState.gain = route->hapticGain;
+				hapticState.loop = route->hapticLoop;
+				hapticState.playbackId = played ? playbackId : 0;
+				if (!played)
+					cemuLog_log(LogType::Force, "Enhanced haptic playback failed for '{}': {}", route->hapticPath, error);
+			}
+		}
+		else
+		{
+			clearHapticRouteState();
+		}
+
+		const EnhancedSoundRouter::RouteMatch* audioRoute =
+			(route && route->audioEnabled) ? &(*route) : nullptr;
+
+		if (!audioRoute && !state.applied)
 			return;
 
 		AXVPBInternal_t* internal = __AXVPBInternalVoiceArray + (sint32)vpb->index;
@@ -765,10 +814,10 @@ namespace snd_core
 			memcpy(nativeDrcMix, &internal->deviceMixDRC[0], sizeof(nativeDrcMix));
 		}
 
-		if (!route)
+		if (!audioRoute)
 		{
-			// A reused voice no longer matches. Restore the exact native TV and DRC0
-			// mixes captured before enhancement without reapplying our persistence hook.
+			// A reused voice no longer has an audio route. Restore the exact native
+			// TV and DRC0 mixes captured before enhancement.
 			state.internalMixWrite = true;
 			AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, nativeTvMix);
 			AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, nativeDrcMix);
@@ -779,23 +828,21 @@ namespace snd_core
 
 		AXCHMIX_DEPR enhancedTvMix[AX_TV_CHANNEL_COUNT * AX_BUS_COUNT];
 		memcpy(enhancedTvMix, nativeTvMix, sizeof(enhancedTvMix));
-		AXApplyEnhancedSoundTvPolicy(enhancedTvMix, route->mode, route->tvVolumePercent);
+		AXApplyEnhancedSoundTvPolicy(enhancedTvMix, audioRoute->mode, audioRoute->tvVolumePercent);
 
 		AXCHMIX_DEPR enhancedDrcMix[AX_DRC_CHANNEL_COUNT * AX_BUS_COUNT];
 		memcpy(enhancedDrcMix, nativeDrcMix, sizeof(enhancedDrcMix));
-		AXApplyEnhancedSoundDrcPolicy(enhancedDrcMix, nativeTvMix, route->mode, route->gain);
+		AXApplyEnhancedSoundDrcPolicy(enhancedDrcMix, nativeTvMix, audioRoute->mode, audioRoute->gain);
 
-		// These writes are ours. Native game-side TV/DRC writes that arrive later are
-		// captured by AXSetVoiceDeviceMix and the enhancement is reapplied there.
 		state.internalMixWrite = true;
 		AXSetVoiceDeviceMix(vpb, AX_DEV_TV, 0, enhancedTvMix);
 		AXSetVoiceDeviceMix(vpb, AX_DEV_DRC, 0, enhancedDrcMix);
 		state.internalMixWrite = false;
 		memcpy(state.nativeTv0, nativeTvMix, sizeof(state.nativeTv0));
 		memcpy(state.nativeDrc0, nativeDrcMix, sizeof(state.nativeDrc0));
-		state.routeGain = route->gain;
-		state.routeTvVolumePercent = route->tvVolumePercent;
-		state.routeMode = route->mode;
+		state.routeGain = audioRoute->gain;
+		state.routeTvVolumePercent = audioRoute->tvVolumePercent;
+		state.routeMode = audioRoute->mode;
 		state.applied = true;
 	}
 
@@ -1057,8 +1104,9 @@ namespace snd_core
 			return;
 		}
 		memcpy(&vpb->offsets, pbOffset, sizeof(AXPBOFFSET_t));
-		// BOTW and other games can reuse a running AX voice with a new sample.
-		// Re-resolve only in that reuse case; initial voices are resolved on start.
+		// A running voice can reuse even the same address after guest memory writes.
+		// Keep live source/fingerprint validation; the tracker/router cache only
+		// immutable lookup inputs. Initial voices are resolved on start.
 		if (vpb->playbackState == (uint32be)1)
 			AXApplyEnhancedSoundRoute(vpb, sampleBase);
 		sampleBase = memory_virtualToPhysical(sampleBase);
