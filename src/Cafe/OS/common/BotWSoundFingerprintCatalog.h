@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 namespace BotWSoundFingerprintCatalog
@@ -34,8 +35,28 @@ namespace BotWSoundFingerprintCatalog
 		std::string trackName;
 	};
 
+	struct FingerprintKey
+	{
+		uint64 hashA{};
+		uint64 hashB{};
+
+		bool operator==(const FingerprintKey&) const = default;
+	};
+
+	struct FingerprintKeyHasher
+	{
+		size_t operator()(const FingerprintKey& key) const
+		{
+			const size_t h1 = std::hash<uint64>{}(key.hashA);
+			const size_t h2 = std::hash<uint64>{}(key.hashB);
+			return h1 ^ (h2 + 0x9e3779b97f4a7c15ull + (h1 << 6) + (h1 >> 2));
+		}
+	};
+
 	inline std::mutex s_mutex;
 	inline std::vector<FingerprintEntry> s_entries;
+	// Lookup-only acceleration index. s_entries remains the source of truth.
+	inline std::unordered_map<FingerprintKey, std::vector<Match>, FingerprintKeyHasher> s_lookupIndex;
 
 	inline uint16 ReadU16(const uint8* p, bool bigEndian)
 	{
@@ -157,6 +178,36 @@ namespace BotWSoundFingerprintCatalog
 		return 0;
 	}
 
+	inline Match ToLookupMatch(const FingerprintEntry& entry)
+	{
+		Match match;
+		match.sourceStart = entry.sourceStart;
+		match.sourceSize = entry.sourceSize;
+		match.dataOffset = entry.dataOffset;
+		match.path = entry.path;
+		match.trackName = entry.trackName;
+		return match;
+	}
+
+	inline void RemoveLookupEntryLocked(const FingerprintEntry& entry)
+	{
+		const FingerprintKey key{ entry.hashA, entry.hashB };
+		auto bucketIt = s_lookupIndex.find(key);
+		if (bucketIt == s_lookupIndex.end())
+			return;
+
+		auto& bucket = bucketIt->second;
+		auto it = std::find_if(bucket.begin(), bucket.end(), [&](const Match& match) {
+			return match.sourceStart == entry.sourceStart && match.sourceSize == entry.sourceSize &&
+				match.dataOffset == entry.dataOffset && match.path == entry.path &&
+				match.trackName == entry.trackName;
+		});
+		if (it != bucket.end())
+			bucket.erase(it);
+		if (bucket.empty())
+			s_lookupIndex.erase(bucketIt);
+	}
+
 	inline void AddEntryLocked(FingerprintEntry entry)
 	{
 		for (const auto& existing : s_entries)
@@ -166,10 +217,19 @@ namespace BotWSoundFingerprintCatalog
 				existing.trackName == entry.trackName)
 				return;
 		}
+
+		const FingerprintKey key{ entry.hashA, entry.hashB };
+		s_lookupIndex[key].emplace_back(ToLookupMatch(entry));
 		s_entries.emplace_back(std::move(entry));
+
 		constexpr size_t kMaxEntries = 32768;
 		if (s_entries.size() > kMaxEntries)
-			s_entries.erase(s_entries.begin(), s_entries.begin() + (s_entries.size() - kMaxEntries));
+		{
+			const size_t removeCount = s_entries.size() - kMaxEntries;
+			for (size_t i = 0; i < removeCount; ++i)
+				RemoveLookupEntryLocked(s_entries[i]);
+			s_entries.erase(s_entries.begin(), s_entries.begin() + removeCount);
+		}
 	}
 
 	inline void RegisterBarsRead(std::string_view path, uint32 start, uint32 size)
@@ -300,10 +360,13 @@ namespace BotWSoundFingerprintCatalog
 		const uint64 hashB = Hash32(sample + 32);
 
 		std::scoped_lock lock(s_mutex);
-		for (auto it = s_entries.rbegin(); it != s_entries.rend(); ++it)
+		const auto bucketIt = s_lookupIndex.find(FingerprintKey{ hashA, hashB });
+		if (bucketIt == s_lookupIndex.end())
+			return matches;
+
+		const auto& bucket = bucketIt->second;
+		for (auto it = bucket.rbegin(); it != bucket.rend(); ++it)
 		{
-			if (it->hashA != hashA || it->hashB != hashB)
-				continue;
 			if (!expectedPath.empty() && it->path != expectedPath)
 				continue;
 
@@ -312,14 +375,7 @@ namespace BotWSoundFingerprintCatalog
 			});
 			if (duplicate)
 				continue;
-
-			Match match;
-			match.sourceStart = it->sourceStart;
-			match.sourceSize = it->sourceSize;
-			match.dataOffset = it->dataOffset;
-			match.path = it->path;
-			match.trackName = it->trackName;
-			matches.emplace_back(std::move(match));
+			matches.emplace_back(*it);
 		}
 		return matches;
 	}
