@@ -147,3 +147,4 @@ jobs:
           name: Cemu-EnhancedSound-CueCaptureV2-ARM64
           path: artifact/**
           if-no-files-found: error
+# build-trigger: fingerprint-index-sync-2026-09-19
