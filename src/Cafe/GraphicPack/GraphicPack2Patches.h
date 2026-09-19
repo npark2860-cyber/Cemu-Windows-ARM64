@@ -220,6 +220,26 @@ enum class GPCallbackType {
     Entry
 };
 
+enum class GPAdaptiveTriggerRawHand : uint8
+{
+	Right,
+	Left
+};
+
+struct GPAdaptiveTriggerRawSource
+{
+	std::string symbol;
+	GPAdaptiveTriggerRawHand hand{ GPAdaptiveTriggerRawHand::Right };
+};
+
+struct GPAdaptiveTriggerRawBinding
+{
+	MPTR stateAddress{};
+	GPAdaptiveTriggerRawHand hand{ GPAdaptiveTriggerRawHand::Right };
+	uint32 lastCommand{};
+	bool initialized{};
+};
+
 class PatchGroup
 {
 	friend class GraphicPack2;
@@ -265,6 +285,7 @@ private:
 	std::vector<uint32> list_moduleMatches;
 	std::vector<PatchEntry*> list_patches;
 	std::vector<std::pair<std::string, GPCallbackType>> list_callbacks;
+	std::vector<GPAdaptiveTriggerRawSource> list_adaptiveTriggerRaw;
 	uint32 codeCaveSize;
 	MEMPTR<void> codeCaveMem;
 	bool m_isApplied{};

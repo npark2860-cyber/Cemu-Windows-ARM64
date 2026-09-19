@@ -181,6 +181,7 @@ public:
 	static void WaitUntilReady(); // wait until all graphic packs finished activation
 
 	static void ActivateForCurrentTitle();
+	static void UpdateAdaptiveTriggerOutputs();
 	static void Reset();
 
 private:
@@ -291,6 +292,7 @@ private:
 	std::vector<PatchGroup*> list_patchGroups;
 	
 	std::vector<std::pair<MPTR, GPCallbackType>> m_callbacks;
+	std::vector<GPAdaptiveTriggerRawBinding> m_adaptiveTriggerRawBindings;
 
 	static std::recursive_mutex mtx_patches;
 	static std::vector<const RPLModule*> list_modules;

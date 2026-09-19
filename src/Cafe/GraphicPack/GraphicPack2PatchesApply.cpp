@@ -1,3 +1,4 @@
+#include "Cafe/OS/common/EnhancedSoundDualSenseService.h"
 #include "Cafe/GraphicPack/GraphicPack2.h"
 #include "Common/FileStream.h"
 #include "Cemu/PPCAssembler/ppcAssembler.h"
@@ -660,6 +661,19 @@ void GraphicPack2::ApplyPatchGroups(std::vector<PatchGroup*>& groups, const RPLM
                 return;
             }
 		}
+
+		for (const auto& source : patchGroup->list_adaptiveTriggerRaw)
+		{
+			auto it = patchContext.map_values.find(source.symbol);
+			if (it == patchContext.map_values.end())
+			{
+				patchContext.errorHandler.printError(
+					patchGroup, -1, fmt::format("Failed to resolve .adaptiveTriggerRaw symbol: {}", source.symbol));
+				patchContext.errorHandler.showStageErrorMessageBox();
+				return;
+			}
+			m_adaptiveTriggerRawBindings.push_back({ it->second, source.hand, 0, false });
+		}
 	}
 	// mark groups as applied
 	for (auto patchGroup : groups)
@@ -668,11 +682,13 @@ void GraphicPack2::ApplyPatchGroups(std::vector<PatchGroup*>& groups, const RPLM
 
 void GraphicPack2::UndoPatchGroups(std::vector<PatchGroup*>& groups, const RPLModule* rpl)
 {
+	bool removedAdaptiveTriggerRaw = false;
 	// restore original data
 	for (auto patchGroup : groups)
 	{
 		if (!patchGroup->isApplied())
 			continue;
+		removedAdaptiveTriggerRaw = removedAdaptiveTriggerRaw || !patchGroup->list_adaptiveTriggerRaw.empty();
 		for (auto& patch : patchGroup->list_patches)
 		{
 			PatchEntryInstruction* patchInstruction = dynamic_cast<PatchEntryInstruction*>(patch);
@@ -680,6 +696,11 @@ void GraphicPack2::UndoPatchGroups(std::vector<PatchGroup*>& groups, const RPLMo
 				continue;
 			patchInstruction->undoPatch();
 		}
+	}
+	if (removedAdaptiveTriggerRaw)
+	{
+		m_adaptiveTriggerRawBindings.clear();
+		EnhancedSoundDualSenseService::StopAdaptiveTrigger();
 	}
 	// mark groups as not applied
 	for (auto patchGroup : groups)

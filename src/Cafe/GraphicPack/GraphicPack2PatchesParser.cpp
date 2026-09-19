@@ -457,6 +457,47 @@ bool GraphicPack2::ParseCemuPatchesTxtInternal(MemStreamReader& patchesStream)
 			}
 		}
 
+		else if (parser.matchWordI(".adaptiveTriggerRaw"))
+		{
+			if (currentGroup == nullptr)
+			{
+				LogPatchesSyntaxError(lineNumber, "Specified '.adaptiveTriggerRaw' outside of a group");
+				CancelParsingPatches();
+				return false;
+			}
+
+			GPAdaptiveTriggerRawSource source;
+			if (parser.matchWordI("right"))
+				source.hand = GPAdaptiveTriggerRawHand::Right;
+			else if (parser.matchWordI("left"))
+				source.hand = GPAdaptiveTriggerRawHand::Left;
+			else
+			{
+				LogPatchesSyntaxError(lineNumber, "'.adaptiveTriggerRaw' hand must be 'right' or 'left'");
+				CancelParsingPatches();
+				return false;
+			}
+
+			const char* symbolStr;
+			sint32 symbolLen;
+			if (!parser.parseSymbolName(symbolStr, symbolLen))
+			{
+				LogPatchesSyntaxError(lineNumber, "'.adaptiveTriggerRaw' must reference a command symbol");
+				CancelParsingPatches();
+				return false;
+			}
+			source.symbol.assign(symbolStr, static_cast<size_t>(symbolLen));
+			parser.skipWhitespaces();
+			if (!parser.isEndOfString())
+			{
+				LogPatchesSyntaxError(lineNumber, "Unexpected characters after '.adaptiveTriggerRaw' symbol");
+				CancelParsingPatches();
+				return false;
+			}
+			currentGroup->list_adaptiveTriggerRaw.emplace_back(std::move(source));
+			continue;
+		}
+
 		// next we attempt to parse symbol assignment
 		// symbols can be labels or variables. The type is determined by what comes after the symbol name
 		// <symbolName> = <expression> defines a variable

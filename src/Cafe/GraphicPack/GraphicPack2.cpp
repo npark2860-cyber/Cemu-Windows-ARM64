@@ -1,5 +1,7 @@
 #include "Cafe/GraphicPack/GraphicPack2.h"
 #include "Cafe/OS/common/EnhancedSoundRouter.h"
+#include "Cafe/OS/common/EnhancedSoundDualSenseService.h"
+#include "Cafe/HW/MMU/MMU.h"
 #include "Cafe/Filesystem/fsc.h"
 #include "config/CemuConfig.h"
 #include "config/ActiveSettings.h"
@@ -15,6 +17,7 @@
 #include "Cafe/HW/Latte/Renderer/Renderer.h"
 #include "Cafe/HW/Latte/Renderer/RendererOuputShader.h"
 #include <cinttypes>
+#include <cmath>
 
 std::vector<GraphicPackPtr> GraphicPack2::s_graphic_packs;
 std::vector<GraphicPackPtr> GraphicPack2::s_active_graphic_packs;
@@ -235,12 +238,14 @@ void GraphicPack2::ActivateForCurrentTitle()
 
 void GraphicPack2::Reset()
 {
+	EnhancedSoundDualSenseService::StopAdaptiveTrigger();
 	s_active_graphic_packs.clear();
 	s_isReady = false;
 }
 
 void GraphicPack2::ClearGraphicPacks()
 {
+	EnhancedSoundDualSenseService::StopAdaptiveTrigger();
 	s_graphic_packs.clear();
 	s_active_graphic_packs.clear();
 }
@@ -249,6 +254,41 @@ void GraphicPack2::WaitUntilReady()
 {
 	while (!s_isReady)
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+}
+
+void GraphicPack2::UpdateAdaptiveTriggerOutputs()
+{
+	for (const auto& gp : s_active_graphic_packs)
+	{
+		for (auto& binding : gp->m_adaptiveTriggerRawBindings)
+		{
+			const uint32 command = memory_readU32(binding.stateAddress);
+			if (binding.initialized && binding.lastCommand == command)
+				continue;
+
+			binding.initialized = true;
+			binding.lastCommand = command;
+
+			if (command == 0)
+			{
+				EnhancedSoundDualSenseService::StopAdaptiveTrigger();
+				continue;
+			}
+
+			// Raw command layout is owned by the GraphicPack:
+			// bits 0..7   = SetBow22 StartZone byte
+			// bits 8..15  = SetBow22 SnapBack/force byte
+			// bits 16..31 = event sequence, ignored by Cemu but makes a repeated
+			//               identical tension a new command.
+			const uint8 startZoneMask = static_cast<uint8>(command & 0xFFu);
+			const uint8 forcePair = static_cast<uint8>((command >> 8) & 0xFFu);
+			const bool leftHand = binding.hand == GPAdaptiveTriggerRawHand::Left;
+			if (startZoneMask == 0)
+				EnhancedSoundDualSenseService::StopAdaptiveTrigger();
+			else
+				EnhancedSoundDualSenseService::ApplyAdaptiveTriggerBowRaw(startZoneMask, forcePair, leftHand);
+		}
+	}
 }
 
 std::unordered_map<std::string, GraphicPack2::PresetVar> GraphicPack2::ParsePresetVars(IniParser& rules) const
@@ -980,6 +1020,7 @@ void GraphicPack2::LoadEnhancedSoundRoutes()
 	fsRoutes->extract(routeData);
 	IniParser routes(routeData, _pathToUtf8(routesPath));
 	std::vector<EnhancedSoundRouter::RouteRule> routeRules;
+	const fs::path hapticRoot = routesPath.parent_path() / "haptics";
 
 	while (routes.NextSection())
 	{
@@ -993,73 +1034,130 @@ void GraphicPack2::LoadEnhancedSoundRoutes()
 		if (const auto track = routes.FindOption("track"))
 			rule.trackPattern = *track;
 
-		const auto mode = routes.FindOption("mode");
-		if (!mode)
+		bool hasAudioRoute = false;
+		if (const auto mode = routes.FindOption("mode"))
 		{
-			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because mode is missing", owner, section);
-			continue;
+			hasAudioRoute = true;
+			rule.audioEnabled = true;
+			if (boost::iequals(*mode, "add_drc"))
+				rule.mode = EnhancedSoundRouter::Mode::AddDRC;
+			else if (boost::iequals(*mode, "spatial_drc"))
+				rule.mode = EnhancedSoundRouter::Mode::SpatialDRC;
+			else
+			{
+				cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because mode must be add_drc or spatial_drc", owner, section);
+				continue;
+			}
+
+			if (const auto gain = routes.FindOption("gain"))
+			{
+				try
+				{
+					const auto parsed = std::stoul(std::string(*gain), nullptr, 0);
+					if (parsed > 0xFFFFu)
+						throw std::out_of_range("gain");
+					rule.gain = static_cast<uint16_t>(parsed);
+				}
+				catch (const std::exception&)
+				{
+					cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because gain is invalid", owner, section);
+					continue;
+				}
+			}
+
+			if (const auto tvVolume = routes.FindOption("tv_volume"))
+			{
+				try
+				{
+					const auto parsed = std::stoul(std::string(*tvVolume), nullptr, 10);
+					if (parsed > 100u)
+						throw std::out_of_range("tv_volume");
+					rule.tvVolumePercent = static_cast<uint8_t>(parsed);
+				}
+				catch (const std::exception&)
+				{
+					cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because tv_volume must be 0-100", owner, section);
+					continue;
+				}
+			}
 		}
-		if (boost::iequals(*mode, "add_drc"))
-			rule.mode = EnhancedSoundRouter::Mode::AddDRC;
-		else if (boost::iequals(*mode, "spatial_drc"))
-			rule.mode = EnhancedSoundRouter::Mode::SpatialDRC;
 		else
 		{
-			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because mode must be add_drc or spatial_drc", owner, section);
-			continue;
+			rule.audioEnabled = false;
 		}
 
-		if (const auto gain = routes.FindOption("gain"))
+		if (const auto haptic = routes.FindOption("haptic"))
 		{
-			try
+			fs::path relativePath = _utf8ToPath(std::string(*haptic)).lexically_normal();
+			bool invalidPath = relativePath.empty() || relativePath.is_absolute();
+			for (const auto& component : relativePath)
 			{
-				const auto parsed = std::stoul(std::string(*gain), nullptr, 0);
-				if (parsed > 0xFFFFu)
-					throw std::out_of_range("gain");
-				rule.gain = static_cast<uint16_t>(parsed);
+				if (component == "..")
+				{
+					invalidPath = true;
+					break;
+				}
 			}
-			catch (const std::exception&)
-			{
-				cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because gain is invalid", owner, section);
-				continue;
-			}
-		}
 
-		if (const auto tvVolume = routes.FindOption("tv_volume"))
-		{
-			try
+			if (invalidPath || !boost::iequals(_pathToUtf8(relativePath.extension()), ".bnvib"))
 			{
-				const auto parsed = std::stoul(std::string(*tvVolume), nullptr, 0);
-				if (parsed > 100u)
-					throw std::out_of_range("tv_volume");
-				rule.tvVolume = static_cast<uint8_t>(parsed);
+				cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" ignored invalid haptic path; use a relative .bnvib path under haptics/", owner, section);
 			}
-			catch (const std::exception&)
+			else
 			{
-				cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because tv_volume must be 0..100", owner, section);
-				continue;
+				const fs::path resolvedPath = (hapticRoot / relativePath).lexically_normal();
+				std::error_code ec;
+				if (!fs::is_regular_file(resolvedPath, ec))
+				{
+					cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" haptic asset not found: {}", owner, section, _pathToUtf8(resolvedPath));
+				}
+				else
+				{
+					rule.hapticPath = _pathToUtf8(resolvedPath);
+				}
 			}
-		}
 
-		if (const auto tvVolume = routes.FindOption("tv_volume"))
-		{
-			try
+			if (!rule.hapticPath.empty())
 			{
-				const auto parsed = std::stoul(std::string(*tvVolume), nullptr, 10);
-				if (parsed > 100u)
-					throw std::out_of_range("tv_volume");
-				rule.tvVolumePercent = static_cast<uint8_t>(parsed);
-			}
-			catch (const std::exception&)
-			{
-				cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because tv_volume must be 0-100", owner, section);
-				continue;
+				if (const auto hapticGain = routes.FindOption("haptic_gain"))
+				{
+					try
+					{
+						const float parsed = std::stof(std::string(*hapticGain));
+						if (!std::isfinite(parsed) || parsed < 0.0f || parsed > 1.0f)
+							throw std::out_of_range("haptic_gain");
+						rule.hapticGain = parsed;
+					}
+					catch (const std::exception&)
+					{
+						cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" ignored haptic because haptic_gain must be 0.0-1.0", owner, section);
+						rule.hapticPath.clear();
+					}
+				}
+
+				if (const auto hapticLoop = routes.FindOption("haptic_loop"))
+				{
+					if (boost::iequals(*hapticLoop, "true") || boost::iequals(*hapticLoop, "yes") || *hapticLoop == "1")
+						rule.hapticLoop = true;
+					else if (boost::iequals(*hapticLoop, "false") || boost::iequals(*hapticLoop, "no") || *hapticLoop == "0")
+						rule.hapticLoop = false;
+					else
+					{
+						cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" ignored haptic because haptic_loop must be true/false", owner, section);
+						rule.hapticPath.clear();
+					}
+				}
 			}
 		}
 
 		if (rule.sourcePattern.empty() && rule.trackPattern.empty())
 		{
 			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because source/track are both empty", owner, section);
+			continue;
+		}
+		if (!hasAudioRoute && rule.hapticPath.empty())
+		{
+			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because neither mode nor a valid haptic asset is present", owner, section);
 			continue;
 		}
 		routeRules.emplace_back(std::move(rule));
@@ -1212,6 +1310,8 @@ bool GraphicPack2::Deactivate()
 
 	EnhancedSoundRouter::UnregisterRouteTable(GetNormalizedPathString());
 
+	if (!m_adaptiveTriggerRawBindings.empty())
+		EnhancedSoundDualSenseService::StopAdaptiveTrigger();
 	UnloadPatches();
 
 	m_activated = false;
