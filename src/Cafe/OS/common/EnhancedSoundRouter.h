@@ -21,17 +21,25 @@ namespace EnhancedSoundRouter
 	{
 		std::string sourcePattern;
 		std::string trackPattern;
+		bool audioEnabled{ true };
 		Mode mode{ Mode::AddDRC };
 		uint16_t gain{ 0x6000 };
 		uint8_t tvVolume{ 50 };
 		uint8_t tvVolumePercent{ 50 };
+		std::string hapticPath;
+		float hapticGain{ 1.0f };
+		bool hapticLoop{};
 	};
 
 	struct RouteMatch
 	{
+		bool audioEnabled{ true };
 		Mode mode{ Mode::AddDRC };
 		uint16_t gain{ 0x6000 };
 		uint8_t tvVolumePercent{ 50 };
+		std::string hapticPath;
+		float hapticGain{ 1.0f };
+		bool hapticLoop{};
 	};
 
 	struct RouteTable
@@ -109,6 +117,17 @@ namespace EnhancedSoundRouter
 		return GlobMatch(pattern, trackName);
 	}
 
+	inline bool Equivalent(const RouteMatch& a, const RouteMatch& b)
+	{
+		return a.audioEnabled == b.audioEnabled &&
+			a.mode == b.mode &&
+			a.gain == b.gain &&
+			a.tvVolumePercent == b.tvVolumePercent &&
+			a.hapticPath == b.hapticPath &&
+			a.hapticGain == b.hapticGain &&
+			a.hapticLoop == b.hapticLoop;
+	}
+
 	inline void RegisterRouteTable(std::string owner, std::vector<RouteRule> rules)
 	{
 		std::scoped_lock lock(s_mutex);
@@ -136,7 +155,15 @@ namespace EnhancedSoundRouter
 			{
 				if (!MatchSource(rule.sourcePattern, sourcePath) || !MatchTrack(rule.trackPattern, trackName))
 					continue;
-				return RouteMatch{ rule.mode, rule.gain, rule.tvVolumePercent };
+				return RouteMatch{
+					rule.audioEnabled,
+					rule.mode,
+					rule.gain,
+					rule.tvVolumePercent,
+					rule.hapticPath,
+					rule.hapticGain,
+					rule.hapticLoop
+				};
 			}
 		}
 		return std::nullopt;

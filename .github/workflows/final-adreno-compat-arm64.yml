@@ -1,4 +1,4 @@
-name: "[Test] Cemu ARM64 SE Fingerprint Index"
+name: "[Test] Cemu ARM64 SE + GraphicPack Haptics"
 
 on:
   push:
@@ -30,6 +30,14 @@ jobs:
           if ("${{ github.ref }}" -ne "refs/heads/test/se-fingerprint-index-v1") {
             throw "Test workflow ran on unexpected ref: ${{ github.ref }}"
           }
+          foreach ($required in @(
+            'src/Cafe/OS/common/EnhancedHapticEngine.h',
+            'src/Cafe/OS/common/EnhancedSoundDualSenseService.h',
+            'src/Cafe/OS/common/EnhancedSoundRouter.h'
+          )) {
+            if (-not (Test-Path $required)) { throw "Missing Test haptic source: $required" }
+          }
+          Write-Host 'PASS: Test SE/GraphicPack haptic source verified'
 
       - name: Apply known-good pre-e834 runtime behavior
         shell: pwsh
@@ -191,5 +199,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-test-se-fingerprint-index-v1
+          name: cemu-arm64-test-se-haptics-gfxpack-v1
           path: ./bin/Cemu.exe
