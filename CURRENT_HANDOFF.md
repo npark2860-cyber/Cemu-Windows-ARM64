@@ -29,3 +29,19 @@ The pack does not overwrite a BOTW instruction hook, so it avoids the known FPS+
 The old sound-route adaptive trigger path is removed. Enhanced Sound, BNVIB, headset routing, CPU/Vulkan and fingerprint indexing are preserved.
 
 Validation: implementation/build/runtime validation pending.
+
+## Runtime finding — repeated bow shots
+
+User runtime test found:
+- equipping a bow produces the expected tension once;
+- after one pull/fire cycle, subsequent shots lose trigger tension until another state change.
+
+Cause:
+- generic service only resent `SetBow22` when the GraphicPack state revision changed;
+- the same equipped bow keeps the same 0..100 state, so the trigger effect was not re-armed after a completed pull/release cycle.
+
+Fix:
+- keep the GraphicPack state contract unchanged;
+- poll DualSense trigger analog at 8 ms while the service is active;
+- after a pull crosses 0.25 and returns to <= 0.05, resend the same `SetBow22` effect;
+- no BOTW-specific logic added to Cemu.
