@@ -1,4 +1,4 @@
-# CURRENT HANDOFF — [Test] SE / DualSense Haptics
+# CURRENT HANDOFF — [Test] SE / DualSense Haptics + Adaptive Trigger Redesign
 
 Canonical policy:
 - `BRANCH_POLICY.md`
@@ -14,63 +14,97 @@ GitHub is the only source of truth. Fetch actual HEADs before any write/build.
 - [Diagnostics+SE] `feat/enhanced-sound-experience-v1`
 - [Test] `test/se-fingerprint-index-v1`
 
-This branch is the current SE/haptic laboratory.
+This branch is the current SE / DualSense haptic / adaptive-trigger laboratory.
 
 Historical `test-haptic`, `Final+SE`, and `runtime-experiments-arm64` are reference/archive only unless the user explicitly reactivates them.
 
-## Current code state
+## Current Test baseline
 
-Validated test build/code HEAD:
-`9263604feff7d92cbe517cd75246ac97d15d853d`
+Code HEAD that produced the latest validated build:
+`63172d8a28e773cabbf14220e440823bd441a428`
 
-Run:
-`35425264365`
+Successful build:
+- run: `35443550198`
+- workflow: `[Test] Cemu ARM64 SE + GraphicPack Haptics + Bow Trigger`
+- result: SUCCESS
 
-Result:
-SUCCESS
+Documentation commits may advance the branch after that code HEAD. Always fetch the actual branch HEAD before work.
 
-Artifact:
-`cemu-arm64-test-se-fingerprint-index-v1`
+## Runtime result — BOTW bow prototype
 
-After that SUCCESS, only handoff/policy documentation commits were added. Fetch the actual current branch HEAD before work.
+User runtime validation:
 
-## Fingerprint optimization
+PASS:
+- bow-specific adaptive-trigger tension works;
+- changing between bows with different BaseAttack values produces different R2 resistance;
+- the existing strength calculation and DualSense output path are proven on real hardware.
 
-The test branch contains the indexed fingerprint lookup now promoted to Release+SE.
+LIMITATION:
+- aiming while moving is not reliably captured by the current implementation.
 
-Release+SE implementation promotion commit:
-`f2a5ad15b191d30eb2c870db7626518628cd90a2`
+Do not treat the current sound-triggered lifecycle as final.
 
-The implementation preserves existing matching semantics while avoiding a full scan of up to 32,768 entries on every lookup.
+## Current prototype architecture
 
-Do not remove/regress this optimization during haptic work.
+The present implementation is intentionally a prototype.
 
-## Current next work
+Current flow:
 
-DualSense haptic experiments.
+`GraphicPack sound_routes.ini`
+-> sound route match
+-> `adaptive_trigger = botw_bow` / `stop`
+-> `EnhancedSoundDualSenseService`
+-> `BotwBowAdaptiveTrigger.h`
+-> BOTW guest-memory read
+-> bow actor/BaseAttack resolution
+-> DualSense R2 effect
 
-User-approved exact mappings:
-- UI tab change -> `UIFadeIn.bnvib`
-- UI cursor movement -> `UiRollOver.bnvib`
-- elevator/lift -> `PresetDohoon.bnvib`
-- invalid/unavailable action -> `PresetPiton.bnvib`
+BOTW-specific source currently exists in:
+`src/Cafe/OS/common/BotwBowAdaptiveTrigger.h`
 
-Also planned:
-- Master Cycle / motorbike vibration
+It contains BOTW v208-specific addresses, pouch-list traversal, actor IDs, and the bow/BaseAttack table.
 
-The old `test-haptic` branch contains prior haptic engine/smoke work and may be consulted as historical reference, but do not fast-forward/merge it wholesale. Port only reviewed haptic pieces into this current Test branch.
+This must NOT become the pattern for adding games.
 
-## Important resolved issue
+## Architectural decision
 
-A temporary workaround that called `g_tvAudio->Play()` after DualSense route changes was reverted. The user determined there was no real global TV mute problem.
+The adaptive-trigger feature is being redesigned before further expansion.
 
-Do not re-add that workaround without new evidence.
+Required final separation:
 
-## Build discipline
+- Cemu core = generic adaptive-trigger/state engine only.
+- GraphicPack = game-specific state detection/configuration.
+- A new game must not require adding game-specific addresses, actor IDs, weapon tables, or title logic to Cemu source.
+- Persistent trigger state should follow relevant game-state changes such as equipped-item changes, not depend on a sound cue being emitted.
+- Audio routing / BNVIB haptic routing / adaptive-trigger state detection must remain separable.
 
-- check active/queued once;
-- one build only;
-- no automatic reruns;
-- no repeated polling;
-- preserve Release+SE CPU/Vulkan behavior;
-- haptic work stays on Test until runtime-validated and explicitly approved for promotion.
+Do NOT add BOTW polling to `EnhancedSoundDualSenseService` as the final solution.
+Do NOT add more `Botw*` cases to the core.
+Do NOT solve moving-aim by simply adding more sound cues.
+
+The exact generic GraphicPack interface is not yet approved.
+
+## Next design task
+
+Before coding, compare the smallest reusable designs for exposing game state from a GraphicPack to Cemu:
+
+1. declarative guest-memory watch/state rules;
+2. GraphicPack game-side patch/hook that exposes a simple value/event to a generic Cemu interface.
+
+Prefer the simplest design that handles BOTW cleanly without turning Cemu into a generic game-structure interpreter.
+
+The user must approve the architecture before implementation/build work resumes.
+
+## Preserve
+
+Do not regress:
+- indexed fingerprint lookup already promoted to Release+SE;
+- existing Enhanced Sound routing;
+- current BNVIB GraphicPack haptics;
+- DualSense audio/headset behavior;
+- Release+SE CPU/Vulkan behavior.
+
+Do not delete the current BOTW bow prototype until the generic replacement is built and runtime-validated.
+
+Detailed prototype history:
+`DEBUG_HISTORY_20260919_BOTW_BOW_ADAPTIVE_TRIGGER_PROTOTYPE.md`
