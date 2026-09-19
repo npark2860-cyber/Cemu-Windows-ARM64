@@ -2,84 +2,64 @@
 
 ## Symptom
 
-User reported a serious FPS drop in BOTW while using the SE build. It was initially unclear whether it was random or tied to a specific area.
+User reported a severe BOTW FPS drop on the SE build. It was initially unclear whether the slowdown was random or location-dependent.
 
-## Static finding
+## Static hot-path finding
 
-The main suspected hot path was the Enhanced Sound fingerprint resolver.
-
-Call path:
+Primary suspect:
 `AXApplyEnhancedSoundRoute()`
 -> `EnhancedSoundSourceTracker::ResolveSourceCandidates()`
 -> `BotWSoundFingerprintCatalog::FindMatches()`
 
-The old `FindMatches()` implementation:
-- hashes the first 64 bytes of the sample as two 32-byte hashes,
-- locks the catalog mutex,
-- reverse-scans `s_entries`,
-- `s_entries` is capped at 32,768 entries,
-- applies expectedPath and duplicate filtering after hash comparison.
+Old `FindMatches()` behavior:
+- hash 64 sample bytes as two 32-byte hashes;
+- lock fingerprint catalog mutex;
+- reverse-scan `s_entries`;
+- catalog limit up to 32,768 entries;
+- only then filter hash/path/duplicates.
 
-This can become expensive when many AX voices start/reuse in sound-heavy areas.
+This could create large CPU cost when many AX voices start/reuse in sound-heavy areas.
 
-## Safety requirement
-
-The optimization must not change matching semantics.
-
-Do NOT use a simple:
-`hash -> single entry`
-
-because:
-- identical sample hashes may legitimately map to multiple path/track candidates,
-- ambiguity handling is intentional,
-- expectedPath filtering must remain,
-- duplicate `path + trackName` suppression must remain.
-
-## Implemented test optimization
-
-Branch:
-`test/se-fingerprint-index-v1`
+## Implemented optimization
 
 Implementation commit:
 `fb2d7afeb4deb6929b164bdf97842465b971f901`
 
 Design:
-- keep `s_entries` unchanged as source of truth,
-- add `FingerprintKey { hashA, hashB }`,
-- add `unordered_map<FingerprintKey, vector<Match>> s_lookupIndex`,
-- populate lookup index when a unique source entry is accepted,
-- remove index entry when the bounded catalog evicts an entry,
-- `FindMatches()` now looks up only the hash bucket,
-- iterate bucket in reverse order to preserve newest-first behavior,
-- retain expectedPath filtering,
-- retain duplicate `path + trackName` suppression,
-- return multiple matches exactly as before.
+- `s_entries` remains source of truth;
+- add `FingerprintKey { hashA, hashB }`;
+- add lookup-only `unordered_map<FingerprintKey, vector<Match>>`;
+- add accepted entries to the hash bucket;
+- remove corresponding lookup data on bounded-catalog eviction;
+- `FindMatches()` checks only the matching hash bucket;
+- reverse iteration preserves newest-first order;
+- expectedPath filtering remains;
+- duplicate `path + trackName` suppression remains;
+- multiple candidate/ambiguity behavior remains.
 
-## Build validation
+Do not simplify to `hash -> single entry`.
 
-Test workflow change produced:
-- Test HEAD: `9263604feff7d92cbe517cd75246ac97d15d853d`
-- Run: `35425264365`
-- Result: SUCCESS
-- Artifact: `cemu-arm64-test-se-fingerprint-index-v1`
+## Validation and promotion
 
-## Promotion
+Validated Test build/code HEAD:
+`9263604feff7d92cbe517cd75246ac97d15d853d`
 
-User explicitly requested promotion and asked that the test branch remain for haptic work.
+Run:
+`35425264365`
 
-Promoted to:
-`Release+SE`
+Result:
+SUCCESS
 
-Promotion commit:
+Promoted to Release+SE:
 `f2a5ad15b191d30eb2c870db7626518628cd90a2`
 
-At handoff, Release+SE and Test use the same optimized fingerprint file blob:
+At promotion time, the optimized file blob matched between Release+SE and Test:
 `9cc256faf0e4c0880a8b7eee18486c5a1bf9e127`
 
-No post-promotion Release+SE artifact build has been run yet.
+Later commits on both branches may be policy/handoff documentation only. Always fetch current HEAD.
 
-## Separate resolved misunderstanding
+## Separate discarded hypothesis
 
-The user briefly suspected DualSense headset auto-detection was globally muting TV audio. A temporary TV `Play()` workaround was added, then the user determined the original behavior had actually been fine. The workaround was reverted.
+The user briefly thought DualSense headset auto-routing globally muted TV output. A temporary `g_tvAudio->Play()` workaround was added, then reverted when the user determined TV output had actually been normal.
 
-Do not connect future FPS diagnosis to that reverted TV workaround without new evidence.
+Do not connect future FPS work to that discarded workaround without new evidence.
