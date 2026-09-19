@@ -40,10 +40,6 @@ namespace EnhancedSoundRouter
 		uint8_t triggerMinPercent{ 40 };
 		uint8_t triggerMaxPercent{ 85 };
 		uint8_t triggerStartZone{ 2 };
-		AdaptiveTriggerAction adaptiveTrigger{ AdaptiveTriggerAction::None };
-		uint8_t triggerMinPercent{ 40 };
-		uint8_t triggerMaxPercent{ 85 };
-		uint8_t triggerStartZone{ 2 };
 	};
 
 	struct RouteMatch
@@ -55,6 +51,10 @@ namespace EnhancedSoundRouter
 		std::string hapticPath;
 		float hapticGain{ 1.0f };
 		bool hapticLoop{};
+		AdaptiveTriggerAction adaptiveTrigger{ AdaptiveTriggerAction::None };
+		uint8_t triggerMinPercent{ 40 };
+		uint8_t triggerMaxPercent{ 85 };
+		uint8_t triggerStartZone{ 2 };
 	};
 
 	struct RouteTable
