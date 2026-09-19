@@ -196,21 +196,17 @@ namespace EnhancedSoundDualSenseService
 
 		EnsureRunning();
 		std::scoped_lock lock(s_triggerMutex);
-		const bool changed =
-			!s_triggerRequest.active ||
-			s_triggerRequest.leftHand != leftHand ||
-			s_triggerRequest.startZoneMask != startZoneMask ||
-			s_triggerRequest.forcePair != forcePair ||
-			s_triggerRequest.tensionPercent != safeTension;
-		if (changed)
-		{
-			s_triggerRequest.active = true;
-			s_triggerRequest.leftHand = leftHand;
-			s_triggerRequest.startZoneMask = startZoneMask;
-			s_triggerRequest.forcePair = forcePair;
-			s_triggerRequest.tensionPercent = safeTension;
-			++s_triggerRevision;
-		}
+
+		// The GraphicPack owns gameplay state. A repeated non-zero request is a
+		// deliberate refresh of the same generic haptic effect, not a state
+		// transition to be deduplicated. This keeps Cemu unaware of firing,
+		// aiming, trigger release, weapon IDs, or any other game-specific state.
+		s_triggerRequest.active = true;
+		s_triggerRequest.leftHand = leftHand;
+		s_triggerRequest.startZoneMask = startZoneMask;
+		s_triggerRequest.forcePair = forcePair;
+		s_triggerRequest.tensionPercent = safeTension;
+		++s_triggerRevision;
 		return true;
 	}
 
@@ -233,14 +229,10 @@ namespace EnhancedSoundDualSenseService
 
 			using Clock = std::chrono::steady_clock;
 			auto nextDevicePoll = Clock::now();
-			auto nextInputPoll = Clock::now();
 			bool outputConfigured = false;
 			bool configuredHeadsetConnected = false;
 			bool configuredHapticsEnabled = false;
 			bool lastHeadsetConnected = false;
-			float lastLeftTriggerAnalog = 0.0f;
-			float lastRightTriggerAnalog = 0.0f;
-			bool triggerPulledSinceApply = false;
 			bool hadHaptics = false;
 			bool hadAdaptiveTrigger = false;
 			bool appliedTriggerLeftHand = false;
@@ -253,8 +245,17 @@ namespace EnhancedSoundDualSenseService
 				{
 					registry.PlugAndPlay(0.1f);
 					auto* polledGamepad = registry.GetLibrary(0);
-					if (!IsEligibleUsbDualSense(polledGamepad))
+					if (IsEligibleUsbDualSense(polledGamepad))
+					{
+						polledGamepad->UpdateInput(0.1f);
+						auto* ctx = polledGamepad->GetMutableDeviceContext();
+						const auto* input = ctx ? ctx->GetInputState() : nullptr;
+						lastHeadsetConnected = input && input->bHasPhoneConnected;
+					}
+					else
+					{
 						registry.RequestImmediateDetection();
+					}
 					nextDevicePoll = now + std::chrono::milliseconds(100);
 				}
 
@@ -264,9 +265,6 @@ namespace EnhancedSoundDualSenseService
 					outputConfigured = false;
 					hadHaptics = false;
 					hadAdaptiveTrigger = false;
-					triggerPulledSinceApply = false;
-					lastLeftTriggerAnalog = 0.0f;
-					lastRightTriggerAnalog = 0.0f;
 					appliedTriggerRevision = 0;
 					std::this_thread::sleep_for(std::chrono::milliseconds(2));
 					continue;
@@ -285,20 +283,6 @@ namespace EnhancedSoundDualSenseService
 					std::scoped_lock lock(s_triggerMutex);
 					triggerRequest = s_triggerRequest;
 					triggerRevision = s_triggerRevision;
-				}
-
-				if (now >= nextInputPoll)
-				{
-					gamepad->UpdateInput(0.008f);
-					auto* ctx = gamepad->GetMutableDeviceContext();
-					const auto* input = ctx ? ctx->GetInputState() : nullptr;
-					if (input)
-					{
-						lastHeadsetConnected = input->bHasPhoneConnected;
-						lastLeftTriggerAnalog = input->LeftTriggerAnalog;
-						lastRightTriggerAnalog = input->RightTriggerAnalog;
-					}
-					nextInputPoll = now + std::chrono::milliseconds(8);
 				}
 
 				const auto hapticFrame = s_hapticPlayer.Tick(now);
@@ -351,34 +335,6 @@ namespace EnhancedSoundDualSenseService
 						appliedTriggerLeftHand = triggerRequest.leftHand;
 						appliedTriggerRevision = triggerRevision;
 					}
-				}
-
-				// DualSense bow mode is a pull/release cycle. Re-arm the same
-				// GraphicPack-requested effect after the physical trigger returns
-				// to rest, even when the game-side tension value did not change.
-				if (triggerRequest.active)
-				{
-					const float triggerAnalog =
-						triggerRequest.leftHand ? lastLeftTriggerAnalog : lastRightTriggerAnalog;
-					if (triggerAnalog >= 0.25f)
-					{
-						triggerPulledSinceApply = true;
-					}
-					else if (triggerPulledSinceApply && triggerAnalog <= 0.05f &&
-						triggerRevision == appliedTriggerRevision)
-					{
-						if (auto* trigger = gamepad->GetIGamepadTrigger())
-						{
-							const auto hand = triggerRequest.leftHand ? EDSGamepadHand::Left : EDSGamepadHand::Right;
-							trigger->SetBow22(triggerRequest.startZoneMask, triggerRequest.forcePair, hand);
-							gamepad->UpdateOutput();
-							triggerPulledSinceApply = false;
-						}
-					}
-				}
-				else
-				{
-					triggerPulledSinceApply = false;
 				}
 
 				hadHaptics = hapticsEnabled;

@@ -10,38 +10,36 @@ Last runtime-validated prototype:
 - bow tension PASS
 - moving-aim lifecycle incomplete
 
-The BOTW-specific Cemu-core prototype is being replaced.
+Generic separation rule:
+`GraphicPack game state -> generic haptic request -> DualSense output`
 
-Generic design:
-`GX2SwapScanBuffers -> GraphicPack frame callback -> state 0..100 -> generic DualSense trigger output`
-
-Cemu owns only:
+Cemu binary owns only generic haptic/trigger transport:
 - `.callback frame <functionSymbol>`
 - `.adaptiveTrigger <right|left> bow <stateSymbol> [startZone]`
 - state 0 = off, 1..100 = tension percent
-- DualSense output
+- generic DualSense `SetBow22` output
 
-BOTW-specific addresses, equipped-bow lookup and bow mapping live only in:
+Cemu binary must NOT contain:
+- BOTW addresses, actor IDs, weapon tables
+- aim/fire/release detection
+- physical R2 polling for bow lifecycle
+- BOTW-specific re-arm state machines
+
+BOTW-specific state detection and bow mapping live only in:
 `enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/patch_AdaptiveTrigger.asm`
 
-The pack does not overwrite a BOTW instruction hook, so it avoids the known FPS++ frame-hook address collision.
+## Runtime finding — repeated shots
 
-The old sound-route adaptive trigger path is removed. Enhanced Sound, BNVIB, headset routing, CPU/Vulkan and fingerprint indexing are preserved.
-
-Validation: implementation/build/runtime validation pending.
-
-## Runtime finding — repeated bow shots
-
-User runtime test found:
-- equipping a bow produces the expected tension once;
-- after one pull/fire cycle, subsequent shots lose trigger tension until another state change.
+Observed:
+- first equipped-bow tension works;
+- subsequent shots lost tension.
 
 Cause:
-- generic service only resent `SetBow22` when the GraphicPack state revision changed;
-- the same equipped bow keeps the same 0..100 state, so the trigger effect was not re-armed after a completed pull/release cycle.
+- generic output deduplicated an unchanged 0..100 GraphicPack value, so identical persistent haptic requests were not resent.
 
-Fix:
-- keep the GraphicPack state contract unchanged;
-- poll DualSense trigger analog at 8 ms while the service is active;
-- after a pull crosses 0.25 and returns to <= 0.05, resend the same `SetBow22` effect;
-- no BOTW-specific logic added to Cemu.
+Correction:
+- do not inspect R2 in Cemu;
+- every non-zero GraphicPack frame request refreshes the same generic `SetBow22` output;
+- zero still means stop/off.
+
+This preserves the architectural boundary: GraphicPack owns gameplay; Cemu owns only generic haptic transport.
