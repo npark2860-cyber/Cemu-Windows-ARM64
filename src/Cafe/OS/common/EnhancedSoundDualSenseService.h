@@ -3,6 +3,7 @@
 #ifdef _WIN32
 
 #include "config/CemuConfig.h"
+#include "audio/IAudioAPI.h"
 #include "GCore/Interfaces/IPlatformHardware.h"
 #include "GCore/Templates/TBasicDeviceRegistry.h"
 #include "GCore/Types/Structs/Context/DeviceContext.h"
@@ -12,6 +13,7 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <thread>
 
 namespace EnhancedSoundDualSenseService
@@ -72,6 +74,14 @@ namespace EnhancedSoundDualSenseService
 			0,                         // rumble reduction
 			0);                        // trigger reduction
 		gamepad->UpdateOutput();
+
+		// DualSense audio-route changes must never leave Cemu's TV stream stopped.
+		// Play() is idempotent on all supported Cemu audio backends.
+		{
+			std::shared_lock lock(g_audioMutex);
+			if (g_tvAudio)
+				g_tvAudio->Play();
+		}
 		return true;
 	}
 
