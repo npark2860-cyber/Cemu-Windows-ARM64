@@ -8,6 +8,7 @@
 
 #ifdef _WIN32
 
+#include "Cafe/OS/common/BotwBowAdaptiveTrigger.h"
 #include "config/CemuConfig.h"
 #include "GCore/Interfaces/IPlatformHardware.h"
 #include "GCore/Templates/TBasicDeviceRegistry.h"
@@ -58,6 +59,19 @@ namespace EnhancedSoundDualSenseService
 	inline std::mutex s_playbackMutex;
 	inline uint64_t s_nextPlaybackId{ 1 };
 	inline uint64_t s_activePlaybackId{};
+
+	struct AdaptiveTriggerRequest
+	{
+		bool active{};
+		uint8_t startZoneMask{};
+		uint8_t forcePair{};
+		uint8_t tensionPercent{};
+		std::string actorId;
+	};
+
+	inline std::mutex s_triggerMutex;
+	inline AdaptiveTriggerRequest s_triggerRequest;
+	inline uint64_t s_triggerRevision{};
 
 	inline bool IsEligibleUsbDualSense(IGamepadBase* gamepad)
 	{
@@ -155,6 +169,48 @@ namespace EnhancedSoundDualSenseService
 		s_hapticPlayer.Stop();
 	}
 
+
+	inline bool ApplyBotwBowTrigger(uint8_t minTensionPercent = 40, uint8_t maxTensionPercent = 85,
+		uint8_t startZone = 2, std::string* error = nullptr)
+	{
+		const auto profile = BotwBowAdaptiveTrigger::ResolveEquippedBow(
+			minTensionPercent, maxTensionPercent, startZone);
+		if (!profile)
+		{
+			if (error)
+				*error = "BOTW v208 equipped bow could not be resolved";
+			return false;
+		}
+
+		EnsureRunning();
+		std::scoped_lock lock(s_triggerMutex);
+		const bool changed =
+			!s_triggerRequest.active ||
+			s_triggerRequest.startZoneMask != profile->startZoneMask ||
+			s_triggerRequest.forcePair != profile->forcePair ||
+			s_triggerRequest.tensionPercent != profile->tensionPercent ||
+			s_triggerRequest.actorId != profile->actorId;
+		if (changed)
+		{
+			s_triggerRequest.active = true;
+			s_triggerRequest.startZoneMask = profile->startZoneMask;
+			s_triggerRequest.forcePair = profile->forcePair;
+			s_triggerRequest.tensionPercent = profile->tensionPercent;
+			s_triggerRequest.actorId = profile->actorId;
+			++s_triggerRevision;
+		}
+		return true;
+	}
+
+	inline void StopAdaptiveTrigger()
+	{
+		std::scoped_lock lock(s_triggerMutex);
+		if (!s_triggerRequest.active)
+			return;
+		s_triggerRequest = {};
+		++s_triggerRevision;
+	}
+
 	inline void Worker(std::stop_token stopToken)
 	{
 		try
@@ -170,6 +226,8 @@ namespace EnhancedSoundDualSenseService
 			bool configuredHapticsEnabled = false;
 			bool lastHeadsetConnected = false;
 			bool hadHaptics = false;
+			bool hadAdaptiveTrigger = false;
+			uint64_t appliedTriggerRevision = 0;
 
 			while (!stopToken.stop_requested())
 			{
@@ -197,16 +255,32 @@ namespace EnhancedSoundDualSenseService
 				{
 					outputConfigured = false;
 					hadHaptics = false;
+					hadAdaptiveTrigger = false;
+					appliedTriggerRevision = 0;
 					std::this_thread::sleep_for(std::chrono::milliseconds(2));
 					continue;
 				}
 
-				if (!GetConfig().enhanced_sound_experience && s_hapticPlayer.IsActive())
-					StopHaptics();
+				if (!GetConfig().enhanced_sound_experience)
+				{
+					if (s_hapticPlayer.IsActive())
+						StopHaptics();
+					StopAdaptiveTrigger();
+				}
+
+				AdaptiveTriggerRequest triggerRequest;
+				uint64_t triggerRevision;
+				{
+					std::scoped_lock lock(s_triggerMutex);
+					triggerRequest = s_triggerRequest;
+					triggerRevision = s_triggerRevision;
+				}
 
 				const auto hapticFrame = s_hapticPlayer.Tick(now);
 				const bool hapticsEnabled = s_hapticPlayer.IsActive() || hapticFrame.has_value();
-				const bool serviceEnabled = GetConfig().enhanced_sound_experience || hapticsEnabled || hadHaptics;
+				const bool serviceEnabled =
+					GetConfig().enhanced_sound_experience || hapticsEnabled || hadHaptics ||
+					triggerRequest.active || hadAdaptiveTrigger;
 
 				if (serviceEnabled &&
 					(!outputConfigured ||
@@ -238,7 +312,21 @@ namespace EnhancedSoundDualSenseService
 					}
 				}
 
+				if (triggerRevision != appliedTriggerRevision)
+				{
+					if (auto* trigger = gamepad->GetIGamepadTrigger())
+					{
+						if (triggerRequest.active)
+							trigger->SetBow22(triggerRequest.startZoneMask, triggerRequest.forcePair, EDSGamepadHand::Right);
+						else
+							trigger->StopTrigger(EDSGamepadHand::Right);
+						gamepad->UpdateOutput();
+						appliedTriggerRevision = triggerRevision;
+					}
+				}
+
 				hadHaptics = hapticsEnabled;
+				hadAdaptiveTrigger = triggerRequest.active;
 				std::this_thread::sleep_for(std::chrono::milliseconds(2));
 			}
 		}
@@ -268,5 +356,12 @@ namespace EnhancedSoundDualSenseService
 		return false;
 	}
 	inline void StopHaptics(uint64_t = 0) {}
+	inline bool ApplyBotwBowTrigger(uint8_t = 40, uint8_t = 85, uint8_t = 2, std::string* error = nullptr)
+	{
+		if (error)
+			*error = "DualSense adaptive triggers are only available on Windows";
+		return false;
+	}
+	inline void StopAdaptiveTrigger() {}
 }
 #endif

@@ -1,4 +1,4 @@
-name: "[Test] Cemu ARM64 SE + GraphicPack Haptics"
+name: "[Test] Cemu ARM64 SE + GraphicPack Haptics + Bow Trigger"
 
 on:
   push:
@@ -32,6 +32,7 @@ jobs:
           }
           foreach ($required in @(
             'src/Cafe/OS/common/EnhancedHapticEngine.h',
+            'src/Cafe/OS/common/BotwBowAdaptiveTrigger.h',
             'src/Cafe/OS/common/EnhancedSoundDualSenseService.h',
             'src/Cafe/OS/common/EnhancedSoundRouter.h'
           )) {
@@ -199,5 +200,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-test-se-haptics-gfxpack-v1
+          name: cemu-arm64-test-se-haptics-bow-trigger-v1
           path: ./bin/Cemu.exe

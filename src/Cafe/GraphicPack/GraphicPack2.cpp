@@ -1111,14 +1111,83 @@ void GraphicPack2::LoadEnhancedSoundRoutes()
 			}
 		}
 
+
+		if (const auto adaptiveTrigger = routes.FindOption("adaptive_trigger"))
+		{
+			if (boost::iequals(*adaptiveTrigger, "botw_bow"))
+			{
+				rule.adaptiveTrigger = EnhancedSoundRouter::AdaptiveTriggerAction::BotwBow;
+				bool triggerValid = true;
+
+				auto parsePercent = [&](std::string_view optionName, uint8_t& outValue)
+				{
+					if (const auto value = routes.FindOption(optionName))
+					{
+						try
+						{
+							const auto parsed = std::stoul(std::string(*value), nullptr, 10);
+							if (parsed > 100u)
+								throw std::out_of_range("trigger percent");
+							outValue = static_cast<uint8_t>(parsed);
+						}
+						catch (const std::exception&)
+						{
+							triggerValid = false;
+						}
+					}
+				};
+
+				parsePercent("trigger_min", rule.triggerMinPercent);
+				parsePercent("trigger_max", rule.triggerMaxPercent);
+				if (rule.triggerMinPercent > rule.triggerMaxPercent)
+					triggerValid = false;
+
+				if (const auto startZone = routes.FindOption("trigger_start_zone"))
+				{
+					try
+					{
+						const auto parsed = std::stoul(std::string(*startZone), nullptr, 10);
+						if (parsed > 7u)
+							throw std::out_of_range("trigger_start_zone");
+						rule.triggerStartZone = static_cast<uint8_t>(parsed);
+					}
+					catch (const std::exception&)
+					{
+						triggerValid = false;
+					}
+				}
+
+				if (!triggerValid)
+				{
+					cemuLog_log(LogType::Force,
+						"Graphic pack \"{}\": sound_routes.ini section \"{}\" ignored adaptive trigger because trigger_min/max must be 0-100, min <= max, and trigger_start_zone must be 0-7",
+						owner, section);
+					rule.adaptiveTrigger = EnhancedSoundRouter::AdaptiveTriggerAction::None;
+				}
+			}
+			else if (boost::iequals(*adaptiveTrigger, "stop"))
+			{
+				rule.adaptiveTrigger = EnhancedSoundRouter::AdaptiveTriggerAction::Stop;
+			}
+			else
+			{
+				cemuLog_log(LogType::Force,
+					"Graphic pack \"{}\": sound_routes.ini section \"{}\" ignored adaptive_trigger; use botw_bow or stop",
+					owner, section);
+			}
+		}
+
 		if (rule.sourcePattern.empty() && rule.trackPattern.empty())
 		{
 			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because source/track are both empty", owner, section);
 			continue;
 		}
-		if (!hasAudioRoute && rule.hapticPath.empty())
+		if (!hasAudioRoute && rule.hapticPath.empty() &&
+			rule.adaptiveTrigger == EnhancedSoundRouter::AdaptiveTriggerAction::None)
 		{
-			cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because neither mode nor a valid haptic asset is present", owner, section);
+			cemuLog_log(LogType::Force,
+				"Graphic pack \"{}\": sound_routes.ini section \"{}\" skipped because neither mode, a valid haptic asset, nor an adaptive trigger action is present",
+				owner, section);
 			continue;
 		}
 		routeRules.emplace_back(std::move(rule));
