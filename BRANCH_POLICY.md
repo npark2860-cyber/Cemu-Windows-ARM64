@@ -2,96 +2,109 @@
 
 This document is the canonical branch-role and promotion policy for this repository.
 
-If an older handoff/debug document conflicts with this file about which branch to use or how a verified fix is promoted, **this file wins**. Actual GitHub branch/HEAD/workflow/source remains the source of truth for the implementation currently present on each branch.
+GitHub is the only source of truth. Before every write, build, promotion, or artifact handoff, fetch the actual branch HEAD and inspect the actual source/workflow on that branch.
 
-## Exactly three active work branches
+## Five active source-of-truth branches
 
-Only these three branches are active for ongoing work:
+There are exactly five active source-of-truth roles.
 
 1. **[Release] `final-adreno-compat-arm64`**
-   - Production/release baseline only.
-   - Contains only verified behavior fixes and release features.
-   - Must not contain diagnostic-only UI, checkbox persistence, logging-only instrumentation, or unverified experiments.
-   - Release artifacts are produced only from this branch.
-   - The active custom workflow must be `.github/workflows/final-adreno-compat-arm64.yml` and must identify itself as `[Release]`.
+   - Stock production/release baseline.
+   - Verified ARM64/Adreno fixes and release features only.
+   - No Enhanced Sound, CueCapture, haptic experiments, or diagnostic-only instrumentation.
 
 2. **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**
-   - Must always represent **current Release + diagnostic instrumentation/UI**.
-   - Every fix that has been verified and promoted to Release must also be applied here.
-   - Diagnostic-only logging/UI/persistence may exist here and must not be promoted to Release unless explicitly requested.
-   - This is the normal branch for reproducing and investigating failures with switchable diagnostics.
-   - The active custom workflow must be `.github/workflows/diagnostics-arm64.yml` and must identify itself as `[Diagnostics]`.
+   - Diagnostic counterpart of the stock Release line.
+   - Used for non-SE investigation/instrumentation.
+   - Diagnostic-only UI/logging must never be promoted wholesale into Release.
 
-3. **[Test] `runtime-experiments-arm64`**
-   - Must normally start from the current Diagnostics baseline.
-   - Behavior-changing experiments are performed here only.
-   - Change one variable at a time.
-   - An experiment is not a FIX until static verification, CI, and required runtime validation pass.
-   - The active custom workflow must be `.github/workflows/runtime-experiments-arm64.yml` and must identify itself as `[Test]`.
+3. **[Release+SE] `Release+SE`**
+   - Production Enhanced Sound line.
+   - Based on Release plus runtime-verified SE features.
+   - This is the promotion target for verified SE and haptic features.
+   - CPU/Vulkan behavior must remain aligned with the protected Release baseline unless the user explicitly requests otherwise.
 
-All other historical branches are **read-only reference/archive branches** and are not valid targets for new work unless the user explicitly requests historical inspection. `main` is outside this workflow and must not be touched.
+4. **[Diagnostics+SE] `feat/enhanced-sound-experience-v1`**
+   - Enhanced Sound diagnostic line.
+   - Contains SE diagnostic tooling including CueCaptureV2.
+   - Used to investigate route/fingerprint/cue issues that need instrumentation.
+   - Diagnostic instrumentation must not be promoted wholesale into Release+SE.
 
-## Non-negotiable branch-role isolation
+5. **[Test] `test/se-fingerprint-index-v1`**
+   - Current SE/haptic experiment line.
+   - Based on Release+SE, not on the stock Diagnostics line.
+   - Keep verified Release+SE behavior intact and change one experimental variable at a time.
+   - Current next use: DualSense haptic experiments.
 
-Before any write or CI run, determine the role first: Release, Diagnostics, or Test.
+## Historical/reference branches
 
-- Never fast-forward or merge Diagnostics/Test wholesale into Release.
-- Never run a Release workflow from Diagnostics or Test.
-- Never run a Diagnostics workflow from Release or Test.
-- Never run a Test workflow from Release or Diagnostics.
-- Never hand an artifact to the user unless branch + HEAD + workflow name + artifact name all match the intended role.
-- If any branch contains another role's active custom workflow, treat that as repository corruption and fix it before further work.
+The following are not active source-of-truth branches unless the user explicitly reactivates them:
 
-## Promotion flow
+- `Final+SE`
+- `test-haptic`
+- `runtime-experiments-arm64`
+- old `diag/*`, `exp/*`, `test-*`, bisect, archive and temporary branches
+- `main`
 
-The fixed workflow is:
+Build/helper branches such as `build/release-se-once` are build carriers only. They are never source of truth.
 
-**Diagnostics baseline -> Test one-variable experiment -> runtime-verified FIX -> promote the same FIX to Release and Diagnostics -> reset/advance Test from updated Diagnostics baseline**
+## Promotion flows
 
-When a Test change is verified as a FIX:
+### Stock / non-SE fixes
 
-1. Apply **only the verified FIX** to `final-adreno-compat-arm64`.
-2. Apply the **same verified FIX** to `fix/arm64-diagnostics-ui-artifact-gate`.
-3. Keep diagnostic-only code exclusive to the Diagnostics branch.
-4. After both are synchronized, move/reset `runtime-experiments-arm64` to the updated Diagnostics baseline before the next experiment.
+Diagnostics -> runtime verification as appropriate -> Release.
 
-Do **not** fast-forward or merge an entire Diagnostics/Test branch into Release if that would carry diagnostic or experimental commits. Promote selected FIX commits/patches only.
+If a stock fix affects code shared by SE builds, sync only the verified fix into Release+SE and Diagnostics+SE. Do not merge entire diagnostic branches.
 
-## Artifact identity rules
+### Enhanced Sound fixes
 
-- **Release artifact**: only from `final-adreno-compat-arm64`, artifact name `cemu-arm64-release`.
-- **Diagnostics artifact**: only from `fix/arm64-diagnostics-ui-artifact-gate`, artifact name `cemu-arm64-diagnostics`.
-- **Test artifact**: only from `runtime-experiments-arm64`, artifact name `cemu-arm64-test`.
-- Never call a Diagnostics or Test artifact a release build.
-- Before handing an artifact to the user, verify branch, HEAD, workflow run, and artifact source.
+Diagnostics+SE and/or Test -> runtime verification -> Release+SE.
 
-## Mandatory no-regression constraints
+After promotion:
+- keep Diagnostics+SE compatible with the promoted SE behavior when that diagnostic line is next used;
+- advance/rebase the Test line from the current Release+SE baseline before a new unrelated experiment when necessary.
 
-The following are protected and must survive every promotion unless the user explicitly changes policy:
+### Haptic experiments
 
+All new haptic behavior is developed on [Test] first.
+
+A haptic experiment may be promoted to Release+SE only after:
+1. static/build validation,
+2. user runtime validation,
+3. explicit user approval to promote.
+
+Do not put haptic experiments directly into stock Release or stock Diagnostics.
+
+## Non-negotiable branch isolation
+
+- Never fast-forward or merge Diagnostics/Diagnostics+SE/Test wholesale into a release branch when that would carry diagnostic or experimental code.
+- Promote only the verified patch/change.
+- Never call a Test or Diagnostics artifact a release build.
+- Verify branch + HEAD + workflow + artifact identity before handing off a binary.
 - Do not touch `main`.
-- Keep Bayonetta 2 / Star Fox Zero / Xenoblade Chronicles X `vkGetQueryPoolResults` direct query readback FIX for all JPN / USA / EUR application title IDs.
-- Protected application title IDs:
-  - Bayonetta 2: `00050000-1011B900` JPN, `00050000-10172600` USA, `00050000-10172700` EUR.
-  - Star Fox Zero: `00050000-101AFF00` JPN, `00050000-101B0400` USA, `00050000-101B0500` EUR.
-  - Xenoblade Chronicles X: `00050000-10116100` JPN, `00050000-101C4D00` USA, `00050000-101C4C00` EUR.
-- Do not promote the historical XCX `0 -> 1 force-visible` experiment into Release or Diagnostics.
-- Keep VS `DEFAULT_VAL` synthesize/linkage FIX.
-- Keep FidelityFX FSR1 EASU + RCAS.
-- Keep existing Adreno / pre-e834 verified fixes.
-- Do not repeat already excluded query experiments.
-- Do not reintroduce previously rejected workaround experiments as fixes without new evidence.
+- Do not silently substitute an older branch-role scheme for these five active roles.
 
-## Start-of-work verification
+## Protected baseline behavior
 
-Before any code change or CI run:
+Unless the user explicitly changes policy, preserve:
 
-1. Identify which of the three roles the requested work belongs to.
-2. Fetch the actual branch HEAD.
-3. Inspect the actual workflow/source on that branch.
-4. Confirm protected fixes are present.
-5. Confirm the branch does not contain another role's active custom workflow.
-6. Make the smallest role-appropriate change only.
-7. Run static role guards before CI.
+- Bayonetta 2 / Star Fox Zero / Xenoblade Chronicles X `vkGetQueryPoolResults` direct query readback FIX for all JPN / USA / EUR application title IDs.
+- Bayonetta 2: `00050000-1011B900`, `00050000-10172600`, `00050000-10172700`.
+- Star Fox Zero: `00050000-101AFF00`, `00050000-101B0400`, `00050000-101B0500`.
+- Xenoblade Chronicles X: `00050000-10116100`, `00050000-101C4D00`, `00050000-101C4C00`.
+- Do not promote the historical XCX `0 -> 1 force-visible` experiment.
+- VS `DEFAULT_VAL` synthesize/linkage FIX.
+- FidelityFX FSR1 EASU + RCAS.
+- Existing verified Adreno / pre-e834 behavior.
+- Do not repeat already rejected experiments without new evidence.
 
-If a handoff document is stale, update the document instead of following the stale branch/HEAD.
+## Build discipline
+
+Before starting CI:
+1. verify the intended role and actual HEAD;
+2. inspect active/queued runs once;
+3. trigger one build only;
+4. do not auto-rerun failed/cancelled work;
+5. do not repeatedly poll unless needed for a direct user request.
+
+For Release+SE, `build/release-se-once` may be used as a one-shot build carrier when the release workflow guard prevents direct building. The carrier must contain the exact intended Release+SE source and must not become a source-of-truth branch.
