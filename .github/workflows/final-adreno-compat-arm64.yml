@@ -1,4 +1,4 @@
-name: "[Test] Cemu ARM64 SE + Generic GraphicPack Adaptive Trigger"
+name: "[Test] Cemu ARM64 Release+SE + Haptics + Raw Trigger"
 
 on:
   push:
@@ -34,12 +34,11 @@ jobs:
             'src/Cafe/OS/common/EnhancedHapticEngine.h',
             'src/Cafe/OS/common/EnhancedSoundDualSenseService.h',
             'src/Cafe/OS/common/EnhancedSoundRouter.h',
-            'src/Cafe/GraphicPack/GraphicPack2PatchesParser.cpp',
-            'enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/patch_AdaptiveTrigger.asm'
+            'src/Cafe/GraphicPack/GraphicPack2PatchesParser.cpp'
           )) {
             if (-not (Test-Path $required)) { throw "Missing Test haptic source: $required" }
           }
-          Write-Host 'PASS: Test SE/GraphicPack haptic source verified'
+          Write-Host 'PASS: Release+SE + BNVIB haptics + raw adaptive-trigger bridge verified'
 
       - name: Apply known-good pre-e834 runtime behavior
         shell: pwsh
@@ -196,17 +195,10 @@ jobs:
           Write-Host 'PASS: release binary contains no custom diagnostics markers'
 
       - name: Prepare artifact
-        shell: pwsh
-        run: |
-          Rename-Item bin/Cemu_release.exe Cemu.exe
-          $pack = 'bin/graphicPacks/BreathOfTheWild/EnhancedSoundExperience'
-          New-Item -ItemType Directory -Force -Path $pack | Out-Null
-          Copy-Item 'enhanced_sound_policies/BreathOfTheWild/EnhancedSoundExperience/*' $pack -Recurse -Force
+        run: Rename-Item bin/Cemu_release.exe Cemu.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: cemu-arm64-test-se-generic-adaptive-trigger-v1
-          path: |
-            ./bin/Cemu.exe
-            ./bin/graphicPacks/BreathOfTheWild/EnhancedSoundExperience
+          name: cemu-arm64-test-release-se-haptics-raw-trigger-v1
+          path: ./bin/Cemu.exe

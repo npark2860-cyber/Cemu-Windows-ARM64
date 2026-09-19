@@ -87,7 +87,7 @@ void gx2Export_GX2SwapScanBuffers(PPCInterpreter_t* hCPU)
 		GX2::GX2WaitForFlip();
 	}
 
-	GraphicPack2::ExecuteFrameCallbacks();
+	GraphicPack2::UpdateAdaptiveTriggerOutputs();
 	osLib_returnFromFunction(hCPU, 0);
 }
 

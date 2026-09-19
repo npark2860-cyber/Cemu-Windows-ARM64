@@ -217,35 +217,27 @@ private:
 };
 
 enum class GPCallbackType {
-	Entry,
-	Frame
+    Entry
 };
 
-enum class GPAdaptiveTriggerHand : uint8
+enum class GPAdaptiveTriggerRawHand : uint8
 {
 	Right,
 	Left
 };
 
-enum class GPAdaptiveTriggerEffect : uint8
-{
-	Bow
-};
-
-struct GPAdaptiveTriggerSource
+struct GPAdaptiveTriggerRawSource
 {
 	std::string symbol;
-	GPAdaptiveTriggerHand hand{ GPAdaptiveTriggerHand::Right };
-	GPAdaptiveTriggerEffect effect{ GPAdaptiveTriggerEffect::Bow };
-	uint8 startZone{ 2 };
+	GPAdaptiveTriggerRawHand hand{ GPAdaptiveTriggerRawHand::Right };
 };
 
-struct GPAdaptiveTriggerBinding
+struct GPAdaptiveTriggerRawBinding
 {
 	MPTR stateAddress{};
-	GPAdaptiveTriggerHand hand{ GPAdaptiveTriggerHand::Right };
-	GPAdaptiveTriggerEffect effect{ GPAdaptiveTriggerEffect::Bow };
-	uint8 startZone{ 2 };
+	GPAdaptiveTriggerRawHand hand{ GPAdaptiveTriggerRawHand::Right };
+	uint32 lastCommand{};
+	bool initialized{};
 };
 
 class PatchGroup
@@ -293,7 +285,7 @@ private:
 	std::vector<uint32> list_moduleMatches;
 	std::vector<PatchEntry*> list_patches;
 	std::vector<std::pair<std::string, GPCallbackType>> list_callbacks;
-	std::vector<GPAdaptiveTriggerSource> list_adaptiveTriggers;
+	std::vector<GPAdaptiveTriggerRawSource> list_adaptiveTriggerRaw;
 	uint32 codeCaveSize;
 	MEMPTR<void> codeCaveMem;
 	bool m_isApplied{};

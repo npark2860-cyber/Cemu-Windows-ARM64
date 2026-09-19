@@ -1,20 +1,10 @@
-# NEXT ACTION — Generic GraphicPack Adaptive Trigger v1
+# NEXT ACTION — BOTW GraphicPack only
 
-Work only on `test/se-fingerprint-index-v1`. Do not create a branch.
+Do not modify the Cemu binary after the clean raw-trigger bridge passes build/runtime transport validation.
 
-Validation target:
-1. Build the corrected generic haptic-refresh implementation once.
-2. Runtime-test several consecutive shots without changing bows.
-3. Verify first shot still has tension.
-4. Verify weak/strong bow changes still change tension.
-5. Verify moving while aiming remains active.
-6. Verify no valid bow releases trigger.
-7. Verify FPS++ coexistence.
-
-Hard boundary:
-- no R2/input polling in Cemu for bow behavior;
-- no aim/fire/release state machine in Cemu;
-- no BOTW addresses, actor IDs or weapon tables in Cemu core;
-- all gameplay-specific detection stays in the GraphicPack.
-
-Do not rerun old prototype run `35443550198`.
+Next work is GraphicPack-only:
+1. On GraphicPack/game start, read current equipped bow once and cache its tension.
+2. On bow change, update the cached bow/tension.
+3. On fire/reload event, increment the event sequence and republish the cached raw trigger command.
+4. Keep all bow tables/formulas/BOTW addresses in the GraphicPack.
+5. Do not add R2 polling or BOTW state logic to Cemu.

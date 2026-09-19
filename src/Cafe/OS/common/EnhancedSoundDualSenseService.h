@@ -2,7 +2,6 @@
 
 #include "Cafe/OS/common/EnhancedHapticEngine.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -66,7 +65,6 @@ namespace EnhancedSoundDualSenseService
 		bool leftHand{};
 		uint8_t startZoneMask{};
 		uint8_t forcePair{};
-		uint8_t tensionPercent{};
 	};
 
 	inline std::mutex s_triggerMutex;
@@ -170,42 +168,17 @@ namespace EnhancedSoundDualSenseService
 	}
 
 
-	inline bool ApplyAdaptiveTriggerBow(uint8_t tensionPercent, uint8_t startZone = 2, bool leftHand = false)
+	inline bool ApplyAdaptiveTriggerBowRaw(uint8_t startZoneMask, uint8_t forcePair, bool leftHand = false)
 	{
-		if (!GetConfig().enhanced_sound_experience)
+		if (!GetConfig().enhanced_sound_experience || startZoneMask == 0)
 			return false;
-
-		const uint8_t safeTension = std::min<uint8_t>(tensionPercent, 100u);
-		if (safeTension == 0)
-		{
-			std::scoped_lock lock(s_triggerMutex);
-			if (s_triggerRequest.active)
-			{
-				s_triggerRequest = {};
-				++s_triggerRevision;
-			}
-			return true;
-		}
-
-		const uint8_t hardwareStrength = static_cast<uint8_t>(std::clamp(
-			(static_cast<int>(safeTension) * 8 + 50) / 100, 1, 8));
-		const uint8_t encodedForce = static_cast<uint8_t>(hardwareStrength - 1u);
-		const uint8_t forcePair = static_cast<uint8_t>(encodedForce | (encodedForce << 3));
-		const uint8_t safeStartZone = std::min<uint8_t>(startZone, 7u);
-		const uint8_t startZoneMask = static_cast<uint8_t>(1u << safeStartZone);
 
 		EnsureRunning();
 		std::scoped_lock lock(s_triggerMutex);
-
-		// The GraphicPack owns gameplay state. A repeated non-zero request is a
-		// deliberate refresh of the same generic haptic effect, not a state
-		// transition to be deduplicated. This keeps Cemu unaware of firing,
-		// aiming, trigger release, weapon IDs, or any other game-specific state.
 		s_triggerRequest.active = true;
 		s_triggerRequest.leftHand = leftHand;
 		s_triggerRequest.startZoneMask = startZoneMask;
 		s_triggerRequest.forcePair = forcePair;
-		s_triggerRequest.tensionPercent = safeTension;
 		++s_triggerRevision;
 		return true;
 	}
@@ -368,7 +341,7 @@ namespace EnhancedSoundDualSenseService
 		return false;
 	}
 	inline void StopHaptics(uint64_t = 0) {}
-	inline bool ApplyAdaptiveTriggerBow(uint8_t, uint8_t = 2, bool = false)
+	inline bool ApplyAdaptiveTriggerBowRaw(uint8_t, uint8_t, bool = false)
 	{
 		return false;
 	}

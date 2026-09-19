@@ -433,69 +433,47 @@ bool GraphicPack2::ParseCemuPatchesTxtInternal(MemStreamReader& patchesStream)
 		}
 		else if (parser.matchWordI(".callback"))
 		{
-			if (currentGroup == nullptr)
-			{
-				LogPatchesSyntaxError(lineNumber, "Specified '.callback' outside of a group");
-				CancelParsingPatches();
-				return false;
-			}
-
-			GPCallbackType callbackType;
-			if (parser.matchWordI("entry"))
-				callbackType = GPCallbackType::Entry;
-			else if (parser.matchWordI("frame"))
-				callbackType = GPCallbackType::Frame;
-			else
-			{
+		    if (parser.matchWordI("entry"))
+    		{
+                const char* symbolStr;
+    			sint32 symbolLen;
+    		    if (parser.parseSymbolName(symbolStr, symbolLen))
+    		    {
+    				currentGroup->list_callbacks.push_back(std::make_pair(std::string(symbolStr, static_cast<size_t>(symbolLen)), GPCallbackType::Entry));
+    				continue;
+    		    }
+    		    else
+    		    {
+                    LogPatchesSyntaxError(lineNumber, "'.callback' must reference a symbol after the type");
+                    CancelParsingPatches();
+                    return false;
+    		    }
+    		}
+		    else
+		    {
 				LogPatchesSyntaxError(lineNumber, "Unrecognized type for '.callback'");
 				CancelParsingPatches();
 				return false;
 			}
-
-			const char* symbolStr;
-			sint32 symbolLen;
-			if (!parser.parseSymbolName(symbolStr, symbolLen))
-			{
-				LogPatchesSyntaxError(lineNumber, "'.callback' must reference a symbol after the type");
-				CancelParsingPatches();
-				return false;
-			}
-			parser.skipWhitespaces();
-			if (!parser.isEndOfString())
-			{
-				LogPatchesSyntaxError(lineNumber, "Unexpected characters after '.callback' symbol");
-				CancelParsingPatches();
-				return false;
-			}
-			currentGroup->list_callbacks.emplace_back(std::string(symbolStr, static_cast<size_t>(symbolLen)), callbackType);
-			continue;
 		}
-		else if (parser.matchWordI(".adaptiveTrigger"))
+
+		else if (parser.matchWordI(".adaptiveTriggerRaw"))
 		{
 			if (currentGroup == nullptr)
 			{
-				LogPatchesSyntaxError(lineNumber, "Specified '.adaptiveTrigger' outside of a group");
+				LogPatchesSyntaxError(lineNumber, "Specified '.adaptiveTriggerRaw' outside of a group");
 				CancelParsingPatches();
 				return false;
 			}
 
-			GPAdaptiveTriggerSource source;
+			GPAdaptiveTriggerRawSource source;
 			if (parser.matchWordI("right"))
-				source.hand = GPAdaptiveTriggerHand::Right;
+				source.hand = GPAdaptiveTriggerRawHand::Right;
 			else if (parser.matchWordI("left"))
-				source.hand = GPAdaptiveTriggerHand::Left;
+				source.hand = GPAdaptiveTriggerRawHand::Left;
 			else
 			{
-				LogPatchesSyntaxError(lineNumber, "'.adaptiveTrigger' hand must be 'right' or 'left'");
-				CancelParsingPatches();
-				return false;
-			}
-
-			if (parser.matchWordI("bow"))
-				source.effect = GPAdaptiveTriggerEffect::Bow;
-			else
-			{
-				LogPatchesSyntaxError(lineNumber, "'.adaptiveTrigger' currently supports the generic 'bow' effect");
+				LogPatchesSyntaxError(lineNumber, "'.adaptiveTriggerRaw' hand must be 'right' or 'left'");
 				CancelParsingPatches();
 				return false;
 			}
@@ -504,33 +482,19 @@ bool GraphicPack2::ParseCemuPatchesTxtInternal(MemStreamReader& patchesStream)
 			sint32 symbolLen;
 			if (!parser.parseSymbolName(symbolStr, symbolLen))
 			{
-				LogPatchesSyntaxError(lineNumber, "'.adaptiveTrigger' must reference a state symbol");
+				LogPatchesSyntaxError(lineNumber, "'.adaptiveTriggerRaw' must reference a command symbol");
 				CancelParsingPatches();
 				return false;
 			}
 			source.symbol.assign(symbolStr, static_cast<size_t>(symbolLen));
-
 			parser.skipWhitespaces();
 			if (!parser.isEndOfString())
 			{
-				uint32 startZone;
-				if (!parser.parseU32(startZone) || startZone > 7)
-				{
-					LogPatchesSyntaxError(lineNumber, "'.adaptiveTrigger' start zone must be 0-7");
-					CancelParsingPatches();
-					return false;
-				}
-				source.startZone = static_cast<uint8>(startZone);
-				parser.skipWhitespaces();
-				if (!parser.isEndOfString())
-				{
-					LogPatchesSyntaxError(lineNumber, "Unexpected characters after '.adaptiveTrigger' start zone");
-					CancelParsingPatches();
-					return false;
-				}
+				LogPatchesSyntaxError(lineNumber, "Unexpected characters after '.adaptiveTriggerRaw' symbol");
+				CancelParsingPatches();
+				return false;
 			}
-
-			currentGroup->list_adaptiveTriggers.emplace_back(std::move(source));
+			currentGroup->list_adaptiveTriggerRaw.emplace_back(std::move(source));
 			continue;
 		}
 

@@ -1,7 +1,6 @@
 #include "Cafe/GraphicPack/GraphicPack2.h"
 #include "Cafe/OS/common/EnhancedSoundRouter.h"
 #include "Cafe/OS/common/EnhancedSoundDualSenseService.h"
-#include "Cafe/HW/Espresso/PPCCallback.h"
 #include "Cafe/HW/MMU/MMU.h"
 #include "Cafe/Filesystem/fsc.h"
 #include "config/CemuConfig.h"
@@ -257,30 +256,37 @@ void GraphicPack2::WaitUntilReady()
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
 }
 
-void GraphicPack2::ExecuteFrameCallbacks()
+void GraphicPack2::UpdateAdaptiveTriggerOutputs()
 {
 	for (const auto& gp : s_active_graphic_packs)
 	{
-		for (const auto& [callback, type] : gp->m_callbacks)
+		for (auto& binding : gp->m_adaptiveTriggerRawBindings)
 		{
-			if (type == GPCallbackType::Frame)
-				PPCCoreCallback(callback);
-		}
+			const uint32 command = memory_readU32(binding.stateAddress);
+			if (binding.initialized && binding.lastCommand == command)
+				continue;
 
-		for (const auto& binding : gp->m_adaptiveTriggerBindings)
-		{
-			uint32 state = memory_readU32(binding.stateAddress);
-			if (state > 100u)
-				state = 0;
+			binding.initialized = true;
+			binding.lastCommand = command;
 
-			switch (binding.effect)
+			if (command == 0)
 			{
-			case GPAdaptiveTriggerEffect::Bow:
-				EnhancedSoundDualSenseService::ApplyAdaptiveTriggerBow(
-					static_cast<uint8_t>(state), binding.startZone,
-					binding.hand == GPAdaptiveTriggerHand::Left);
-				break;
+				EnhancedSoundDualSenseService::StopAdaptiveTrigger();
+				continue;
 			}
+
+			// Raw command layout is owned by the GraphicPack:
+			// bits 0..7   = SetBow22 StartZone byte
+			// bits 8..15  = SetBow22 SnapBack/force byte
+			// bits 16..31 = event sequence, ignored by Cemu but makes a repeated
+			//               identical tension a new command.
+			const uint8 startZoneMask = static_cast<uint8>(command & 0xFFu);
+			const uint8 forcePair = static_cast<uint8>((command >> 8) & 0xFFu);
+			const bool leftHand = binding.hand == GPAdaptiveTriggerRawHand::Left;
+			if (startZoneMask == 0)
+				EnhancedSoundDualSenseService::StopAdaptiveTrigger();
+			else
+				EnhancedSoundDualSenseService::ApplyAdaptiveTriggerBowRaw(startZoneMask, forcePair, leftHand);
 		}
 	}
 }
@@ -1304,7 +1310,7 @@ bool GraphicPack2::Deactivate()
 
 	EnhancedSoundRouter::UnregisterRouteTable(GetNormalizedPathString());
 
-	if (!m_adaptiveTriggerBindings.empty())
+	if (!m_adaptiveTriggerRawBindings.empty())
 		EnhancedSoundDualSenseService::StopAdaptiveTrigger();
 	UnloadPatches();
 
