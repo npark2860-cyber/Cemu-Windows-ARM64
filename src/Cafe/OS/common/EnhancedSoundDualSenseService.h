@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cafe/OS/common/EnhancedHapticMixer.h"
+#include "Cafe/OS/common/EnhancedHapticOutput.h"
 
 #include <cstdint>
 #include <filesystem>
@@ -79,7 +80,7 @@ namespace EnhancedSoundDualSenseService
 		return ctx->DeviceType == EDSDeviceType::DualSense || ctx->DeviceType == EDSDeviceType::DualSenseEdge;
 	}
 
-	inline bool ConfigureOutputState(IGamepadBase* gamepad, bool headsetConnected, bool hapticsEnabled)
+	inline bool ConfigureOutputState(IGamepadBase* gamepad, bool headsetConnected, bool /*hapticsEnabled*/)
 	{
 		if (!IsEligibleUsbDualSense(gamepad))
 			return false;
@@ -87,17 +88,8 @@ namespace EnhancedSoundDualSenseService
 		if (!settings)
 			return false;
 
-		// Preserve the current Release+SE jack-detect routing while switching only
-		// the DualSense rumble transport when a BNVIB clip is active.
-		settings->DualSenseSettings(
-			0,                         // mic state
-			headsetConnected ? 1 : 0, // headset follows physical jack state
-			headsetConnected ? 0 : 1, // internal speaker only while unplugged
-			0,                         // mic volume
-			255,                       // audio volume
-			hapticsEnabled ? 0 : 255,  // non-255 => DualSense HapticsRumble transport
-			0,                         // rumble reduction
-			0);                        // trigger reduction
+		// Preserve headset/speaker routing while enabling HID motor amplitudes.
+		EnhancedHapticOutput::ConfigureAmplitudeTransport(*settings, headsetConnected);
 		gamepad->UpdateOutput();
 		return true;
 	}
@@ -288,13 +280,14 @@ namespace EnhancedSoundDualSenseService
 					if (auto* rumble = gamepad->GetIGamepadRumbles())
 					{
 						// Phase-1 backend: preserve BNVIB low/high amplitudes through
-						// Gamepad-Core's DualSense HapticsRumble transport. Frequency
+						// DualSense compatible HID vibration. Frequency
 						// metadata stays available in the parsed frame for a later
 						// audio-haptics backend.
 						if ((hapticFrame->lowLevel || hapticFrame->highLevel) && loggedOutputs < 8)
 						{
 							++loggedOutputs;
-							cemuLog_log(LogType::Force, "Haptic output send: low={} high={}", hapticFrame->lowLevel, hapticFrame->highLevel);
+							cemuLog_log(LogType::Force, "Haptic output send: low={} high={} valid0=0x{:02X}", hapticFrame->lowLevel, hapticFrame->highLevel,
+								gamepad->GetMutableDeviceContext()->Output.Feature.VibrationMode);
 						}
 						rumble->SetVibration(hapticFrame->lowLevel, hapticFrame->highLevel);
 						gamepad->UpdateOutput();

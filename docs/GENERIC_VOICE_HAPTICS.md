@@ -40,7 +40,7 @@ Limitations:
 - Maximum-channel gain can vary with panning. No game-specific distance curve, actor ID, hook, address or velocity is added.
 - After a host stall longer than 100 ms, silence is intentional until the next snapshot. BNVIB timelines use host time and continue while muted; this is not emulated-time pause/resume.
 - Route edits require the usual pack reload/title restart. This patch does not introduce live route invalidation for already-running voices.
-- The existing output backend sends low/high amplitudes through DualSense HapticsRumble. BNVIB frequency bytes are not rendered as audio haptics.
+- The existing output backend sends low/high amplitudes through DualSense compatible HID vibration. BNVIB frequency bytes are not rendered as audio haptics.
 
 ## Implementation map
 
@@ -62,6 +62,7 @@ The generic raw adaptive-trigger bridge and its revision semantics are unchanged
 ## Automated checks
 
 ```sh
+git submodule update --init dependencies/Gamepad-Core
 cmake -S tests/enhanced_sound -B build-haptic-tests
 cmake --build build-haptic-tests --config Release
 ctest --test-dir build-haptic-tests -C Release --output-on-failure
@@ -93,3 +94,13 @@ The user reported total haptic loss on build carrier `406ecf7` (runtime source i
 The first revision incorrectly made legacy finite UI effects wait for AX snapshots and stop with source lifetime. It also advanced their BNVIB clock while waiting: a short clip could finish before its first snapshot. A deterministic delayed-snapshot regression test now reproduces and guards that defect. Finite legacy effects now bypass snapshot/lease coupling, and bound clips do not consume samples before their first snapshot. This corrects proven design defects; the exact cause of *all* output loss remains unconfirmed without runtime telemetry.
 
 Test-only diagnostics now log at most 16 route starts, 16 initial bound-voice snapshots and 8 nonzero output sends per process, plus first eligible USB device detection and worker exceptions. They distinguish route resolution, initial snapshot/volume, device availability and output submission without per-frame logging. Hardware retest remains required. No BOTW-specific runtime checks were introduced.
+
+## Output transport correction after 907dd4b
+
+The subsequent user test still had no vibration. Its log proves route start (`played=true`), eligible USB DualSense detection, nonzero output submission, and nonzero AX gains. Thus snapshot gating is not the current blocking stage.
+
+The pinned Gamepad-Core `9a16b81604fd711db3c445e8a8108e2b570f6477` exposes a misleading `HapticsRumble` name: `DualSenseSettings` maps any rumbleMode other than 255 to `0xFC`; `GamepadOutput.cpp` writes that value directly to output valid_flag0. The service selected it while writing ordinary HID motor amplitude bytes. `0xFC & 0x03 == 0`: compatible-vibration and haptics-select are both clear. No PCM haptic stream is supplied to replace those disabled motor bytes. This is a concrete protocol mismatch; it was already present in the restored BNVIB service, not introduced by the mixer.
+
+The amplitude backend now keeps Gamepad-Core's default compatible vibration mode (255 -> `0xFF`) for active output and zero-amplitude stop packets. Speaker/headset selection and raw trigger bytes are preserved. This fixes the protocol mismatch for all games; it does not implement frequency/PCM haptics.
+
+Evidence: [Linux Sony driver flags and output worker](https://github.com/torvalds/linux/blob/master/drivers/hid/hid-playstation.c) selects haptics and compatible vibration when sending motor amplitudes. The production Gamepad-Core serializer is compiled into `haptic_output_tests.cpp`, replacing only hardware writes with capture. Tests verify enable bits, nonzero/zero motor bytes, speaker/headset routing and raw SetBow22 bytes; a negative fixture demonstrates that the old `0xFC` mode carries amplitudes without enabling them. ARM64 test PASS; physical vibration and concurrent audio behavior still require a new-binary test. Bounded output logs now include actual `valid0` (expected `0xFF`).

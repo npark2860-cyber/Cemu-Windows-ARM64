@@ -31,3 +31,7 @@ The raw adaptive-trigger bridge and sequence/revision behavior remain unchanged.
 ## Runtime regression follow-up
 
 User reports no vibration (including UI) on build carrier 406ecf7, whose runtime matches PR 36e3107. Follow-up restores independent immediate playback for legacy finite effects, prevents pending-snapshot clips from silently expiring, and adds bounded route/snapshot/output diagnostics. New deterministic tests pass; hardware validation of the correction is pending. User settings were backed up and three conflicting older motorcycle preview entries disabled while Cemu was closed. Do not report full runtime success yet.
+
+## Output-stage finding on 907dd4b
+
+The next test still had no vibration, despite successful route/USB/nonzero-output logs. Found an existing transport mismatch: active BNVIB selected valid_flag0=0xFC (clears HID motor enable/select bits) while only writing motor amplitudes. Keep compatible HID rumble mode 255/0xFF via a shared output helper. Real pinned Gamepad-Core packet serializer tests pass on ARM64, including preserved audio and raw trigger fields. Full build/hardware confirmation of this transport correction is pending; mixer-only unit tests were insufficient to detect this issue.
