@@ -36,6 +36,21 @@ int main(int argc, char** argv)
 		Require(count == 11, "pack includes all eleven haptic patterns");
 	}
 	const auto t = Mixer::Clock::time_point{};
+	{
+		Mixer pending;
+		const auto id = pending.Play(MakeClip(90, 20, false), 1, true, t);
+		Require(pending.Tick(t)->lowLevel == 0, "bound clip waits silently");
+		pending.Tick(t + 200ms);
+		Require(pending.IsActive(), "pending snapshot must not consume a short clip");
+		pending.Update(id, 1, t + 201ms);
+		Require(pending.Tick(t + 201ms)->lowLevel == 90, "first snapshot starts the full clip");
+		pending.Tick(t + 221ms);
+		Require(!pending.IsActive(), "bound one-shot still ends naturally");
+		// Legacy UI one-shots need no AX snapshot/lease and finish independently.
+		pending.Play(MakeClip(90, 20, false), 0.4f, false, t);
+		Require(pending.Tick(t)->lowLevel == 36, "legacy UI starts without snapshot");
+		Require(pending.Tick(t + 20ms)->lowLevel == 0, "legacy UI completes itself");
+	}
 	Mixer mixer;
 	const auto engine = mixer.Play(MakeClip(100, 30), 1, true, t);
 	Require(engine != 0, "playback allocation");

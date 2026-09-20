@@ -27,3 +27,7 @@ See [design, limitations and test checklist](docs/GENERIC_VOICE_HAPTICS.md) and 
 Build this experimental revision through a verified Test workflow/carrier, then follow the acceptance checklist. The inherited workflow on `test_SE` still guards the stock Release branch; this change does not dispatch it or modify that guard. Do not promote to Release+SE until user runtime verification and explicit promotion approval.
 
 The raw adaptive-trigger bridge and sequence/revision behavior remain unchanged. Existing local SE and Bow work is separate from this PR.
+
+## Runtime regression follow-up
+
+User reports no vibration (including UI) on build carrier 406ecf7, whose runtime matches PR 36e3107. Follow-up restores independent immediate playback for legacy finite effects, prevents pending-snapshot clips from silently expiring, and adds bounded route/snapshot/output diagnostics. New deterministic tests pass; hardware validation of the correction is pending. User settings were backed up and three conflicting older motorcycle preview entries disabled while Cemu was closed. Do not report full runtime success yet.

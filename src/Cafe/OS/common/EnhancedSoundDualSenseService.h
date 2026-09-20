@@ -9,6 +9,7 @@
 #ifdef _WIN32
 
 #include "config/CemuConfig.h"
+#include "Cemu/Logging/CemuLogging.h"
 #include "GCore/Interfaces/IPlatformHardware.h"
 #include "GCore/Templates/TBasicDeviceRegistry.h"
 #include "GCore/Types/Structs/Context/DeviceContext.h"
@@ -197,6 +198,8 @@ namespace EnhancedSoundDualSenseService
 			using Clock = std::chrono::steady_clock;
 			auto nextDevicePoll = Clock::now();
 			bool outputConfigured = false;
+			bool loggedDevice = false;
+			unsigned loggedOutputs = 0;
 			bool configuredHeadsetConnected = false;
 			bool configuredHapticsEnabled = false;
 			bool lastHeadsetConnected = false;
@@ -237,6 +240,11 @@ namespace EnhancedSoundDualSenseService
 					continue;
 				}
 
+				if (!loggedDevice)
+				{
+					loggedDevice = true;
+					cemuLog_log(LogType::Force, "Haptic output: eligible USB DualSense detected");
+				}
 				if (!GetConfig().enhanced_sound_experience)
 				{
 					if (s_hapticPlayer.IsActive())
@@ -283,6 +291,11 @@ namespace EnhancedSoundDualSenseService
 						// Gamepad-Core's DualSense HapticsRumble transport. Frequency
 						// metadata stays available in the parsed frame for a later
 						// audio-haptics backend.
+						if ((hapticFrame->lowLevel || hapticFrame->highLevel) && loggedOutputs < 8)
+						{
+							++loggedOutputs;
+							cemuLog_log(LogType::Force, "Haptic output send: low={} high={}", hapticFrame->lowLevel, hapticFrame->highLevel);
+						}
 						rumble->SetVibration(hapticFrame->lowLevel, hapticFrame->highLevel);
 						gamepad->UpdateOutput();
 					}
@@ -309,9 +322,14 @@ namespace EnhancedSoundDualSenseService
 				std::this_thread::sleep_for(std::chrono::milliseconds(2));
 			}
 		}
+		catch (const std::exception& error)
+		{
+			cemuLog_log(LogType::Force, "Haptic worker stopped: {}", error.what());
+		}
 		catch (...)
 		{
 			// Enhanced Sound/Haptics are optional and must never make Cemu fatal.
+			cemuLog_log(LogType::Force, "Haptic worker stopped: unknown exception");
 		}
 	}
 

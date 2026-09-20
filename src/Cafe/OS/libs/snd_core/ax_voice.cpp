@@ -9,6 +9,7 @@
 #include "config/CemuConfig.h"
 #include "Cafe/OS/libs/coreinit/coreinit_Thread.h"
 #include "util/helpers/fspinlock.h"
+#include <atomic>
 
 namespace snd_core
 {
@@ -50,6 +51,7 @@ namespace snd_core
 		uint64_t playbackId{};
 		bool loop{};
 		bool followTv{};
+		bool snapshotLogged{};
 	};
 
 	EnhancedSoundHapticState s_enhancedSoundHapticState[AX_MAX_VOICES]{};
@@ -57,7 +59,7 @@ namespace snd_core
 	void AXUpdateVoiceHaptics(uint32 index, const AXVPBInternal_t* voice)
 	{
 		auto& state = s_enhancedSoundHapticState[index];
-		if (!state.playbackId)
+		if (!state.playbackId || !(state.loop || state.followTv))
 			return;
 		if (!GetConfig().enhanced_sound_experience || _swapEndianU16(voice->playbackState) != 1)
 		{
@@ -83,6 +85,13 @@ namespace snd_core
 			}
 			gain *= std::min(1.0f, maximumSend / 32768.0f);
 			gain *= std::min(1.0f, static_cast<uint16>(voice->veVolume) / 32768.0f);
+		}
+		if (!state.snapshotLogged)
+		{
+			state.snapshotLogged = true;
+			static std::atomic_uint snapshots{0};
+			if (snapshots.fetch_add(1, std::memory_order_relaxed) < 16)
+				cemuLog_log(LogType::Force, "Haptic AX snapshot: voice={} id={} gain={}", index, state.playbackId, gain);
 		}
 		EnhancedSoundDualSenseService::UpdateVoiceHaptics(state.playbackId, gain);
 	}
@@ -428,7 +437,8 @@ namespace snd_core
 		AXVPBInternal_t* internal = GetInternalVoice(vpb);
 		uint32 index = GetVoiceIndex(vpb);
 		s_enhancedSoundDrcState[index] = {};
-		if (s_enhancedSoundHapticState[index].playbackId)
+		if (s_enhancedSoundHapticState[index].playbackId &&
+			(s_enhancedSoundHapticState[index].loop || s_enhancedSoundHapticState[index].followTv))
 			EnhancedSoundDualSenseService::StopHaptics(s_enhancedSoundHapticState[index].playbackId);
 		s_enhancedSoundHapticState[index] = {};
 		vpb->playbackState = 0;
@@ -558,9 +568,9 @@ namespace snd_core
 
     void __AXVPBResetVoices()
     {
+        EnhancedSoundDualSenseService::StopHaptics();
         for (auto& state : s_enhancedSoundHapticState)
         {
-            if (state.playbackId) EnhancedSoundDualSenseService::StopHaptics(state.playbackId);
             state = {};
         }
         __AXVPBInternalVoiceArray = _buffer__AXVPBInternalVoiceArray.GetPtr();
@@ -802,7 +812,7 @@ namespace snd_core
 
 		auto clearHapticRouteState = [&]()
 		{
-			if (hapticState.playbackId != 0)
+			if (hapticState.playbackId != 0 && (hapticState.loop || hapticState.followTv))
 				EnhancedSoundDualSenseService::StopHaptics(hapticState.playbackId);
 			hapticState = {};
 		};
@@ -821,13 +831,17 @@ namespace snd_core
 				uint64_t playbackId = 0;
 				std::string error;
 				const bool played = EnhancedSoundDualSenseService::PlayBnvib(
-					route->hapticPath, route->hapticGain, route->hapticLoop, &playbackId, &error, true);
+					route->hapticPath, route->hapticGain, route->hapticLoop, &playbackId, &error, route->hapticLoop || route->hapticFollowTv);
 				hapticState.sampleBase = sampleBase;
 				hapticState.hapticPath = route->hapticPath;
 				hapticState.gain = route->hapticGain;
 				hapticState.loop = route->hapticLoop;
 				hapticState.followTv = route->hapticFollowTv;
 				hapticState.playbackId = played ? playbackId : 0;
+				static std::atomic_uint starts{0};
+				if (starts.fetch_add(1, std::memory_order_relaxed) < 16)
+					cemuLog_log(LogType::Force, "Haptic route start: voice={} id={} loop={} followTv={} gain={} played={}",
+						(uint32)vpb->index, playbackId, route->hapticLoop, route->hapticFollowTv, route->hapticGain, played);
 				if (!played)
 					cemuLog_log(LogType::Force, "Enhanced haptic playback failed for '{}': {}", route->hapticPath, error);
 			}

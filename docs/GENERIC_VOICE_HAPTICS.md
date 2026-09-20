@@ -6,7 +6,7 @@ Status: experimental; standalone ARM64 tests pass. Full Cemu build and controlle
 
 Previously a routed BNVIB clip used fixed `haptic_gain`, independently of AX voice volume. `spatial_drc` changed the sound send only. Free/reset could discard a playback ID without stopping its loop; natural sample completion did not run `AXSetVoiceState`. A single haptic player also let an action replace an engine loop permanently.
 
-The runtime now owns independent playback IDs and timelines. Source completion, explicit stop, route replacement, free, steal/default reset and AX reset stop the associated playback, including one-shots. Each AX synchronization refreshes its playback lease. Missing snapshots for 100 ms mute output (e.g. pause/stalled audio); a surviving loop can resume when snapshots return. This is a host-time fail-safe, not an actor-destruction detector.
+The runtime now owns independent playback IDs and timelines. For loops or `haptic_follow_tv=true` effects, source completion, explicit stop, route replacement, free and steal/default reset stop the associated playback. Legacy finite effects with both flags false start immediately and finish independently of their source voice; AX reset/global disable stops all effects. Each AX synchronization refreshes its playback lease. Missing snapshots for 100 ms mute output (e.g. pause/stalled audio); a surviving loop can resume when snapshots return. This is a host-time fail-safe, not an actor-destruction detector.
 
 Concurrent clips combine using the maximum amplitude in each actuator channel. An action can dominate a quieter loop temporarily without deleting it. This deliberately avoids additive clipping and amplification of duplicate stereo voices. It is amplitude mixing, not frequency-preserving waveform synthesis.
 
@@ -21,14 +21,14 @@ haptic_loop = true
 haptic_follow_tv = true
 ```
 
-`haptic_follow_tv` accepts true/false, yes/no or 1/0, case-insensitively. Default false preserves fixed-gain routes. Invalid values reject the haptic part of that route. Voice lifetime management applies regardless of this flag.
+`haptic_follow_tv` accepts true/false, yes/no or 1/0, case-insensitively. Default false preserves fixed-gain routes. Invalid values reject the haptic part of that route. Voice lifetime management applies to loops and effects explicitly opting into TV following. Plain finite UI effects retain their original independent lifetime.
 
 When true:
 
 ```text
 effective gain = haptic_gain
-               × clamp(max enabled TV channel/bus send / 32768, 0, 1)
-               × clamp(voice envelope / 32768, 0, 1)
+               횞 clamp(max enabled TV channel/bus send / 32768, 0, 1)
+               횞 clamp(voice envelope / 32768, 0, 1)
 ```
 
 This is the synchronized AX shadow mix, including mixer-evolved ramps. It is sampled once per AX frame; it is not sample-accurate gain automation. It includes the Enhanced Sound TV policy: `add_drc` with `tv_volume=0` therefore mutes these haptics. Use `spatial_drc` for unchanged TV sends and a spatial controller sound send. Haptic-only routes also support TV following.
@@ -70,7 +70,7 @@ python tests/enhanced_sound/test_unified_pack.py
 
 `haptic_tests.cpp` checks initial mute, live gain updates, zero gain/resume, overlap and natural one-shot completion, lease expiry/recovery, stale IDs, forced reconnect output, bounded allocation, nonfinite gain, concurrent updates and route-cache policy changes. Existing lookup tests check SE routing/fingerprint equivalence. These tests do not compile the complete AX/GraphicPack/service translation units and do not prove hardware behavior.
 
-The accompanying [unified GraphicPack](../enhanced_sound_policies/BreathOfTheWild/DualSenseExperienceUnified/README.md) preserves all 63 routes and three UI assets from the user-provided UI/Sheikah v3 archive, then prepends eight exact motorcycle routes before its wildcard rules. Only motorcycle routes opt into TV following. The pack regression test checks the original settings/order and asset hashes, precedence, and all 11 BNVIB files. Original UI settings are preserved, but the new source-bound lifetime can truncate patterns longer than their source sounds; test menu/Sheikah feel on hardware.
+The accompanying [unified GraphicPack](../enhanced_sound_policies/BreathOfTheWild/DualSenseExperienceUnified/README.md) preserves all 63 routes and three UI assets from the user-provided UI/Sheikah v3 archive, then prepends eight exact motorcycle routes before its wildcard rules. Only motorcycle routes opt into TV following. The pack regression test checks the original settings/order and asset hashes, precedence, and all 11 BNVIB files. Original UI settings and independent finite-effect lifetime are preserved; test menu/Sheikah feel on hardware.
 
 ## Hardware acceptance checklist
 
@@ -85,3 +85,11 @@ The accompanying [unified GraphicPack](../enhanced_sound_policies/BreathOfTheWil
 - Confirm existing audio routing and raw adaptive-trigger behavior remain unchanged.
 
 Do not mark distance/despawn behavior PASS until those cases are tested on the new binary. If TV gain remains nonzero after object destruction, collect AX playback state, envelope, sends and stop/free events before considering further generic controls.
+
+## Regression follow-up: no vibration on 406ecf7
+
+The user reported total haptic loss on build carrier `406ecf7` (runtime source identical to PR commit `36e3107`). The log confirmed Unified plus all three older motorcycle preview profiles were enabled; Enhanced Sound was true. These overlaps override motorcycle routes, but do not by themselves explain UI silence.
+
+The first revision incorrectly made legacy finite UI effects wait for AX snapshots and stop with source lifetime. It also advanced their BNVIB clock while waiting: a short clip could finish before its first snapshot. A deterministic delayed-snapshot regression test now reproduces and guards that defect. Finite legacy effects now bypass snapshot/lease coupling, and bound clips do not consume samples before their first snapshot. This corrects proven design defects; the exact cause of *all* output loss remains unconfirmed without runtime telemetry.
+
+Test-only diagnostics now log at most 16 route starts, 16 initial bound-voice snapshots and 8 nonzero output sends per process, plus first eligible USB device detection and worker exceptions. They distinguish route resolution, initial snapshot/volume, device availability and output submission without per-frame logging. Hardware retest remains required. No BOTW-specific runtime checks were introduced.

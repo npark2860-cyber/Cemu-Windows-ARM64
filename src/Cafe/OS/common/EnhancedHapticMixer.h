@@ -67,6 +67,12 @@ namespace EnhancedHapticEngine
 			for (auto it = m_entries.begin(); it != m_entries.end();)
 			{
 				auto& entry = it->second;
+				// Do not consume a finite clip while its first AX snapshot is pending.
+				if (entry.voiceBound && !entry.hasSnapshot)
+				{
+					++it;
+					continue;
+				}
 				if (auto frame = entry.player.Tick(now))
 					entry.frame = *frame;
 				if (!entry.player.IsActive())
