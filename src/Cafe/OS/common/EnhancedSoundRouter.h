@@ -31,6 +31,7 @@ namespace EnhancedSoundRouter
 		std::string hapticPath;
 		float hapticGain{ 1.0f };
 		bool hapticLoop{};
+		bool hapticFollowTv{};
 	};
 
 	struct RouteMatch
@@ -42,6 +43,7 @@ namespace EnhancedSoundRouter
 		std::string hapticPath;
 		float hapticGain{ 1.0f };
 		bool hapticLoop{};
+		bool hapticFollowTv{};
 	};
 
 	struct RouteTable
@@ -142,7 +144,8 @@ namespace EnhancedSoundRouter
 			a.tvVolumePercent == b.tvVolumePercent &&
 			a.hapticPath == b.hapticPath &&
 			a.hapticGain == b.hapticGain &&
-			a.hapticLoop == b.hapticLoop;
+			a.hapticLoop == b.hapticLoop &&
+			a.hapticFollowTv == b.hapticFollowTv;
 	}
 
 	inline void RegisterRouteTable(std::string owner, std::vector<RouteRule> rules)
@@ -192,7 +195,8 @@ namespace EnhancedSoundRouter
 					rule.tvVolumePercent,
 					rule.hapticPath,
 					rule.hapticGain,
-					rule.hapticLoop
+					rule.hapticLoop,
+					rule.hapticFollowTv
 				};
 				cached.valid = true;
 				return cached.route;

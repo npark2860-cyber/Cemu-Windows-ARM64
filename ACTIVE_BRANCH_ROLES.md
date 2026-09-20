@@ -8,7 +8,7 @@ This repository currently has exactly five active source-of-truth roles.
 | [Diagnostics] | `fix/arm64-diagnostics-ui-artifact-gate` | Stock diagnostic/instrumentation line |
 | [Release+SE] | `Release+SE` | Production Enhanced Sound line |
 | [Diagnostics+SE] | `feat/enhanced-sound-experience-v1` | Enhanced Sound diagnostics, including CueCaptureV2 |
-| [Test] | `test/se-fingerprint-index-v1` | Current SE/haptic experiment line |
+| [Test] | `test_SE` | Current SE/haptic experiment line |
 
 ## Current build identities
 
@@ -16,7 +16,7 @@ This repository currently has exactly five active source-of-truth roles.
 - [Diagnostics]: `.github/workflows/diagnostics-arm64.yml` -> `cemu-arm64-diagnostics`.
 - [Release+SE]: source of truth is `Release+SE`; `build/release-se-once` is an ephemeral build carrier only when needed.
 - [Diagnostics+SE]: CueCaptureV2 workflow is `.github/workflows/enhanced-sound-cue-capture-v2-arm64.yml`; verify actual workflow/HEAD before each diagnostic build.
-- [Test]: current dedicated workflow is stored at `.github/workflows/final-adreno-compat-arm64.yml` on the Test branch with display name `[Test] Cemu ARM64 SE Fingerprint Index`; current artifact identity is `cemu-arm64-test-se-fingerprint-index-v1`. This branch remains the haptic laboratory even if the workflow/artifact name is later updated for haptic testing.
+- [Test]: `test_SE` is the source branch. Its inherited `final-adreno-compat-arm64.yml` currently guards the stock Release ref; do not dispatch it as a Test build. `build/test-se-once` is only a build carrier. The generic voice-haptics PR does not alter or dispatch workflows.
 
 ## Not active source of truth
 

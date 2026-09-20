@@ -9,6 +9,11 @@ It's written in C/C++ and is being actively developed with new features and fixe
 
 Cemu is currently only available for 64-bit Windows, Linux & macOS devices.
 
+### Test_SE haptics
+
+[Generic voice-haptics design, configuration and validation](docs/GENERIC_VOICE_HAPTICS.md).
+[Current Test_SE handoff](CURRENT_HANDOFF.md).
+
 ### Links:
  - [Open Source Announcement](https://www.reddit.com/r/cemu/comments/wwa22c/cemu_20_announcement_linux_builds_opensource_and/)
  - [Official Website](https://cemu.info)
