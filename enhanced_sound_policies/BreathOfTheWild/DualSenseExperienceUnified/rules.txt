@@ -1,0 +1,7 @@
+[Definition]
+titleIds = 00050000101C9300,00050000101C9400,00050000101C9500
+name = DualSense Experience - UI + Sheikah + Master Cycle - TEST
+path = "The Legend of Zelda: Breath of the Wild/Enhancements/DualSense Experience - Unified"
+description = "Preserves UI/Sheikah v3 sound and haptic settings; adds voice-follow Master Cycle haptics. Requires generic voice-haptics Test_SE build. Disable overlapping older packs. See README."
+version = 8
+default = false

@@ -207,6 +207,8 @@ namespace snd_core
 
     void AXVBP_Reset();
 
+	void AXUpdateVoiceHaptics(uint32 index, const AXVPBInternal_t* voice);
+
 	// AXIst
 	void AXIst_InitThread();
 	OSThread_t* AXIst_GetThread();

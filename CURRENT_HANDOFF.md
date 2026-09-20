@@ -1,70 +1,29 @@
-# CURRENT HANDOFF — [Release+SE]
+# CURRENT HANDOFF — Test_SE generic voice haptics
 
-Canonical policy:
-- `BRANCH_POLICY.md`
-- `ACTIVE_BRANCH_ROLES.md`
+## Source and scope
 
-GitHub is the only source of truth. Fetch the actual branch HEAD before every write/build.
+- Source branch: `test_SE`.
+- Verified upstream baseline: `7c5bb3fdce5d23f1349a421bb465d9db8db215d9`.
+- Development/PR branch: `codex/generic-voice-haptics`.
+- `build/test-se-once` is a historical build carrier, not the source branch.
+- The user authorized binary changes only for reusable, game-independent haptic functionality.
 
-## Role
+## Change
 
-Branch:
-`Release+SE`
+Voice-bound BNVIB playback now follows voice completion/free/reset, supports concurrent effects, and optionally follows the synchronized TV sends/envelope with `haptic_follow_tv=true`. Missing AX updates mute output after 100 ms. Source recognition and SE lookup optimizations are retained; no BOTW addresses, actor state or distance formulas were added to Cemu.
 
-Purpose:
-- production Enhanced Sound line
-- verified SE features only
-- promotion target for runtime-verified SE/haptic changes
+See [design, limitations and test checklist](docs/GENERIC_VOICE_HAPTICS.md) and the [optional Master Cycle test pack](enhanced_sound_policies/BreathOfTheWild/DualSenseExperienceUnified/README.md).
 
-Do not confuse this branch with stock `final-adreno-compat-arm64`.
+## Validation
 
-## Current implementation baseline
+- Native ARM64 MSVC C++20 haptic mixer/route tests: PASS.
+- Existing Enhanced Sound lookup/range/catalog tests: PASS (pre-existing signedness warning in EnhancedSoundPackedBars.h).
+- Full Cemu build: not performed; standalone tests do not compile the full AX/GraphicPack/backend integration.
+- DualSense/gameplay regression, distance and despawn tests on this revision: pending.
+- No claim that the reported motorcycle issues are hardware-verified fixed.
 
-Implementation HEAD before policy-document-only commits:
-`f2a5ad15b191d30eb2c870db7626518628cd90a2`
+## Next step
 
-That commit promoted the indexed Enhanced Sound fingerprint lookup.
+Build this experimental revision through a verified Test workflow/carrier, then follow the acceptance checklist. The inherited workflow on `test_SE` still guards the stock Release branch; this change does not dispatch it or modify that guard. Do not promote to Release+SE until user runtime verification and explicit promotion approval.
 
-The later branch-policy commits are documentation-only. Fetch the actual current HEAD from GitHub before work.
-
-## Fingerprint optimization
-
-`BotWSoundFingerprintCatalog::FindMatches()` no longer scans the entire bounded fingerprint catalog for every lookup.
-
-The promoted implementation:
-- keeps `s_entries` as source of truth;
-- uses a lookup-only `unordered_map` keyed by `(hashA, hashB)`;
-- preserves expectedPath filtering;
-- preserves duplicate path+track suppression;
-- preserves multiple-candidate/ambiguity behavior;
-- preserves catalog eviction semantics.
-
-Test validation source:
-- branch `test/se-fingerprint-index-v1`
-- validated test implementation/build HEAD `9263604feff7d92cbe517cd75246ac97d15d853d`
-- run `35425264365` SUCCESS
-
-## DualSense SE
-
-Keep the current USB DualSense headset detection/auto-routing behavior.
-
-The temporary TV `g_tvAudio->Play()` workaround was reverted after the user determined the TV output was already normal. Do not reintroduce it without new evidence.
-
-## Promotion rule
-
-New haptic behavior must be developed on:
-`test/se-fingerprint-index-v1`
-
-Do not add new haptic experiments directly here.
-
-Promote to Release+SE only after user runtime validation and explicit approval.
-
-## Build note
-
-`build/release-se-once` is a build carrier only, never source of truth.
-
-Before any build:
-- verify Release+SE HEAD;
-- check active/queued once;
-- start one build only;
-- preserve CPU/Vulkan behavior.
+The raw adaptive-trigger bridge and sequence/revision behavior remain unchanged. Existing local SE and Bow work is separate from this PR.

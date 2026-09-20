@@ -49,9 +49,43 @@ namespace snd_core
 		float gain{ 1.0f };
 		uint64_t playbackId{};
 		bool loop{};
+		bool followTv{};
 	};
 
 	EnhancedSoundHapticState s_enhancedSoundHapticState[AX_MAX_VOICES]{};
+
+	void AXUpdateVoiceHaptics(uint32 index, const AXVPBInternal_t* voice)
+	{
+		auto& state = s_enhancedSoundHapticState[index];
+		if (!state.playbackId)
+			return;
+		if (!GetConfig().enhanced_sound_experience || _swapEndianU16(voice->playbackState) != 1)
+		{
+			EnhancedSoundDualSenseService::StopHaptics(state.playbackId);
+			state = {};
+			return;
+		}
+		float gain = state.gain;
+		if (state.followTv)
+		{
+			// Snapshot after AX synchronization: includes the game's pan/distance sends
+			// and mixer-evolved ramps. No route lookup, guest actor access or PCM scan.
+			uint16 maximumSend = 0;
+			for (uint32 bus = 0; bus < AX_BUS_COUNT; ++bus)
+			{
+				const uint16 mask = _swapEndianU16(voice->deviceMixMaskTV[bus]);
+				for (uint32 channel = 0; channel < AX_TV_CHANNEL_COUNT; ++channel)
+				{
+					if ((mask >> (channel * 2)) & 3)
+						maximumSend = std::max<uint16>(maximumSend,
+							_swapEndianU16(voice->deviceMixTV[channel * AX_BUS_COUNT + bus].vol));
+				}
+			}
+			gain *= std::min(1.0f, maximumSend / 32768.0f);
+			gain *= std::min(1.0f, static_cast<uint16>(voice->veVolume) / 32768.0f);
+		}
+		EnhancedSoundDualSenseService::UpdateVoiceHaptics(state.playbackId, gain);
+	}
 
 	void AXApplyEnhancedSoundTvPolicy(AXCHMIX_DEPR* tvMix, EnhancedSoundRouter::Mode mode, uint8 tvVolumePercent)
 	{
@@ -394,6 +428,8 @@ namespace snd_core
 		AXVPBInternal_t* internal = GetInternalVoice(vpb);
 		uint32 index = GetVoiceIndex(vpb);
 		s_enhancedSoundDrcState[index] = {};
+		if (s_enhancedSoundHapticState[index].playbackId)
+			EnhancedSoundDualSenseService::StopHaptics(s_enhancedSoundHapticState[index].playbackId);
 		s_enhancedSoundHapticState[index] = {};
 		vpb->playbackState = 0;
 		vpb->sync = 0;
@@ -522,6 +558,11 @@ namespace snd_core
 
     void __AXVPBResetVoices()
     {
+        for (auto& state : s_enhancedSoundHapticState)
+        {
+            if (state.playbackId) EnhancedSoundDualSenseService::StopHaptics(state.playbackId);
+            state = {};
+        }
         __AXVPBInternalVoiceArray = _buffer__AXVPBInternalVoiceArray.GetPtr();
         __AXVPBInternalVoiceShadowCopyArrayPtr = _buffer__AXVPBInternalVoiceShadowCopyArray.GetPtr();
         __AXVPBArrayPtr = _buffer__AXVPBArray.GetPtr();
@@ -761,7 +802,7 @@ namespace snd_core
 
 		auto clearHapticRouteState = [&]()
 		{
-			if (hapticState.loop && hapticState.playbackId != 0)
+			if (hapticState.playbackId != 0)
 				EnhancedSoundDualSenseService::StopHaptics(hapticState.playbackId);
 			hapticState = {};
 		};
@@ -772,18 +813,20 @@ namespace snd_core
 				hapticState.sampleBase != sampleBase ||
 				hapticState.hapticPath != route->hapticPath ||
 				hapticState.gain != route->hapticGain ||
-				hapticState.loop != route->hapticLoop;
+				hapticState.loop != route->hapticLoop ||
+				hapticState.followTv != route->hapticFollowTv;
 			if (hapticChanged)
 			{
 				clearHapticRouteState();
 				uint64_t playbackId = 0;
 				std::string error;
 				const bool played = EnhancedSoundDualSenseService::PlayBnvib(
-					route->hapticPath, route->hapticGain, route->hapticLoop, &playbackId, &error);
+					route->hapticPath, route->hapticGain, route->hapticLoop, &playbackId, &error, true);
 				hapticState.sampleBase = sampleBase;
 				hapticState.hapticPath = route->hapticPath;
 				hapticState.gain = route->hapticGain;
 				hapticState.loop = route->hapticLoop;
+				hapticState.followTv = route->hapticFollowTv;
 				hapticState.playbackId = played ? playbackId : 0;
 				if (!played)
 					cemuLog_log(LogType::Force, "Enhanced haptic playback failed for '{}': {}", route->hapticPath, error);
@@ -1478,5 +1521,4 @@ namespace snd_core
 		return vpbLoopTracker_loopCount[voiceIndex];
 	}
 }
-
 

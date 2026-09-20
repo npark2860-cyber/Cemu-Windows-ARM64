@@ -1147,6 +1147,18 @@ void GraphicPack2::LoadEnhancedSoundRoutes()
 						rule.hapticPath.clear();
 					}
 				}
+				if (const auto hapticFollowTv = routes.FindOption("haptic_follow_tv"))
+				{
+					if (boost::iequals(*hapticFollowTv, "true") || boost::iequals(*hapticFollowTv, "yes") || *hapticFollowTv == "1")
+						rule.hapticFollowTv = true;
+					else if (boost::iequals(*hapticFollowTv, "false") || boost::iequals(*hapticFollowTv, "no") || *hapticFollowTv == "0")
+						rule.hapticFollowTv = false;
+					else
+					{
+						cemuLog_log(LogType::Force, "Graphic pack \"{}\": sound_routes.ini section \"{}\" ignored haptic because haptic_follow_tv must be true/false", owner, section);
+						rule.hapticPath.clear();
+					}
+				}
 			}
 		}
 

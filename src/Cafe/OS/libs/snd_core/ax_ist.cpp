@@ -845,6 +845,8 @@ namespace snd_core
 						vpb->sync = 0;
 					}
 				}
+				if (!AXVoiceProtection_IsProtectedByAnyThread(vpb))
+					AXUpdateVoiceHaptics(index, internalShadowCopy);
 			}
 		}
 		// depop and reset voices which just stopped playing

@@ -30,7 +30,7 @@ There are exactly five active source-of-truth roles.
    - Used to investigate route/fingerprint/cue issues that need instrumentation.
    - Diagnostic instrumentation must not be promoted wholesale into Release+SE.
 
-5. **[Test] `test/se-fingerprint-index-v1`**
+5. **[Test] `test_SE`**
    - Current SE/haptic experiment line.
    - Based on Release+SE, not on the stock Diagnostics line.
    - Keep verified Release+SE behavior intact and change one experimental variable at a time.

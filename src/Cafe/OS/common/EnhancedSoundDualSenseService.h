@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Cafe/OS/common/EnhancedHapticEngine.h"
+#include "Cafe/OS/common/EnhancedHapticMixer.h"
 
 #include <cstdint>
 #include <filesystem>
@@ -48,16 +48,11 @@ namespace EnhancedSoundDualSenseService
 	};
 
 	inline std::mutex s_startMutex;
-	inline std::unique_ptr<std::jthread> s_worker;
-	inline EnhancedHapticEngine::Player s_hapticPlayer;
+	inline EnhancedHapticEngine::Mixer s_hapticPlayer;
 
 	inline std::mutex s_clipCacheMutex;
 	inline std::unordered_map<std::filesystem::path, std::shared_ptr<const EnhancedHapticEngine::Clip>> s_oneShotClipCache;
 	inline std::unordered_map<std::filesystem::path, std::shared_ptr<const EnhancedHapticEngine::Clip>> s_loopClipCache;
-
-	inline std::mutex s_playbackMutex;
-	inline uint64_t s_nextPlaybackId{ 1 };
-	inline uint64_t s_activePlaybackId{};
 
 	struct AdaptiveTriggerRequest
 	{
@@ -70,6 +65,8 @@ namespace EnhancedSoundDualSenseService
 	inline std::mutex s_triggerMutex;
 	inline AdaptiveTriggerRequest s_triggerRequest;
 	inline uint64_t s_triggerRevision{};
+	// Stop/join the worker before destroying the shared state above.
+	inline std::unique_ptr<std::jthread> s_worker;
 
 	inline bool IsEligibleUsbDualSense(IGamepadBase* gamepad)
 	{
@@ -136,7 +133,7 @@ namespace EnhancedSoundDualSenseService
 	inline void EnsureRunning();
 
 	inline bool PlayBnvib(const std::filesystem::path& path, float gain = 1.0f, bool useLoop = false,
-		uint64_t* playbackId = nullptr, std::string* error = nullptr)
+		uint64_t* playbackId = nullptr, std::string* error = nullptr, bool voiceBound = false)
 	{
 		auto clip = GetCachedClip(path, useLoop, error);
 		if (!clip)
@@ -144,14 +141,11 @@ namespace EnhancedSoundDualSenseService
 
 		EnsureRunning();
 
-		uint64_t id;
+		const uint64_t id = s_hapticPlayer.Play(std::move(clip), gain, voiceBound);
+		if (!id)
 		{
-			std::scoped_lock lock(s_playbackMutex);
-			if (s_nextPlaybackId == 0)
-				s_nextPlaybackId = 1;
-			id = s_nextPlaybackId++;
-			s_activePlaybackId = id;
-			s_hapticPlayer.Play(std::move(clip), gain);
+			if (error) *error = "Haptic playback capacity exhausted";
+			return false;
 		}
 		if (playbackId)
 			*playbackId = id;
@@ -160,13 +154,13 @@ namespace EnhancedSoundDualSenseService
 
 	inline void StopHaptics(uint64_t playbackId = 0)
 	{
-		std::scoped_lock lock(s_playbackMutex);
-		if (playbackId != 0 && s_activePlaybackId != playbackId)
-			return;
-		s_activePlaybackId = 0;
-		s_hapticPlayer.Stop();
+		s_hapticPlayer.Stop(playbackId);
 	}
 
+	inline void UpdateVoiceHaptics(uint64_t id, float gain)
+	{
+		s_hapticPlayer.Update(id, gain);
+	}
 
 	inline bool ApplyAdaptiveTriggerBowRaw(uint8_t startZoneMask, uint8_t forcePair, bool leftHand = false)
 	{
@@ -258,7 +252,7 @@ namespace EnhancedSoundDualSenseService
 					triggerRevision = s_triggerRevision;
 				}
 
-				const auto hapticFrame = s_hapticPlayer.Tick(now);
+				const auto hapticFrame = s_hapticPlayer.Tick(now, !outputConfigured && s_hapticPlayer.IsActive());
 				const bool hapticsEnabled = s_hapticPlayer.IsActive() || hapticFrame.has_value();
 				const bool serviceEnabled =
 					GetConfig().enhanced_sound_experience || hapticsEnabled || hadHaptics ||
@@ -334,13 +328,14 @@ namespace EnhancedSoundDualSenseService
 {
 	inline void EnsureRunning() {}
 	inline bool PlayBnvib(const std::filesystem::path&, float = 1.0f, bool = false,
-		uint64_t* = nullptr, std::string* error = nullptr)
+		uint64_t* = nullptr, std::string* error = nullptr, bool = false)
 	{
 		if (error)
 			*error = "DualSense BNVIB playback is only available on Windows";
 		return false;
 	}
 	inline void StopHaptics(uint64_t = 0) {}
+	inline void UpdateVoiceHaptics(uint64_t, float) {}
 	inline bool ApplyAdaptiveTriggerBowRaw(uint8_t, uint8_t, bool = false)
 	{
 		return false;
