@@ -366,7 +366,7 @@ FORCE_INLINE int BSF(uint32 v) // returns index of first bit set, counting from 
 
 inline void _mm_pause()
 {
-    asm volatile("yield");
+    asm volatile("yield" ::: "memory"); // memory clobber: spin loops must re-read memory
 }
 
 inline uint64 __rdtsc()

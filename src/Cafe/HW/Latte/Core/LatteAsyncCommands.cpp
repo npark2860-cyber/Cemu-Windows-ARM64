@@ -52,6 +52,11 @@ typedef struct
 
 std::queue<LatteAsyncCommand_t> LatteAsyncCommandQueue;
 
+// Number of queued commands. The queue itself is only touched under swl_gpuAsyncCommands, but other threads poll for emptiness without the lock.
+// Reading std::queue::empty() unsynchronized is a data race and, on weakly ordered CPUs (ARM), does not guarantee that the effects of a finished
+// command (e.g. the copied surface data) are visible to the waiting thread. Use an atomic with acquire/release semantics for this.
+static std::atomic<uint32> s_pendingAsyncCommands{0};
+
 void LatteAsyncCommands_queueForceTextureReadback(MPTR physAddr, MPTR mipAddr, uint32 swizzle, sint32 format, sint32 width, sint32 height, sint32 depth, uint32 pitch, uint32 slice, sint32 dim, Latte::E_HWTILEMODE tilemode, sint32 aa, sint32 level)
 {
 	LatteAsyncCommand_t asyncCommand = {};
@@ -73,6 +78,7 @@ void LatteAsyncCommands_queueForceTextureReadback(MPTR physAddr, MPTR mipAddr, u
 	asyncCommand.forceTextureReadback.level = level;
 	swl_gpuAsyncCommands.LockWrite();
 	LatteAsyncCommandQueue.push(asyncCommand);
+	s_pendingAsyncCommands.fetch_add(1, std::memory_order_release);
 	swl_gpuAsyncCommands.UnlockWrite();
 }
 
@@ -88,6 +94,7 @@ void LatteAsyncCommands_queueDeleteShader(uint64 shaderBaseHash, uint64 shaderAu
 
 	swl_gpuAsyncCommands.LockWrite();
 	LatteAsyncCommandQueue.push(asyncCommand);
+	s_pendingAsyncCommands.fetch_add(1, std::memory_order_release);
 	swl_gpuAsyncCommands.UnlockWrite();
 }
 
@@ -102,12 +109,13 @@ void LatteAsyncCommand_queueTextureCopy(const LatteSurfaceCopyParam& src, const 
 
 	swl_gpuAsyncCommands.LockWrite();
 	LatteAsyncCommandQueue.push(asyncCommand);
+	s_pendingAsyncCommands.fetch_add(1, std::memory_order_release);
 	swl_gpuAsyncCommands.UnlockWrite();
 }
 
 void LatteAsyncCommands_waitUntilAllProcessed()
 {
-	while (LatteAsyncCommandQueue.empty() == false)
+	while (s_pendingAsyncCommands.load(std::memory_order_acquire) != 0)
 	{
 		_mm_pause();
 	}
@@ -121,7 +129,7 @@ void LatteAsyncCommands_checkAndExecute()
 	// quick check if queue is empty (requires no lock)
 	if (Latte_GetStopSignal())
 		LatteThread_Exit();
-	if (LatteAsyncCommandQueue.empty())
+	if (s_pendingAsyncCommands.load(std::memory_order_acquire) == 0)
 		return;
 	swl_gpuAsyncCommands.LockWrite();
 	while (LatteAsyncCommandQueue.empty() == false)
@@ -160,6 +168,7 @@ void LatteAsyncCommands_checkAndExecute()
 		}
 		swl_gpuAsyncCommands.LockWrite();
 		LatteAsyncCommandQueue.pop();
+		s_pendingAsyncCommands.fetch_sub(1, std::memory_order_release);
 	}
 	swl_gpuAsyncCommands.UnlockWrite();
 }
