@@ -631,6 +631,7 @@ set_property(TARGET CemuCafe PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CON
 if(CEMU_ENABLE_NPU)
     target_sources(CemuCafe PRIVATE HW/Latte/Renderer/Vulkan/VulkanNPU.cpp)
     target_include_directories(CemuCafe PRIVATE "${CMAKE_SOURCE_DIR}/dependencies/npu-cemu")
+    target_link_libraries(CemuCafe PRIVATE setupapi)
 endif()
 cemu_use_precompiled_header(CemuCafe)
 
