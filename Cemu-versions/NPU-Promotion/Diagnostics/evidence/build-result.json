@@ -1,0 +1,7 @@
+{
+  "variant": "Diagnostics",
+  "pass": "build",
+  "exit_code": 1,
+  "finished_at": "2026-09-29T18:43:46.1035691+09:00",
+  "device_executed": false
+}
