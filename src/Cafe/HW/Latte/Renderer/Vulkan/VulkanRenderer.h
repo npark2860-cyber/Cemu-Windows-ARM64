@@ -13,6 +13,8 @@
 #include "util/containers/flat_hash_map.hpp"
 #include "util/containers/robin_hood.h"
 
+struct VulkanNPUState;
+
 struct VkSupportedFormatInfo_t
 {
 	bool fmt_d24_unorm_s8_uint{};
@@ -222,6 +224,9 @@ public:
 	static VkSurfaceKHR CreateFramebufferSurface(VkInstance instance, struct WindowSystem::WindowHandleInfo& windowInfo);
 
 	void AppendOverlayDebugInfo() override;
+#ifdef CEMU_ENABLE_NPU
+    std::optional<double> GetFrameGenerationFps() const override;
+#endif
 
 	void ImguiInit();
 	VkInstance GetVkInstance() const { return m_instance; }
@@ -499,6 +504,41 @@ private:
 
 	VkDescriptorSetLayout m_swapchainDescriptorSetLayout;
 
+	struct FSRIntermediate
+	{
+		VkImage image{ VK_NULL_HANDLE };
+		VkImageView view{ VK_NULL_HANDLE };
+		VkFramebuffer framebuffer{ VK_NULL_HANDLE };
+		VkImageMemAllocation* allocation{ nullptr };
+		VkDescriptorSet descriptorSet{ VK_NULL_HANDLE };
+		uint32 width{ 0 };
+		uint32 height{ 0 };
+	};
+#ifdef CEMU_ENABLE_NPU
+#ifdef CEMU_ENABLE_NPU
+    VulkanNPUState* m_npu{};
+    void npuInitialize();
+    void npuShutdown();
+    void npuCapture();
+    void npuInvalidate();
+    bool npuPresentGenerated();
+    bool npuIsGeneratedPresent() const;
+    void npuRecordPresentTiming(double sourceThrottleMs,double availableFenceMs,double queueLimitMs,double queuePresentMs);
+    void npuRecordPresent(VkResult result);
+    std::optional<double> npuGetFps() const;
+#endif
+    bool m_npuSupported{}, m_npuImguiMainWindow{};
+    uint64_t m_npuSwapchainGeneration{};
+#endif
+	std::array<FSRIntermediate, 2> m_fsrIntermediate{};
+	VkRenderPass m_fsrRenderPass{ VK_NULL_HANDLE };
+	VkSampler m_fsrSampler{ VK_NULL_HANDLE };
+
+	void fsrEnsureIntermediate(bool padView, uint32 width, uint32 height);
+	void fsrDestroyIntermediate(size_t index);
+	void fsrDestroyResources();
+	void DrawBackbufferQuadFSR(LatteTextureView* texView, RendererOutputShader* easuShader, sint32 imageX, sint32 imageY, sint32 imageWidth, sint32 imageHeight, bool padView);
+
 	VkQueue m_graphicsQueue, m_presentQueue;
 
 	// swapchain
@@ -569,7 +609,7 @@ private:
 	// misc
 	void CreatePipelineCache();
 	VkPipelineShaderStageCreateInfo CreatePipelineShaderStageCreateInfo(VkShaderStageFlagBits stage, VkShaderModule& module, const char* entryName) const;
-	VkPipeline backbufferBlit_createGraphicsPipeline(VkDescriptorSetLayout descriptorLayout, bool padView, RendererOutputShader* shader);
+	VkPipeline backbufferBlit_createGraphicsPipeline(VkDescriptorSetLayout descriptorLayout, bool padView, RendererOutputShader* shader, VkRenderPass overrideRenderPass = VK_NULL_HANDLE);
 	bool AcquireNextSwapchainImage(bool mainWindow);
 	void RecreateSwapchain(bool mainWindow, bool skipCreate = false);
 

@@ -33,6 +33,66 @@ void _emitTypeConversionPrefix(LatteDecompilerShaderContext* shaderContext, sint
 void _emitTypeConversionSuffix(LatteDecompilerShaderContext* shaderContext, sint32 sourceType, sint32 destinationType);
 void LatteDecompiler_emitClauseCode(LatteDecompilerShaderContext* shaderContext, LatteDecompilerCFInstruction* cfInstruction, bool isSubroutine);
 
+namespace LatteDecompiler
+{
+	static bool _isPSInputWrittenByVS(LatteDecompilerShaderContext* shaderContext, sint32 psInputIndex)
+	{
+		LatteShaderPSInputTable* psInputTable = LatteSHRC_GetPSInputTable();
+		cemu_assert_debug(psInputIndex >= 0 && psInputIndex < psInputTable->count);
+
+		uint32 semanticId = psInputTable->import[psInputIndex].semanticId;
+		if (semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
+			return false;
+
+		uint32 parameterMask = shaderContext->shader->outputParameterMask;
+		for (uint32 paramIndex = 0; paramIndex < 32; paramIndex++)
+		{
+			if ((parameterMask & (1u << paramIndex)) == 0)
+				continue;
+
+			uint32 vsSemanticId = LatteShaderPSInputTable::getVertexShaderOutParamSemanticId(shaderContext->contextRegisters, paramIndex);
+			if (psInputTable->getPSImportLocationBySemanticId(vsSemanticId) == psInputIndex)
+				return true;
+		}
+
+		return false;
+	}
+
+	static const char* _getPSInputDefaultValueGLSL(uint8 defaultValue)
+	{
+		switch (defaultValue & 3)
+		{
+		case 0:
+			return "vec4(0.0, 0.0, 0.0, 0.0)";
+		case 1:
+			return "vec4(0.0, 0.0, 0.0, 1.0)";
+		case 2:
+			return "vec4(1.0, 1.0, 1.0, 0.0)";
+		case 3:
+			return "vec4(1.0, 1.0, 1.0, 1.0)";
+		}
+
+		cemu_assert_unimplemented();
+		return "vec4(0.0)";
+	}
+
+	static void _emitPSInputDefaultsForVS(LatteDecompilerShaderContext* shaderContext)
+	{
+		LatteShaderPSInputTable* psInputTable = LatteSHRC_GetPSInputTable();
+		for (sint32 i = 0; i < psInputTable->count; i++)
+		{
+			uint32 semanticId = psInputTable->import[i].semanticId;
+			if (semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
+				continue;
+			if (_isPSInputWrittenByVS(shaderContext, i))
+				continue;
+
+			shaderContext->shaderSource->addFmt("passParameterSem{} = {};" _CRLF,
+				semanticId, _getPSInputDefaultValueGLSL(psInputTable->import[i].defaultValue));
+		}
+	}
+}
+
 const char* _getShaderUniformBlockInterfaceName(LatteConst::ShaderType mode)
 {
 	switch (mode)
@@ -4193,6 +4253,12 @@ void LatteDecompiler_emitGLSLShader(LatteDecompilerShaderContext* shaderContext,
 					cemu_assert_debug(false);
 			}
 		}
+	}
+	if (shader->shaderType == LatteConst::ShaderType::Vertex && !shaderContext->options->usesGeometryShader)
+	{
+		src->add("#ifdef VULKAN" _CRLF);
+		LatteDecompiler::_emitPSInputDefaultsForVS(shaderContext);
+		src->add("#endif" _CRLF);
 	}
 	for(auto& cfInstruction : shaderContext->cfInstructions)
 		LatteDecompiler_emitClauseCode(shaderContext, &cfInstruction, false);

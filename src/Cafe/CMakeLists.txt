@@ -628,6 +628,10 @@ endif()
 
 set_property(TARGET CemuCafe PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+if(CEMU_ENABLE_NPU)
+    target_sources(CemuCafe PRIVATE HW/Latte/Renderer/Vulkan/VulkanNPU.cpp)
+    target_include_directories(CemuCafe PRIVATE "${CMAKE_SOURCE_DIR}/dependencies/npu-cemu")
+endif()
 cemu_use_precompiled_header(CemuCafe)
 
 if (ENABLE_LIBUSB)
