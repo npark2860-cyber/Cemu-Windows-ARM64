@@ -1,0 +1,127 @@
+name: "[Release | NPU] Cemu Windows ARM64"
+
+# Builds this branch as committed: the compatibility, FSR and branding patches
+# the Release workflow applies at build time are already part of the NPU
+# branches. ONNX Runtime/QNN comes from its pinned NuGet package.
+on:
+  push:
+    branches:
+      - codex/npu-release
+  pull_request:
+    branches:
+      - codex/npu-release
+  workflow_dispatch:
+    inputs:
+      full_runtime:
+        description: "Also upload a complete runtime folder with the ONNX Runtime/QNN DLLs (about 110 MB)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VARIANT: Release-NPU
+  VCPKG_ROOT: "${{ github.workspace }}/dependencies/vcpkg"
+  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
+  VCPKG_FORCE_DOWNLOADED_BINARIES: true
+
+jobs:
+  build-windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Ensure clang-cl toolset is installed
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -property installationPath
+          $setup = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe"
+          $modifyArgs = "modify --installPath `"$vsPath`" --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset --quiet --norestart"
+          Start-Process -FilePath $setup -Wait -ArgumentList $modifyArgs
+
+      - name: Setup MSVC environment arm64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: arm64
+
+      - name: Setup Ninja
+        run: choco install ninja -y
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.29.0'
+
+      - name: NPU module and CPU contract tests
+        run: |
+          cmake -S dependencies/npu-cemu -B build-npu -G Ninja -DCMAKE_BUILD_TYPE=Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build-npu
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ctest --test-dir build-npu --output-on-failure
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Bootstrap vcpkg
+        run: ./dependencies/vcpkg/bootstrap-vcpkg.bat
+
+      - name: Setup NuGet Credentials for vcpkg
+        shell: bash
+        run: |
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          sources add \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          -storepasswordincleartext \
+          -name "GitHub" \
+          -username "${{ github.repository_owner }}" \
+          -password "${{ secrets.GITHUB_TOKEN }}"
+          `./dependencies/vcpkg/vcpkg.exe fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+
+      - name: cmake
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=release -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_LINKER_TYPE=MSVC -DVCPKG_INSTALL_OPTIONS="--clean-after-build" -DCEMU_ENABLE_NPU=ON "-DCEMU_NPU_ORT_PACKAGE=${{ github.workspace }}/build-npu/_deps/microsoft.ml.onnxruntime.qnn.1.24.4.nupkg"
+
+      - name: Build Cemu
+        run: cmake --build build
+
+      - name: Prepare artifacts
+        run: |
+          $update = "artifact/Cemu-$env:VARIANT"
+          New-Item -ItemType Directory -Force $update | Out-Null
+          Copy-Item bin/Cemu_release.exe "$update/Cemu-$env:VARIANT.exe"
+          Copy-Item bin/cemu_npu.dll $update
+          Copy-Item -Recurse bin/npu "$update/npu"
+          # Korean catalog with the NPU menu, hotkey and notice strings merged in.
+          New-Item -ItemType Directory -Force "$update/resources/ko" | Out-Null
+          Copy-Item bin/resources/ko/cemu.mo "$update/resources/ko/cemu.mo"
+          Push-Location $update
+          $sums = Get-ChildItem -Recurse -File | Get-FileHash -Algorithm SHA256 | ForEach-Object { "{0}  {1}" -f $_.Hash.ToLower(), (Resolve-Path -Relative $_.Path).Substring(2) }
+          Set-Content SHA256SUMS.txt $sums
+          Pop-Location
+          if ("${{ inputs.full_runtime }}" -eq "true") {
+            $full = "artifact-full/Cemu-$env:VARIANT-runtime"
+            New-Item -ItemType Directory -Force $full | Out-Null
+            Copy-Item -Recurse bin/* $full -Exclude Cemu_release.exe,*.pdb,*.ilk,*.lib,*.exp
+            Copy-Item bin/Cemu_release.exe "$full/Cemu-$env:VARIANT.exe"
+          }
+
+      - name: Upload executable and NPU module
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-${{ env.VARIANT }}
+          path: artifact/
+          retention-days: 30
+
+      - name: Upload complete runtime
+        if: ${{ inputs.full_runtime }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: Cemu-${{ env.VARIANT }}-runtime
+          path: artifact-full/
+          retention-days: 7
