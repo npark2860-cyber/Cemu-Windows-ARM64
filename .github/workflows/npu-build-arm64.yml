@@ -97,6 +97,9 @@ jobs:
           Copy-Item bin/Cemu_release.exe "$update/Cemu-$env:VARIANT.exe"
           Copy-Item bin/cemu_npu.dll $update
           Copy-Item -Recurse bin/npu "$update/npu"
+          # Korean catalog with the NPU menu, hotkey and notice strings merged in.
+          New-Item -ItemType Directory -Force "$update/resources/ko" | Out-Null
+          Copy-Item bin/resources/ko/cemu.mo "$update/resources/ko/cemu.mo"
           Push-Location $update
           $sums = Get-ChildItem -Recurse -File | Get-FileHash -Algorithm SHA256 | ForEach-Object { "{0}  {1}" -f $_.Hash.ToLower(), (Resolve-Path -Relative $_.Path).Substring(2) }
           Set-Content SHA256SUMS.txt $sums

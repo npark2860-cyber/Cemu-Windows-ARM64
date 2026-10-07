@@ -30,28 +30,29 @@ struct VulkanNPUState {
 
 namespace {
 using NpuClock=std::chrono::steady_clock;
-// rpc-path.txt pins libcdsprpc.dll. Without it, use the copy in the installed
-// Hexagon NPU driver package, found through the compute accelerator's INF, so a
-// driver update or another PC needs no manual path.
+// rpc-path.txt pins libcdsprpc.dll. Without it, use the copy in the driver
+// package of the running Hexagon NPU, found through its INF, so a driver update
+// or another PC needs no manual path. Only present devices count: a device
+// instance left from an earlier install keeps its old driver's INF.
 std::wstring NpuDriverRpcLibrary() {
-    constexpr wchar_t computeAccelerators[]=L"SYSTEM\\CurrentControlSet\\Control\\Class\\{F01A9D53-3FF6-48D2-9F97-C8A7004BE10C}";
-    HKEY root{};
-    if(RegOpenKeyExW(HKEY_LOCAL_MACHINE,computeAccelerators,0,KEY_READ,&root)!=ERROR_SUCCESS) return {};
+    // GUID_DEVCLASS_COMPUTEACCELERATOR and DEVPKEY_Device_DriverInfPath, spelled
+    // out so that no header has to define them in this file.
+    constexpr GUID computeAccelerators{0xf01a9d53,0x3ff6,0x48d2,{0x9f,0x97,0xc8,0xa7,0x00,0x4b,0xe1,0x0c}};
+    constexpr DEVPROPKEY driverInfPath{{0xa8b865dd,0x2e3d,0x4094,{0xad,0x97,0xe5,0x93,0xa7,0x0c,0x75,0xd6}},5};
+    const HDEVINFO devices=SetupDiGetClassDevsW(&computeAccelerators,nullptr,nullptr,DIGCF_PRESENT);
+    if(devices==INVALID_HANDLE_VALUE) return {};
     std::wstring found;
-    for(DWORD index=0;found.empty();++index) {
-        wchar_t device[256];DWORD length=DWORD(std::size(device));
-        const auto status=RegEnumKeyExW(root,index,device,&length,nullptr,nullptr,nullptr,nullptr);
-        if(status==ERROR_NO_MORE_ITEMS) break;
-        if(status!=ERROR_SUCCESS) continue;
-        wchar_t inf[MAX_PATH]{};DWORD size=sizeof(inf);
-        if(RegGetValueW(root,device,L"InfPath",RRF_RT_REG_SZ,nullptr,inf,&size)!=ERROR_SUCCESS) continue;
+    SP_DEVINFO_DATA device{sizeof(device)};
+    for(DWORD index=0;found.empty() && SetupDiEnumDeviceInfo(devices,index,&device);++index) {
+        DEVPROPTYPE type{};wchar_t inf[MAX_PATH]{};
+        if(!SetupDiGetDevicePropertyW(devices,&device,&driverInfPath,&type,reinterpret_cast<PBYTE>(inf),sizeof(inf),nullptr,0) || type!=DEVPROP_TYPE_STRING) continue;
         wchar_t store[MAX_PATH]{};
         if(!SetupGetInfDriverStoreLocationW(inf,nullptr,nullptr,store,DWORD(std::size(store)),nullptr)) continue;
         std::error_code error;
         const auto rpc=fs::path(store).parent_path()/L"libcdsprpc.dll";
         if(fs::is_regular_file(rpc,error)) found=rpc.wstring();
     }
-    RegCloseKey(root);
+    SetupDiDestroyDeviceInfoList(devices);
     return found;
 }
 void NpuBarrier(VkCommandBuffer command,VkImage image,VkImageLayout before,VkImageLayout after) {
@@ -134,8 +135,8 @@ void VulkanRenderer::npuInitialize() {
         char error[1024]{};
         const auto startup=NpuClock::now();
         if(state.api.create(&info,&state.context,error,sizeof(error))) throw std::runtime_error(error);
-        cemuLog_log(LogType::Force,"[NPU] Module startup {:.0f} ms; RPC library from {}",
-            std::chrono::duration<double,std::milli>(NpuClock::now()-startup).count(),rpcLine.empty()?"the installed driver":"rpc-path.txt");
+        cemuLog_log(LogType::Force,"[NPU] Module startup {:.0f} ms; RPC library {} (from {}); {}",
+            std::chrono::duration<double,std::milli>(NpuClock::now()-startup).count(),_pathToUtf8(rpc),rpcLine.empty()?"the installed driver":"rpc-path.txt",error);
         state.intervalStart=NpuClock::now();
         cemuLog_log(LogType::Force,"[NPU] READY/OFF: ANVIL U8 NHWC processing={}x{}, window-sized SDR output, 3 shared slots; QNN worker and borrowed Vulkan queue. No inference at startup. One-frame buffering, cached block motion and immutable overlay replay.",state.processingExtent.width,state.processingExtent.height);
     } catch(const std::exception& error) {
@@ -167,6 +168,7 @@ void VulkanRenderer::npuCapture() {
     if(requested!=state.enabled) {
         npuInvalidate();state.enabled=requested;state.unsupportedLogged=false;
         cemuLog_log(LogType::Force,"[NPU] {}: history reset; no per-frame inference wait",requested?"ON (one-frame buffered)":"OFF/passthrough");
+        LatteOverlay_pushNotification(requested?_tr("NPU frame generation on"):_tr("NPU frame generation off"),2000);
     }
     if(!requested) return; // No frame copies, dispatches, NPU Run, or waits while OFF.
     try {

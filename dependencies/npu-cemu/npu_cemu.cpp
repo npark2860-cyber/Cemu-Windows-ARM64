@@ -27,10 +27,11 @@ struct Slot {
     SlotState state{SlotState::Free};
     cemu::npu::Completion completion{};
     // Written by the worker for its job and read after take(); the worker
-    // mutex orders both. submitted is set before the job is handed over.
+    // mutex orders both. submitted and firstJob are set before the job is
+    // handed over; ranBefore is the worker's own.
     Clock::time_point submitted{},waitStart{},waitEnd{};
     Clock::duration run{};
-    bool ran{};
+    bool ran{},firstRun{},ranBefore{},used{},firstJob{};
     Slot(Vulkan& v,const ProcessingProfile& p):vk(v),profile(p),input(v),output(v),forward(v),backward(v),composed(v),quarterA(v),quarterB(v),warpedA(v),warpedB(v),compute(v,p){}
     void create(Ort::Allocator& allocator,GpuImage& a,GpuImage& b,const fs::path& shaders) {
         input.create(profile.inputBytes,&allocator); output.create(profile.outputBytes,&allocator);
@@ -74,6 +75,7 @@ struct CemuNpu {
     cemu::npu::PairAdmission admission{1}; // One source frame of buffering.
     std::atomic<uint64_t> latestReal{},npuRuns{},inputWaitUs{},npuRunUs{},workerStartUs{};
     CemuNpuStats counters{};
+    std::string startupNote; // QNN context cache outcome, returned by create for the log.
     static uint64_t micros(Clock::time_point begin) { return uint64_t(std::chrono::duration_cast<std::chrono::microseconds>(Clock::now()-begin).count()); }
     void initialize(const CemuNpuCreateInfo& info) {
         const char* stage="borrowed Vulkan setup";
@@ -96,10 +98,13 @@ struct CemuNpu {
         options.AddConfigEntry("session.disable_cpu_ep_fallback","1");
         stage="QNN provider registration";
         const std::unordered_map<std::string,std::string> qnn{{"backend_path",backend},{"offload_graph_io_quantization","0"},
-            {"enable_htp_fp16_precision","1"},{"htp_performance_mode","balanced"},{"profiling_level","off"},{"enable_htp_shared_memory_allocator","1"}};
+            {"enable_htp_fp16_precision","1"},{"htp_performance_mode","balanced"},{"profiling_level","off"},{"enable_htp_shared_memory_allocator","1"},
+            // ORT 1.24.4 maps context weights from a file by default and then
+            // cannot create a session from an embedded context in memory.
+            {"disable_file_mapped_weights","1"}};
         options.AppendExecutionProvider("QNN",qnn);
         stage="QNN session creation (wide model path, app-local backend basename)";
-        session=openSession(directory,directory/L"npu"/profile.label/L"anvil-u8nhwc.onnx",rpcPath,options,qnn);
+        session=openSession(directory,directory/L"npu"/profile.label/L"anvil-u8nhwc.onnx",rpcPath,options,qnn,startupNote);
         Ort::AllocatorWithDefaultOptions names;
         inputName=session->GetInputNameAllocated(0,names).get();outputName=session->GetOutputNameAllocated(0,names).get();
         stage="QNN shared allocator";
@@ -126,10 +131,14 @@ struct CemuNpu {
     // model). Compile once into an embedded EP context and reuse it from
     // npu/<profile>/cache on later starts. Cache problems never fail startup:
     // the last step is the original uncached session from the source model.
-    // A key whose context failed here once is marked and stays uncached, so a
-    // broken cache costs at most one slower start; deleting the folder retries.
+    // A saved context that fails to load is compiled again once. A marker is
+    // written before compiling and removed once the context is saved, so a
+    // crash while compiling, a fresh context that does not load or a folder
+    // that cannot be written stops later starts from compiling every time;
+    // deleting the folder retries. note: what happened, for the log.
     std::unique_ptr<Ort::Session> openSession(const fs::path& directory,const fs::path& model,const fs::path& rpcPath,
-                                              const Ort::SessionOptions& options,const std::unordered_map<std::string,std::string>& qnn) {
+                                              const Ort::SessionOptions& options,const std::unordered_map<std::string,std::string>& qnn,
+                                              std::string& note) {
         std::error_code ignored;
         std::vector<char> source;fs::path cache,disabled;
         try {
@@ -141,15 +150,19 @@ struct CemuNpu {
                                   L"QnnHtpV73Stub.dll",L"libQnnHtpV73Skel.so",L"QnnHtpV81Stub.dll",L"libQnnHtpV81Skel.so"}) key.addFile(directory/file);
             cache=model.parent_path()/L"cache"/cemu::npu::contextFileName(key);
             disabled=cemu::npu::disabledMarker(cache);
-            if(fs::exists(disabled,ignored)) cache.clear();
-        } catch(const std::exception&) {cache.clear();}
-        if(!cache.empty()) {
+        } catch(const std::exception& e) {note=std::string("QNN context cache unavailable: ")+e.what();cache.clear();}
+        if(!cache.empty() && fs::is_regular_file(cache,ignored)) {
             try {
-                if(fs::is_regular_file(cache,ignored)) {
-                    const auto bytes=cemu::npu::readFile(cache);
-                    auto cached=std::make_unique<Ort::Session>(*env,bytes.data(),bytes.size(),options);
-                    verifyModel(*cached);return cached;
-                }
+                const auto bytes=cemu::npu::readFile(cache);
+                auto cached=std::make_unique<Ort::Session>(*env,bytes.data(),bytes.size(),options);
+                verifyModel(*cached);note="QNN context loaded from cache";return cached;
+            } catch(const std::exception& e) {fs::remove(cache,ignored);note=std::string("cached QNN context did not load: ")+e.what()+"; ";}
+        }
+        if(!cache.empty() && fs::exists(disabled,ignored)) {note+="QNN context cache off for this setup after an earlier failure; delete "+utf8(cache.parent_path().wstring())+" to retry";cache.clear();}
+        else if(!cache.empty() && !cemu::npu::writeFileReplacing(disabled,"",0)) {note+="QNN context cache folder is not writable; starting uncached";cache.clear();}
+        if(!cache.empty()) {
+            std::string failure;
+            try {
                 Ort::AllocatorWithDefaultOptions cpu;
                 void* data{};size_t size{};
                 Ort::ModelCompilationOptions compile(*env,options);
@@ -161,12 +174,19 @@ struct CemuNpu {
                 if(!status.IsOK() || !data || !size) throw std::runtime_error(status.GetErrorMessage());
                 auto fresh=std::make_unique<Ort::Session>(*env,data,size,options);
                 verifyModel(*fresh);
-                if(cemu::npu::writeFileReplacing(cache,data,size)) cemu::npu::removeStaleContexts(cache.parent_path(),cache.filename());
+                // Saving removes the marker with every other key's files.
+                if(cemu::npu::writeFileReplacing(cache,data,size)) {cemu::npu::removeStaleContexts(cache.parent_path(),cache.filename());note+="QNN context compiled and cached";}
+                else note+="QNN context compiled; saving it failed, so later starts are uncached";
                 return fresh;
-            } catch(const std::exception&) {
-                fs::remove(cache,ignored);
-                cemu::npu::writeFileReplacing(disabled,"",0);
-            }
+            } catch(const std::exception& e) {fs::remove(cache,ignored);failure=e.what();}
+            // Keep the marker only when the original model loads: if it fails
+            // too, the NPU was unavailable and the next start tries again.
+            try {
+                auto uncached=std::make_unique<Ort::Session>(*env,model.c_str(),options);
+                verifyModel(*uncached);
+                note+="QNN context failed, cache off for this setup: "+failure;
+                return uncached;
+            } catch(...) {fs::remove(disabled,ignored);throw;}
         }
         auto uncached=std::make_unique<Ort::Session>(*env,model.c_str(),options);
         verifyModel(*uncached);return uncached;
@@ -202,8 +222,8 @@ struct CemuNpu {
             auto& slot=*slots.at(size_t(result->pair.slot));++counters.completed;
             double ms[3]{};if(slot.compute.timing(0,3,ms)) {counters.downsampleMs+=ms[0];counters.motionMs+=ms[1];counters.packMs+=ms[2];++counters.preGpuSamples;}
             if(result->error) {slot.state=SlotState::Free;std::rethrow_exception(result->error);}
-            admission.completed(slot.submitted,slot.waitStart,slot.waitEnd,
-                slot.ran?std::optional<cemu::npu::PairAdmission::Duration>(slot.run):std::nullopt,result->finished);
+            admission.completed(slot.submitted,slot.waitStart,slot.waitEnd,result->finished,slot.firstJob,
+                slot.ran && !slot.firstRun?std::optional<cemu::npu::PairAdmission::Duration>(slot.run):std::nullopt);
             if(result->stale || !result->executed || result->pair.current<=latestReal.load(std::memory_order_acquire)) {slot.state=SlotState::Free;++counters.stale;}
             else {slot.completion=*result;slot.state=SlotState::Ready;}
         }
@@ -251,7 +271,7 @@ struct CemuNpu {
         submit(slot.inputFence);slot.state=SlotState::Orphan;
         const auto queued=Clock::now();const auto epoch=worker->epoch();
         cemu::npu::FramePair pair{epoch,frameId-1,frameId,index,profile.width,profile.height,queued+std::chrono::milliseconds(250)};
-        slot.submitted=queued;
+        slot.submitted=queued;slot.firstJob=!std::exchange(slot.used,true);
         if(worker->submit(pair,[this,index,frameId,queued](const auto& currentEpoch) {
             auto& target=*slots[index];workerStartUs.fetch_add(micros(queued),std::memory_order_relaxed);
             target.ran=false;target.waitStart=target.waitEnd=Clock::now();
@@ -261,7 +281,7 @@ struct CemuNpu {
             if(!currentEpoch() || latestReal.load(std::memory_order_acquire)>=frameId) return false;
             const char* in=inputName.c_str();const char* out=outputName.c_str();const auto runStart=Clock::now();
             session->Run(Ort::RunOptions{nullptr},&in,&target.inputTensor,1,&out,&target.outputTensor,1);
-            target.run=Clock::now()-runStart;target.ran=true;
+            target.run=Clock::now()-runStart;target.ran=true;target.firstRun=!std::exchange(target.ranBefore,true);
             npuRunUs.fetch_add(micros(runStart),std::memory_order_relaxed);npuRuns.fetch_add(1,std::memory_order_relaxed);
             if(target.inputTensor.GetTensorRawData()!=target.input.pointer || target.outputTensor.GetTensorRawData()!=target.output.pointer) throw std::runtime_error("QNN replaced shared pointers");
             return true;
@@ -281,7 +301,8 @@ static int createContext(const CemuNpuCreateInfo* info,CemuNpu** out,char* error
     if(out) *out=nullptr;
     try {
         if(!info || !out || info->size!=sizeof(*info) || info->abi!=CEMU_NPU_ABI || !info->directory || !info->rpcLibrary) throw std::runtime_error("NPU ABI mismatch");
-        auto context=std::make_unique<CemuNpu>();context->initialize(*info);*out=context.release();return 0;
+        auto context=std::make_unique<CemuNpu>();context->initialize(*info);
+        errorText(error,size,context->startupNote.c_str());*out=context.release();return 0;
     } catch(const std::exception& e) {errorText(error,size,e.what());return 1;}
 }
 static int processFrame(CemuNpu* context,uint64_t id,CemuNpuFrame* frame,char* error,uint32_t size) {
