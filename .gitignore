@@ -52,5 +52,10 @@ bin/gameProfiles/*
 
 bin/graphicPacks/*
 
+# NPU runtime files placed in bin/ by the build or on first start
+bin/*.cat
+bin/rpc-path.txt
+bin/npu/*/cache/
+
 # Ignore Finder view option files created by OS X
 .DS_Store

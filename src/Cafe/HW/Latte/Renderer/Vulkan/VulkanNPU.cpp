@@ -6,6 +6,7 @@
 #include "npu_cemu.h"
 #include <fstream>
 #include <chrono>
+#include <setupapi.h>
 
 struct NpuHostTiming {
     double sum{},maximum{};uint64_t count{};
@@ -72,6 +73,30 @@ struct VulkanNPUState {
 
 namespace {
 using NpuClock=std::chrono::steady_clock;
+// rpc-path.txt pins libcdsprpc.dll. Without it, use the copy in the installed
+// Hexagon NPU driver package, found through the compute accelerator's INF, so a
+// driver update or another PC needs no manual path.
+std::wstring NpuDriverRpcLibrary() {
+    constexpr wchar_t computeAccelerators[]=L"SYSTEM\\CurrentControlSet\\Control\\Class\\{F01A9D53-3FF6-48D2-9F97-C8A7004BE10C}";
+    HKEY root{};
+    if(RegOpenKeyExW(HKEY_LOCAL_MACHINE,computeAccelerators,0,KEY_READ,&root)!=ERROR_SUCCESS) return {};
+    std::wstring found;
+    for(DWORD index=0;found.empty();++index) {
+        wchar_t device[256];DWORD length=DWORD(std::size(device));
+        const auto status=RegEnumKeyExW(root,index,device,&length,nullptr,nullptr,nullptr,nullptr);
+        if(status==ERROR_NO_MORE_ITEMS) break;
+        if(status!=ERROR_SUCCESS) continue;
+        wchar_t inf[MAX_PATH]{};DWORD size=sizeof(inf);
+        if(RegGetValueW(root,device,L"InfPath",RRF_RT_REG_SZ,nullptr,inf,&size)!=ERROR_SUCCESS) continue;
+        wchar_t store[MAX_PATH]{};
+        if(!SetupGetInfDriverStoreLocationW(inf,nullptr,nullptr,store,DWORD(std::size(store)),nullptr)) continue;
+        std::error_code error;
+        const auto rpc=fs::path(store).parent_path()/L"libcdsprpc.dll";
+        if(fs::is_regular_file(rpc,error)) found=rpc.wstring();
+    }
+    RegCloseKey(root);
+    return found;
+}
 void NpuBarrier(VkCommandBuffer command,VkImage image,VkImageLayout before,VkImageLayout after) {
     VkImageMemoryBarrier barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
     barrier.srcAccessMask=before==VK_IMAGE_LAYOUT_UNDEFINED?0:VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT;
@@ -158,8 +183,8 @@ void VulkanRenderer::npuInitialize() {
         const auto directory=ActiveSettings::GetExecutablePath().parent_path();
         std::ifstream file(directory/L"rpc-path.txt");std::string rpcLine;std::getline(file,rpcLine);
         if(!rpcLine.empty() && rpcLine.back()=='\r') rpcLine.pop_back();
-        if(rpcLine.empty()) throw std::runtime_error("Missing rpc-path.txt beside the NPU runtime");
-        const auto rpc=fs::u8path(rpcLine).wstring();
+        const auto rpc=rpcLine.empty()?NpuDriverRpcLibrary():fs::u8path(rpcLine).wstring();
+        if(rpc.empty()) throw std::runtime_error("Hexagon NPU driver not found; put the libcdsprpc.dll path in rpc-path.txt beside Cemu");
         state.library=LoadLibraryExW((directory/L"cemu_npu.dll").c_str(),nullptr,LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
         if(!state.library) throw std::runtime_error(fmt::format("NPU module load failed, Win32 {}",GetLastError()));
         auto getApi=reinterpret_cast<CemuNpuGetApi>(GetProcAddress(state.library,"cemu_npu_get_api"));
@@ -167,7 +192,10 @@ void VulkanRenderer::npuInitialize() {
         const auto path=directory.wstring();
         CemuNpuCreateInfo info{sizeof(info),CEMU_NPU_ABI,m_instance,m_physicalDevice,m_logicalDevice,m_graphicsQueue,uint32_t(m_indices.graphicsFamily),vkGetInstanceProcAddr,path.c_str(),rpc.c_str(),state.processingExtent.height};
         char error[1024]{};
+        const auto startup=NpuClock::now();
         if(state.api.create(&info,&state.context,error,sizeof(error))) throw std::runtime_error(error);
+        cemuLog_log(LogType::Force,"[NPU] Module startup {:.0f} ms; RPC library from {}",
+            std::chrono::duration<double,std::milli>(NpuClock::now()-startup).count(),rpcLine.empty()?"the installed driver":"rpc-path.txt");
         state.intervalStart=NpuClock::now();
         cemuLog_log(LogType::Force,"[NPU] READY/OFF: ANVIL U8 NHWC processing={}x{}, native-resolution originals, {} shared slots; QNN worker and borrowed Vulkan queue. No inference at startup. Adaptive 1-3 frame buffering, cached block motion and immutable overlay replay.",state.processingExtent.width,state.processingExtent.height,cemu::npu::JobSlotCount);
     } catch(const std::exception& error) {

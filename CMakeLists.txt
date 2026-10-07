@@ -312,5 +312,7 @@ if(CEMU_ENABLE_NPU)
     endif()
     add_compile_definitions(CEMU_ENABLE_NPU)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    # cemu_npu.dll and its ONNX Runtime/QNN DLLs, built into bin/ beside Cemu.
+    add_subdirectory(dependencies/npu-cemu)
 endif()
 add_subdirectory(src)
