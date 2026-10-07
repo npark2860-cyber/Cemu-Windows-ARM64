@@ -52,7 +52,9 @@ inline constexpr std::string_view ContextPrefix = "anvil-u8nhwc-";
 inline std::filesystem::path contextFileName(const ContextCacheKey& key) {
     return std::filesystem::path(std::string(ContextPrefix) + key.hex() + ".ctx.onnx");
 }
-// Marks a key whose compiled context failed on this machine.
+// Marks a key that stays uncached on this machine. Written before compiling and
+// removed once the context is saved, so it remains after a failed or
+// interrupted compile, or when the folder cannot be written.
 inline std::filesystem::path disabledMarker(std::filesystem::path context) { return context += ".disabled"; }
 
 inline std::vector<char> readFile(const std::filesystem::path& path) {
@@ -90,7 +92,8 @@ inline bool writeFileReplacing(const std::filesystem::path& path, const void* da
     }
 }
 
-// Remove contexts and markers of other keys, and interrupted writes.
+// Removes every cache file except keep: other keys' contexts and markers, the
+// marker of keep's key, and interrupted writes.
 inline void removeStaleContexts(const std::filesystem::path& directory, const std::filesystem::path& keep) noexcept {
     try {
         std::error_code error;

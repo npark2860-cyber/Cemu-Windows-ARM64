@@ -316,3 +316,7 @@ if(CEMU_ENABLE_NPU)
     add_subdirectory(dependencies/npu-cemu)
 endif()
 add_subdirectory(src)
+if(CEMU_ENABLE_NPU)
+    # Building only the executable still rebuilds its paired module and runtime.
+    add_dependencies(CemuBin cemu_npu)
+endif()

@@ -53,7 +53,7 @@ if(WIN32 AND CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64")
     target_include_directories(cemu_npu PRIVATE "${ort}/build/native/include" "${CMAKE_CURRENT_SOURCE_DIR}/../Vulkan-Headers/include")
     target_link_libraries(cemu_npu PRIVATE "${ort}/runtimes/win-arm64/native/onnxruntime.lib")
     target_compile_definitions(cemu_npu PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
-    target_compile_options(cemu_npu PRIVATE /utf-8)
+    target_compile_options(cemu_npu PRIVATE $<$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},MSVC>:/utf-8>)
     # $<1:> keeps multi-config generators from adding a configuration folder.
     set_target_properties(cemu_npu PROPERTIES PREFIX "" RUNTIME_OUTPUT_DIRECTORY "${CEMU_NPU_OUTPUT_DIR}/$<1:>")
 
@@ -71,8 +71,8 @@ endif()
 
 if(CEMU_NPU_TESTS)
     set(tests buffered_timeline processing_profile npu_scheduling qnn_context_cache)
-    if(WIN32)
-        list(APPEND tests ort_paths)
+    if(MSVC)
+        list(APPEND tests ort_paths) # wmain, Windows paths
     endif()
     foreach(test IN LISTS tests)
         add_executable(cemu_npu_test_${test} test_${test}.cpp)

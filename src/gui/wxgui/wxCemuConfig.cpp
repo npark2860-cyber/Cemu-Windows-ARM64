@@ -116,6 +116,9 @@ void wxCemuConfig::Load(XMLConfigParser& parser)
 	hotkeys.takeScreenshot = xml_hotkeys.get("TakeScreenshot", sHotkeyCfg{uKeyboardHotkey{WXK_F12}});
 	hotkeys.toggleFastForward = xml_hotkeys.get("ToggleFastForward", sHotkeyCfg{});
 	hotkeys.exitApplication = xml_hotkeys.get("ExitApplication", sHotkeyCfg{});
+#ifdef CEMU_ENABLE_NPU
+	hotkeys.toggleNpu = xml_hotkeys.get("ToggleNPU", sHotkeyCfg{uKeyboardHotkey{WXK_F9}});
+#endif
 #ifdef CEMU_DEBUG_ASSERT
 	hotkeys.endEmulation = xml_hotkeys.get("EndEmulation", sHotkeyCfg{uKeyboardHotkey{WXK_F5}});
 #endif
@@ -187,4 +190,7 @@ void wxCemuConfig::Save(XMLConfigParser& config)
 	xml_hotkeys.set("TakeScreenshot", hotkeys.takeScreenshot);
 	xml_hotkeys.set("ToggleFastForward", hotkeys.toggleFastForward);
 	xml_hotkeys.set("ExitApplication", hotkeys.exitApplication);
+#ifdef CEMU_ENABLE_NPU
+	xml_hotkeys.set("ToggleNPU", hotkeys.toggleNpu);
+#endif
 }

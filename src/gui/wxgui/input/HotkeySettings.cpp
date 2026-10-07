@@ -2,6 +2,9 @@
 #include "Cafe/HW/Latte/Renderer/Renderer.h"
 #include "interface/WindowSystem.h"
 #include <config/ActiveSettings.h>
+#ifdef CEMU_ENABLE_NPU
+#include "config/CemuConfig.h"
+#endif
 #include "input/InputManager.h"
 #include "HotkeySettings.h"
 #include "MainWindow.h"
@@ -158,6 +161,9 @@ HotkeySettings::HotkeySettings(wxWindow* parent)
 	CreateHotkeyRow(_tr("Toggle fullscreen"), s_cfgHotkeys.toggleFullscreen);
 	CreateHotkeyRow(_tr("Take screenshot"), s_cfgHotkeys.takeScreenshot);
 	CreateHotkeyRow(_tr("Toggle fast-forward"), s_cfgHotkeys.toggleFastForward);
+#ifdef CEMU_ENABLE_NPU
+	CreateHotkeyRow(_tr("Toggle NPU frame generation"), s_cfgHotkeys.toggleNpu);
+#endif
 #ifdef CEMU_DEBUG_ASSERT
 	CreateHotkeyRow(_tr("End emulation"), s_cfgHotkeys.endEmulation);
 #endif
@@ -197,6 +203,12 @@ void HotkeySettings::Init(MainWindow* mainWindowFrame)
 		{&s_cfgHotkeys.toggleFastForward, [](void) {
 			 ActiveSettings::SetTimerShiftFactor((ActiveSettings::GetTimerShiftFactor() < 3) ? 3 : 1);
 		 }},
+#ifdef CEMU_ENABLE_NPU
+		{&s_cfgHotkeys.toggleNpu, [](void) {
+			 // The renderer applies it on the next frame and shows on or off.
+			 GetConfig().npu_enabled = !GetConfig().npu_enabled.GetValue();
+		 }},
+#endif
 		{&s_cfgHotkeys.exitApplication, [](void) {
 			auto closeEvent = new wxCloseEvent{wxEVT_CLOSE_WINDOW, s_mainWindow->GetId()};
 			closeEvent->SetCanVeto(false);
