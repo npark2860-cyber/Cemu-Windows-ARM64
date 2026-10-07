@@ -85,7 +85,18 @@ void LatteOverlay_renderOverlay(ImVec2& position, ImVec2& pivot, sint32 directio
 		if (ImGui::Begin("Stats overlay", nullptr, kPopupFlags))
 		{
 			if (config.overlay.fps)
-				ImGui::Text("FPS: %.2lf", g_state.fps);
+            {
+#ifdef CEMU_ENABLE_NPU
+                const auto outputFps = !pad ? g_renderer->GetFrameGenerationFps() : std::nullopt;
+                if (outputFps)
+                {
+                    ImGui::Text("FPS: %.2lf (NPU FG)", *outputFps);
+                    ImGui::Text("Native: %.2lf FPS", g_state.fps);
+                }
+                else
+#endif
+                    ImGui::Text("FPS: %.2lf", g_state.fps);
+            }
 
 			if (config.overlay.drawcalls)
 				ImGui::Text("Draws/f: %d (fast: %d)", g_state.draw_calls_per_frame, g_state.fast_draw_calls_per_frame);

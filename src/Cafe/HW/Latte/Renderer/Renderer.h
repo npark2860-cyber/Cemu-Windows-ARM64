@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "Cafe/HW/Latte/Core/Latte.h"
 #include "Cafe/HW/Latte/Core/LatteCachedFBO.h"
 #include "Cafe/HW/Latte/Renderer/RendererShader.h"
@@ -92,6 +94,11 @@ public:
 	GfxVendor GetVendor() const { return m_vendor; }
 	virtual bool UseTFViaSSBO() const { return false; }
 	virtual void AppendOverlayDebugInfo() = 0;
+#ifdef CEMU_ENABLE_NPU
+    // Render-thread telemetry: accepted main-window presents, including generated
+    // frames. No value until the first measurement window or when FG is off.
+    virtual std::optional<double> GetFrameGenerationFps() const { return std::nullopt; }
+#endif
 
 	// rendertarget
 	virtual void renderTarget_setViewport(float x, float y, float width, float height, float nearZ, float farZ, bool halfZ = false) = 0;

@@ -74,7 +74,11 @@ WindowSystem::WindowInfo& WindowSystem::GetWindowInfo()
 void WindowSystem::UpdateWindowTitles(bool isIdle, bool isLoading, double fps)
 {
 	std::string windowText;
-	windowText = BUILD_VERSION_WITH_NAME_STRING;
+#ifdef CEMU_ENABLE_NPU
+	windowText = "Cemu ARM64 [Release | NPU]";
+#else
+	windowText = "Cemu ARM64";
+#endif
 
 	if (isIdle)
 	{
@@ -120,7 +124,18 @@ void WindowSystem::UpdateWindowTitles(bool isIdle, bool isLoading, double fps)
 		graphicMode = "[Apple GPU]";
 
 	const uint64 titleId = CafeSystem::GetForegroundTitleId();
-	windowText.append(fmt::format(" - FPS: {:.2f} {} {} [TitleId: {:08x}-{:08x}]", (double)fps, renderer, graphicMode, (uint32)(titleId >> 32), (uint32)(titleId & 0xFFFFFFFF)));
+    std::string fpsText = fmt::format("{:.2f}", fps);
+#ifdef CEMU_ENABLE_NPU
+    if (g_renderer)
+    {
+        if (const auto outputFps = g_renderer->GetFrameGenerationFps())
+        {
+            const char* mode="NPU FG";
+            fpsText = fmt::format("{:.2f} (Native: {:.2f}, {})", *outputFps, fps, mode);
+        }
+    }
+#endif
+	windowText.append(fmt::format(" - FPS: {} {} {} [TitleId: {:08x}-{:08x}]", fpsText, renderer, graphicMode, (uint32)(titleId >> 32), (uint32)(titleId & 0xFFFFFFFF)));
 
 	if (ActiveSettings::IsOnlineEnabled())
 	{

@@ -276,7 +276,7 @@ void LatteShader_CreatePSInputTable(LatteShaderPSInputTable* psInputTable, uint3
 		// 1 -> 0.0 0.0 0.0 1.0
 		// 2 -> 1.0 1.0 1.0 0.0
 		// 3 -> 1.0 1.0 1.0 1.0
-		cemu_assert_debug(defaultValue <= 1);
+		psInputTable->import[f].defaultValue = defaultValue;
 
 		uint32 uknBits = psInputControl & ~((0xFF)|(0x3<<8) | (1 << 10) | (1 << 12));
 		uknBits &= ~0x800; // FLAT_SHADE

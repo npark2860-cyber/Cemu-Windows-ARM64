@@ -16,6 +16,7 @@ public:
 		uint32 applySRGBEncoding;
 		float targetGamma;
 		float displayGamma;
+		float fsrSharpness;
 	};
 	enum Shader
 	{
@@ -50,6 +51,10 @@ public:
 	static RendererOutputShader* s_hermit_shader;
 	static RendererOutputShader* s_hermit_shader_ud;
 
+	static RendererOutputShader* s_fsr_easu_shader;
+	static RendererOutputShader* s_fsr_easu_shader_ud;
+	static RendererOutputShader* s_fsr_rcas_shader;
+
 	static std::string GetOpenGlVertexSource(bool render_upside_down);
 	static std::string GetVulkanVertexSource(bool render_upside_down);
 	static std::string GetMetalVertexSource(bool render_upside_down);
@@ -65,6 +70,8 @@ private:
 	static const std::string s_copy_shader_source;
 	static const std::string s_bicubic_shader_source;
 	static const std::string s_hermite_shader_source;
+	static const std::string s_fsr_easu_shader_source;
+	static const std::string s_fsr_rcas_shader_source;
 
 	static const std::string s_bicubic_shader_source_vk;
 	static const std::string s_hermite_shader_source_vk;

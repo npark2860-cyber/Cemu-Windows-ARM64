@@ -950,6 +950,26 @@ void LatteRenderTarget_copyToBackbuffer(LatteTextureView* textureView, bool isPa
 
 			filter = LatteTextureView::MagFilter::kLinear;
 		}
+		else if (scaling_filter == kFidelityFXFSRFilter)
+		{
+			// FSR EASU is an upscaler. If a config manually selects it for
+			// downscaling, retain Cemu's normal linear path instead.
+			if (downscaling)
+			{
+				if (renderUpsideDown)
+					shader = RendererOutputShader::s_copy_shader_ud;
+				else
+					shader = RendererOutputShader::s_copy_shader;
+			}
+			else
+			{
+				if (renderUpsideDown)
+					shader = RendererOutputShader::s_fsr_easu_shader_ud;
+				else
+					shader = RendererOutputShader::s_fsr_easu_shader;
+			}
+			filter = LatteTextureView::MagFilter::kLinear;
+		}
 		else if (scaling_filter == kNearestNeighborFilter)
 		{
 			if (renderUpsideDown)
