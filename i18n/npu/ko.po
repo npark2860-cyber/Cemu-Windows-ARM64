@@ -35,3 +35,12 @@ msgstr "NPU 프레임 생성이 현재 출력 형식을 지원하지 않습니�
 msgid "NPU FG stopped after an error. Showing original frames; see log.txt."
 msgstr "오류로 NPU 프레임 생성이 중지되었습니다. 원본 프레임을 표시합니다. log.txt를 확인하세요."
 
+msgid "NPU frame generation on"
+msgstr "NPU 프레임 생성 켜짐"
+
+msgid "NPU frame generation off"
+msgstr "NPU 프레임 생성 꺼짐"
+
+msgid "Toggle NPU frame generation"
+msgstr "NPU 프레임 생성 전환"
+
