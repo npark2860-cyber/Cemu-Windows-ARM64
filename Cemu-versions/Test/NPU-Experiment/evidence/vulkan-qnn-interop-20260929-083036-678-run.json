@@ -1,0 +1,18 @@
+{
+  "status": "FAILED",
+  "started_at": "2026-09-29T08:30:36.6824449+09:00",
+  "ended_at": "2026-09-29T08:30:37.2853282+09:00",
+  "closed": true,
+  "exit_code": 1,
+  "npu_driver_before": "30.0.224.10000",
+  "npu_driver_after": "30.0.224.10000",
+  "gpu_driver_before": "31.0.170.0",
+  "gpu_driver_after": "31.0.170.0",
+  "manifest_sha256": "b82c466e00b14c51f8573c275912d1bac113dc17633df439eed2e66992875897",
+  "probe_sha256": "4bd79d85a5ce0624fc50910603f3ac489b44b88029075a97a121715cdd01c210",
+  "model_sha256": "447cb38952fe343c7f7779271515eeb4a20fa1c1a122ae3d84c80bea14dae779",
+  "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\vulkan-qnn-interop-20260929-083036-678",
+  "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\vulkan-qnn-interop-20260929-083036-678-console.log",
+  "result": null,
+  "error": "Probe did not complete: GPU-read NPU output differs from arithmetic oracle"
+}

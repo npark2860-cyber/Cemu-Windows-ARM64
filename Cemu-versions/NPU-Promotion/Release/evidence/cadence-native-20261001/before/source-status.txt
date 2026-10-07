@@ -1,0 +1,27 @@
+ M CMakeLists.txt
+ M src/Cafe/CMakeLists.txt
+ M src/Cafe/HW/Latte/Core/LatteOverlay.cpp
+ M src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp
+ M src/Cafe/HW/Latte/Core/LatteShader.cpp
+ M src/Cafe/HW/Latte/Core/LatteShader.h
+ M src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp
+ M src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp
+ M src/Cafe/HW/Latte/Renderer/Renderer.h
+ M src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp
+ M src/Cafe/HW/Latte/Renderer/RendererOuputShader.h
+ M src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp
+ M src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h
+ M src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h
+ M src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+ M src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h
+ M src/config/CemuConfig.cpp
+ M src/config/CemuConfig.h
+ M src/gui/wxgui/GeneralSettings2.cpp
+ M src/gui/wxgui/GeneralSettings2.h
+ M src/gui/wxgui/MainWindow.cpp
+ M src/gui/wxgui/wxWindowSystem.cpp
+ M src/imgui/imgui_impl_vulkan.cpp
+ M src/imgui/imgui_impl_vulkan.h
+?? dependencies/npu-cemu/
+?? i18n/
+?? src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp

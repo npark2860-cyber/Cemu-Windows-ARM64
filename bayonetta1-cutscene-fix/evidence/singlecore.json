@@ -1,0 +1,16 @@
+{
+  "stage": "SingleCore",
+  "title_id": "000500001014db00",
+  "cpu_mode": "SinglecoreRecompiler",
+  "cpu_mode_value": 1,
+  "profile_path": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release\\runtime\\portable\\gameProfiles\\000500001014db00.ini",
+  "original_profile_existed": false,
+  "resolution_pack": "restored 1920x1080",
+  "npu": "leave OFF for comparison",
+  "profile_sha256": "8e11411ebd6c44551018bd23e4def43edef32202c76f6f27a2157f2b6d2d0087",
+  "status": "NOT_FIXED",
+  "agent_launched_cemu": false,
+  "log_confirmed_cpu": true,
+  "log_confirmed_resolution": true,
+  "user_result": "User reported no change or worse geometry corruption."
+}

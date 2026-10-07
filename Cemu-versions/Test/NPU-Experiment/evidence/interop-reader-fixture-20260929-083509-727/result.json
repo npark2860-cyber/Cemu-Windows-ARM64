@@ -1,0 +1,65 @@
+{
+  "status": "INTEROP_ROUNDTRIP_COMPLETED_PROFILE_VERIFICATION_PENDING",
+  "stage": "vulkan_capabilities",
+  "reason": "Synthetic extension-unavailable fixture",
+  "model": "../models/smoke-average-qdq-u8.onnx",
+  "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+  "cemu_executed": false,
+  "full_framegen_validated": false,
+  "application_copy_free_gpu_npu_handoff": true,
+  "qnn_initialized": true,
+  "completed_rounds": 5,
+  "gpu_name": "SYNTHETIC FIXTURE",
+  "external_memory_host": true,
+  "cpu_fallback_disabled": true,
+  "qnn_memhandle_logging": true,
+  "ort_profile": "../evidence/interop-reader-fixture-20260929-083509-727/ort-profile.json",
+  "invocation": "direct_preallocated_run",
+  "output_memory_flags": 6,
+  "input_allocator": "QnnHtpShared",
+  "output_allocator": "QnnHtpShared",
+  "import_handle_type": "HOST_ALLOCATION_BIT_EXT",
+  "input_memory_flags": 6,
+  "ort_version": "1.24.4",
+  "rounds": [
+    {
+      "round": 0,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    },
+    {
+      "round": 1,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    },
+    {
+      "round": 2,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    },
+    {
+      "round": 3,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    },
+    {
+      "round": 4,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    }
+  ],
+  "backend": "QnnHtp.dll",
+  "diagnostic_gpu_readback_used": true,
+  "offline_fixture": true,
+  "application_cpu_writes_to_shared_payload": false
+}

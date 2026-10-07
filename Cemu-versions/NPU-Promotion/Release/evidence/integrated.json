@@ -1,0 +1,30 @@
+{
+  "role": "Release",
+  "base_commit": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+  "branch": "codex/npu-release",
+  "title": "Cemu ARM64 [Release | NPU]",
+  "common_patch_sha256": "739046d5a4ac83a36beb0f72c47b18468af0a30c9aa8cf8108107b4826016214",
+  "common_changed_paths": [
+    "CMakeLists.txt",
+    "dependencies/npu-cemu/npu_cemu.h",
+    "src/Cafe/CMakeLists.txt",
+    "src/Cafe/HW/Latte/Core/LatteOverlay.cpp",
+    "src/Cafe/HW/Latte/Renderer/Renderer.h",
+    "src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp",
+    "src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h",
+    "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h",
+    "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp",
+    "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+    "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+    "src/config/CemuConfig.cpp",
+    "src/config/CemuConfig.h",
+    "src/gui/wxgui/GeneralSettings2.cpp",
+    "src/gui/wxgui/wxWindowSystem.cpp",
+    "src/imgui/imgui_impl_vulkan.cpp",
+    "src/imgui/imgui_impl_vulkan.h"
+  ],
+  "unchanged_non_integration_tracked_files": 1606,
+  "baseline_preserved": true,
+  "module_source": "RC1 ABI v2, identical",
+  "device_executed": false
+}

@@ -1,0 +1,10 @@
+{
+  "source": "Test/LSFG-Release/build",
+  "byte_identical_source_files": 2392,
+  "unchanged_virtual_paths": [
+    "Q:/source",
+    "Q:/build"
+  ],
+  "other_variants": "separate clean builds",
+  "ninja_rebuilds_changed_inputs": true
+}

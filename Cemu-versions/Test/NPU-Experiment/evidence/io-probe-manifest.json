@@ -1,0 +1,178 @@
+{
+  "created_at": "2026-09-29T07:31:55.0335388+09:00",
+  "status": "PREPARED_NOT_NPU_TESTED",
+  "probe_sha256": "9045a2127994d531de9f93057bc63bdfe18aa70ddb86eb07c8c931d3e35eb9b3",
+  "build_exit_code": 0,
+  "machine": "ARM64 0xAA64",
+  "preparation": "evidence/io-prep-20260929-072654-165595/preparation.json",
+  "models": [
+    {
+      "variant": "FloatNCHW",
+      "model": "evidence/int8-prep-20260929-071500-022764/anvil-1080p-synthetic-u8u8.onnx",
+      "sha256": "ec1abb0d5921a5117ff247bc7803287b44be38423af8e84393d8553cee84d95f",
+      "layout": "NCHW",
+      "host_dtype": "float",
+      "input_shape": [
+        1,
+        6,
+        1080,
+        1920
+      ],
+      "output_shape": [
+        1,
+        3,
+        1080,
+        1920
+      ],
+      "input_bytes": 49766400,
+      "output_bytes": 24883200
+    },
+    {
+      "variant": "U8NCHW",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nchw.onnx",
+      "sha256": "55b8bae4441de0341d92470091b6174a3cd57b077ed178d14f3a690f658f7699",
+      "input_shape": [
+        1,
+        6,
+        1080,
+        1920
+      ],
+      "output_shape": [
+        1,
+        3,
+        1080,
+        1920
+      ],
+      "host_dtype": "uint8",
+      "input_bytes": 12441600,
+      "output_bytes": 6220800,
+      "node_count": 248,
+      "operators": {
+        "Constant": 8,
+        "DequantizeLinear": 128,
+        "Pad": 1,
+        "QuantizeLinear": 56,
+        "Conv": 32,
+        "Add": 17,
+        "ConvTranspose": 4,
+        "Slice": 2
+      },
+      "weights_and_scales_unchanged": true,
+      "input_scale": 0.003921568859368563,
+      "input_zero_point": 0,
+      "output_scale": 0.00330072408542037,
+      "output_zero_point": 128,
+      "layout": "NCHW"
+    },
+    {
+      "variant": "U8NHWC",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "input_shape": [
+        1,
+        1080,
+        1920,
+        6
+      ],
+      "output_shape": [
+        1,
+        1080,
+        1920,
+        3
+      ],
+      "host_dtype": "uint8",
+      "input_bytes": 12441600,
+      "output_bytes": 6220800,
+      "node_count": 250,
+      "operators": {
+        "Constant": 8,
+        "DequantizeLinear": 128,
+        "Transpose": 2,
+        "Pad": 1,
+        "QuantizeLinear": 56,
+        "Conv": 32,
+        "Add": 17,
+        "ConvTranspose": 4,
+        "Slice": 2
+      },
+      "weights_and_scales_unchanged": true,
+      "input_scale": 0.003921568859368563,
+      "input_zero_point": 0,
+      "output_scale": 0.00330072408542037,
+      "output_zero_point": 128,
+      "layout": "NHWC"
+    }
+  ],
+  "files": [
+    {
+      "path": "build-io-probe.cmd",
+      "bytes": 622,
+      "sha256": "611bd5d1a296e85db79b29e3cb03a282210ce53467aaea2063ada51bdad7e9a6"
+    },
+    {
+      "path": "evidence/int8-prep-20260929-071500-022764/anvil-1080p-synthetic-u8u8.onnx",
+      "bytes": 943947,
+      "sha256": "ec1abb0d5921a5117ff247bc7803287b44be38423af8e84393d8553cee84d95f"
+    },
+    {
+      "path": "evidence/int8-probe-manifest.json",
+      "bytes": 1846,
+      "sha256": "2fb2abf356379f8a172e394f66ec7607ac4585fd9218d47d4cec035f5359ca7e"
+    },
+    {
+      "path": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nchw.onnx",
+      "bytes": 953954,
+      "sha256": "55b8bae4441de0341d92470091b6174a3cd57b077ed178d14f3a690f658f7699"
+    },
+    {
+      "path": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "bytes": 954257,
+      "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c"
+    },
+    {
+      "path": "evidence/io-prep-20260929-072654-165595/preparation.json",
+      "bytes": 2997,
+      "sha256": "36a73e0f07b1fb55bb9b2aea920fc4688efb2f8e792f1388b91caff9b6cdad3a"
+    },
+    {
+      "path": "evidence/io-probe-build.log",
+      "bytes": 318,
+      "sha256": "236979009f4d3329ead754b87ee25a30a272c5726bfab8cc3a6789a558cdfc28"
+    },
+    {
+      "path": "evidence/npu-io-probe.pdb",
+      "bytes": 7344128,
+      "sha256": "dd8e16704d6ad6705c20cfe15aae2f0b746dc24c4707d70ddd00eb8fccd286a9"
+    },
+    {
+      "path": "IO-EXPERIMENT.md",
+      "bytes": 4227,
+      "sha256": "ecb6b957550e09289e4ef6487f775e865fb01aa63d98bc2f6afedc97a27b14da"
+    },
+    {
+      "path": "run-io-probe.ps1",
+      "bytes": 3061,
+      "sha256": "ef97fafed41c6fd66f2d535b619531ed32db1917a3aa260e52573904920dbfd4"
+    },
+    {
+      "path": "runtime/npu-io-probe.exe",
+      "bytes": 322048,
+      "sha256": "9045a2127994d531de9f93057bc63bdfe18aa70ddb86eb07c8c931d3e35eb9b3"
+    },
+    {
+      "path": "scripts/prepare_io_experiment.py",
+      "bytes": 7769,
+      "sha256": "1a44e129adab3182cd1b4ec9aa2719261cb799151af960acb8a7d054726a8699"
+    },
+    {
+      "path": "scripts/read-io-result.ps1",
+      "bytes": 3830,
+      "sha256": "a0d577f999519ef307cf8f058e646792d69362a57dd5234a4dacfe3a4fafafa9"
+    },
+    {
+      "path": "src/npu_io_probe.cpp",
+      "bytes": 13848,
+      "sha256": "6b2f483facaa18b8ce672f78a3ae1ad4730d21f76feff7b9bdc289ed8a21d3bf"
+    }
+  ]
+}

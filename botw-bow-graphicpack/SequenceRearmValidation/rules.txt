@@ -1,0 +1,7 @@
+[Definition]
+titleIds = 00050000101C9300,00050000101C9400,00050000101C9500
+name = Bow Adaptive Trigger - Sequence re-arm validation (v208)
+path = "The Legend of Zelda: Breath of the Wild/Mods/Controller/Bow Trigger Validation"
+description = "VALIDATION ONLY. Reissues the known raw 0x3F04 with a new sequence every 120 Player callbacks; stops after 1201 callbacks. Not the finished bow-aware pack. Enable only one R2 raw-trigger pack."
+version = 8
+default = false

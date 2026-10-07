@@ -1,0 +1,40 @@
+{
+  "recorded_at": "2026-09-29T03:37:48.0646826+09:00",
+  "operator": "user",
+  "exe_sha256": "e2f7899842c93c0bbee13ad9c23581b9f3a74595e80270725784bc8ae6d7ffa2",
+  "user_feedback": "Works; existing FPS counter shows roughly half the apparent rate, around 20 FPS.",
+  "log": "user-manual-20260929-0335-log.txt",
+  "startup": {
+    "generated": 0,
+    "pipelines": 51,
+    "shaders": 51
+  },
+  "shutdown": {
+    "dispatches": 1036400,
+    "generated": 10352,
+    "captured": 10368,
+    "context_builds": 4,
+    "history_clears": 4,
+    "history_resets": 4
+  },
+  "fsr_active": true,
+  "observed_extents": [
+    "1280x720",
+    "1429x992",
+    "2560x1440",
+    "1429x992"
+  ],
+  "observations": [
+    "Startup preprepare and initial OFF confirmed in log",
+    "Three warmup calls observed after ON and reset",
+    "FSR EASU + RCAS active at 2560x1440",
+    "1440p generation roughly 11.2-11.9 ms in periodic samples",
+    "Renderer shutdown log present; process exit status not captured"
+  ],
+  "unverified": [
+    "OFF -> ON repeated toggle with unchanged extent",
+    "Measured successful present/display rate and cadence",
+    "Full-frame interpolation correctness including known border-pixel issue"
+  ],
+  "baseline_promotion_ready": false
+}

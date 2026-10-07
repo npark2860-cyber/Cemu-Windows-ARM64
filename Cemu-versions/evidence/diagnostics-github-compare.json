@@ -1,0 +1,367 @@
+{
+  "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/compare/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934...6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+  "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/compare/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934...6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+  "permalink_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/compare/npark2860-cyber:4a7d4a6...npark2860-cyber:6aa1338",
+  "diff_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/compare/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934...6aa13388289ed41c2f7c802c5b096b142dc1b4c8.diff",
+  "patch_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/compare/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934...6aa13388289ed41c2f7c802c5b096b142dc1b4c8.patch",
+  "base_commit": {
+    "sha": "4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+    "node_id": "C_kwDOT3q2ANoAKDRhN2Q0YTYxYmI2YjhmZmMyZjFiZGEzNmMyYzkxZjJjM2EwNTU5MzQ",
+    "commit": {
+      "author": {
+        "name": "npark2860-cyber",
+        "email": "npark2860@gmail.com",
+        "date": "2026-09-09T05:19:34Z"
+      },
+      "committer": {
+        "name": "npark2860-cyber",
+        "email": "npark2860@gmail.com",
+        "date": "2026-09-09T05:19:34Z"
+      },
+      "message": "diag: sync regional direct query titles",
+      "tree": {
+        "sha": "6611e5cb2a699c3877ca3ec0a017aff73e4a4346",
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/trees/6611e5cb2a699c3877ca3ec0a017aff73e4a4346"
+      },
+      "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/commits/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+    "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+    "comments_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934/comments",
+    "author": {
+      "login": "npark2860-cyber",
+      "id": 300044211,
+      "node_id": "U_kgDOEeJPsw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/npark2860-cyber",
+      "html_url": "https://github.com/npark2860-cyber",
+      "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+      "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+      "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+      "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+      "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+      "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "npark2860-cyber",
+      "id": 300044211,
+      "node_id": "U_kgDOEeJPsw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/npark2860-cyber",
+      "html_url": "https://github.com/npark2860-cyber",
+      "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+      "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+      "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+      "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+      "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+      "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "12c49392f97bcca479939dabdd3cfb1ec1de07e0",
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/12c49392f97bcca479939dabdd3cfb1ec1de07e0",
+        "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/12c49392f97bcca479939dabdd3cfb1ec1de07e0"
+      }
+    ]
+  },
+  "merge_base_commit": {
+    "sha": "4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+    "node_id": "C_kwDOT3q2ANoAKDRhN2Q0YTYxYmI2YjhmZmMyZjFiZGEzNmMyYzkxZjJjM2EwNTU5MzQ",
+    "commit": {
+      "author": {
+        "name": "npark2860-cyber",
+        "email": "npark2860@gmail.com",
+        "date": "2026-09-09T05:19:34Z"
+      },
+      "committer": {
+        "name": "npark2860-cyber",
+        "email": "npark2860@gmail.com",
+        "date": "2026-09-09T05:19:34Z"
+      },
+      "message": "diag: sync regional direct query titles",
+      "tree": {
+        "sha": "6611e5cb2a699c3877ca3ec0a017aff73e4a4346",
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/trees/6611e5cb2a699c3877ca3ec0a017aff73e4a4346"
+      },
+      "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/commits/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+    "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+    "comments_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934/comments",
+    "author": {
+      "login": "npark2860-cyber",
+      "id": 300044211,
+      "node_id": "U_kgDOEeJPsw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/npark2860-cyber",
+      "html_url": "https://github.com/npark2860-cyber",
+      "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+      "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+      "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+      "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+      "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+      "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "npark2860-cyber",
+      "id": 300044211,
+      "node_id": "U_kgDOEeJPsw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/npark2860-cyber",
+      "html_url": "https://github.com/npark2860-cyber",
+      "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+      "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+      "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+      "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+      "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+      "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "12c49392f97bcca479939dabdd3cfb1ec1de07e0",
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/12c49392f97bcca479939dabdd3cfb1ec1de07e0",
+        "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/12c49392f97bcca479939dabdd3cfb1ec1de07e0"
+      }
+    ]
+  },
+  "status": "ahead",
+  "ahead_by": 2,
+  "behind_by": 0,
+  "total_commits": 2,
+  "commits": [
+    {
+      "sha": "77a8a9c64fd162b83497c3a0d307ab6d15e084fd",
+      "node_id": "C_kwDOT3q2ANoAKDc3YThhOWM2NGZkMTYyYjgzNDk3YzNhMGQzMDdhYjZkMTVlMDg0ZmQ",
+      "commit": {
+        "author": {
+          "name": "npark2860-cyber",
+          "email": "npark2860@gmail.com",
+          "date": "2026-09-19T08:08:30Z"
+        },
+        "committer": {
+          "name": "npark2860-cyber",
+          "email": "npark2860@gmail.com",
+          "date": "2026-09-19T08:08:30Z"
+        },
+        "message": "docs: update five-branch source-of-truth policy [skip ci]",
+        "tree": {
+          "sha": "e80d9f86d571fc6ed57b9468ae120e60e3ccdc80",
+          "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/trees/e80d9f86d571fc6ed57b9468ae120e60e3ccdc80"
+        },
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/commits/77a8a9c64fd162b83497c3a0d307ab6d15e084fd",
+        "comment_count": 0,
+        "verification": {
+          "verified": false,
+          "reason": "unsigned",
+          "signature": null,
+          "payload": null,
+          "verified_at": null
+        }
+      },
+      "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/77a8a9c64fd162b83497c3a0d307ab6d15e084fd",
+      "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/77a8a9c64fd162b83497c3a0d307ab6d15e084fd",
+      "comments_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/77a8a9c64fd162b83497c3a0d307ab6d15e084fd/comments",
+      "author": {
+        "login": "npark2860-cyber",
+        "id": 300044211,
+        "node_id": "U_kgDOEeJPsw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/npark2860-cyber",
+        "html_url": "https://github.com/npark2860-cyber",
+        "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+        "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+        "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+        "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+        "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+        "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "committer": {
+        "login": "npark2860-cyber",
+        "id": 300044211,
+        "node_id": "U_kgDOEeJPsw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/npark2860-cyber",
+        "html_url": "https://github.com/npark2860-cyber",
+        "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+        "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+        "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+        "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+        "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+        "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "parents": [
+        {
+          "sha": "4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+          "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+          "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934"
+        }
+      ]
+    },
+    {
+      "sha": "6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+      "node_id": "C_kwDOT3q2ANoAKDZhYTEzMzg4Mjg5ZWQ0MWMyZjdjODAyYzViMDk2YjE0MmRjMWI0Yzg",
+      "commit": {
+        "author": {
+          "name": "npark2860-cyber",
+          "email": "npark2860@gmail.com",
+          "date": "2026-09-19T08:08:32Z"
+        },
+        "committer": {
+          "name": "npark2860-cyber",
+          "email": "npark2860@gmail.com",
+          "date": "2026-09-19T08:08:32Z"
+        },
+        "message": "docs: update five-branch source-of-truth policy [skip ci]",
+        "tree": {
+          "sha": "daa3f8db2ccbf095ad032f0152a464239dbb53f8",
+          "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/trees/daa3f8db2ccbf095ad032f0152a464239dbb53f8"
+        },
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/commits/6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+        "comment_count": 0,
+        "verification": {
+          "verified": false,
+          "reason": "unsigned",
+          "signature": null,
+          "payload": null,
+          "verified_at": null
+        }
+      },
+      "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+      "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+      "comments_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/6aa13388289ed41c2f7c802c5b096b142dc1b4c8/comments",
+      "author": {
+        "login": "npark2860-cyber",
+        "id": 300044211,
+        "node_id": "U_kgDOEeJPsw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/npark2860-cyber",
+        "html_url": "https://github.com/npark2860-cyber",
+        "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+        "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+        "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+        "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+        "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+        "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "committer": {
+        "login": "npark2860-cyber",
+        "id": 300044211,
+        "node_id": "U_kgDOEeJPsw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/npark2860-cyber",
+        "html_url": "https://github.com/npark2860-cyber",
+        "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+        "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+        "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+        "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+        "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+        "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "parents": [
+        {
+          "sha": "77a8a9c64fd162b83497c3a0d307ab6d15e084fd",
+          "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/77a8a9c64fd162b83497c3a0d307ab6d15e084fd",
+          "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/77a8a9c64fd162b83497c3a0d307ab6d15e084fd"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "sha": "bc982f4ebdf3876a0bb1a760b6ef6d4dab04f3b6",
+      "filename": "ACTIVE_BRANCH_ROLES.md",
+      "status": "modified",
+      "additions": 20,
+      "deletions": 8,
+      "changes": 28,
+      "blob_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/blob/6aa13388289ed41c2f7c802c5b096b142dc1b4c8/ACTIVE_BRANCH_ROLES.md",
+      "raw_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/raw/6aa13388289ed41c2f7c802c5b096b142dc1b4c8/ACTIVE_BRANCH_ROLES.md",
+      "contents_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/contents/ACTIVE_BRANCH_ROLES.md?ref=6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+      "patch": "@@ -1,13 +1,25 @@\n # Active branch roles\n \n-This repository has exactly three active work roles.\n+This repository currently has exactly five active source-of-truth roles.\n \n-| Role | Branch | Active workflow | Artifact |\n-| --- | --- | --- | --- |\n-| Release | `final-adreno-compat-arm64` | `.github/workflows/final-adreno-compat-arm64.yml` | `cemu-arm64-release` |\n-| Diagnostics | `fix/arm64-diagnostics-ui-artifact-gate` | `.github/workflows/diagnostics-arm64.yml` | `cemu-arm64-diagnostics` |\n-| Test | `runtime-experiments-arm64` | `.github/workflows/runtime-experiments-arm64.yml` | `cemu-arm64-test` |\n+| Role | Branch | Purpose |\n+| --- | --- | --- |\n+| [Release] | `final-adreno-compat-arm64` | Stock final ARM64/Adreno production baseline |\n+| [Diagnostics] | `fix/arm64-diagnostics-ui-artifact-gate` | Stock diagnostic/instrumentation line |\n+| [Release+SE] | `Release+SE` | Production Enhanced Sound line |\n+| [Diagnostics+SE] | `feat/enhanced-sound-experience-v1` | Enhanced Sound diagnostics, including CueCaptureV2 |\n+| [Test] | `test/se-fingerprint-index-v1` | Current SE/haptic experiment line |\n \n-All other branches/workflows are historical and must not be used for new work.\n+## Current build identities\n \n-Before any write, build, or artifact handoff, verify the requested role against this table and `BRANCH_POLICY.md`.\n+- [Release]: `.github/workflows/final-adreno-compat-arm64.yml` -> `cemu-arm64-release`.\n+- [Diagnostics]: `.github/workflows/diagnostics-arm64.yml` -> `cemu-arm64-diagnostics`.\n+- [Release+SE]: source of truth is `Release+SE`; `build/release-se-once` is an ephemeral build carrier only when needed.\n+- [Diagnostics+SE]: CueCaptureV2 workflow is `.github/workflows/enhanced-sound-cue-capture-v2-arm64.yml`; verify actual workflow/HEAD before each diagnostic build.\n+- [Test]: current dedicated workflow is stored at `.github/workflows/final-adreno-compat-arm64.yml` on the Test branch with display name `[Test] Cemu ARM64 SE Fingerprint Index`; current artifact identity is `cemu-arm64-test-se-fingerprint-index-v1`. This branch remains the haptic laboratory even if the workflow/artifact name is later updated for haptic testing.\n+\n+## Not active source of truth\n+\n+`Final+SE`, `test-haptic`, `runtime-experiments-arm64`, historical diagnostic/experiment branches, build helpers, archives, bisects, temporary branches, and `main` are not active work branches unless the user explicitly changes the policy.\n+\n+Before any write/build, read `BRANCH_POLICY.md`, identify the role, and verify the actual branch HEAD."
+    },
+    {
+      "sha": "95375122eacb9a698993e5aaa6ad233e4c2e7429",
+      "filename": "BRANCH_POLICY.md",
+      "status": "modified",
+      "additions": 83,
+      "deletions": 70,
+      "changes": 153,
+      "blob_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/blob/6aa13388289ed41c2f7c802c5b096b142dc1b4c8/BRANCH_POLICY.md",
+      "raw_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/raw/6aa13388289ed41c2f7c802c5b096b142dc1b4c8/BRANCH_POLICY.md",
+      "contents_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/contents/BRANCH_POLICY.md?ref=6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+      "patch": "@@ -2,96 +2,109 @@\n \n This document is the canonical branch-role and promotion policy for this repository.\n \n-If an older handoff/debug document conflicts with this file about which branch to use or how a verified fix is promoted, **this file wins**. Actual GitHub branch/HEAD/workflow/source remains the source of truth for the implementation currently present on each branch.\n+GitHub is the only source of truth. Before every write, build, promotion, or artifact handoff, fetch the actual branch HEAD and inspect the actual source/workflow on that branch.\n \n-## Exactly three active work branches\n+## Five active source-of-truth branches\n \n-Only these three branches are active for ongoing work:\n+There are exactly five active source-of-truth roles.\n \n 1. **[Release] `final-adreno-compat-arm64`**\n-   - Production/release baseline only.\n-   - Contains only verified behavior fixes and release features.\n-   - Must not contain diagnostic-only UI, checkbox persistence, logging-only instrumentation, or unverified experiments.\n-   - Release artifacts are produced only from this branch.\n-   - The active custom workflow must be `.github/workflows/final-adreno-compat-arm64.yml` and must identify itself as `[Release]`.\n+   - Stock production/release baseline.\n+   - Verified ARM64/Adreno fixes and release features only.\n+   - No Enhanced Sound, CueCapture, haptic experiments, or diagnostic-only instrumentation.\n \n 2. **[Diagnostics] `fix/arm64-diagnostics-ui-artifact-gate`**\n-   - Must always represent **current Release + diagnostic instrumentation/UI**.\n-   - Every fix that has been verified and promoted to Release must also be applied here.\n-   - Diagnostic-only logging/UI/persistence may exist here and must not be promoted to Release unless explicitly requested.\n-   - This is the normal branch for reproducing and investigating failures with switchable diagnostics.\n-   - The active custom workflow must be `.github/workflows/diagnostics-arm64.yml` and must identify itself as `[Diagnostics]`.\n+   - Diagnostic counterpart of the stock Release line.\n+   - Used for non-SE investigation/instrumentation.\n+   - Diagnostic-only UI/logging must never be promoted wholesale into Release.\n \n-3. **[Test] `runtime-experiments-arm64`**\n-   - Must normally start from the current Diagnostics baseline.\n-   - Behavior-changing experiments are performed here only.\n-   - Change one variable at a time.\n-   - An experiment is not a FIX until static verification, CI, and required runtime validation pass.\n-   - The active custom workflow must be `.github/workflows/runtime-experiments-arm64.yml` and must identify itself as `[Test]`.\n+3. **[Release+SE] `Release+SE`**\n+   - Production Enhanced Sound line.\n+   - Based on Release plus runtime-verified SE features.\n+   - This is the promotion target for verified SE and haptic features.\n+   - CPU/Vulkan behavior must remain aligned with the protected Release baseline unless the user explicitly requests otherwise.\n \n-All other historical branches are **read-only reference/archive branches** and are not valid targets for new work unless the user explicitly requests historical inspection. `main` is outside this workflow and must not be touched.\n+4. **[Diagnostics+SE] `feat/enhanced-sound-experience-v1`**\n+   - Enhanced Sound diagnostic line.\n+   - Contains SE diagnostic tooling including CueCaptureV2.\n+   - Used to investigate route/fingerprint/cue issues that need instrumentation.\n+   - Diagnostic instrumentation must not be promoted wholesale into Release+SE.\n \n-## Non-negotiable branch-role isolation\n+5. **[Test] `test/se-fingerprint-index-v1`**\n+   - Current SE/haptic experiment line.\n+   - Based on Release+SE, not on the stock Diagnostics line.\n+   - Keep verified Release+SE behavior intact and change one experimental variable at a time.\n+   - Current next use: DualSense haptic experiments.\n \n-Before any write or CI run, determine the role first: Release, Diagnostics, or Test.\n+## Historical/reference branches\n \n-- Never fast-forward or merge Diagnostics/Test wholesale into Release.\n-- Never run a Release workflow from Diagnostics or Test.\n-- Never run a Diagnostics workflow from Release or Test.\n-- Never run a Test workflow from Release or Diagnostics.\n-- Never hand an artifact to the user unless branch + HEAD + workflow name + artifact name all match the intended role.\n-- If any branch contains another role's active custom workflow, treat that as repository corruption and fix it before further work.\n+The following are not active source-of-truth branches unless the user explicitly reactivates them:\n \n-## Promotion flow\n+- `Final+SE`\n+- `test-haptic`\n+- `runtime-experiments-arm64`\n+- old `diag/*`, `exp/*`, `test-*`, bisect, archive and temporary branches\n+- `main`\n \n-The fixed workflow is:\n+Build/helper branches such as `build/release-se-once` are build carriers only. They are never source of truth.\n \n-**Diagnostics baseline -> Test one-variable experiment -> runtime-verified FIX -> promote the same FIX to Release and Diagnostics -> reset/advance Test from updated Diagnostics baseline**\n+## Promotion flows\n \n-When a Test change is verified as a FIX:\n+### Stock / non-SE fixes\n \n-1. Apply **only the verified FIX** to `final-adreno-compat-arm64`.\n-2. Apply the **same verified FIX** to `fix/arm64-diagnostics-ui-artifact-gate`.\n-3. Keep diagnostic-only code exclusive to the Diagnostics branch.\n-4. After both are synchronized, move/reset `runtime-experiments-arm64` to the updated Diagnostics baseline before the next experiment.\n+Diagnostics -> runtime verification as appropriate -> Release.\n \n-Do **not** fast-forward or merge an entire Diagnostics/Test branch into Release if that would carry diagnostic or experimental commits. Promote selected FIX commits/patches only.\n+If a stock fix affects code shared by SE builds, sync only the verified fix into Release+SE and Diagnostics+SE. Do not merge entire diagnostic branches.\n \n-## Artifact identity rules\n+### Enhanced Sound fixes\n \n-- **Release artifact**: only from `final-adreno-compat-arm64`, artifact name `cemu-arm64-release`.\n-- **Diagnostics artifact**: only from `fix/arm64-diagnostics-ui-artifact-gate`, artifact name `cemu-arm64-diagnostics`.\n-- **Test artifact**: only from `runtime-experiments-arm64`, artifact name `cemu-arm64-test`.\n-- Never call a Diagnostics or Test artifact a release build.\n-- Before handing an artifact to the user, verify branch, HEAD, workflow run, and artifact source.\n+Diagnostics+SE and/or Test -> runtime verification -> Release+SE.\n \n-## Mandatory no-regression constraints\n+After promotion:\n+- keep Diagnostics+SE compatible with the promoted SE behavior when that diagnostic line is next used;\n+- advance/rebase the Test line from the current Release+SE baseline before a new unrelated experiment when necessary.\n \n-The following are protected and must survive every promotion unless the user explicitly changes policy:\n+### Haptic experiments\n \n+All new haptic behavior is developed on [Test] first.\n+\n+A haptic experiment may be promoted to Release+SE only after:\n+1. static/build validation,\n+2. user runtime validation,\n+3. explicit user approval to promote.\n+\n+Do not put haptic experiments directly into stock Release or stock Diagnostics.\n+\n+## Non-negotiable branch isolation\n+\n+- Never fast-forward or merge Diagnostics/Diagnostics+SE/Test wholesale into a release branch when that would carry diagnostic or experimental code.\n+- Promote only the verified patch/change.\n+- Never call a Test or Diagnostics artifact a release build.\n+- Verify branch + HEAD + workflow + artifact identity before handing off a binary.\n - Do not touch `main`.\n-- Keep Bayonetta 2 / Star Fox Zero / Xenoblade Chronicles X `vkGetQueryPoolResults` direct query readback FIX for all JPN / USA / EUR application title IDs.\n-- Protected application title IDs:\n-  - Bayonetta 2: `00050000-1011B900` JPN, `00050000-10172600` USA, `00050000-10172700` EUR.\n-  - Star Fox Zero: `00050000-101AFF00` JPN, `00050000-101B0400` USA, `00050000-101B0500` EUR.\n-  - Xenoblade Chronicles X: `00050000-10116100` JPN, `00050000-101C4D00` USA, `00050000-101C4C00` EUR.\n-- Do not promote the historical XCX `0 -> 1 force-visible` experiment into Release or Diagnostics.\n-- Keep VS `DEFAULT_VAL` synthesize/linkage FIX.\n-- Keep FidelityFX FSR1 EASU + RCAS.\n-- Keep existing Adreno / pre-e834 verified fixes.\n-- Do not repeat already excluded query experiments.\n-- Do not reintroduce previously rejected workaround experiments as fixes without new evidence.\n-\n-## Start-of-work verification\n-\n-Before any code change or CI run:\n-\n-1. Identify which of the three roles the requested work belongs to.\n-2. Fetch the actual branch HEAD.\n-3. Inspect the actual workflow/source on that branch.\n-4. Confirm protected fixes are present.\n-5. Confirm the branch does not contain another role's active custom workflow.\n-6. Make the smallest role-appropriate change only.\n-7. Run static role guards before CI.\n-\n-If a handoff document is stale, update the document instead of following the stale branch/HEAD.\n+- Do not silently substitute an older branch-role scheme for these five active roles.\n+\n+## Protected baseline behavior\n+\n+Unless the user explicitly changes policy, preserve:\n+\n+- Bayonetta 2 / Star Fox Zero / Xenoblade Chronicles X `vkGetQueryPoolResults` direct query readback FIX for all JPN / USA / EUR application title IDs.\n+- Bayonetta 2: `00050000-1011B900`, `00050000-10172600`, `00050000-10172700`.\n+- Star Fox Zero: `00050000-101AFF00`, `00050000-101B0400`, `00050000-101B0500`.\n+- Xenoblade Chronicles X: `00050000-10116100`, `00050000-101C4D00`, `00050000-101C4C00`.\n+- Do not promote the historical XCX `0 -> 1 force-visible` experiment.\n+- VS `DEFAULT_VAL` synthesize/linkage FIX.\n+- FidelityFX FSR1 EASU + RCAS.\n+- Existing verified Adreno / pre-e834 behavior.\n+- Do not repeat already rejected experiments without new evidence.\n+\n+## Build discipline\n+\n+Before starting CI:\n+1. verify the intended role and actual HEAD;\n+2. inspect active/queued runs once;\n+3. trigger one build only;\n+4. do not auto-rerun failed/cancelled work;\n+5. do not repeatedly poll unless needed for a direct user request.\n+\n+For Release+SE, `build/release-se-once` may be used as a one-shot build carrier when the release workflow guard prevents direct building. The carrier must contain the exact intended Release+SE source and must not become a source-of-truth branch."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "status": "HTP_EXECUTION_VERIFIED",
+  "stage": "SmokeQuantized",
+  "started_at": "2026-09-29T06:44:09.8128853+09:00",
+  "ended_at": "2026-09-29T06:44:11.4060123+09:00",
+  "exit_code": 0,
+  "profile_evidence": {
+    "verified_qnn_only": true,
+    "node_events": 24,
+    "kernel_events": 24,
+    "kernels_without_provider": 0,
+    "providers": [
+      "QNNExecutionProvider"
+    ],
+    "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+  },
+  "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-smokequantized-20260929-064409-810-console.log",
+  "synthetic_input": true,
+  "game_quality_verified": false,
+  "gpu_transfers_measured": false
+}

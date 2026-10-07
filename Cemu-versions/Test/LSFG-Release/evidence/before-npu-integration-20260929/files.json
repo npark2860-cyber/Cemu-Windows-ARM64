@@ -1,0 +1,42 @@
+[
+  {
+    "path": "CMakeLists.txt",
+    "sha256": "911113cca27ba1a4f16b1ce37b9b37db68d708edbc445671def07d27d792a384"
+  },
+  {
+    "path": "src/Cafe/CMakeLists.txt",
+    "sha256": "ddfc96ab12da79a38a9cd6c1767df63fb26ca230db8f97b49ec8eae9d39dbe19"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+    "sha256": "d0d25957fdd9c221b99e989a3fc9f7d05e7e37cbb23bcb532b15d2e56808e33a"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+    "sha256": "f10b588c4f2a6cf8ac856a498da67f59b16b3f5866ed1028ddb83c9d4739d034"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanLSFG.cpp",
+    "sha256": "b336015999e9ad503f9e175ba0a5a4b2f07a43d55f81cdbf03de59eb1bec8974"
+  },
+  {
+    "path": "src/config/CemuConfig.h",
+    "sha256": "c1ab3f1fdeb1fb5cb84e55c7d62f62b18bd4645e6285c509adbef7d3411acf49"
+  },
+  {
+    "path": "src/gui/wxgui/GeneralSettings2.cpp",
+    "sha256": "81cc30f6862f3961cefed76f115543b68315428efa284efa474597e4d2443c25"
+  },
+  {
+    "path": "src/gui/wxgui/MainWindow.cpp",
+    "sha256": "6c6abebefdb775f5caf31bc8e9e47e89798366ba7d2ebc5ef92883dbab638b62"
+  },
+  {
+    "path": "src/gui/wxgui/wxWindowSystem.cpp",
+    "sha256": "d0bc214497b134d69786400cd496cddd4e50707e8ded96d603026bab1bf069d6"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteOverlay.cpp",
+    "sha256": "a4a358bdaf585ad03d7e092bcfae5d026e71671aaa42c0257ced396781a909d6"
+  }
+]

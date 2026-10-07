@@ -1,0 +1,202 @@
+{
+  "created_at": "2026-09-29T09:47:58.2092296+09:00",
+  "status": "REVISION_1_PREPARED_NOT_DEVICE_TESTED",
+  "revision": 1,
+  "machine": "ARM64 0xAA64",
+  "build_exit_code": 0,
+  "probe_sha256": "fee17ac0d17781f9758844dcf77e7af43c87b6ee53f8d3ce99fb3653a8d0dd7c",
+  "model": {
+    "variant": "U8NHWC",
+    "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+    "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+    "input_shape": [
+      1,
+      1080,
+      1920,
+      6
+    ],
+    "output_shape": [
+      1,
+      1080,
+      1920,
+      3
+    ],
+    "host_dtype": "uint8",
+    "input_bytes": 12441600,
+    "output_bytes": 6220800,
+    "node_count": 250,
+    "operators": {
+      "Constant": 8,
+      "DequantizeLinear": 128,
+      "Transpose": 2,
+      "Pad": 1,
+      "QuantizeLinear": 56,
+      "Conv": 32,
+      "Add": 17,
+      "ConvTranspose": 4,
+      "Slice": 2
+    },
+    "weights_and_scales_unchanged": true,
+    "input_scale": 0.003921568859368563,
+    "input_zero_point": 0,
+    "output_scale": 0.00330072408542037,
+    "output_zero_point": 128,
+    "layout": "NHWC"
+  },
+  "driver": {
+    "version": "30.0.224.10000",
+    "inf": "oem73.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{F01A9D53-3FF6-48D2-9F97-C8A7004BE10C}\\0000",
+    "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+    "rpc_sha256": "218057045fb448f60585b03de05476e8673d4c14da5a94d8c7fb3a1f1264c3a1"
+  },
+  "graphics": {
+    "version": "31.0.170.0",
+    "inf": "oem36.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000",
+    "description": "Qualcomm(R) Adreno(TM) X1-85 GPU"
+  },
+  "python": {
+    "path": "C:/Users/angel/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe",
+    "sha256": "38bc3e8cdbea071d2cb2db79e3fcaa622f8c3ff8636b313569aa514497dbf6fc"
+  },
+  "files": [
+    {
+      "path": "src/anvil_async_worker.h",
+      "sha256": "cea41fdaf22d959735c7020bfa72573ee094f7f3cce4fe6fce3459310638e951"
+    },
+    {
+      "path": "src/test_anvil_async_worker.cpp",
+      "sha256": "aad18ad3f6b24dfc34e8ed4456d89d5361b154d3ea550cdaa89306315412f950"
+    },
+    {
+      "path": "src/motion1080_pipeline_probe.cpp",
+      "sha256": "7766d2513acf52d72a8e3d46ac01b57234b784061e1a87b331f0ff3270911fa5"
+    },
+    {
+      "path": "src/motion1080_vulkan_support.h",
+      "sha256": "58d2350476be494237e0a6010734cefc19b1ca045634b4480da31bbc9605a5d6"
+    },
+    {
+      "path": "scripts/prepare_motion_probe_source.py",
+      "sha256": "cf05fcb47cc3dfcbbf2aab0606a0cf0f9146241e4eec8b3a22e40ccc8ff84611"
+    },
+    {
+      "path": "scripts/read_motion1080_result.py",
+      "sha256": "683d78d7b3dc951db25cc6d96ae00b6f4b57be92a4087b2e836a790a71c5e517"
+    },
+    {
+      "path": "scripts/motion_oracle.py",
+      "sha256": "f95027aca7aa28437d3d1ab3f0ee0bdaee0cd6c976f426ff8be2f864fda608a8"
+    },
+    {
+      "path": "scripts/test_motion_oracle.py",
+      "sha256": "e7bc4f25cb91a26a1afecdc510f52ce02aa2becc2d0325fb880a7a65169084f0"
+    },
+    {
+      "path": "scripts/test_motion_reader.py",
+      "sha256": "071d18b4999f7a51202e0f0b705faa5964b2e729594bfe53b0fbde7184fb3358"
+    },
+    {
+      "path": "build-motion1080-probe.cmd",
+      "sha256": "b096eb6977663b3c30709225d33c82fd38cd89e4d07d52c3b046a1e8b39c23bb"
+    },
+    {
+      "path": "run-motion1080-probe.ps1",
+      "sha256": "d64ae0c6d04c2a562b043445f1222a899b62845d96037664002aea5abeeb7a96"
+    },
+    {
+      "path": "runtime/motion1080-pipeline-probe.exe",
+      "sha256": "fee17ac0d17781f9758844dcf77e7af43c87b6ee53f8d3ce99fb3653a8d0dd7c"
+    },
+    {
+      "path": "build/test-anvil-async-worker.exe",
+      "sha256": "ff01cbccd2106eacbc1166e6665d7b79afbc0625ec7ef6643651d6e812d323f5"
+    },
+    {
+      "path": "MOTION1080-EXPERIMENT.md",
+      "sha256": "c7d9e8aa7c6e723c0aaf7807e0ec8d05bd87ae22a93292c37fa170c0a28867dc"
+    },
+    {
+      "path": "evidence/anvil1080-probe-manifest.json",
+      "sha256": "b362519e2780432c6e50177a429ec3db2051dca32c03bd6cdfab6095a1a7ca35"
+    },
+    {
+      "path": "evidence/async-worker-cpu-tests-v1.json",
+      "sha256": "5c47978282665dbf31df1f4758d1269d576130066591c7049d32944a8628951a"
+    },
+    {
+      "path": "evidence/motion-oracle-cpu-tests-v1.json",
+      "sha256": "f23e5636b93b4ba0f4b02e6c793e8aea20c6941af4f08ab0426ef77a6d307a54"
+    },
+    {
+      "path": "evidence/motion-reader-cpu-tests-v1.json",
+      "sha256": "834beda60a628832c77d048dede50c72cecd1f022d5a2d2eab696a33e039974e"
+    },
+    {
+      "path": "evidence/motion1080-build-v1.log",
+      "sha256": "2a94812f560aa1430b8946799c02c35cd98f7592234b90b4e89d9fd01d5feaa5"
+    },
+    {
+      "path": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c"
+    },
+    {
+      "path": "shaders/motion1080-generate.comp",
+      "sha256": "c3fe5794ee027db75c3f157779544180f442182faba4969d791aaab9d972fdf9"
+    },
+    {
+      "path": "shaders/motion1080-generate.spv",
+      "sha256": "234f4ed023d48d79fc07104042142ce06b4ec10088367afb5af3a183ac8200f9"
+    },
+    {
+      "path": "shaders/motion1080-downsample.comp",
+      "sha256": "52aafb745ebf35033e7bf6379e52f95aac5defe2e0ef631fce97d735115cbafb"
+    },
+    {
+      "path": "shaders/motion1080-downsample.spv",
+      "sha256": "ede06889d191e1fc74462d4f012a538fbd91fe30c4cdac5a783cf480b180084d"
+    },
+    {
+      "path": "shaders/motion1080-flow.comp",
+      "sha256": "bfce51562868986369d56c1986bdf290fd88338a26fa31686e94b4176fc64d9e"
+    },
+    {
+      "path": "shaders/motion1080-flow.spv",
+      "sha256": "5f7d4b2d35ad24428cd000be3ad23558581d0be621f563b9f6caf2e6f96c0d68"
+    },
+    {
+      "path": "shaders/motion1080-pack.comp",
+      "sha256": "9b464e335954f9454c198f392ae4a3eeecc87c7dbf0324d6171bdb4c7b097e43"
+    },
+    {
+      "path": "shaders/motion1080-pack.spv",
+      "sha256": "691782ae630be5fc0b77bec84c42643afd7207d314826856726e644f88af7b57"
+    },
+    {
+      "path": "shaders/motion1080-compose.comp",
+      "sha256": "fbc4a4d48a92252c55303c9bf12208e14a01d394d9474c142635d10d2dbee507"
+    },
+    {
+      "path": "shaders/motion1080-compose.spv",
+      "sha256": "118272fdfd2aa6c7fb19e99dbefe0fd0420696e68c5db0fc000b2fc4e5ec0d1a"
+    }
+  ],
+  "verification": {
+    "phases": 4,
+    "qnn_inferences": 8,
+    "expected_memhandle_bindings": 8,
+    "expected_raw_reference_bindings": 8,
+    "diagnostic_bytes": 35512320
+  },
+  "measurement": {
+    "first_runs": 1,
+    "warmup_runs": 3,
+    "measured_runs": 30,
+    "phase_cycle": 4,
+    "qnn_profile": "off",
+    "performance": "balanced",
+    "ort_profile": true
+  },
+  "scope": "Standalone quarter-resolution bidirectional block matching, midpoint warp, asynchronous shared-tensor QNN worker and GPU compose. No Cemu or game-quality validation. Host-call overlap does not prove simultaneous device compute."
+}

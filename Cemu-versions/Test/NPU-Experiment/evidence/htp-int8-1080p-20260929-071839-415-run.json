@@ -1,0 +1,60 @@
+{
+  "status": "HTP_SYNTHETIC_INT8_1080P_VERIFIED",
+  "started_at": "2026-09-29T07:18:39.4175056+09:00",
+  "ended_at": "2026-09-29T07:18:45.9975119+09:00",
+  "exit_code": 0,
+  "model_sha256": "ec1abb0d5921a5117ff247bc7803287b44be38423af8e84393d8553cee84d95f",
+  "model": "evidence/int8-prep-20260929-071500-022764/anvil-1080p-synthetic-u8u8.onnx",
+  "precision": "U8/U8 QDQ",
+  "host_io": "FLOAT32",
+  "calibration": "Synthetic 136x240 proxy ranges reused at 1080p",
+  "settings": "Original ARM64 probe, balanced, detailed profiling",
+  "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-int8-1080p-20260929-071839-415-console.log",
+  "result": {
+    "run_mean_ms": 105.30619,
+    "run_p50_ms": 105.1029,
+    "run_p95_ms": 106.4859,
+    "profile_evidence": {
+      "verified_qnn_only": true,
+      "node_events": 14,
+      "kernel_events": 14,
+      "kernels_without_provider": 0,
+      "providers": [
+        "QNNExecutionProvider"
+      ],
+      "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+    },
+    "accelerator_metrics": [
+      {
+        "name": "Accelerator (execute excluding wait) time",
+        "mean_ms": 65.8641,
+        "samples": 10
+      },
+      {
+        "name": "Accelerator (execute) time",
+        "mean_ms": 66.34669999999998,
+        "samples": 10
+      },
+      {
+        "name": "QNN accelerator (execute) time",
+        "mean_ms": 96.2458,
+        "samples": 10
+      },
+      {
+        "name": "RPC (execute) time",
+        "mean_ms": 96.7912,
+        "samples": 10
+      },
+      {
+        "name": "QNN (execute) time",
+        "mean_ms": 100.21090000000001,
+        "samples": 10
+      }
+    ],
+    "metrics_overlap_do_not_add": true,
+    "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes Vulkan transfers, motion estimation and present"
+  },
+  "error": null,
+  "quality_validated": false,
+  "gpu_transfers_measured": false
+}

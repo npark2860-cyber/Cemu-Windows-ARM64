@@ -1,0 +1,706 @@
+{
+  "/encoders.2/encoders.2.0/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      10.188343048095703
+    ]
+  },
+  "/out_conv/Conv_output_0": {
+    "min": [
+      -0.42231234908103943
+    ],
+    "max": [
+      0.4193722903728485
+    ]
+  },
+  "/downs.0/downs.0.1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      9.675539016723633
+    ]
+  },
+  "/encoders.0/encoders.0.0/conv1/Conv_output_0": {
+    "min": [
+      -24.25106430053711
+    ],
+    "max": [
+      30.066999435424805
+    ]
+  },
+  "/bottleneck/bottleneck.2/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      12.396207809448242
+    ]
+  },
+  "/decoders.2/decoders.2.0/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      21.48154640197754
+    ]
+  },
+  "/encoders.2/encoders.2.0/Add_output_0": {
+    "min": [
+      -7.7721028327941895
+    ],
+    "max": [
+      10.188343048095703
+    ]
+  },
+  "/bottleneck/bottleneck.2/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      4.179574489593506
+    ]
+  },
+  "/decoders.2/decoders.2.0/Add_output_0": {
+    "min": [
+      -20.3684139251709
+    ],
+    "max": [
+      21.48154640197754
+    ]
+  },
+  "/encoders.2/encoders.2.0/conv1/Conv_output_0": {
+    "min": [
+      -10.52155876159668
+    ],
+    "max": [
+      8.716424942016602
+    ]
+  },
+  "/downs.3/downs.3.0/Conv_output_0": {
+    "min": [
+      -19.639297485351562
+    ],
+    "max": [
+      15.1936616897583
+    ]
+  },
+  "/bottleneck/bottleneck.1/Add_output_0": {
+    "min": [
+      -6.181950569152832
+    ],
+    "max": [
+      12.638925552368164
+    ]
+  },
+  "/Add_output_0": {
+    "min": [
+      -7.643923282623291
+    ],
+    "max": [
+      12.34424114227295
+    ]
+  },
+  "/decoders.1/decoders.1.0/conv1/Conv_output_0": {
+    "min": [
+      -9.065133094787598
+    ],
+    "max": [
+      8.239354133605957
+    ]
+  },
+  "/decoders.2/decoders.2.0/conv2/Conv_output_0": {
+    "min": [
+      -18.0820369720459
+    ],
+    "max": [
+      16.365943908691406
+    ]
+  },
+  "/encoders.3/encoders.3.0/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      6.571868896484375
+    ]
+  },
+  "/bottleneck/bottleneck.3/Add_output_0": {
+    "min": [
+      -7.585597991943359
+    ],
+    "max": [
+      15.352888107299805
+    ]
+  },
+  "/decoders.0/decoders.0.0/conv1/Conv_output_0": {
+    "min": [
+      -8.974326133728027
+    ],
+    "max": [
+      4.946257591247559
+    ]
+  },
+  "/downs.1/downs.1.0/Conv_output_0": {
+    "min": [
+      -18.93975830078125
+    ],
+    "max": [
+      12.091541290283203
+    ]
+  },
+  "input": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      1.0
+    ]
+  },
+  "/bottleneck/bottleneck.0/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      4.564984321594238
+    ]
+  },
+  "/Add_3_output_0": {
+    "min": [
+      -11.494514465332031
+    ],
+    "max": [
+      20.301513671875
+    ]
+  },
+  "/downs.1/downs.1.1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      12.091541290283203
+    ]
+  },
+  "/Add_1_output_0": {
+    "min": [
+      -7.377389430999756
+    ],
+    "max": [
+      10.650890350341797
+    ]
+  },
+  "/encoders.2/encoders.2.0/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      8.716424942016602
+    ]
+  },
+  "/encoders.1/encoders.1.0/Add_output_0": {
+    "min": [
+      -9.876116752624512
+    ],
+    "max": [
+      11.64992904663086
+    ]
+  },
+  "/ups.2/ConvTranspose_output_0": {
+    "min": [
+      -8.80420970916748
+    ],
+    "max": [
+      8.621358871459961
+    ]
+  },
+  "/encoders.3/encoders.3.1/conv2/Conv_output_0": {
+    "min": [
+      -8.37902545928955
+    ],
+    "max": [
+      4.7331414222717285
+    ]
+  },
+  "/decoders.0/decoders.0.0/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      4.946257591247559
+    ]
+  },
+  "/bottleneck/bottleneck.1/conv1/Conv_output_0": {
+    "min": [
+      -5.26210880279541
+    ],
+    "max": [
+      4.94189453125
+    ]
+  },
+  "/bottleneck/bottleneck.2/Add_output_0": {
+    "min": [
+      -4.831327438354492
+    ],
+    "max": [
+      12.396207809448242
+    ]
+  },
+  "/decoders.1/decoders.1.0/Add_output_0": {
+    "min": [
+      -18.399253845214844
+    ],
+    "max": [
+      15.989537239074707
+    ]
+  },
+  "/encoders.0/encoders.0.0/conv2/Conv_output_0": {
+    "min": [
+      -22.924440383911133
+    ],
+    "max": [
+      20.996530532836914
+    ]
+  },
+  "/decoders.2/decoders.2.0/conv1/Conv_output_0": {
+    "min": [
+      -9.55072021484375
+    ],
+    "max": [
+      10.038520812988281
+    ]
+  },
+  "/bottleneck/bottleneck.0/Add_output_0": {
+    "min": [
+      -8.447673797607422
+    ],
+    "max": [
+      13.642143249511719
+    ]
+  },
+  "/ups.3/ConvTranspose_output_0": {
+    "min": [
+      -11.494514465332031
+    ],
+    "max": [
+      7.874081134796143
+    ]
+  },
+  "output": {
+    "min": [
+      -0.42231234908103943
+    ],
+    "max": [
+      0.4193722903728485
+    ]
+  },
+  "/bottleneck/bottleneck.1/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      4.94189453125
+    ]
+  },
+  "/encoders.3/encoders.3.0/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      11.39820671081543
+    ]
+  },
+  "/encoders.3/encoders.3.1/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      12.757377624511719
+    ]
+  },
+  "/encoders.0/encoders.0.0/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      20.996530532836914
+    ]
+  },
+  "/decoders.3/decoders.3.0/conv2/Conv_output_0": {
+    "min": [
+      -26.038578033447266
+    ],
+    "max": [
+      19.286523818969727
+    ]
+  },
+  "/bottleneck/bottleneck.3/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      6.003775596618652
+    ]
+  },
+  "/bottleneck/bottleneck.2/conv2/Conv_output_0": {
+    "min": [
+      -5.737903594970703
+    ],
+    "max": [
+      5.3902130126953125
+    ]
+  },
+  "/bottleneck/bottleneck.2/conv1/Conv_output_0": {
+    "min": [
+      -6.81962776184082
+    ],
+    "max": [
+      4.179574489593506
+    ]
+  },
+  "/downs.0/downs.0.0/Conv_output_0": {
+    "min": [
+      -25.41887855529785
+    ],
+    "max": [
+      9.675539016723633
+    ]
+  },
+  "/decoders.0/decoders.0.0/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      12.643867492675781
+    ]
+  },
+  "/encoders.0/encoders.0.0/Add_output_0": {
+    "min": [
+      -22.379928588867188
+    ],
+    "max": [
+      20.996530532836914
+    ]
+  },
+  "/decoders.0/decoders.0.0/Add_output_0": {
+    "min": [
+      -11.489299774169922
+    ],
+    "max": [
+      12.643867492675781
+    ]
+  },
+  "/Slice_1_output_0": {
+    "min": [
+      -0.42231234908103943
+    ],
+    "max": [
+      0.4193722903728485
+    ]
+  },
+  "/encoders.3/encoders.3.1/Add_output_0": {
+    "min": [
+      -8.37902545928955
+    ],
+    "max": [
+      12.757377624511719
+    ]
+  },
+  "/encoders.3/encoders.3.1/conv1/Conv_output_0": {
+    "min": [
+      -8.239572525024414
+    ],
+    "max": [
+      5.690534591674805
+    ]
+  },
+  "/Pad_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      1.0
+    ]
+  },
+  "/bottleneck/bottleneck.1/conv2/Conv_output_0": {
+    "min": [
+      -6.181950569152832
+    ],
+    "max": [
+      4.777896881103516
+    ]
+  },
+  "/encoders.0/encoders.0.0/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      30.066999435424805
+    ]
+  },
+  "/encoders.1/encoders.1.0/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      11.64992904663086
+    ]
+  },
+  "/encoders.3/encoders.3.0/Add_output_0": {
+    "min": [
+      -6.25115966796875
+    ],
+    "max": [
+      11.39820671081543
+    ]
+  },
+  "/encoders.3/encoders.3.0/conv2/Conv_output_0": {
+    "min": [
+      -6.904939651489258
+    ],
+    "max": [
+      7.162034034729004
+    ]
+  },
+  "/downs.3/downs.3.1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      15.1936616897583
+    ]
+  },
+  "/bottleneck/bottleneck.1/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      12.638925552368164
+    ]
+  },
+  "/decoders.3/decoders.3.0/Add_output_0": {
+    "min": [
+      -28.805259704589844
+    ],
+    "max": [
+      15.201136589050293
+    ]
+  },
+  "/bottleneck/bottleneck.3/conv2/Conv_output_0": {
+    "min": [
+      -8.983861923217773
+    ],
+    "max": [
+      6.696377277374268
+    ]
+  },
+  "/bottleneck/bottleneck.0/conv2/Conv_output_0": {
+    "min": [
+      -8.447673797607422
+    ],
+    "max": [
+      5.079512119293213
+    ]
+  },
+  "/ups.0/ConvTranspose_output_0": {
+    "min": [
+      -7.643923282623291
+    ],
+    "max": [
+      6.764325141906738
+    ]
+  },
+  "/decoders.3/decoders.3.0/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      15.201136589050293
+    ]
+  },
+  "/encoders.3/encoders.3.1/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      5.690534591674805
+    ]
+  },
+  "/encoders.3/encoders.3.0/conv1/Conv_output_0": {
+    "min": [
+      -15.930816650390625
+    ],
+    "max": [
+      6.571868896484375
+    ]
+  },
+  "/encoders.1/encoders.1.0/conv2/Conv_output_0": {
+    "min": [
+      -9.876116752624512
+    ],
+    "max": [
+      9.46419906616211
+    ]
+  },
+  "/encoders.2/encoders.2.0/conv2/Conv_output_0": {
+    "min": [
+      -7.961291790008545
+    ],
+    "max": [
+      6.508945941925049
+    ]
+  },
+  "/decoders.2/decoders.2.0/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      10.038520812988281
+    ]
+  },
+  "/encoders.1/encoders.1.0/conv1/Conv_output_0": {
+    "min": [
+      -35.4805908203125
+    ],
+    "max": [
+      16.078304290771484
+    ]
+  },
+  "/decoders.1/decoders.1.0/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      15.989537239074707
+    ]
+  },
+  "/bottleneck/bottleneck.3/conv1/Conv_output_0": {
+    "min": [
+      -5.471447467803955
+    ],
+    "max": [
+      6.003775596618652
+    ]
+  },
+  "/intro/intro.0/Conv_output_0": {
+    "min": [
+      -23.978580474853516
+    ],
+    "max": [
+      2.0213091373443604
+    ]
+  },
+  "/Add_2_output_0": {
+    "min": [
+      -8.775166511535645
+    ],
+    "max": [
+      13.528207778930664
+    ]
+  },
+  "/ups.1/ConvTranspose_output_0": {
+    "min": [
+      -7.859482765197754
+    ],
+    "max": [
+      9.052127838134766
+    ]
+  },
+  "/decoders.3/decoders.3.0/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      20.362014770507812
+    ]
+  },
+  "/bottleneck/bottleneck.0/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      13.642143249511719
+    ]
+  },
+  "/decoders.1/decoders.1.0/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      8.239354133605957
+    ]
+  },
+  "/decoders.3/decoders.3.0/conv1/Conv_output_0": {
+    "min": [
+      -21.75863265991211
+    ],
+    "max": [
+      20.362014770507812
+    ]
+  },
+  "/downs.2/downs.2.1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      13.216361045837402
+    ]
+  },
+  "/encoders.1/encoders.1.0/relu1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      16.078304290771484
+    ]
+  },
+  "/bottleneck/bottleneck.3/relu2/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      15.352888107299805
+    ]
+  },
+  "/intro/intro.1/Relu_output_0": {
+    "min": [
+      0.0
+    ],
+    "max": [
+      2.0213091373443604
+    ]
+  },
+  "/bottleneck/bottleneck.0/conv1/Conv_output_0": {
+    "min": [
+      -7.867170333862305
+    ],
+    "max": [
+      4.564984321594238
+    ]
+  },
+  "/downs.2/downs.2.0/Conv_output_0": {
+    "min": [
+      -14.164205551147461
+    ],
+    "max": [
+      13.216361045837402
+    ]
+  },
+  "/decoders.1/decoders.1.0/conv2/Conv_output_0": {
+    "min": [
+      -14.831070899963379
+    ],
+    "max": [
+      13.950350761413574
+    ]
+  },
+  "/decoders.0/decoders.0.0/conv2/Conv_output_0": {
+    "min": [
+      -7.890467643737793
+    ],
+    "max": [
+      10.224676132202148
+    ]
+  }
+}

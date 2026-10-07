@@ -1,0 +1,56 @@
+{
+  "xlsr": {
+    "source": "https://huggingface.co/qualcomm/XLSR",
+    "release": "v0.62.2",
+    "input": [
+      1,
+      128,
+      128,
+      3
+    ],
+    "output": [
+      1,
+      512,
+      512,
+      3
+    ],
+    "quantization": "W8A8",
+    "context_target": {
+      "soc_model": 69,
+      "dsp_arch": 79,
+      "qairt": "2.45.0.260326"
+    },
+    "hardware_tested": false
+  },
+  "anvil": {
+    "source": "https://huggingface.co/NihilDigit/anvil",
+    "source_file": "onnx/D_unet_v3bs_nomv_1080p.onnx",
+    "quantization": "FP32; INT8 requires calibration",
+    "hardware_tested": false,
+    "windows_qnn_cpu_inference_tested": true,
+    "qnn_input_layout": "NCHW",
+    "qnn_input_shape": [
+      1,
+      6,
+      1080,
+      1920
+    ],
+    "qnn_output_shape": [
+      1,
+      3,
+      1080,
+      1920
+    ],
+    "moving_pair_reference_max_rgb8_error": 0
+  },
+  "files": {
+    "ANVIL-LICENSE": "7cc016c9d53cdcc370c3e3e8c9053250061fa3a15580f049528a0aacb7b08ad0",
+    "anvil-small-1080p-fp32.dlc": "4d1bdc6720fbaf00b648106e5f197ac26b212c9251e913297a8ade932122eaa3",
+    "anvil-small-1080p-fp32.onnx": "65e871aed25b331e3a3747cf9019942121a94af71997476f5804a24b768cd0d8",
+    "convert_qnn.py": "bacd5cddf136a7b34cb85a7e38c4bc06fc427b60584ebfbad25636c2eaa33ef1",
+    "XLSR-LICENSE.md": "3d7f7841688ba4c69892be4df5dd7a2c114d3ac8b2113953a6e3a35d7f86c657",
+    "xlsr-sm8750-v79.bin": "be294e79bd73d6949da6dfc80c057f625134f76bc2e770d41134b3ebd2f62c44",
+    "xlsr-sm8750-v79.json": "4fe6063cdcaa6193e9b5729b5d39df24e07b1ae08528be90f98f9940b1791d86",
+    "xlsr-w8a8.dlc": "fb9e9e8dc5926c1dbe9fb691cff2bdd2e127075db11b24175b9be7c8adb28a96"
+  }
+}

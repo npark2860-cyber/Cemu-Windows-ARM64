@@ -1,0 +1,697 @@
+{
+  "created_at": "2026-09-29T07:39:38.872433+09:00",
+  "status": "U8_NHWC_SPEEDUP_AND_REPEAT_VERIFIED_REALTIME_PIPELINE_NOT_YET_MET",
+  "runs": {
+    "FloatNCHW": "htp-io-floatnchw-20260929-073237-944",
+    "U8NCHW": "htp-io-u8nchw-20260929-073256-962",
+    "U8NHWC_first": "htp-io-u8nhwc-20260929-073313-189",
+    "U8NHWC_repeat": "htp-io-u8nhwc-20260929-073818-415"
+  },
+  "measurements": [
+    {
+      "label": "FloatNCHW",
+      "run": "htp-io-floatnchw-20260929-073237-944",
+      "mean_ms": 105.8997,
+      "p50_ms": 105.9127,
+      "p95_ms": 106.8497,
+      "min_ms": 104.609,
+      "max_ms": 106.8497,
+      "accelerator_excluding_wait_ms": 65.82719999999999,
+      "output_sha256": "7c829f50151ecd78d2ccf03f91152f58aae54eaec17ed9e1c8933c308b6384ed"
+    },
+    {
+      "label": "U8NCHW",
+      "run": "htp-io-u8nchw-20260929-073256-962",
+      "mean_ms": 92.06601,
+      "p50_ms": 89.051,
+      "p95_ms": 115.6274,
+      "min_ms": 88.6352,
+      "max_ms": 115.6274,
+      "accelerator_excluding_wait_ms": 60.313900000000004,
+      "output_sha256": "2fe9595d4a149c5ff3e55ad4480de0647f487b9efe7a43f080b87cee98331236"
+    },
+    {
+      "label": "U8NHWC_first",
+      "run": "htp-io-u8nhwc-20260929-073313-189",
+      "mean_ms": 34.3743,
+      "p50_ms": 33.2843,
+      "p95_ms": 39.9219,
+      "min_ms": 32.6181,
+      "max_ms": 39.9219,
+      "accelerator_excluding_wait_ms": 15.6697,
+      "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed"
+    },
+    {
+      "label": "U8NHWC_repeat",
+      "run": "htp-io-u8nhwc-20260929-073818-415",
+      "mean_ms": 38.38438,
+      "p50_ms": 37.8506,
+      "p95_ms": 40.3649,
+      "min_ms": 37.6519,
+      "max_ms": 40.3649,
+      "accelerator_excluding_wait_ms": 18.1193,
+      "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed"
+    }
+  ],
+  "run_records": {
+    "FloatNCHW": {
+      "status": "HTP_IO_VARIANT_VERIFIED",
+      "variant": "FloatNCHW",
+      "started_at": "2026-09-29T07:32:37.9459038+09:00",
+      "ended_at": "2026-09-29T07:32:44.7963322+09:00",
+      "exit_code": 0,
+      "model": "evidence/int8-prep-20260929-071500-022764/anvil-1080p-synthetic-u8u8.onnx",
+      "model_sha256": "ec1abb0d5921a5117ff247bc7803287b44be38423af8e84393d8553cee84d95f",
+      "probe_sha256": "9045a2127994d531de9f93057bc63bdfe18aa70ddb86eb07c8c931d3e35eb9b3",
+      "settings": "balanced, detailed profiling, same logical synthetic image",
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-io-floatnchw-20260929-073237-944-console.log",
+      "result": {
+        "status": "HTP_IO_VARIANT_VERIFIED",
+        "variant": "FloatNCHW",
+        "run_mean_ms": 105.8997,
+        "run_p50_ms": 105.9127,
+        "run_p95_ms": 106.8497,
+        "input_shape": [
+          1,
+          6,
+          1080,
+          1920
+        ],
+        "output_shape": [
+          1,
+          3,
+          1080,
+          1920
+        ],
+        "host_dtype": "float",
+        "layout": "NCHW",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 14,
+          "kernel_events": 14,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [
+          {
+            "name": "Accelerator (execute excluding wait) time",
+            "mean_ms": 65.82719999999999,
+            "samples": 10
+          },
+          {
+            "name": "Accelerator (execute) time",
+            "mean_ms": 66.3166,
+            "samples": 10
+          },
+          {
+            "name": "QNN accelerator (execute) time",
+            "mean_ms": 96.0951,
+            "samples": 10
+          },
+          {
+            "name": "RPC (execute) time",
+            "mean_ms": 96.61850000000001,
+            "samples": 10
+          },
+          {
+            "name": "QNN (execute) time",
+            "mean_ms": 100.2165,
+            "samples": 10
+          }
+        ],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes external quantization, packing, output dequantization, Vulkan transfers, motion estimation and present",
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    },
+    "U8NCHW": {
+      "status": "HTP_IO_VARIANT_VERIFIED",
+      "variant": "U8NCHW",
+      "started_at": "2026-09-29T07:32:56.9638790+09:00",
+      "ended_at": "2026-09-29T07:33:02.5444289+09:00",
+      "exit_code": 0,
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nchw.onnx",
+      "model_sha256": "55b8bae4441de0341d92470091b6174a3cd57b077ed178d14f3a690f658f7699",
+      "probe_sha256": "9045a2127994d531de9f93057bc63bdfe18aa70ddb86eb07c8c931d3e35eb9b3",
+      "settings": "balanced, detailed profiling, same logical synthetic image",
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-io-u8nchw-20260929-073256-962-console.log",
+      "result": {
+        "status": "HTP_IO_VARIANT_VERIFIED",
+        "variant": "U8NCHW",
+        "run_mean_ms": 92.06601,
+        "run_p50_ms": 89.051,
+        "run_p95_ms": 115.6274,
+        "input_shape": [
+          1,
+          6,
+          1080,
+          1920
+        ],
+        "output_shape": [
+          1,
+          3,
+          1080,
+          1920
+        ],
+        "host_dtype": "uint8",
+        "layout": "NCHW",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 14,
+          "kernel_events": 14,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [
+          {
+            "name": "Accelerator (execute excluding wait) time",
+            "mean_ms": 60.313900000000004,
+            "samples": 10
+          },
+          {
+            "name": "Accelerator (execute) time",
+            "mean_ms": 60.802499999999995,
+            "samples": 10
+          },
+          {
+            "name": "QNN accelerator (execute) time",
+            "mean_ms": 81.4686,
+            "samples": 10
+          },
+          {
+            "name": "RPC (execute) time",
+            "mean_ms": 82.25060000000002,
+            "samples": 10
+          },
+          {
+            "name": "QNN (execute) time",
+            "mean_ms": 83.4439,
+            "samples": 10
+          }
+        ],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes external quantization, packing, output dequantization, Vulkan transfers, motion estimation and present",
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    },
+    "U8NHWC_first": {
+      "status": "HTP_IO_VARIANT_VERIFIED",
+      "variant": "U8NHWC",
+      "started_at": "2026-09-29T07:33:13.1912977+09:00",
+      "ended_at": "2026-09-29T07:33:17.2465446+09:00",
+      "exit_code": 0,
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "probe_sha256": "9045a2127994d531de9f93057bc63bdfe18aa70ddb86eb07c8c931d3e35eb9b3",
+      "settings": "balanced, detailed profiling, same logical synthetic image",
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-io-u8nhwc-20260929-073313-189-console.log",
+      "result": {
+        "status": "HTP_IO_VARIANT_VERIFIED",
+        "variant": "U8NHWC",
+        "run_mean_ms": 34.3743,
+        "run_p50_ms": 33.2843,
+        "run_p95_ms": 39.9219,
+        "input_shape": [
+          1,
+          1080,
+          1920,
+          6
+        ],
+        "output_shape": [
+          1,
+          1080,
+          1920,
+          3
+        ],
+        "host_dtype": "uint8",
+        "layout": "NHWC",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 14,
+          "kernel_events": 14,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [
+          {
+            "name": "Accelerator (execute excluding wait) time",
+            "mean_ms": 15.6697,
+            "samples": 10
+          },
+          {
+            "name": "Accelerator (execute) time",
+            "mean_ms": 16.139799999999997,
+            "samples": 10
+          },
+          {
+            "name": "QNN accelerator (execute) time",
+            "mean_ms": 26.6421,
+            "samples": 10
+          },
+          {
+            "name": "RPC (execute) time",
+            "mean_ms": 27.2375,
+            "samples": 10
+          },
+          {
+            "name": "QNN (execute) time",
+            "mean_ms": 28.286199999999997,
+            "samples": 10
+          }
+        ],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes external quantization, packing, output dequantization, Vulkan transfers, motion estimation and present",
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    },
+    "U8NHWC_repeat": {
+      "status": "HTP_IO_VARIANT_VERIFIED",
+      "variant": "U8NHWC",
+      "started_at": "2026-09-29T07:38:18.4183205+09:00",
+      "ended_at": "2026-09-29T07:38:25.8860450+09:00",
+      "exit_code": 0,
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "probe_sha256": "9045a2127994d531de9f93057bc63bdfe18aa70ddb86eb07c8c931d3e35eb9b3",
+      "settings": "balanced, detailed profiling, same logical synthetic image",
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-io-u8nhwc-20260929-073818-415-console.log",
+      "result": {
+        "status": "HTP_IO_VARIANT_VERIFIED",
+        "variant": "U8NHWC",
+        "run_mean_ms": 38.38438,
+        "run_p50_ms": 37.8506,
+        "run_p95_ms": 40.3649,
+        "input_shape": [
+          1,
+          1080,
+          1920,
+          6
+        ],
+        "output_shape": [
+          1,
+          1080,
+          1920,
+          3
+        ],
+        "host_dtype": "uint8",
+        "layout": "NHWC",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 14,
+          "kernel_events": 14,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [
+          {
+            "name": "Accelerator (execute excluding wait) time",
+            "mean_ms": 18.1193,
+            "samples": 10
+          },
+          {
+            "name": "Accelerator (execute) time",
+            "mean_ms": 18.5732,
+            "samples": 10
+          },
+          {
+            "name": "QNN accelerator (execute) time",
+            "mean_ms": 30.426699999999993,
+            "samples": 10
+          },
+          {
+            "name": "RPC (execute) time",
+            "mean_ms": 30.9869,
+            "samples": 10
+          },
+          {
+            "name": "QNN (execute) time",
+            "mean_ms": 32.0729,
+            "samples": 10
+          }
+        ],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes external quantization, packing, output dequantization, Vulkan transfers, motion estimation and present",
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    }
+  },
+  "profile_analysis": {
+    "FloatNCHW": {
+      "node_events_per_inference": 62,
+      "transpose_nodes": [
+        {
+          "event": "Transpose_token_214_2:OpId_22 (cycles)",
+          "mean_cycles": 56269721.9,
+          "samples": 10
+        },
+        {
+          "event": "Transpose_token_361_2:OpId_337 (cycles)",
+          "mean_cycles": 2745610.8,
+          "samples": 10
+        }
+      ],
+      "top_nodes": [
+        {
+          "event": "Transpose_token_214_2:OpId_22 (cycles)",
+          "mean_cycles": 56269721.9,
+          "samples": 10
+        },
+        {
+          "event": "DequantizeLinear_token_365_2:OpId_338 (cycles)",
+          "mean_cycles": 9857381.9,
+          "samples": 10
+        },
+        {
+          "event": "input_QuantizeLinear_3:OpId_16 (cycles)",
+          "mean_cycles": 9273744.2,
+          "samples": 10
+        },
+        {
+          "event": "/encoders.0/encoders.0.0/Add_3:OpId_47 (cycles)",
+          "mean_cycles": 4833355.3,
+          "samples": 10
+        },
+        {
+          "event": "/decoders.3/decoders.3.0/Add_3:OpId_315 (cycles)",
+          "mean_cycles": 4323901.6,
+          "samples": 10
+        },
+        {
+          "event": "/Add_3_3:OpId_298 (cycles)",
+          "mean_cycles": 4178138.4,
+          "samples": 10
+        },
+        {
+          "event": "/downs.0/downs.0.0/Conv_token_19_2:OpId_53 (cycles)",
+          "mean_cycles": 2915779.2,
+          "samples": 10
+        },
+        {
+          "event": "Transpose_token_361_2:OpId_337 (cycles)",
+          "mean_cycles": 2745610.8,
+          "samples": 10
+        },
+        {
+          "event": "/Pad_3:OpId_18 (cycles)",
+          "mean_cycles": 2449980.3,
+          "samples": 10
+        },
+        {
+          "event": "/ups.3/ConvTranspose_token_193_2:OpId_296 (cycles)",
+          "mean_cycles": 2028517.0,
+          "samples": 10
+        }
+      ],
+      "note": "Reported cycle events; overlap or clock frequency differences mean they must not be summed or translated directly into wall-time shares."
+    },
+    "U8NCHW": {
+      "node_events_per_inference": 60,
+      "transpose_nodes": [
+        {
+          "event": "Transpose_token_214_2:OpId_21 (cycles)",
+          "mean_cycles": 56260336.6,
+          "samples": 10
+        },
+        {
+          "event": "Transpose_token_360_2:OpId_336 (cycles)",
+          "mean_cycles": 4224969.4,
+          "samples": 10
+        }
+      ],
+      "top_nodes": [
+        {
+          "event": "Transpose_token_214_2:OpId_21 (cycles)",
+          "mean_cycles": 56260336.6,
+          "samples": 10
+        },
+        {
+          "event": "Output OpId_3 (cycles)",
+          "mean_cycles": 11682169.5,
+          "samples": 10
+        },
+        {
+          "event": "/encoders.0/encoders.0.0/Add_3:OpId_46 (cycles)",
+          "mean_cycles": 5153374.3,
+          "samples": 10
+        },
+        {
+          "event": "/Pad_3:OpId_17 (cycles)",
+          "mean_cycles": 4421230.1,
+          "samples": 10
+        },
+        {
+          "event": "/decoders.3/decoders.3.0/Add_3:OpId_314 (cycles)",
+          "mean_cycles": 4293309.0,
+          "samples": 10
+        },
+        {
+          "event": "Transpose_token_360_2:OpId_336 (cycles)",
+          "mean_cycles": 4224969.4,
+          "samples": 10
+        },
+        {
+          "event": "/Add_3_3:OpId_297 (cycles)",
+          "mean_cycles": 4191183.0,
+          "samples": 10
+        },
+        {
+          "event": "/downs.0/downs.0.0/Conv_token_19_2:OpId_52 (cycles)",
+          "mean_cycles": 2913670.4,
+          "samples": 10
+        },
+        {
+          "event": "/ups.3/ConvTranspose_token_193_2:OpId_295 (cycles)",
+          "mean_cycles": 2021948.9,
+          "samples": 10
+        },
+        {
+          "event": "/encoders.1/encoders.1.0/Add_3:OpId_71 (cycles)",
+          "mean_cycles": 1617289.5,
+          "samples": 10
+        }
+      ],
+      "note": "Reported cycle events; overlap or clock frequency differences mean they must not be summed or translated directly into wall-time shares."
+    },
+    "U8NHWC_first": {
+      "node_events_per_inference": 58,
+      "transpose_nodes": [],
+      "top_nodes": [
+        {
+          "event": "/Pad_3:OpId_17 (cycles)",
+          "mean_cycles": 8017954.1,
+          "samples": 10
+        },
+        {
+          "event": "/encoders.0/encoders.0.0/Add_3:OpId_44 (cycles)",
+          "mean_cycles": 5246527.7,
+          "samples": 10
+        },
+        {
+          "event": "/decoders.3/decoders.3.0/Add_3:OpId_312 (cycles)",
+          "mean_cycles": 4229255.8,
+          "samples": 10
+        },
+        {
+          "event": "/Add_3_3:OpId_295 (cycles)",
+          "mean_cycles": 4149970.9,
+          "samples": 10
+        },
+        {
+          "event": "Output OpId_3 (cycles)",
+          "mean_cycles": 3709594.3,
+          "samples": 10
+        },
+        {
+          "event": "/downs.0/downs.0.0/Conv_token_19_2:OpId_50 (cycles)",
+          "mean_cycles": 3180203.6,
+          "samples": 10
+        },
+        {
+          "event": "/ups.3/ConvTranspose_token_193_2:OpId_293 (cycles)",
+          "mean_cycles": 2058699.6,
+          "samples": 10
+        },
+        {
+          "event": "/encoders.1/encoders.1.0/Add_3:OpId_69 (cycles)",
+          "mean_cycles": 1598234.5,
+          "samples": 10
+        },
+        {
+          "event": "/Add_2_3:OpId_270 (cycles)",
+          "mean_cycles": 1051417.9,
+          "samples": 10
+        },
+        {
+          "event": "/decoders.2/decoders.2.0/Add_3:OpId_287 (cycles)",
+          "mean_cycles": 1030685.3,
+          "samples": 10
+        }
+      ],
+      "note": "Reported cycle events; overlap or clock frequency differences mean they must not be summed or translated directly into wall-time shares."
+    },
+    "U8NHWC_repeat": {
+      "node_events_per_inference": 58,
+      "transpose_nodes": [],
+      "top_nodes": [
+        {
+          "event": "/Pad_3:OpId_17 (cycles)",
+          "mean_cycles": 7731445.7,
+          "samples": 10
+        },
+        {
+          "event": "/encoders.0/encoders.0.0/Add_3:OpId_44 (cycles)",
+          "mean_cycles": 6124388.1,
+          "samples": 10
+        },
+        {
+          "event": "/decoders.3/decoders.3.0/Add_3:OpId_312 (cycles)",
+          "mean_cycles": 4192338.2,
+          "samples": 10
+        },
+        {
+          "event": "/Add_3_3:OpId_295 (cycles)",
+          "mean_cycles": 4172743.6,
+          "samples": 10
+        },
+        {
+          "event": "Output OpId_3 (cycles)",
+          "mean_cycles": 3657703.6,
+          "samples": 10
+        },
+        {
+          "event": "/downs.0/downs.0.0/Conv_token_19_2:OpId_50 (cycles)",
+          "mean_cycles": 2998818.1,
+          "samples": 10
+        },
+        {
+          "event": "/ups.3/ConvTranspose_token_193_2:OpId_293 (cycles)",
+          "mean_cycles": 2009202.8,
+          "samples": 10
+        },
+        {
+          "event": "/encoders.1/encoders.1.0/Add_3:OpId_69 (cycles)",
+          "mean_cycles": 1434072.1,
+          "samples": 10
+        },
+        {
+          "event": "/downs.1/downs.1.0/Conv_token_37_2:OpId_75 (cycles)",
+          "mean_cycles": 1058747.1,
+          "samples": 10
+        },
+        {
+          "event": "/Add_2_3:OpId_270 (cycles)",
+          "mean_cycles": 1055760.0,
+          "samples": 10
+        }
+      ],
+      "note": "Reported cycle events; overlap or clock frequency differences mean they must not be summed or translated directly into wall-time shares."
+    }
+  },
+  "output_comparison": {
+    "u8_layout_comparison": {
+      "elements": 6220800,
+      "bitwise_equal": true,
+      "different_values": 0,
+      "max_abs_integer_difference": 0
+    },
+    "U8NCHW": {
+      "finite": true,
+      "byte_range": [
+        53,
+        210
+      ],
+      "max_abs_error_vs_float_io": 0.003373563289642334,
+      "rmse_vs_float_io": 0.0015361073676694017,
+      "mean_abs_error_vs_float_io": 0.0007212354842272652,
+      "reference_output_range": [
+        -0.2476212978363037,
+        0.2707333564758301
+      ]
+    },
+    "U8NHWC": {
+      "finite": true,
+      "byte_range": [
+        53,
+        210
+      ],
+      "max_abs_error_vs_float_io": 0.003373563289642334,
+      "rmse_vs_float_io": 0.0015361073676694017,
+      "mean_abs_error_vs_float_io": 0.0007212354842272652,
+      "reference_output_range": [
+        -0.2476212978363037,
+        0.2707333564758301
+      ]
+    },
+    "repeat": {
+      "bitwise_equal_to_first_nhwc": true,
+      "different_values": 0,
+      "max_abs_integer_difference": 0
+    },
+    "scope": "Saved outputs from identical logical synthetic inputs. U8 NCHW vs NHWC and NHWC repetition are bitwise checks. FLOAT32-boundary output comparison uses the recorded U8 output scale and zero point; no real-game quality claim."
+  },
+  "comparison": {
+    "first_nhwc_wall_reduction_vs_float_io_percent": 67.54070124844547,
+    "repeat_nhwc_wall_reduction_vs_float_io_percent": 63.75402385464737,
+    "first_throughput_ratio": 3.080781281364275,
+    "repeat_throughput_ratio": 2.7589269385098834,
+    "repeat_vs_first_wall_increase_percent": 11.665924833378426,
+    "target_budget_ms": 33.333333333333336,
+    "first_mean_exceeds_budget": true,
+    "repeat_mean_exceeds_budget": true
+  },
+  "time_slots": [
+    {
+      "start": "2026-09-29T07:32:37.9459038+09:00",
+      "end": "2026-09-29T07:33:17.2465446+09:00",
+      "authorization": "Explicit 지금 측정해 for the three-model comparison",
+      "closed": true
+    },
+    {
+      "start": "2026-09-29T07:38:18.4183205+09:00",
+      "end": "2026-09-29T07:38:25.8860450+09:00",
+      "authorization": "User explicitly requested 한번만 더 해볼수 있어?; repeated only the best U8 NHWC variant",
+      "closed": true
+    }
+  ],
+  "runtime_profile_note": "NHWC initial layout-pass validation warned about Pad/Transpose; after layout transformation all 257 nodes were supported in one QNN partition. Final runtime proof is QNN-only kernel profile, disabled CPU fallback, correct I/O and exit0. No transpose NODE events remained in the measured NHWC detailed profiles.",
+  "cpu_fallback": false,
+  "game_quality_validated": false,
+  "external_quantization_packing_dequantization_measured": false,
+  "vulkan_transfers_measured": false,
+  "concurrent_cemu_measured": false,
+  "long_run_thermal_behavior_measured": false,
+  "actual_device_clock_measured": false,
+  "cemu_executed": false,
+  "ui_control": false,
+  "forced_termination": false,
+  "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes external quantization, packing, output dequantization, Vulkan transfers, motion estimation and present",
+  "next_candidates": "Reduce remaining host/runtime overhead and integrate U8 NHWC packing with GPU prealignment plus dequantization with output composition; those costs must be counted. Need representative calibration and actual game quality/latency validation."
+}

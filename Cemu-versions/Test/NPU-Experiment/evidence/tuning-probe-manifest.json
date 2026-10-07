@@ -1,0 +1,153 @@
+{
+  "created_at": "2026-09-29T08:03:37.5736307+09:00",
+  "status": "PREPARED_NOT_NPU_TESTED",
+  "build_exit_code": 0,
+  "machine": "ARM64 0xAA64",
+  "probe_sha256": "e7559b83e8e4d572f8d54a6c2815c231a4e052569f859af97033ff0cf5e254eb",
+  "model": {
+    "variant": "U8NHWC",
+    "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+    "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+    "input_shape": [
+      1,
+      1080,
+      1920,
+      6
+    ],
+    "output_shape": [
+      1,
+      1080,
+      1920,
+      3
+    ],
+    "host_dtype": "uint8",
+    "input_bytes": 12441600,
+    "output_bytes": 6220800,
+    "node_count": 250,
+    "operators": {
+      "Constant": 8,
+      "DequantizeLinear": 128,
+      "Transpose": 2,
+      "Pad": 1,
+      "QuantizeLinear": 56,
+      "Conv": 32,
+      "Add": 17,
+      "ConvTranspose": 4,
+      "Slice": 2
+    },
+    "weights_and_scales_unchanged": true,
+    "input_scale": 0.003921568859368563,
+    "input_zero_point": 0,
+    "output_scale": 0.00330072408542037,
+    "output_zero_point": 128,
+    "layout": "NHWC"
+  },
+  "reference_output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+  "reference_run": "htp-io-u8nhwc-20260929-074227-880",
+  "driver": {
+    "version": "30.0.224.10000",
+    "inf": "oem73.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{F01A9D53-3FF6-48D2-9F97-C8A7004BE10C}\\0000",
+    "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+    "rpc_sha256": "218057045fb448f60585b03de05476e8673d4c14da5a94d8c7fb3a1f1264c3a1"
+  },
+  "variants": [
+    {
+      "variant": "Baseline",
+      "qnn_profile": "detailed",
+      "performance": "balanced",
+      "shared": false,
+      "reuse": false
+    },
+    {
+      "variant": "NoQnnProfile",
+      "qnn_profile": "off",
+      "performance": "balanced",
+      "shared": false,
+      "reuse": false
+    },
+    {
+      "variant": "ReuseHost",
+      "qnn_profile": "off",
+      "performance": "balanced",
+      "shared": false,
+      "reuse": true
+    },
+    {
+      "variant": "SharedBalanced",
+      "qnn_profile": "off",
+      "performance": "balanced",
+      "shared": true,
+      "reuse": true
+    },
+    {
+      "variant": "SharedSustained",
+      "qnn_profile": "off",
+      "performance": "sustained_high_performance",
+      "shared": true,
+      "reuse": true
+    }
+  ],
+  "sequence": [
+    "Baseline",
+    "NoQnnProfile",
+    "ReuseHost",
+    "SharedBalanced",
+    "SharedSustained",
+    "Baseline"
+  ],
+  "measured_runs": 30,
+  "warmup_runs": 3,
+  "ort_profiling": true,
+  "files": [
+    {
+      "path": "src/npu_tuning_probe.cpp",
+      "sha256": "2394c44145e65028991825bdc588dd619d768a0f65a866eb0c7e2dcafd3ab0c9"
+    },
+    {
+      "path": "runtime/npu-tuning-probe.exe",
+      "sha256": "e7559b83e8e4d572f8d54a6c2815c231a4e052569f859af97033ff0cf5e254eb"
+    },
+    {
+      "path": "build-tuning-probe.cmd",
+      "sha256": "5e02e450f08ccdd546a417ee009df6995d96ea6d4eac1a87fd8d6b1322e38089"
+    },
+    {
+      "path": "run-tuning-probe.ps1",
+      "sha256": "18d173073647ad79b3bae4f8416d5188014defab7f0ab721008fe77d66268a71"
+    },
+    {
+      "path": "scripts/read-tuning-result.ps1",
+      "sha256": "6a91aefe97da20d942d4ec3ee8f210e23d74b7b824cedbe5814e1d55fcfc1fc0"
+    },
+    {
+      "path": "scripts/test-tuning-result.ps1",
+      "sha256": "0d47b168f61cf63926ff119cccd4b93701775c073e2320dff0407d141940011c"
+    },
+    {
+      "path": "scripts/read-qnn-profile.ps1",
+      "sha256": "adbdb0d2e5801125a80cf8021d2f25f92c05125582efcd4f04e8b7512d9e1a35"
+    },
+    {
+      "path": "TUNING-EXPERIMENT.md",
+      "sha256": "bd642da630a4af08c57134a988b5aed89f88f0fe8c1bdfff35a7552a0f1c1db7"
+    },
+    {
+      "path": "reference/ort-v1.24.4/test_inference.cc",
+      "sha256": "d6af471caed1f538a583b1e5ea05e114c5437dc02ddac96616bd12f1d4b7947c"
+    },
+    {
+      "path": "reference/ort-v1.24.4/qnn_allocator.cc",
+      "sha256": "14e5854c19458dd0cd7c5d60523158179493e6bf67c5119a55106cada17d9a19"
+    },
+    {
+      "path": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c"
+    }
+  ],
+  "reference_sources": [
+    "https://onnxruntime.ai/docs/execution-providers/QNN-ExecutionProvider.html",
+    "https://github.com/microsoft/onnxruntime/blob/v1.24.4/onnxruntime/test/shared_lib/test_inference.cc",
+    "https://github.com/microsoft/onnxruntime/blob/v1.24.4/onnxruntime/core/providers/qnn/qnn_allocator.cc"
+  ]
+}

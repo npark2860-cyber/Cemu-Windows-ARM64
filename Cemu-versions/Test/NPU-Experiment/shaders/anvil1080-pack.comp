@@ -1,0 +1,20 @@
+#version 450
+layout(local_size_x=256) in;
+layout(set=0,binding=0,rgba8) uniform readonly image2D frameA;
+layout(set=0,binding=1,rgba8) uniform readonly image2D frameB;
+layout(set=0,binding=2,std430) buffer Input { uint words[]; } target;
+uint pack4(uint a,uint b,uint c,uint d) { return a|(b<<8)|(c<<16)|(d<<24); }
+void main() {
+    uint pair=gl_GlobalInvocationID.x;
+    if(pair>=1036800u) return;
+    uint p=pair*2u;
+    ivec2 xy=ivec2(p%1920u,p/1920u);
+    uvec3 a0=uvec3(round(imageLoad(frameA,xy).rgb*255.0));
+    uvec3 b0=uvec3(round(imageLoad(frameB,xy).rgb*255.0));
+    uvec3 a1=uvec3(round(imageLoad(frameA,xy+ivec2(1,0)).rgb*255.0));
+    uvec3 b1=uvec3(round(imageLoad(frameB,xy+ivec2(1,0)).rgb*255.0));
+    // Two NHWC pixels (12 bytes) per invocation; no overlapping byte stores.
+    target.words[pair*3u]=pack4(a0.r,a0.g,a0.b,b0.r);
+    target.words[pair*3u+1u]=pack4(b0.g,b0.b,a1.r,a1.g);
+    target.words[pair*3u+2u]=pack4(a1.b,b1.r,b1.g,b1.b);
+}

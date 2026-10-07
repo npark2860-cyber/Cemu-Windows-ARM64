@@ -1,0 +1,20 @@
+[
+  {
+    "url": "https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime.qnn/1.24.4/microsoft.ml.onnxruntime.qnn.1.24.4.nupkg",
+    "path": "downloads/ort-qnn-1.24.4.nupkg",
+    "bytes": 96584324,
+    "sha256": "e4d6eabb9e503d4f3c78494fc9400f02509b2ee315d9f707644a174ece8da17f"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/54pkp/hexscale/8fed58387dcd5b417910b71f15b12d3aa1e509fa/models/anvil-small-1080p-fp32.onnx",
+    "path": "models/anvil-small-1080p-fp32.onnx",
+    "bytes": 3441349,
+    "sha256": "65e871aed25b331e3a3747cf9019942121a94af71997476f5804a24b768cd0d8"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/54pkp/hexscale/8fed58387dcd5b417910b71f15b12d3aa1e509fa/models/ANVIL-LICENSE",
+    "path": "models/ANVIL-LICENSE",
+    "bytes": 1067,
+    "sha256": "7cc016c9d53cdcc370c3e3e8c9053250061fa3a15580f049528a0aacb7b08ad0"
+  }
+]

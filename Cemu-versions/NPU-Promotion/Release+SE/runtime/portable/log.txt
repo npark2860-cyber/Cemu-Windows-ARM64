@@ -1,0 +1,166 @@
+[04:48:34.867] ------- Init Cemu 9c0b899 -------
+[04:48:34.868] Init Wii U memory space (base: 0x0000026447000000)
+[04:48:34.868] mlc01 path: C:/Users/angel/AppData/Roaming/Cemu/mlc01
+[04:48:34.868] RAM: 15979MB
+[04:48:34.868] Platform: Windows 11 Home 25H2 (Build 26220)
+[04:48:34.868] Used CPU extensions: 
+[04:48:34.869] IOSU_CRYPTO: No otp.bin found. Online mode cannot be used
+[04:48:34.869] IOSU_CRYPTO: No Seeprom.bin found. Online mode cannot be used
+[04:48:36.657] Mounting title 000500001011b900
+[04:48:36.657] Base: C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/1011b900 [Folder]
+[04:48:36.657] Update: C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/0005000e/1011b900 [Folder]
+[04:48:36.657] DLC: Not present
+[04:48:36.694] COS: System fonts found. Generated shareddata (26609KB)
+[04:48:36.702] Recompiler initialized
+[04:48:36.714] ------- Init Vulkan graphics backend -------
+[04:48:36.733] Vulkan instance version: 1.4
+[04:48:36.782] Using GPU: Qualcomm(R) Adreno(TM) X1-85 GPU
+[04:48:36.782] Driver version: Driver Build: 0eb8636cd3, Id6ce193842, 1782814497
+Date: 06/30/2026
+Compiler Version: E031.52.01.00
+Driver Branch: BVT_187
+
+[04:48:36.782] Vulkan: present_wait extension: unsupported
+[04:48:36.782] VK_EXT_attachment_feedback_loop_layout(_dynamic_state) not supported
+[04:48:36.782] VulkanLimits: UBAlignment 64 nonCoherentAtomSize 1
+[04:48:36.785] Vulkan device memory info:
+[04:48:36.785] Heap 0 - Size 7989MB Flags 0x00000001
+[04:48:36.785] Heap 1 - Size 4095MB Flags 0x00000001
+[04:48:36.785] Memory 0 - HeapIndex 0 Flags 0x00000001
+[04:48:36.785] Memory 1 - HeapIndex 0 Flags 0x00000001
+[04:48:36.785] Memory 2 - HeapIndex 0 Flags 0x00000001
+[04:48:36.785] Memory 3 - HeapIndex 0 Flags 0x0000000b
+[04:48:36.785] Memory 4 - HeapIndex 0 Flags 0x00000007
+[04:48:36.785] Memory 5 - HeapIndex 0 Flags 0x00000007
+[04:48:36.785] Memory 6 - HeapIndex 0 Flags 0x0000000f
+[04:48:36.785] Memory 7 - HeapIndex 1 Flags 0x00000021
+[04:48:36.785] Memory 8 - HeapIndex 0 Flags 0x00000011
+[04:48:36.786] VK_FORMAT_R4G4_UNORM_PACK8 not supported
+[04:48:37.609] ------- Loaded title -------
+[04:48:37.609] TitleId: 00050000-1011b900
+[04:48:37.609] TitleVersion: v16
+[04:48:37.609] TitleRegion: JP
+[04:48:37.609] Save path:   C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/save/00050000/1011B900/user/
+[04:48:37.609] Shader cache file: shaderCache/transferable/000500001011b900.bin
+[04:48:37.609] gameprofile path:  (not present)
+[04:48:37.609] RPX hash (updated): b8611392
+[04:48:37.609] RPX hash (base): b8611392
+[04:48:37.651] Loaded module 'prj_010' with checksum 0xaf5d1a85
+[04:48:37.651] RPL link time: 31ms
+[04:48:37.677] Patching Bayonetta 2 audio bug at: 0x035272a4
+[04:48:37.683] HLE scan time: 47ms
+[04:48:37.683] ------- Active settings -------
+[04:48:37.683] CPU-Mode: Multi-core recompiler
+[04:48:37.683] Load shared libraries: true
+[04:48:37.683] Use precompiled shaders: auto
+[04:48:37.683] Full sync at GX2DrawDone: true
+[04:48:37.683] Strict shader mul: true
+[04:48:37.683] Async compile: true
+[04:48:37.683] Console language: 7
+[04:48:40.046] [NPU] READY/OFF: ANVIL U8 NHWC processing=1280x720, window-sized SDR output, 3 shared slots; QNN worker and borrowed Vulkan queue. No inference at startup. One-frame buffering, cached block motion and immutable overlay replay.
+[04:48:40.179] [NPU-SURFACE] Recreate begin: generation=0 skip_create=false
+[04:48:40.180] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0; one-frame delay; scanout cadence unverified
+[04:48:40.180] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[04:48:40.180] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[04:48:40.180] ------- Activate graphic packs -------
+[04:48:40.197] Activate graphic pack: Bayonetta 2/Enhancements/Contrasty [Presets: Default]
+[04:48:40.206] [NPU-SURFACE] Recreate complete: generation=1 extent=1429x992
+[04:48:40.237] Applying patch group 'Bayo2_AspectRatio_V0' (Codecave: 01800000-01800038)
+[04:48:40.237] Activate graphic pack: Bayonetta 2/Graphics [Presets: 2560x1440,Ultra,16x]
+[04:48:40.238] Applying patch group 'Bayo2USv0' (Codecave: 01800100-01800124)
+[04:48:40.238] Activate graphic pack: Bayonetta 2/Mods/60 FPS Cutscenes
+[04:48:40.240] Applying patch group 'Bayo2USv0'
+[04:48:40.240] Activate graphic pack: Bayonetta 2/Mods/Disable Vsync
+[04:48:40.242] Applying patch group 'Bayo2USv0_GP'
+[04:48:40.242] Activate graphic pack: Bayonetta 2/Mods/Force Maximum LOD
+[04:48:40.243] Applying patch group 'Bayonetta2_DynamicShadows_v0'
+[04:48:40.243] Activate graphic pack: Bayonetta 2/Workarounds/Dynamic Shadows (Vulkan)
+[04:48:40.249] Activate graphic pack: Bayonetta 2/Workarounds/Portal
+[04:48:40.249] ------- Init Audio backend -------
+[04:48:40.249] DirectSound: available
+[04:48:40.249] XAudio 2.8: available
+[04:48:40.249] Cubeb: available
+[04:48:40.249] ------- Init Audio input backend -------
+[04:48:40.249] Cubeb: available
+[04:48:40.249] ------- Run title -------
+[04:48:40.249] Graphic pack "Graphic Options" prevents rendertarget size optimization. This warning can be ignored and is intended for graphic pack developers
+[04:48:40.260] Shader cache loaded with 0 shaders. Commited mem 12MB. Took 10ms
+[04:48:40.322] can't initialize pad audio: failed to find selected device while trying to create audio device
+[04:48:40.868] IOSU_ACT: using account default in first slot
+[04:48:40.962] Haptic output: eligible USB DualSense detected
+[04:48:57.335] [NPU-SURFACE] Recreate begin: generation=1 skip_create=false
+[04:48:57.342] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0; one-frame delay; scanout cadence unverified
+[04:48:57.342] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[04:48:57.342] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[04:48:57.386] [NPU-SURFACE] Recreate complete: generation=2 extent=2560x1440
+
+Crashlog for Cemu 9c0b899
+Date: 04-10-2026 19:49:20
+
+-----------------------------------------
+   Stack trace
+-----------------------------------------
+0x00007ff775d0d670 +0x0044d670 Cemu-Release-SE-NPU.exe osLib_registerHLEFunction
+0x00007ff775d0e030 +0x0044e030 Cemu-Release-SE-NPU.exe osLib_registerHLEFunction
+0x00007ffecb6a7880 +0x00157880 ntdll.dll        TpDbgDumpHeapUsage
+0x00007ffecb6bd7c0 +0x0016d7c0 ntdll.dll        wcsnlen
+Exception 0x80000003 at 0x7ff775cafa20(+0x3efa20) in module Cemu-Release-SE-NPU.exe
+cemu.exe at 0x7ff7758c0000
+
+X0 =0000000000000020 X1 =00007ff7773dc400 X2 =0000000000000001 X3 =000000c46caff140
+X4 =000000c46caff158 X5 =0000000000000000 X6 =0000000000000000 X7 =0000000000000000
+X8 =00000265ae3f8698 X9 =0000000000000000 X10=80215debf5a111e0 X11=00000000ffffffff
+X12=00f2fa0f00000000 X13=009eed0f00000000 X14=0000026446c88a50 X15=82f7922407000000
+X16=00009ae7c2da3102 X17=0000026446cfbe68 X18=2e02fffdcd24f4a0 X19=0000026446707850
+X20=0000000000000000 X21=0000026435324a80 X22=000002643ac41928 X23=0000000000000001
+X24=0000026429c78270 X25=0000026571dc6da0 X26=00007ff7773dc400 X27=0000000000000060
+X28=0000000000000000 FP =000000c46caff774 LR =00007ff775caf8f4 SP =000000c46caff1f0 PC =00007ff775cafa20
+
+-----------------------------------------
+   Game info
+-----------------------------------------
+Game: BAYONETTA 2
+TitleId: 000500001011b900
+RPXHash: b8611392 (Update: b8611392)
+
+-----------------------------------------
+   Active PPC instance
+-----------------------------------------
+Not active
+
+-----------------------------------------
+   PPC threads
+-----------------------------------------
+0e302540 Ent 00e07674 IP 00e07674 LR 00e07670 WAITING   Aff 100 Pri 32 Name {SYS Thread Terminator Core 0}
+0e306c40 Ent 00e07674 IP 00e07674 LR 00e07670 WAITING   Aff 010 Pri 32 Name {SYS Thread Terminator Core 1}
+0e30b340 Ent 00e07674 IP 00e07674 LR 00e07670 WAITING   Aff 001 Pri 32 Name {SYS Thread Terminator Core 2}
+0e30fb40 Ent 00e07678 IP 00e07678 LR 00e07670 WAITING   Aff 111 Pri 32 Name Alarm Thread
+0e4e0bc0 Ent 00e0767c IP 00e0767c LR 00e07670 WAITING   Aff 100 Pri 15 Name {SYS IPC Core 0}
+0e4e1260 Ent 00e0767c IP 00e0767c LR 00e07670 WAITING   Aff 010 Pri 15 Name {SYS IPC Core 1}
+0e4e1900 Ent 00e0767c IP 00e0767c LR 00e07670 WAITING   Aff 001 Pri 15 Name {SYS IPC Core 2}
+0e516380 Ent 00e07680 IP 00e07680 LR 00e07670 WAITING   Aff 111 Pri 32 Name Callback Thread
+0e001800 Ent 00e07684 IP 00e00654 LR 02cef4c0 WAITING   Aff 010 Pri 80 Name Default Core 1
+10246390 Ent 02cf0990 IP 0344941c LR 0344941c RUNNING   Aff 010 Pri 80 Name MainLoop
+0e5139c0 Ent 00e076bc IP 00e076bc LR 00e07670 WAITING   Aff 001 Pri 16 Name {SYS ProcUI Core 2}
+0e512c80 Ent 00e076bc IP 00e076bc LR 00e07670 WAITING   Aff 100 Pri 16 Name {SYS ProcUI Core 0}
+0e513320 Ent 00e076bc IP 00e076bc LR 00e07670 WAITING   Aff 010 Pri 16 Name {SYS ProcUI Core 1}
+1047e220 Ent 0368a49c IP 00e00664 LR 0368a43c WAITING   Aff 001 Pri 76 Name NULL
+1049eb68 Ent 0368a49c IP 00e00664 LR 0368a43c WAITING   Aff 001 Pri 84 Name NULL
+10479660 Ent 0368a49c IP 00e00664 LR 0368a43c WAITING   Aff 001 Pri 88 Name NULL
+10474a68 Ent 0368a49c IP 00e0088c LR 0368a720 WAITING   Aff 010 Pri 72 Name NULL
+47a0fb10 Ent 032e7890 IP 00e008a0 LR 032e7ba8 WAITING   Aff 001 Pri 80 Name MainJob1
+47a101d0 Ent 032e7890 IP 00e008a0 LR 032e7ba8 WAITING   Aff 010 Pri 80 Name MainJob2
+47a10890 Ent 032e7890 IP 00e008a0 LR 032e7ba8 WAITING   Aff 100 Pri 80 Name MainUpdate
+47a10f50 Ent 032e7890 IP 00e008a0 LR 032e7ba8 WAITING   Aff 001 Pri 80 Name MainSound
+0e49fc20 Ent 00e076c8 IP 00e076c8 LR 00e07670 WAITING   Aff 010 Pri 48 Name GX2 event callback
+124e36a8 Ent 035e044c IP 00e008a0 LR 035e048c WAITING   Aff 010 Pri 72 Name AK::IOThread
+1046a230 Ent 03599250 IP 00e008a0 LR 035992b0 WAITING   Aff 001 Pri 72 Name AK::EventManager
+10469760 Ent 0353a4e8 IP 00e008a0 LR 0353a52c WAITING   Aff 001 Pri 80 Name AK::BankManager
+0e46a160 Ent 00e07c18 IP 00e07c18 LR 00e07670 WAITING   Aff 001 Pri 14 Name NULL
+1e575b50 Ent 0368a49c IP 00e00664 LR 0368a43c WAITING   Aff 001 Pri 80 Name NULL
+47a11cd0 Ent 032e7890 IP 00e0088c LR 0316495c WAITING   Aff 100 Pri 82 Name SaveSystem::SaveThread
+47a12390 Ent 032e7890 IP 00e0088c LR 02ab4a78 WAITING   Aff 001 Pri 95 Name NwServerCafe::ConnectThread
+47a12a50 Ent 032e7890 IP 00e0088c LR 02aab0fc WAITING   Aff 001 Pri 80 Name FriendManager::FpThread
+47a13110 Ent 032e7890 IP 00e0088c LR 03152748 WAITING   Aff 100 Pri 95 Name NwSystem::NetworkThread
+47a137d0 Ent 032e7890 IP 00e008a0 LR 032e7b70 WAITING   Aff 001 Pri 80 Name HitScrJob1
+47a13e90 Ent 032e7890 IP 00e008a0 LR 032e7b70 WAITING   Aff 010 Pri 80 Name HitScrJob2

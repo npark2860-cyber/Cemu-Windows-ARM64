@@ -1,0 +1,29 @@
+{
+  "status": "INTEROP_UNSUPPORTED",
+  "started_at": "2026-09-29T08:27:54.3461143+09:00",
+  "ended_at": "2026-09-29T08:27:54.5235769+09:00",
+  "closed": true,
+  "exit_code": 2,
+  "npu_driver_before": "30.0.224.10000",
+  "npu_driver_after": "30.0.224.10000",
+  "gpu_driver_before": "31.0.170.0",
+  "gpu_driver_after": "31.0.170.0",
+  "manifest_sha256": "ea6dd931ec654281331ab60b8960b8f76e00cba281191b6e169861ceaf6d6c9c",
+  "probe_sha256": "e3a23a88edb28806de73c740ad7eceb59430cb6363e86b5b46c0468dbfeda7df",
+  "model_sha256": "447cb38952fe343c7f7779271515eeb4a20fa1c1a122ae3d84c80bea14dae779",
+  "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\vulkan-qnn-interop-20260929-082754-339",
+  "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\vulkan-qnn-interop-20260929-082754-339-console.log",
+  "result": {
+    "status": "INTEROP_UNSUPPORTED",
+    "reason": "Expected exactly one Adreno device",
+    "stage": "vulkan_capabilities",
+    "gpu_name": null,
+    "external_memory_host": null,
+    "external_memory_win32": null,
+    "external_semaphore_win32": null,
+    "qnn_initialized": false,
+    "completed_rounds": 0,
+    "zero_copy_proven": false
+  },
+  "error": null
+}

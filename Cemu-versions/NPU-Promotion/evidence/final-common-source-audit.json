@@ -1,0 +1,26 @@
+[
+  {
+    "role": "Release",
+    "module_implementation_source_byte_identical_to_RC1": true,
+    "abi_header_text_identical_normalized_line_endings": true,
+    "renderer_change_only_notification_translation": true
+  },
+  {
+    "role": "Release+SE",
+    "module_implementation_source_byte_identical_to_RC1": true,
+    "abi_header_text_identical_normalized_line_endings": true,
+    "renderer_change_only_notification_translation": true
+  },
+  {
+    "role": "Diagnostics",
+    "module_implementation_source_byte_identical_to_RC1": true,
+    "abi_header_text_identical_normalized_line_endings": true,
+    "renderer_change_only_notification_translation": true
+  },
+  {
+    "role": "Diagnostics+SE",
+    "module_implementation_source_byte_identical_to_RC1": true,
+    "abi_header_text_identical_normalized_line_endings": true,
+    "renderer_change_only_notification_translation": true
+  }
+]

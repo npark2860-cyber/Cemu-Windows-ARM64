@@ -1,0 +1,16 @@
+{
+  "status": "inference_completed_profile_verification_pending",
+  "ort_version": "1.24.4",
+  "backend": "QnnHtp.dll", "cpu_fallback_disabled": true,
+  "synthetic_input": true, "frame_interpolation_quality_validated": false,
+  "model": "../models/anvil-small-1080p-fp32.onnx",
+  "profile": "../evidence/htp-resolution-1080p-20260929-071821-513\\ort-profile_2026-09-29_07-18-21.json",
+  "session_create_ms": 4457.0257, "input_prepare_ms": 21.5306,
+  "first_run_ms": 178.2881, "warmup_runs": 3, "measured_runs": 10,
+  "run_mean_ms": 129.00698, "run_p50_ms": 128.7756, "run_p95_ms": 129.9381,
+  "run_min_ms": 128.2574, "run_max_ms": 129.9381,
+  "input_bytes": 49766400, "output_bytes": 24883200,
+  "output_validation_ms": 31.4643, "checksum": -24327.6191683,
+  "average_oracle_checked": false, "maximum_oracle_error": 0,
+  "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes Vulkan transfers, motion estimation and present"
+}

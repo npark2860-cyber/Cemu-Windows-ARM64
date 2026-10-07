@@ -1,0 +1,137 @@
+{
+  "provenance": "Accepted RC1; unchanged copies. Original build scripts retain their original experiment-relative paths.",
+  "files": [
+    {
+      "path": "shared-module-source/anvil_async_worker.h",
+      "sha256": "cea41fdaf22d959735c7020bfa72573ee094f7f3cce4fe6fce3459310638e951"
+    },
+    {
+      "path": "shared-module-source/asset-checks.json",
+      "sha256": "e9d899b1ae2d7b9c2f5878b88afb4acb778c24f1174399661c68fc2cd6eb3e2b"
+    },
+    {
+      "path": "shared-module-source/before-source.json",
+      "sha256": "671c9f0f62fa0cf812aa652045c1f3e28da9efd10557336c957d162ab3f50e3e"
+    },
+    {
+      "path": "shared-module-source/borrowed_support.h",
+      "sha256": "539d93462cc80a79ed620ba64f285e4868197f262e468d5feac2a98b0c3aeb05"
+    },
+    {
+      "path": "shared-module-source/buffered_timeline.h",
+      "sha256": "2af9a420c74f5ae02768fd91522e8cc1ab313ca8806dfc30a580d122badac473"
+    },
+    {
+      "path": "shared-module-source/build-cemu.cmd",
+      "sha256": "2680b8b460ed7ffd674c117873576db53fe59bcf18c56132255912a6c149b722"
+    },
+    {
+      "path": "shared-module-source/build-cemu.ps1",
+      "sha256": "e86f87d8040ad5f33856404066aeed9c34721d95eee847d29558343671d8da92"
+    },
+    {
+      "path": "shared-module-source/build-cpu-contract.cmd",
+      "sha256": "4a38ee800e6057295de8aebebe57931600f9e6cad9b215489a10c9953d996b00"
+    },
+    {
+      "path": "shared-module-source/build-module.cmd",
+      "sha256": "185438353ffa035a2b395960d4f2bec2656ffd0fbee4a4f73c2eefb91153de85"
+    },
+    {
+      "path": "shared-module-source/build-probe.cmd",
+      "sha256": "5a39455f78b4e8074aea5ec57b889c1224e17b828d0068b7ab20e18a43a61230"
+    },
+    {
+      "path": "shared-module-source/gpu_resources.h",
+      "sha256": "53f19c124514762b419a7992ac03c4f160492326124db7c1f17dffa71241d2de"
+    },
+    {
+      "path": "shared-module-source/module-smoke-probe.cpp",
+      "sha256": "b5f20714862e05742ed0f4ba579b08683763e574d0894a189dae75bcb19380c4"
+    },
+    {
+      "path": "shared-module-source/npu_cemu.cpp",
+      "sha256": "c02a5ea01b36605cb52a89c7fa2ba659159e813caa1aada80e0970055f44ade2"
+    },
+    {
+      "path": "shared-module-source/npu_cemu.h",
+      "sha256": "7626f84843a22836416179d8bb3afc9997051c60619330d0cd63d630783c6e16"
+    },
+    {
+      "path": "shared-module-source/ort_paths.h",
+      "sha256": "7ef1dd5af482c38ca3a73bb584a1d3d04b9e555a77141c24777c23e618585d56"
+    },
+    {
+      "path": "shared-module-source/package.py",
+      "sha256": "dc6cf21a7b0fe59cf4746fa4c04e51a09c2d268a48072119057e8fdb36b50509"
+    },
+    {
+      "path": "shared-module-source/prepare_assets.py",
+      "sha256": "5fd8e7fd2372abb292ca2c900d32ade1058d85f2a1bf18651f917ff53ca91699"
+    },
+    {
+      "path": "shared-module-source/prepare_cpu_contract_test.py",
+      "sha256": "fe1b0dce60709c07f17f45941a0611036d8aabfb79a60e984646d5874ab028a5"
+    },
+    {
+      "path": "shared-module-source/prepare_sources.py",
+      "sha256": "05072ecf1208b76647ad852d119397a55a4afcab7703b6fe84191370ec0856c7"
+    },
+    {
+      "path": "shared-module-source/processing_profile.h",
+      "sha256": "327d80d7a8461167fc2a38f724a3ecb0c7c52ba7d18a2166ad2f2070e3e3583c"
+    },
+    {
+      "path": "shared-module-source/shader-sources/1080p/motion1080-compose.comp",
+      "sha256": "a96b60b416269f79f9340bebab922f7c08a38ea08bd55cc025d41eecc34f7c51"
+    },
+    {
+      "path": "shared-module-source/shader-sources/1080p/motion1080-downsample.comp",
+      "sha256": "52aafb745ebf35033e7bf6379e52f95aac5defe2e0ef631fce97d735115cbafb"
+    },
+    {
+      "path": "shared-module-source/shader-sources/1080p/motion1080-flow.comp",
+      "sha256": "ad47e0224d768e890cab7f5fc8dcb3ae487afaead6c6040cdfc7d62320b02b62"
+    },
+    {
+      "path": "shared-module-source/shader-sources/1080p/motion1080-generate.comp",
+      "sha256": "c3fe5794ee027db75c3f157779544180f442182faba4969d791aaab9d972fdf9"
+    },
+    {
+      "path": "shared-module-source/shader-sources/1080p/motion1080-pack.comp",
+      "sha256": "9b464e335954f9454c198f392ae4a3eeecc87c7dbf0324d6171bdb4c7b097e43"
+    },
+    {
+      "path": "shared-module-source/shader-sources/720p/motion1080-compose.comp",
+      "sha256": "7c5fe74c90c1018be4b30df21bd94843737a9c931629d86652ec7b5be7b08393"
+    },
+    {
+      "path": "shared-module-source/shader-sources/720p/motion1080-downsample.comp",
+      "sha256": "328c70f16050739db7d76b07a988a5b5556b8503421d20fb78550355a68fee62"
+    },
+    {
+      "path": "shared-module-source/shader-sources/720p/motion1080-flow.comp",
+      "sha256": "f1a83783da6ebf67e0571b69e08389e76240540cace9a2af41c793aa65b444d4"
+    },
+    {
+      "path": "shared-module-source/shader-sources/720p/motion1080-generate.comp",
+      "sha256": "ee81c967a97d7306bff0d42048ba1de301a65d28181d1075631bb1fef9e397af"
+    },
+    {
+      "path": "shared-module-source/shader-sources/720p/motion1080-pack.comp",
+      "sha256": "ec48e5f783ab448daec70286fe4b498fd600cae82530b279cf2cf94b52b248dd"
+    },
+    {
+      "path": "shared-module-source/test_buffered_timeline.cpp",
+      "sha256": "290b21c67b61170b6fbce338f3ba2e2db8791000073de6facd07ed53c73f6176"
+    },
+    {
+      "path": "shared-module-source/test_ort_paths.cpp",
+      "sha256": "26b919705a347019cd08e80ae3415a965149450d6dc99bedd618b19a6d33111e"
+    },
+    {
+      "path": "shared-module-source/test_processing_profile.cpp",
+      "sha256": "4ad424ab1f2975fdfcf74516bf7e1973c5611773a87e2291fc8067f38662e6cf"
+    }
+  ]
+}

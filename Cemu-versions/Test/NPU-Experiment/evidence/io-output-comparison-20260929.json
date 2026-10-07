@@ -1,0 +1,36 @@
+{
+  "u8_layout_comparison": {
+    "elements": 6220800,
+    "bitwise_equal": true,
+    "different_values": 0,
+    "max_abs_integer_difference": 0
+  },
+  "U8NCHW": {
+    "finite": true,
+    "byte_range": [
+      53,
+      210
+    ],
+    "max_abs_error_vs_float_io": 0.003373563289642334,
+    "rmse_vs_float_io": 0.0015361073676694017,
+    "mean_abs_error_vs_float_io": 0.0007212354842272652,
+    "reference_output_range": [
+      -0.2476212978363037,
+      0.2707333564758301
+    ]
+  },
+  "U8NHWC": {
+    "finite": true,
+    "byte_range": [
+      53,
+      210
+    ],
+    "max_abs_error_vs_float_io": 0.003373563289642334,
+    "rmse_vs_float_io": 0.0015361073676694017,
+    "mean_abs_error_vs_float_io": 0.0007212354842272652,
+    "reference_output_range": [
+      -0.2476212978363037,
+      0.2707333564758301
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "status": "OFFLINE_READER_TESTS_PASSED",
+  "device_executed": false,
+  "fixture": "tuning-reader-fixture-20260929-080353-429",
+  "cases": [
+    {
+      "name": "accept_complete_detailed_fixture",
+      "passed": true
+    },
+    {
+      "name": "reject_wrong_settings",
+      "passed": true,
+      "reason": "Unexpected tuning settings"
+    },
+    {
+      "name": "reject_wrong_allocator",
+      "passed": true,
+      "reason": "Unexpected tensor memory allocator"
+    },
+    {
+      "name": "reject_wrong_reference_output",
+      "passed": true,
+      "reason": "Output differs from the verified U8NHWC reference: 0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed"
+    },
+    {
+      "name": "reject_cpu_provider",
+      "passed": true,
+      "reason": "QNN-only execution not verified"
+    },
+    {
+      "name": "accept_off_without_qnn_csv",
+      "passed": true
+    },
+    {
+      "name": "accept_consistent_shared_metadata_only",
+      "passed": true
+    }
+  ],
+  "limitation": "Synthetic tuning metadata applied to copied historical output/profile. These tests do not establish native shared-memory support or performance."
+}

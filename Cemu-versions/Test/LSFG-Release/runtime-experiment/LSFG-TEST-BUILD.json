@@ -1,0 +1,71 @@
+{
+  "created_at": "2026-09-29T03:25:37.1381747+09:00",
+  "role": "experimental-stock-Release-plus-LSFG",
+  "base_commit": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+  "official_build_preprocessing": "evidence/official-release-preprocessing.patch",
+  "executable": "Cemu-lsfg.exe",
+  "sha256": "e2f7899842c93c0bbee13ad9c23581b9f3a74595e80270725784bc8ae6d7ffa2",
+  "bytes": 29731328,
+  "pe_machine": "ARM64 (0xAA64)",
+  "pdb": "Cemu_release.pdb",
+  "pdb_sha256": "404e7f61a0d4d66c2d37cc166f26d903e23c02641b9950a49aa765fcb7bf3c34",
+  "compiler": "clang-cl 20.1.8; MSVC 14.51 headers; static CRT",
+  "configuration": "Release, CEMU_ENABLE_LSFG=ON, /Z7, /DEBUG:FULL",
+  "cpu_tests": {
+    "gpu_submissions": 0,
+    "failure_contract_checks": 90,
+    "failures": 0,
+    "suites_passed": 2
+  },
+  "runtime_validation": "NOT RUN: waiting for explicit desktop/GPU test time approval",
+  "source_files": [
+    {
+      "path": "source/CMakeLists.txt",
+      "sha256": "911113cca27ba1a4f16b1ce37b9b37db68d708edbc445671def07d27d792a384"
+    },
+    {
+      "path": "source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanLSFG.cpp",
+      "sha256": "595fa121a6e130a6f4ab869d7f7469a35a343f2d467af93381a6c8fdb8d3d967"
+    },
+    {
+      "path": "source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+      "sha256": "16585e28f1035c7e4a227b3d154c28b296228e6e50a263cb6012e5816bcae32d"
+    },
+    {
+      "path": "source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+      "sha256": "8160013f15373dde13fc835e49408bfffc1f4fd099f0d722ed6812038b2405bc"
+    },
+    {
+      "path": "source/src/gui/wxgui/MainWindow.cpp",
+      "sha256": "32f7e0137b32b8bee27cfa038c2f9bf48153de26a153998debf1671af0d27ad2"
+    },
+    {
+      "path": "source/src/gui/wxgui/GeneralSettings2.cpp",
+      "sha256": "d4f21214b765564b7ddd526aa2c7f7f5a6bc2ef4603c789897c7d5eaabd80e96"
+    },
+    {
+      "path": "source/src/gui/wxgui/wxWindowSystem.cpp",
+      "sha256": "3c5fd60798e4036303c72f5ede50721728e1724897cfc14a449fc530c45ea5ad"
+    },
+    {
+      "path": "source/dependencies/lsfg-cemu-arm64/src/lsfg_cemu.cpp",
+      "sha256": "3a7a7f5c93b26b54de0bee790f427b4dfba2577211f5337419f1a9315d00cc01"
+    },
+    {
+      "path": "source/dependencies/lsfg-cemu-arm64/include/lsfg_cemu.h",
+      "sha256": "85397e9135a6ccb192e594a0f14446b1f252f8a2e48cab1f33de6f326cf98ea7"
+    },
+    {
+      "path": "source/dependencies/lsfg-cemu-arm64/third_party/lsfg_legacy/lsfg-vk-backend/src/lsfgvk.cpp",
+      "sha256": "800badad0e846d79297302a9c8ccdbdf654df7e164ebeab8abff5532c6ff341e"
+    },
+    {
+      "path": "source/dependencies/lsfg-cemu-arm64/third_party/lsfg_legacy/lsfg-vk-backend/include/lsfg-vk-backend/lsfgvk.hpp",
+      "sha256": "f392ea5ec04bc47e8aa6e8b3a1008240d4a4ade6f527b5b71e5671557a446fac"
+    },
+    {
+      "path": "source/dependencies/lsfg-cemu-arm64/third_party/lsfg_legacy/lsfg-vk-common/include/lsfg-vk-common/vulkan/image.hpp",
+      "sha256": "bf78587c4afab51516080805cee2da0ac86d844fa68edfbd40f523442eae26d0"
+    }
+  ]
+}

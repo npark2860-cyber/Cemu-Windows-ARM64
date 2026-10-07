@@ -1,0 +1,68 @@
+{
+  "created_at": "2026-09-29T07:06:28.1614221+09:00",
+  "status": "PREPARED_NOT_DEVICE_TESTED",
+  "base_manifest": "evidence/probe-build-manifest.json",
+  "settings": "same original probe: FP16 / balanced / detailed profiling",
+  "files": [
+    {
+      "path": "evidence/probe-build-manifest.json",
+      "bytes": 4394,
+      "sha256": "86c8fd22447b1767de6e2a62e990822cde9a7cd2ee314f0b0eef30989abd31ab"
+    },
+    {
+      "path": "evidence/resolution-models.json",
+      "bytes": 3584,
+      "sha256": "8d11103f2efea00ccf202a47242cfe8f804a80631639de1c4d8f116dfd489282"
+    },
+    {
+      "path": "models/anvil-small-720p-fp32.onnx",
+      "bytes": 3441300,
+      "sha256": "019968d9710ef555a16816ed61caa3e8fc8bac4c6384e1451487e8d174b889ea"
+    },
+    {
+      "path": "models/anvil-small-540p-fp32.onnx",
+      "bytes": 3441300,
+      "sha256": "9cc9a19826cb26b5e8a5583424c0e7fabe8f405c1d5720c8a6e86355432b690a"
+    },
+    {
+      "path": "scripts/prepare_resolution_models.py",
+      "bytes": 10173,
+      "sha256": "ec9b17d97077d50bcb10ff5d6aff1eae7f18406f0d6424c7d79fc9afddb47bbd"
+    },
+    {
+      "path": "scripts/read-resolution-result.ps1",
+      "bytes": 4070,
+      "sha256": "b6c823adb958a23c01341fa32ec22ecadd7ff7d800c3dd31416be967534d1467"
+    },
+    {
+      "path": "run-resolution-probe.ps1",
+      "bytes": 3265,
+      "sha256": "104fd3bd17362a476cc3641249ba9cbec537b88f3ce2bf21d29868fb8e0ea959"
+    },
+    {
+      "path": "INT8-NEXT.md",
+      "bytes": 3814,
+      "sha256": "610e22cfaca78f059ad0b6421375855a0749386af1ce7d3ca91133006b79f753"
+    },
+    {
+      "path": "models/anvil-small-720p-fp32-nopad.onnx",
+      "bytes": 3437332,
+      "sha256": "3151da962cb40410d8e73be27cf67c4b6db1dfb4ff1a59cc05f7b4e95cad9339"
+    },
+    {
+      "path": "scripts/prepare_zero_pad_720.py",
+      "bytes": 2439,
+      "sha256": "815915ca3c8ba24c5d421c4fbc1b7e67bf18eb904930217d1ee4177e5b952e22"
+    },
+    {
+      "path": "evidence/resolution-models-v1.json",
+      "bytes": 3327,
+      "sha256": "83412e1ffa88aaf9737e1a5ebb8eff15d9a13e978559aad7ada15c4dc1af5b74"
+    },
+    {
+      "path": "evidence/720p-zero-pad-repair.json",
+      "bytes": 979,
+      "sha256": "088a29c26957f0360754142997596780ff9c42aeeab2a4fa335545ef3ff506b2"
+    }
+  ]
+}

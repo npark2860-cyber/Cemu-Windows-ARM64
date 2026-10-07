@@ -1,0 +1,1682 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index eee1259..a1454fa 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -305,4 +305,12 @@ if (NOT ZArchive_FOUND)
+ 	add_subdirectory("dependencies/ZArchive" EXCLUDE_FROM_ALL)
+ endif()
+ 
++option(CEMU_ENABLE_NPU "Build Windows ARM64 NPU frame generation" OFF)
++if(CEMU_ENABLE_NPU)
++    if(NOT WIN32 OR NOT CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64" OR NOT ENABLE_VULKAN)
++        message(FATAL_ERROR "NPU frame generation requires Windows ARM64 and Vulkan")
++    endif()
++    add_compile_definitions(CEMU_ENABLE_NPU)
++    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
++endif()
+ add_subdirectory(src)
+diff --git a/src/Cafe/CMakeLists.txt b/src/Cafe/CMakeLists.txt
+index 026e20a..d36ec25 100644
+--- a/src/Cafe/CMakeLists.txt
++++ b/src/Cafe/CMakeLists.txt
+@@ -628,6 +628,10 @@ endif()
+ 
+ set_property(TARGET CemuCafe PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+ 
++if(CEMU_ENABLE_NPU)
++    target_sources(CemuCafe PRIVATE HW/Latte/Renderer/Vulkan/VulkanNPU.cpp)
++    target_include_directories(CemuCafe PRIVATE "${CMAKE_SOURCE_DIR}/dependencies/npu-cemu")
++endif()
+ cemu_use_precompiled_header(CemuCafe)
+ 
+ if (ENABLE_LIBUSB)
+diff --git a/src/Cafe/HW/Latte/Core/LatteOverlay.cpp b/src/Cafe/HW/Latte/Core/LatteOverlay.cpp
+index 8fdc8f3..9b4b20c 100644
+--- a/src/Cafe/HW/Latte/Core/LatteOverlay.cpp
++++ b/src/Cafe/HW/Latte/Core/LatteOverlay.cpp
+@@ -85,7 +85,18 @@ void LatteOverlay_renderOverlay(ImVec2& position, ImVec2& pivot, sint32 directio
+ 		if (ImGui::Begin("Stats overlay", nullptr, kPopupFlags))
+ 		{
+ 			if (config.overlay.fps)
+-				ImGui::Text("FPS: %.2lf", g_state.fps);
++            {
++#ifdef CEMU_ENABLE_NPU
++                const auto outputFps = !pad ? g_renderer->GetFrameGenerationFps() : std::nullopt;
++                if (outputFps)
++                {
++                    ImGui::Text("FPS: %.2lf (NPU FG)", *outputFps);
++                    ImGui::Text("Native: %.2lf FPS", g_state.fps);
++                }
++                else
++#endif
++                    ImGui::Text("FPS: %.2lf", g_state.fps);
++            }
+ 
+ 			if (config.overlay.drawcalls)
+ 				ImGui::Text("Draws/f: %d (fast: %d)", g_state.draw_calls_per_frame, g_state.fast_draw_calls_per_frame);
+diff --git a/src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp b/src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp
+index 79b2d69..6b72176 100644
+--- a/src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp
++++ b/src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp
+@@ -950,6 +950,26 @@ void LatteRenderTarget_copyToBackbuffer(LatteTextureView* textureView, bool isPa
+ 
+ 			filter = LatteTextureView::MagFilter::kLinear;
+ 		}
++		else if (scaling_filter == kFidelityFXFSRFilter)
++		{
++			// FSR EASU is an upscaler. If a config manually selects it for
++			// downscaling, retain Cemu's normal linear path instead.
++			if (downscaling)
++			{
++				if (renderUpsideDown)
++					shader = RendererOutputShader::s_copy_shader_ud;
++				else
++					shader = RendererOutputShader::s_copy_shader;
++			}
++			else
++			{
++				if (renderUpsideDown)
++					shader = RendererOutputShader::s_fsr_easu_shader_ud;
++				else
++					shader = RendererOutputShader::s_fsr_easu_shader;
++			}
++			filter = LatteTextureView::MagFilter::kLinear;
++		}
+ 		else if (scaling_filter == kNearestNeighborFilter)
+ 		{
+ 			if (renderUpsideDown)
+diff --git a/src/Cafe/HW/Latte/Core/LatteShader.cpp b/src/Cafe/HW/Latte/Core/LatteShader.cpp
+index 3041f63..11a98a3 100644
+--- a/src/Cafe/HW/Latte/Core/LatteShader.cpp
++++ b/src/Cafe/HW/Latte/Core/LatteShader.cpp
+@@ -276,7 +276,7 @@ void LatteShader_CreatePSInputTable(LatteShaderPSInputTable* psInputTable, uint3
+ 		// 1 -> 0.0 0.0 0.0 1.0
+ 		// 2 -> 1.0 1.0 1.0 0.0
+ 		// 3 -> 1.0 1.0 1.0 1.0
+-		cemu_assert_debug(defaultValue <= 1);
++		psInputTable->import[f].defaultValue = defaultValue;
+ 
+ 		uint32 uknBits = psInputControl & ~((0xFF)|(0x3<<8) | (1 << 10) | (1 << 12));
+ 		uknBits &= ~0x800; // FLAT_SHADE
+diff --git a/src/Cafe/HW/Latte/Core/LatteShader.h b/src/Cafe/HW/Latte/Core/LatteShader.h
+index 3844e9f..8bb274e 100644
+--- a/src/Cafe/HW/Latte/Core/LatteShader.h
++++ b/src/Cafe/HW/Latte/Core/LatteShader.h
+@@ -28,6 +28,7 @@ struct LatteShaderPSInputTable
+ 	struct psImport_t
+ 	{
+ 		uint32 semanticId;
++		uint8 defaultValue;
+ 		bool isFlat;
+ 		bool isNoPerspective;
+ 	};
+diff --git a/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp b/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp
+index e7ebcf3..bd00365 100644
+--- a/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp
++++ b/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp
+@@ -33,6 +33,66 @@ void _emitTypeConversionPrefix(LatteDecompilerShaderContext* shaderContext, sint
+ void _emitTypeConversionSuffix(LatteDecompilerShaderContext* shaderContext, sint32 sourceType, sint32 destinationType);
+ void LatteDecompiler_emitClauseCode(LatteDecompilerShaderContext* shaderContext, LatteDecompilerCFInstruction* cfInstruction, bool isSubroutine);
+ 
++namespace LatteDecompiler
++{
++	static bool _isPSInputWrittenByVS(LatteDecompilerShaderContext* shaderContext, sint32 psInputIndex)
++	{
++		LatteShaderPSInputTable* psInputTable = LatteSHRC_GetPSInputTable();
++		cemu_assert_debug(psInputIndex >= 0 && psInputIndex < psInputTable->count);
++
++		uint32 semanticId = psInputTable->import[psInputIndex].semanticId;
++		if (semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
++			return false;
++
++		uint32 parameterMask = shaderContext->shader->outputParameterMask;
++		for (uint32 paramIndex = 0; paramIndex < 32; paramIndex++)
++		{
++			if ((parameterMask & (1u << paramIndex)) == 0)
++				continue;
++
++			uint32 vsSemanticId = LatteShaderPSInputTable::getVertexShaderOutParamSemanticId(shaderContext->contextRegisters, paramIndex);
++			if (psInputTable->getPSImportLocationBySemanticId(vsSemanticId) == psInputIndex)
++				return true;
++		}
++
++		return false;
++	}
++
++	static const char* _getPSInputDefaultValueGLSL(uint8 defaultValue)
++	{
++		switch (defaultValue & 3)
++		{
++		case 0:
++			return "vec4(0.0, 0.0, 0.0, 0.0)";
++		case 1:
++			return "vec4(0.0, 0.0, 0.0, 1.0)";
++		case 2:
++			return "vec4(1.0, 1.0, 1.0, 0.0)";
++		case 3:
++			return "vec4(1.0, 1.0, 1.0, 1.0)";
++		}
++
++		cemu_assert_unimplemented();
++		return "vec4(0.0)";
++	}
++
++	static void _emitPSInputDefaultsForVS(LatteDecompilerShaderContext* shaderContext)
++	{
++		LatteShaderPSInputTable* psInputTable = LatteSHRC_GetPSInputTable();
++		for (sint32 i = 0; i < psInputTable->count; i++)
++		{
++			uint32 semanticId = psInputTable->import[i].semanticId;
++			if (semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
++				continue;
++			if (_isPSInputWrittenByVS(shaderContext, i))
++				continue;
++
++			shaderContext->shaderSource->addFmt("passParameterSem{} = {};" _CRLF,
++				semanticId, _getPSInputDefaultValueGLSL(psInputTable->import[i].defaultValue));
++		}
++	}
++}
++
+ const char* _getShaderUniformBlockInterfaceName(LatteConst::ShaderType mode)
+ {
+ 	switch (mode)
+@@ -4194,6 +4254,12 @@ void LatteDecompiler_emitGLSLShader(LatteDecompilerShaderContext* shaderContext,
+ 			}
+ 		}
+ 	}
++	if (shader->shaderType == LatteConst::ShaderType::Vertex && !shaderContext->options->usesGeometryShader)
++	{
++		src->add("#ifdef VULKAN" _CRLF);
++		LatteDecompiler::_emitPSInputDefaultsForVS(shaderContext);
++		src->add("#endif" _CRLF);
++	}
+ 	for(auto& cfInstruction : shaderContext->cfInstructions)
+ 		LatteDecompiler_emitClauseCode(shaderContext, &cfInstruction, false);
+ 	if( shader->shaderType == LatteConst::ShaderType::Geometry )
+diff --git a/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp b/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp
+index 9d6a438..485b4bd 100644
+--- a/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp
++++ b/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp
+@@ -407,6 +407,26 @@ namespace LatteDecompiler
+ 			src->add("out");
+ 			src->addFmt(" vec4 passParameterSem{};" _CRLF, psInputTable->import[psInputIndex].semanticId);
+ 		}
++
++		// Latte supplies SPI_PS_INPUT_CNTL.DEFAULT_VAL when a PS semantic has no
++		// active producer export. Vulkan still requires a matching stage interface.
++		src->add("#ifdef VULKAN" _CRLF);
++		for (sint32 i = 0; i < psInputTable->count; i++)
++		{
++			if (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
++				continue;
++			if (_isPSInputWrittenByVS(shaderContext, i))
++				continue;
++
++			src->addFmt("layout(location = {}) ", i);
++			if (psInputTable->import[i].isFlat)
++				src->add("flat ");
++			if (psInputTable->import[i].isNoPerspective)
++				src->add("noperspective ");
++			src->add("out");
++			src->addFmt(" vec4 passParameterSem{};" _CRLF, psInputTable->import[i].semanticId);
++		}
++		src->add("#endif" _CRLF);
+ 	}
+ 
+ 	void _emitPSImports(LatteDecompilerShaderContext* shaderContext)
+diff --git a/src/Cafe/HW/Latte/Renderer/Renderer.h b/src/Cafe/HW/Latte/Renderer/Renderer.h
+index 6482f37..f580d54 100644
+--- a/src/Cafe/HW/Latte/Renderer/Renderer.h
++++ b/src/Cafe/HW/Latte/Renderer/Renderer.h
+@@ -1,5 +1,7 @@
+ #pragma once
+ 
++#include <optional>
++
+ #include "Cafe/HW/Latte/Core/Latte.h"
+ #include "Cafe/HW/Latte/Core/LatteCachedFBO.h"
+ #include "Cafe/HW/Latte/Renderer/RendererShader.h"
+@@ -92,6 +94,11 @@ public:
+ 	GfxVendor GetVendor() const { return m_vendor; }
+ 	virtual bool UseTFViaSSBO() const { return false; }
+ 	virtual void AppendOverlayDebugInfo() = 0;
++#ifdef CEMU_ENABLE_NPU
++    // Render-thread telemetry: accepted main-window presents, including generated
++    // frames. No value until the first measurement window or when FG is off.
++    virtual std::optional<double> GetFrameGenerationFps() const { return std::nullopt; }
++#endif
+ 
+ 	// rendertarget
+ 	virtual void renderTarget_setViewport(float x, float y, float width, float height, float nearZ, float farZ, bool halfZ = false) = 0;
+diff --git a/src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp b/src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp
+index a43b7ee..60f6cba 100644
+--- a/src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp
++++ b/src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp
+@@ -287,10 +287,231 @@ RendererOutputShader::OutputUniformVariables RendererOutputShader::FillUniformBl
+ 	vars.applySRGBEncoding = padView ? LatteGPUState.drcBufferUsesSRGB : LatteGPUState.tvBufferUsesSRGB;
+ 	vars.targetGamma = padView ? ActiveSettings::GetDRCGamma() : ActiveSettings::GetTVGamma();
+ 	vars.displayGamma = GetConfig().userDisplayGamma;
++	vars.fsrSharpness = (float)GetConfig().fsr_sharpness.GetValue() / 100.0f;
+ 
+ 	return vars;
+ }
+ 
++const std::string RendererOutputShader::s_fsr_easu_shader_source =
++R"(
++// AMD FidelityFX Super Resolution 1.0 - EASU spatial upscaling stage.
++// Ported to Cemu's output-shader interface from AMD's FSR 1 reference.
++// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
++// Permission is hereby granted, free of charge, to any person obtaining a copy
++// of this software and associated documentation files (the "Software"), to deal
++// in the Software without restriction, including without limitation the rights
++// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++// copies of the Software, and to permit persons to whom the Software is
++// furnished to do so, subject to the following conditions:
++// The above copyright notice and this permission notice shall be included in
++// all copies or substantial portions of the Software.
++// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++// THE SOFTWARE.
++
++void fsrEasuSet(inout vec2 dir, inout float len, float w,
++                float lA, float lB, float lC, float lD, float lE)
++{
++    float dc = lD - lC;
++    float cb = lC - lB;
++    float lenX = max(abs(dc), abs(cb));
++    float dirX = lD - lB;
++    dir.x += dirX * w;
++    lenX = (lenX > 1.0e-8) ? clamp(abs(dirX) / lenX, 0.0, 1.0) : 0.0;
++    len += lenX * lenX * w;
++
++    float ec = lE - lC;
++    float ca = lC - lA;
++    float lenY = max(abs(ec), abs(ca));
++    float dirY = lE - lA;
++    dir.y += dirY * w;
++    lenY = (lenY > 1.0e-8) ? clamp(abs(dirY) / lenY, 0.0, 1.0) : 0.0;
++    len += lenY * lenY * w;
++}
++
++void fsrEasuTap(inout vec3 accumColor, inout float accumWeight,
++                vec2 offset, vec2 dir, vec2 len, float lob, float clp, vec3 color)
++{
++    vec2 v;
++    v.x = offset.x * dir.x + offset.y * dir.y;
++    v.y = offset.x * -dir.y + offset.y * dir.x;
++    v *= len;
++
++    float d2 = min(dot(v, v), clp);
++    float wB = (2.0 / 5.0) * d2 - 1.0;
++    float wA = lob * d2 - 1.0;
++    wB *= wB;
++    wA *= wA;
++    wB = (25.0 / 16.0) * wB - (25.0 / 16.0 - 1.0);
++    float w = wB * wA;
++
++    accumColor += color * w;
++    accumWeight += w;
++}
++
++void outputShader()
++{
++    vec2 inputSize = max(textureSrcResolution, vec2(1.0));
++    vec2 outputSize = max(outputResolution, vec2(1.0));
++    vec2 invInput = 1.0 / inputSize;
++
++    // FsrEasuCon() evaluated in-shader because Cemu already provides both sizes.
++    vec4 con0 = vec4(inputSize / outputSize,
++                     0.5 * inputSize / outputSize - vec2(0.5));
++    vec4 con1 = vec4(invInput.x, invInput.y, invInput.x, -invInput.y);
++    vec4 con2 = vec4(-invInput.x, 2.0 * invInput.y,
++                      invInput.x, 2.0 * invInput.y);
++    vec4 con3 = vec4(0.0, 4.0 * invInput.y, 0.0, 0.0);
++
++    vec2 ip = floor(clamp(passUV * outputSize, vec2(0.0), outputSize - vec2(1.0)));
++    vec2 pp = ip * con0.xy + con0.zw;
++    vec2 fp = floor(pp);
++    pp -= fp;
++
++    vec2 p0 = fp * con1.xy + con1.zw;
++    vec2 p1 = p0 + con2.xy;
++    vec2 p2 = p0 + con2.zw;
++    vec2 p3 = p0 + con3.xy;
++
++    vec4 bczzR = textureGather(textureSrc, p0, 0);
++    vec4 bczzG = textureGather(textureSrc, p0, 1);
++    vec4 bczzB = textureGather(textureSrc, p0, 2);
++    vec4 ijfeR = textureGather(textureSrc, p1, 0);
++    vec4 ijfeG = textureGather(textureSrc, p1, 1);
++    vec4 ijfeB = textureGather(textureSrc, p1, 2);
++    vec4 klhgR = textureGather(textureSrc, p2, 0);
++    vec4 klhgG = textureGather(textureSrc, p2, 1);
++    vec4 klhgB = textureGather(textureSrc, p2, 2);
++    vec4 zzonR = textureGather(textureSrc, p3, 0);
++    vec4 zzonG = textureGather(textureSrc, p3, 1);
++    vec4 zzonB = textureGather(textureSrc, p3, 2);
++
++    vec4 bczzL = bczzB * 0.5 + (bczzR * 0.5 + bczzG);
++    vec4 ijfeL = ijfeB * 0.5 + (ijfeR * 0.5 + ijfeG);
++    vec4 klhgL = klhgB * 0.5 + (klhgR * 0.5 + klhgG);
++    vec4 zzonL = zzonB * 0.5 + (zzonR * 0.5 + zzonG);
++
++    float bL = bczzL.x;
++    float cL = bczzL.y;
++    float iL = ijfeL.x;
++    float jL = ijfeL.y;
++    float fL = ijfeL.z;
++    float eL = ijfeL.w;
++    float kL = klhgL.x;
++    float lL = klhgL.y;
++    float hL = klhgL.z;
++    float gL = klhgL.w;
++    float oL = zzonL.z;
++    float nL = zzonL.w;
++
++    vec2 dir = vec2(0.0);
++    float len = 0.0;
++    fsrEasuSet(dir, len, (1.0 - pp.x) * (1.0 - pp.y), bL, eL, fL, gL, jL);
++    fsrEasuSet(dir, len, pp.x * (1.0 - pp.y),         cL, fL, gL, hL, kL);
++    fsrEasuSet(dir, len, (1.0 - pp.x) * pp.y,         fL, iL, jL, kL, nL);
++    fsrEasuSet(dir, len, pp.x * pp.y,                 gL, jL, kL, lL, oL);
++
++    float dirLen2 = dot(dir, dir);
++    if (dirLen2 < (1.0 / 32768.0))
++        dir = vec2(1.0, 0.0);
++    else
++        dir *= inversesqrt(dirLen2);
++
++    len = 0.5 * len;
++    len *= len;
++    float stretch = 1.0 / max(max(abs(dir.x), abs(dir.y)), 1.0e-8);
++    vec2 len2 = vec2(1.0 + (stretch - 1.0) * len,
++                     1.0 - 0.5 * len);
++    float lob = 0.5 + ((1.0 / 4.0 - 0.04) - 0.5) * len;
++    float clp = 1.0 / lob;
++
++    vec3 f = vec3(ijfeR.z, ijfeG.z, ijfeB.z);
++    vec3 g = vec3(klhgR.w, klhgG.w, klhgB.w);
++    vec3 j = vec3(ijfeR.y, ijfeG.y, ijfeB.y);
++    vec3 k = vec3(klhgR.x, klhgG.x, klhgB.x);
++    vec3 min4 = min(min(f, g), min(j, k));
++    vec3 max4 = max(max(f, g), max(j, k));
++
++    vec3 accumColor = vec3(0.0);
++    float accumWeight = 0.0;
++    fsrEasuTap(accumColor, accumWeight, vec2( 0.0, -1.0) - pp, dir, len2, lob, clp, vec3(bczzR.x, bczzG.x, bczzB.x));
++    fsrEasuTap(accumColor, accumWeight, vec2( 1.0, -1.0) - pp, dir, len2, lob, clp, vec3(bczzR.y, bczzG.y, bczzB.y));
++    fsrEasuTap(accumColor, accumWeight, vec2(-1.0,  1.0) - pp, dir, len2, lob, clp, vec3(ijfeR.x, ijfeG.x, ijfeB.x));
++    fsrEasuTap(accumColor, accumWeight, vec2( 0.0,  1.0) - pp, dir, len2, lob, clp, vec3(ijfeR.y, ijfeG.y, ijfeB.y));
++    fsrEasuTap(accumColor, accumWeight, vec2( 0.0,  0.0) - pp, dir, len2, lob, clp, vec3(ijfeR.z, ijfeG.z, ijfeB.z));
++    fsrEasuTap(accumColor, accumWeight, vec2(-1.0,  0.0) - pp, dir, len2, lob, clp, vec3(ijfeR.w, ijfeG.w, ijfeB.w));
++    fsrEasuTap(accumColor, accumWeight, vec2( 1.0,  1.0) - pp, dir, len2, lob, clp, vec3(klhgR.x, klhgG.x, klhgB.x));
++    fsrEasuTap(accumColor, accumWeight, vec2( 2.0,  1.0) - pp, dir, len2, lob, clp, vec3(klhgR.y, klhgG.y, klhgB.y));
++    fsrEasuTap(accumColor, accumWeight, vec2( 2.0,  0.0) - pp, dir, len2, lob, clp, vec3(klhgR.z, klhgG.z, klhgB.z));
++    fsrEasuTap(accumColor, accumWeight, vec2( 1.0,  0.0) - pp, dir, len2, lob, clp, vec3(klhgR.w, klhgG.w, klhgB.w));
++    fsrEasuTap(accumColor, accumWeight, vec2( 1.0,  2.0) - pp, dir, len2, lob, clp, vec3(zzonR.z, zzonG.z, zzonB.z));
++    fsrEasuTap(accumColor, accumWeight, vec2( 0.0,  2.0) - pp, dir, len2, lob, clp, vec3(zzonR.w, zzonG.w, zzonB.w));
++
++    vec3 result = accumColor / max(accumWeight, 1.0e-8);
++    colorOut0 = vec4(clamp(result, min4, max4), 1.0);
++}
++)";
++
++const std::string RendererOutputShader::s_fsr_rcas_shader_source =
++R"(
++// AMD FidelityFX Super Resolution 1.0 - RCAS sharpening stage.
++// This is the 32-bit 5-tap RCAS resolve used after EASU. The AMD FSR1
++// license notice carried by the EASU source above applies to this port.
++
++ivec2 fsrClampPixel(ivec2 p, ivec2 size)
++{
++    return clamp(p, ivec2(0), size - ivec2(1));
++}
++
++vec3 fsrRcasLoad(ivec2 p, ivec2 size)
++{
++    return texelFetch(textureSrc, fsrClampPixel(p, size), 0).rgb;
++}
++
++void outputShader()
++{
++    ivec2 size = max(textureSize(textureSrc, 0), ivec2(1));
++    ivec2 p = ivec2(floor(passUV * vec2(size)));
++    p = fsrClampPixel(p, size);
++
++    // Cross-shaped 5 tap neighborhood:
++    //       b
++    //     d e f
++    //       h
++    vec3 b = fsrRcasLoad(p + ivec2( 0, -1), size);
++    vec3 d = fsrRcasLoad(p + ivec2(-1,  0), size);
++    vec3 e = fsrRcasLoad(p,                   size);
++    vec3 f = fsrRcasLoad(p + ivec2( 1,  0), size);
++    vec3 h = fsrRcasLoad(p + ivec2( 0,  1), size);
++
++    vec3 mn4 = min(min(b, d), min(f, h));
++    vec3 mx4 = max(max(b, d), max(f, h));
++
++    // RCAS clipping limiters. Guard only the exact zero denominators; the
++    // limiter shape and the -0.1875 lobe limit match AMD FSR1.
++    vec3 hitMin = min(mn4, e) / max(vec3(1.0e-6), 4.0 * mx4);
++    vec3 hitMaxDenom = min(vec3(-1.0e-6), 4.0 * mn4 - vec3(4.0));
++    vec3 hitMax = (vec3(1.0) - max(mx4, e)) / hitMaxDenom;
++    vec3 lobeRGB = max(-hitMin, hitMax);
++
++    float lobe = max(lobeRGB.r, max(lobeRGB.g, lobeRGB.b));
++    lobe = max(-0.1875, min(lobe, 0.0));
++
++    // Eden/Yuzu passes slider/100 to FsrRcasCon(), where the value is in
++    // stops and is converted to a linear multiplier with exp2(-stops).
++    float sharp = exp2(-clamp(fsrSharpness, 0.0, 2.0));
++    lobe *= sharp;
++
++    float rcpL = 1.0 / (4.0 * lobe + 1.0);
++    vec3 result = (lobe * (b + d + f + h) + e) * rcpL;
++    colorOut0 = vec4(result, 1.0);
++}
++)";
++
+ RendererOutputShader* RendererOutputShader::s_copy_shader;
+ RendererOutputShader* RendererOutputShader::s_copy_shader_ud;
+ 
+@@ -300,6 +521,10 @@ RendererOutputShader* RendererOutputShader::s_bicubic_shader_ud;
+ RendererOutputShader* RendererOutputShader::s_hermit_shader;
+ RendererOutputShader* RendererOutputShader::s_hermit_shader_ud;
+ 
++RendererOutputShader* RendererOutputShader::s_fsr_easu_shader;
++RendererOutputShader* RendererOutputShader::s_fsr_easu_shader_ud;
++RendererOutputShader* RendererOutputShader::s_fsr_rcas_shader;
++
+ std::string RendererOutputShader::GetOpenGlVertexSource(bool render_upside_down)
+ {
+ 	// vertex shader
+@@ -457,6 +682,7 @@ uniform vec2 outputResolution;
+ uniform bool applySRGBEncoding;
+ uniform float targetGamma;
+ uniform float displayGamma;
++uniform float fsrSharpness;
+ };
+ 
+ float sRGBEncode(float linear)
+@@ -527,6 +753,10 @@ void RendererOutputShader::InitializeStatic()
+ 
+     	s_hermit_shader = new RendererOutputShader(vertex_source, s_hermite_shader_source);
+     	s_hermit_shader_ud = new RendererOutputShader(vertex_source_ud, s_hermite_shader_source);
++
++    	s_fsr_easu_shader = new RendererOutputShader(vertex_source, s_fsr_easu_shader_source);
++    	s_fsr_easu_shader_ud = new RendererOutputShader(vertex_source_ud, s_fsr_easu_shader_source);
++    	s_fsr_rcas_shader = new RendererOutputShader(vertex_source, s_fsr_rcas_shader_source);
+ 		break;
+     }
+ #endif
+@@ -546,6 +776,10 @@ void RendererOutputShader::InitializeStatic()
+ 
+     	s_hermit_shader = new RendererOutputShader(vertex_source, s_hermite_shader_source);
+     	s_hermit_shader_ud = new RendererOutputShader(vertex_source_ud, s_hermite_shader_source);
++
++    	s_fsr_easu_shader = new RendererOutputShader(vertex_source, s_fsr_easu_shader_source);
++    	s_fsr_easu_shader_ud = new RendererOutputShader(vertex_source_ud, s_fsr_easu_shader_source);
++    	s_fsr_rcas_shader = new RendererOutputShader(vertex_source, s_fsr_rcas_shader_source);
+ 		break;
+     }
+ #endif
+@@ -562,4 +796,8 @@ void RendererOutputShader::ShutdownStatic()
+ 
+ 	delete s_hermit_shader;
+ 	delete s_hermit_shader_ud;
++
++	delete s_fsr_easu_shader;
++	delete s_fsr_easu_shader_ud;
++	delete s_fsr_rcas_shader;
+ }
+diff --git a/src/Cafe/HW/Latte/Renderer/RendererOuputShader.h b/src/Cafe/HW/Latte/Renderer/RendererOuputShader.h
+index 433a330..2e6ba50 100644
+--- a/src/Cafe/HW/Latte/Renderer/RendererOuputShader.h
++++ b/src/Cafe/HW/Latte/Renderer/RendererOuputShader.h
+@@ -16,6 +16,7 @@ public:
+ 		uint32 applySRGBEncoding;
+ 		float targetGamma;
+ 		float displayGamma;
++		float fsrSharpness;
+ 	};
+ 	enum Shader
+ 	{
+@@ -50,6 +51,10 @@ public:
+ 	static RendererOutputShader* s_hermit_shader;
+ 	static RendererOutputShader* s_hermit_shader_ud;
+ 
++	static RendererOutputShader* s_fsr_easu_shader;
++	static RendererOutputShader* s_fsr_easu_shader_ud;
++	static RendererOutputShader* s_fsr_rcas_shader;
++
+ 	static std::string GetOpenGlVertexSource(bool render_upside_down);
+ 	static std::string GetVulkanVertexSource(bool render_upside_down);
+ 	static std::string GetMetalVertexSource(bool render_upside_down);
+@@ -65,6 +70,8 @@ private:
+ 	static const std::string s_copy_shader_source;
+ 	static const std::string s_bicubic_shader_source;
+ 	static const std::string s_hermite_shader_source;
++	static const std::string s_fsr_easu_shader_source;
++	static const std::string s_fsr_rcas_shader_source;
+ 
+ 	static const std::string s_bicubic_shader_source_vk;
+ 	static const std::string s_hermite_shader_source_vk;
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp b/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp
+index b27aae0..bbece49 100644
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp
+@@ -42,6 +42,10 @@ void SwapchainInfoVk::Create()
+ 	VkSwapchainCreateInfoKHR create_info = CreateSwapchainCreateInfo(m_surface, details, m_surfaceFormat, image_count, m_actualExtent);
+ 	create_info.oldSwapchain = nullptr;
+ 	create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
++#ifdef CEMU_ENABLE_NPU
++    m_npuTransferSource = mainWindow && (details.capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
++    if (m_npuTransferSource) create_info.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
++#endif
+ 
+ 	VkResult result = vkCreateSwapchainKHR(m_logicalDevice, &create_info, nullptr, &m_swapchain);
+ 	if (result != VK_SUCCESS)
+@@ -60,7 +64,7 @@ void SwapchainInfoVk::Create()
+ 	VkAttachmentDescription colorAttachment = {};
+ 	colorAttachment.format = m_surfaceFormat.format;
+ 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
++	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+ 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+ 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+ 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h b/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h
+index 9f1199e..cffb997 100644
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h
+@@ -60,6 +60,7 @@ struct SwapchainInfoVk
+ 
+ 	bool m_shouldRecreate = false;
+ 	VSync m_vsyncState = VSync::Immediate;
++	bool m_npuTransferSource{};
+ 	bool hasDefinedSwapchainImage{}; // indicates if the swapchain image is in a defined state
+ 
+ 	VkInstance m_instance{};
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h
+index 246920e..e4c573f 100644
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h
+@@ -199,6 +199,7 @@ VKFUNC_DEVICE(vkWaitForPresentKHR);
+ VKFUNC_DEVICE(vkCreateQueryPool);
+ VKFUNC_DEVICE(vkDestroyQueryPool);
+ VKFUNC_DEVICE(vkCmdResetQueryPool);
++VKFUNC_DEVICE(vkCmdWriteTimestamp);
+ VKFUNC_DEVICE(vkCmdBeginQuery);
+ VKFUNC_DEVICE(vkCmdEndQuery);
+ VKFUNC_DEVICE(vkCmdCopyQueryPoolResults);
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+index 95bc0fc..4e50c81 100644
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+@@ -29,6 +29,7 @@
+ #include "Cafe/HW/Latte/Core/LatteTiming.h" // vsync control
+ 
+ #include <cstdint>
++#include <chrono>
+ #include <glslang/Public/ShaderLang.h>
+ 
+ #ifndef VK_API_VERSION_MAJOR
+@@ -677,6 +678,16 @@ VulkanRenderer::VulkanRenderer() : Renderer(RendererAPI::Vulkan)
+ 		cemuLog_log(LogType::Force, "vertexPipelineStoresAndAtomics not supported by the driver. Games which use the streamout feature will not render correctly");
+ 
+ 	void* deviceExtensionFeatures = nullptr;
++#ifdef CEMU_ENABLE_NPU
++    uint32_t npuQueueCount{};
++    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &npuQueueCount, nullptr);
++    std::vector<VkQueueFamilyProperties> npuQueues(npuQueueCount);
++    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &npuQueueCount, npuQueues.data());
++    m_npuSupported = deviceFeatures2.features.shaderStorageImageExtendedFormats &&
++        m_indices.graphicsFamily < npuQueueCount &&
++        (npuQueues[m_indices.graphicsFamily].queueFlags & VK_QUEUE_COMPUTE_BIT);
++    if (m_npuSupported) deviceFeatures.shaderStorageImageExtendedFormats = VK_TRUE;
++#endif
+ 
+ 	// enable VK_EXT_pipeline_creation_cache_control
+ 	VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT cacheControlFeature{};
+@@ -852,6 +863,11 @@ VulkanRenderer::~VulkanRenderer()
+ 	SubmitCommandBuffer();
+ 	WaitDeviceIdle();
+ 	WaitCommandBufferFinished(GetCurrentCommandBufferId());
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    npuShutdown();
++#endif
++#endif
+ 	// shut down pipeline save thread
+ 	m_destructionRequested = true;
+ 	m_pipeline_cache_semaphore.notify();
+@@ -1842,6 +1858,15 @@ void VulkanRenderer::ImguiInit()
+ 	info.DescriptorPool = m_descriptorPool;
+ 	info.MinImageCount = m_mainSwapchainInfo->m_swapchainImages.size();
+ 	info.ImageCount = info.MinImageCount;
++#ifdef CEMU_ENABLE_NPU
++    info.UploadUser = this;
++    info.UploadCommandId = [](void* user) {return static_cast<VulkanRenderer*>(user)->GetCurrentCommandBufferId();};
++    info.WaitUploadCommand = [](void* user,uint64_t commandId) {
++        auto* renderer=static_cast<VulkanRenderer*>(user);
++        if(!renderer->HasCommandBufferFinished(commandId))
++            renderer->WaitCommandBufferFinished(commandId);
++    };
++#endif
+ 
+ 	ImGui_ImplVulkan_Init(&info, m_imguiRenderPass);
+ 
+@@ -1856,12 +1881,23 @@ void VulkanRenderer::Initialize()
+ 	CreatePipelineCache();
+ 	ImguiInit();
+ 	CreateNullObjects();
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    npuInitialize();
++#endif
++#endif
+ }
+ 
+ void VulkanRenderer::Shutdown()
+ {
+ 	SubmitCommandBuffer();
+ 	WaitDeviceIdle();
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    npuShutdown();
++#endif
++#endif
++	fsrDestroyResources();
+ 	// stop compilation threads
+ 	RendererShaderVk::Shutdown();
+ 	PipelineCompiler::CompileThreadPool_Stop();
+@@ -2040,6 +2076,9 @@ void VulkanRenderer::QueryAvailableFormats()
+ 
+ bool VulkanRenderer::ImguiBegin(bool mainWindow)
+ {
++#ifdef CEMU_ENABLE_NPU
++    m_npuImguiMainWindow = mainWindow;
++#endif
+ 	if (!Renderer::ImguiBegin(mainWindow))
+ 		return false;
+ 
+@@ -2063,6 +2102,15 @@ void VulkanRenderer::ImguiEnd()
+ 	ImGui::Render();
+ 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_state.currentCommandBuffer);
+ 	vkCmdEndRenderPass(m_state.currentCommandBuffer);
++#ifdef CEMU_ENABLE_NPU
++    if (npuPresentGenerated())
++    {
++        auto& chain = GetChainInfo(true);
++        ImGui_ImplVulkan_NewFrame(m_state.currentCommandBuffer, chain.m_swapchainFramebuffers[chain.swapchainImageIndex], chain.getExtent());
++        ImGui_ImplVulkan_ReplayDrawData(ImGui::GetDrawData(), m_state.currentCommandBuffer);
++        vkCmdEndRenderPass(m_state.currentCommandBuffer);
++    }
++#endif
+ }
+ 
+ ImTextureID VulkanRenderer::GenerateTexture(const std::vector<uint8>& data, const Vector2i& size)
+@@ -2133,7 +2181,7 @@ void VulkanRenderer::InitFirstCommandBuffer()
+ 	vkResetFences(m_logicalDevice, 1, &m_cmdBufferFences[m_commandBufferIndex]);
+ 	VkCommandBufferBeginInfo beginInfo{};
+ 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
++	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+ 	vkBeginCommandBuffer(m_state.currentCommandBuffer, &beginInfo);
+ 
+ 	vkCmdSetViewport(m_state.currentCommandBuffer, 0, 1, &m_state.currentViewport);
+@@ -2254,7 +2302,7 @@ void VulkanRenderer::SubmitCommandBuffer(VkSemaphore signalSemaphore, VkSemaphor
+ 
+ 	VkCommandBufferBeginInfo beginInfo{};
+ 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
++	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+ 	vkBeginCommandBuffer(m_state.currentCommandBuffer, &beginInfo);
+ 
+ 	// make sure some states are set for this command buffer
+@@ -2768,9 +2816,10 @@ VkPipelineShaderStageCreateInfo VulkanRenderer::CreatePipelineShaderStageCreateI
+ 	return shaderStageInfo;
+ }
+ 
+-VkPipeline VulkanRenderer::backbufferBlit_createGraphicsPipeline(VkDescriptorSetLayout descriptorLayout, bool padView, RendererOutputShader* shader)
++VkPipeline VulkanRenderer::backbufferBlit_createGraphicsPipeline(VkDescriptorSetLayout descriptorLayout, bool padView, RendererOutputShader* shader, VkRenderPass overrideRenderPass)
+ {
+ 	auto& chainInfo = GetChainInfo(!padView);
++	const VkRenderPass targetRenderPass = overrideRenderPass != VK_NULL_HANDLE ? overrideRenderPass : chainInfo.m_swapchainRenderPass;
+ 
+ 	RendererShaderVk* vertexRendererShader = static_cast<RendererShaderVk*>(shader->GetVertexShader());
+ 	RendererShaderVk* fragmentRendererShader = static_cast<RendererShaderVk*>(shader->GetFragmentShader());
+@@ -2779,6 +2828,7 @@ VkPipeline VulkanRenderer::backbufferBlit_createGraphicsPipeline(VkDescriptorSet
+ 	hash += (uint64)vertexRendererShader;
+ 	hash += (uint64)fragmentRendererShader;
+ 	hash += ((uint64)padView) << 1;
++	hash ^= ((uint64)targetRenderPass * 0x9E3779B185EBCA87ull);
+ 
+ 	const auto it = m_backbufferBlitPipelineCache.find(hash);
+ 	if (it != m_backbufferBlitPipelineCache.cend())
+@@ -2868,7 +2918,7 @@ VkPipeline VulkanRenderer::backbufferBlit_createGraphicsPipeline(VkDescriptorSet
+ 	pipelineInfo.pMultisampleState = &multisampling;
+ 	pipelineInfo.pColorBlendState = &colorBlending;
+ 	pipelineInfo.layout = m_pipelineLayout;
+-	pipelineInfo.renderPass = chainInfo.m_swapchainRenderPass;
++	pipelineInfo.renderPass = targetRenderPass;
+ 	pipelineInfo.subpass = 0;
+ 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+ 
+@@ -2918,6 +2968,11 @@ bool VulkanRenderer::AcquireNextSwapchainImage(bool mainWindow)
+ 
+ void VulkanRenderer::RecreateSwapchain(bool mainWindow, bool skipCreate)
+ {
++#ifdef CEMU_ENABLE_NPU
++    if (mainWindow)
++        cemuLog_log(LogType::Force, "[NPU-SURFACE] Recreate begin: generation={} skip_create={}",
++            m_npuSwapchainGeneration, skipCreate);
++#endif
+ 	SubmitCommandBuffer();
+ 	WaitDeviceIdle();
+ 	auto& chainInfo = GetChainInfo(mainWindow);
+@@ -2925,6 +2980,14 @@ void VulkanRenderer::RecreateSwapchain(bool mainWindow, bool skipCreate)
+ 	Vector2i size;
+ 	if (mainWindow)
+ 	{
++#ifdef CEMU_ENABLE_NPU
++        // A driver can reuse a destroyed swapchain's numeric handle. Track
++        // resource lifetime explicitly before retiring ImGui font resources.
++        ++m_npuSwapchainGeneration;
++#ifdef CEMU_ENABLE_NPU
++        npuInvalidate();
++#endif
++#endif
+ 		ImGui_ImplVulkan_Shutdown();
+ 		WindowSystem::GetWindowPhysSize(size.x, size.y);
+ 	}
+@@ -2942,7 +3005,14 @@ void VulkanRenderer::RecreateSwapchain(bool mainWindow, bool skipCreate)
+ 	}
+ 
+ 	if (mainWindow)
++    {
+ 		ImguiInit();
++#ifdef CEMU_ENABLE_NPU
++        const auto extent = chainInfo.getExtent();
++        cemuLog_log(LogType::Force, "[NPU-SURFACE] Recreate complete: generation={} extent={}x{}",
++            m_npuSwapchainGeneration, extent.width, extent.height);
++#endif
++    }
+ }
+ 
+ bool VulkanRenderer::UpdateSwapchainProperties(bool mainWindow)
+@@ -3002,11 +3072,25 @@ void VulkanRenderer::SwapBuffer(bool mainWindow)
+ 
+ 	cemu_assert_debug(m_numSubmittedCmdBuffers > 0);
+ 
+-	// wait for the previous frame to finish rendering
+-	WaitCommandBufferFinished(m_commandBufferIDOfPrevFrame);
+-	m_commandBufferIDOfPrevFrame = currentFrameCmdBufferID;
++    // A generated present belongs to the current source frame. Advancing the
++    // source-frame throttle here would make the subsequent real present wait
++    // for its own generated sibling, serializing every source frame.
++#ifdef CEMU_ENABLE_NPU
++    const auto npuThrottleStart = std::chrono::steady_clock::now();
++    if (!(mainWindow && npuIsGeneratedPresent()))
++#endif
++    {
++        WaitCommandBufferFinished(m_commandBufferIDOfPrevFrame);
++        m_commandBufferIDOfPrevFrame = currentFrameCmdBufferID;
++    }
++#ifdef CEMU_ENABLE_NPU
++    const auto npuThrottleEnd = std::chrono::steady_clock::now();
++#endif
+ 
+ 	chainInfo.WaitAvailableFence();
++#ifdef CEMU_ENABLE_NPU
++    const auto npuAvailableEnd = std::chrono::steady_clock::now();
++#endif
+ 
+ 	VkPresentIdKHR presentId = {};
+ 
+@@ -3037,7 +3121,20 @@ void VulkanRenderer::SwapBuffer(bool mainWindow)
+ 		}
+ 	}
+ 
++#ifdef CEMU_ENABLE_NPU
++    const auto npuQueuePresentStart = std::chrono::steady_clock::now();
++#endif
+ 	VkResult result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
++#ifdef CEMU_ENABLE_NPU
++    if(mainWindow) {
++        const auto end = std::chrono::steady_clock::now();
++        npuRecordPresentTiming(std::chrono::duration<double,std::milli>(npuThrottleEnd-npuThrottleStart).count(),
++            std::chrono::duration<double,std::milli>(npuAvailableEnd-npuThrottleEnd).count(),
++            std::chrono::duration<double,std::milli>(npuQueuePresentStart-npuAvailableEnd).count(),
++            std::chrono::duration<double,std::milli>(end-npuQueuePresentStart).count());
++        npuRecordPresent(result);
++    }
++#endif
+ 	if (result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR)
+ 	{
+ 		throw std::runtime_error(fmt::format("Failed to present image: {}", result));
+@@ -3164,6 +3261,363 @@ void VulkanRenderer::ClearColorImage(LatteTextureVk* vkTexture, uint32 sliceInde
+ 	vkTexture->SetImageLayout(subresourceRange, outputLayout);
+ }
+ 
++void VulkanRenderer::fsrDestroyIntermediate(size_t index)
++{
++    auto& resource = m_fsrIntermediate[index];
++
++    if (resource.framebuffer != VK_NULL_HANDLE)
++    {
++        vkDestroyFramebuffer(m_logicalDevice, resource.framebuffer, nullptr);
++        resource.framebuffer = VK_NULL_HANDLE;
++    }
++    if (resource.view != VK_NULL_HANDLE)
++    {
++        vkDestroyImageView(m_logicalDevice, resource.view, nullptr);
++        resource.view = VK_NULL_HANDLE;
++    }
++    if (resource.image != VK_NULL_HANDLE)
++    {
++        vkDestroyImage(m_logicalDevice, resource.image, nullptr);
++        resource.image = VK_NULL_HANDLE;
++    }
++    if (resource.allocation)
++    {
++        memoryManager->imageMemoryFree(resource.allocation);
++        resource.allocation = nullptr;
++    }
++
++    resource.width = 0;
++    resource.height = 0;
++}
++
++void VulkanRenderer::fsrDestroyResources()
++{
++    for (size_t i = 0; i < m_fsrIntermediate.size(); ++i)
++        fsrDestroyIntermediate(i);
++
++    for (auto& resource : m_fsrIntermediate)
++    {
++        if (resource.descriptorSet != VK_NULL_HANDLE && m_descriptorPool != VK_NULL_HANDLE)
++        {
++            vkFreeDescriptorSets(m_logicalDevice, m_descriptorPool, 1, &resource.descriptorSet);
++            resource.descriptorSet = VK_NULL_HANDLE;
++        }
++    }
++
++    if (m_fsrSampler != VK_NULL_HANDLE)
++    {
++        vkDestroySampler(m_logicalDevice, m_fsrSampler, nullptr);
++        m_fsrSampler = VK_NULL_HANDLE;
++    }
++    if (m_fsrRenderPass != VK_NULL_HANDLE)
++    {
++        vkDestroyRenderPass(m_logicalDevice, m_fsrRenderPass, nullptr);
++        m_fsrRenderPass = VK_NULL_HANDLE;
++    }
++}
++
++void VulkanRenderer::fsrEnsureIntermediate(bool padView, uint32 width, uint32 height)
++{
++    if (width == 0 || height == 0)
++        return;
++
++    const size_t resourceIndex = padView ? 1 : 0;
++    auto& resource = m_fsrIntermediate[resourceIndex];
++
++    if (resource.image != VK_NULL_HANDLE && resource.width == width && resource.height == height)
++        return;
++
++    if (resource.image != VK_NULL_HANDLE)
++    {
++        // Resize is rare and old frames may still sample this image.
++        WaitDeviceIdle();
++        fsrDestroyIntermediate(resourceIndex);
++    }
++
++    constexpr VkFormat kFSRIntermediateFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
++
++    if (m_fsrRenderPass == VK_NULL_HANDLE)
++    {
++        VkAttachmentDescription colorAttachment{};
++        colorAttachment.format = kFSRIntermediateFormat;
++        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
++        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
++        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
++        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
++        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
++        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
++        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
++
++        VkAttachmentReference colorReference{};
++        colorReference.attachment = 0;
++        colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
++
++        VkSubpassDescription subpass{};
++        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
++        subpass.colorAttachmentCount = 1;
++        subpass.pColorAttachments = &colorReference;
++
++        VkSubpassDependency dependencies[2]{};
++        dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
++        dependencies[0].dstSubpass = 0;
++        dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
++        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
++        dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
++        dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
++        dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
++
++        dependencies[1].srcSubpass = 0;
++        dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
++        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
++        dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
++        dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
++        dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
++        dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
++
++        VkRenderPassCreateInfo renderPassInfo{};
++        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
++        renderPassInfo.attachmentCount = 1;
++        renderPassInfo.pAttachments = &colorAttachment;
++        renderPassInfo.subpassCount = 1;
++        renderPassInfo.pSubpasses = &subpass;
++        renderPassInfo.dependencyCount = std::size(dependencies);
++        renderPassInfo.pDependencies = dependencies;
++
++        if (vkCreateRenderPass(m_logicalDevice, &renderPassInfo, nullptr, &m_fsrRenderPass) != VK_SUCCESS)
++            UnrecoverableError("Failed to create FSR intermediate render pass");
++    }
++
++    if (m_fsrSampler == VK_NULL_HANDLE)
++    {
++        VkSamplerCreateInfo samplerInfo{};
++        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
++        samplerInfo.magFilter = VK_FILTER_LINEAR;
++        samplerInfo.minFilter = VK_FILTER_LINEAR;
++        samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
++        samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
++        samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
++        samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
++        samplerInfo.minLod = 0.0f;
++        samplerInfo.maxLod = 0.0f;
++        samplerInfo.maxAnisotropy = 1.0f;
++        samplerInfo.anisotropyEnable = VK_FALSE;
++        samplerInfo.compareEnable = VK_FALSE;
++        samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
++
++        if (vkCreateSampler(m_logicalDevice, &samplerInfo, nullptr, &m_fsrSampler) != VK_SUCCESS)
++            UnrecoverableError("Failed to create FSR intermediate sampler");
++    }
++
++    VkImageCreateInfo imageInfo{};
++    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
++    imageInfo.imageType = VK_IMAGE_TYPE_2D;
++    imageInfo.format = kFSRIntermediateFormat;
++    imageInfo.extent = { width, height, 1 };
++    imageInfo.mipLevels = 1;
++    imageInfo.arrayLayers = 1;
++    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
++    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
++    imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
++    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
++    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
++
++    if (vkCreateImage(m_logicalDevice, &imageInfo, nullptr, &resource.image) != VK_SUCCESS)
++        UnrecoverableError("Failed to create FSR intermediate image");
++    resource.allocation = memoryManager->imageMemoryAllocate(resource.image);
++
++    VkImageViewCreateInfo viewInfo{};
++    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
++    viewInfo.image = resource.image;
++    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
++    viewInfo.format = kFSRIntermediateFormat;
++    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
++    viewInfo.subresourceRange.baseMipLevel = 0;
++    viewInfo.subresourceRange.levelCount = 1;
++    viewInfo.subresourceRange.baseArrayLayer = 0;
++    viewInfo.subresourceRange.layerCount = 1;
++
++    if (vkCreateImageView(m_logicalDevice, &viewInfo, nullptr, &resource.view) != VK_SUCCESS)
++        UnrecoverableError("Failed to create FSR intermediate image view");
++
++    VkFramebufferCreateInfo framebufferInfo{};
++    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
++    framebufferInfo.renderPass = m_fsrRenderPass;
++    framebufferInfo.attachmentCount = 1;
++    framebufferInfo.pAttachments = &resource.view;
++    framebufferInfo.width = width;
++    framebufferInfo.height = height;
++    framebufferInfo.layers = 1;
++
++    if (vkCreateFramebuffer(m_logicalDevice, &framebufferInfo, nullptr, &resource.framebuffer) != VK_SUCCESS)
++        UnrecoverableError("Failed to create FSR intermediate framebuffer");
++
++    if (resource.descriptorSet == VK_NULL_HANDLE)
++    {
++        VkDescriptorSetAllocateInfo allocInfo{};
++        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
++        allocInfo.descriptorPool = m_descriptorPool;
++        allocInfo.descriptorSetCount = 1;
++        allocInfo.pSetLayouts = &m_swapchainDescriptorSetLayout;
++
++        if (vkAllocateDescriptorSets(m_logicalDevice, &allocInfo, &resource.descriptorSet) != VK_SUCCESS)
++            UnrecoverableError("Failed to allocate FSR intermediate descriptor set");
++        performanceMonitor.vk.numDescriptorSets.increment();
++    }
++
++    VkDescriptorImageInfo imageDescriptor{};
++    imageDescriptor.sampler = m_fsrSampler;
++    imageDescriptor.imageView = resource.view;
++    imageDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
++
++    VkDescriptorBufferInfo uniformDescriptor{};
++    uniformDescriptor.buffer = m_uniformVarBuffer;
++    uniformDescriptor.offset = 0;
++    uniformDescriptor.range = sizeof(RendererOutputShader::OutputUniformVariables);
++
++    VkWriteDescriptorSet descriptorWrites[2]{};
++    descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
++    descriptorWrites[0].dstSet = resource.descriptorSet;
++    descriptorWrites[0].dstBinding = 0;
++    descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
++    descriptorWrites[0].descriptorCount = 1;
++    descriptorWrites[0].pImageInfo = &imageDescriptor;
++
++    descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
++    descriptorWrites[1].dstSet = resource.descriptorSet;
++    descriptorWrites[1].dstBinding = 1;
++    descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
++    descriptorWrites[1].descriptorCount = 1;
++    descriptorWrites[1].pBufferInfo = &uniformDescriptor;
++
++    vkUpdateDescriptorSets(m_logicalDevice, std::size(descriptorWrites), descriptorWrites, 0, nullptr);
++    performanceMonitor.vk.numDescriptorSamplerTextures.increment();
++
++    resource.width = width;
++    resource.height = height;
++}
++
++void VulkanRenderer::DrawBackbufferQuadFSR(LatteTextureView* texView, RendererOutputShader* easuShader, sint32 imageX, sint32 imageY, sint32 imageWidth, sint32 imageHeight, bool padView)
++{
++    if (imageWidth <= 0 || imageHeight <= 0)
++        return;
++
++    auto& chainInfo = GetChainInfo(!padView);
++    auto* texViewVk = static_cast<LatteTextureViewVk*>(texView);
++    const size_t resourceIndex = padView ? 1 : 0;
++
++    fsrEnsureIntermediate(padView, (uint32)imageWidth, (uint32)imageHeight);
++    auto& resource = m_fsrIntermediate[resourceIndex];
++
++    // Make the emulated TV/DRC texture visible to the EASU fragment shader.
++    VkMemoryBarrier inputBarrier{};
++    inputBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
++    inputBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
++    inputBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT;
++    const VkPipelineStageFlags inputSrcStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT;
++    const VkPipelineStageFlags inputDstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
++    vkCmdPipelineBarrier(m_state.currentCommandBuffer, inputSrcStages, inputDstStages, 0, 1, &inputBarrier, 0, nullptr, 0, nullptr);
++
++    const auto easuPipeline = backbufferBlit_createGraphicsPipeline(m_swapchainDescriptorSetLayout, padView, easuShader, m_fsrRenderPass);
++    const auto sourceDescriptor = backbufferBlit_createDescriptorSet(m_swapchainDescriptorSetLayout, texViewVk, true);
++
++    VkRenderPassBeginInfo easuPassInfo{};
++    easuPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
++    easuPassInfo.renderPass = m_fsrRenderPass;
++    easuPassInfo.framebuffer = resource.framebuffer;
++    easuPassInfo.renderArea.offset = { 0, 0 };
++    easuPassInfo.renderArea.extent = { (uint32)imageWidth, (uint32)imageHeight };
++
++    VkViewport easuViewport{};
++    easuViewport.x = 0.0f;
++    easuViewport.y = 0.0f;
++    easuViewport.width = (float)imageWidth;
++    easuViewport.height = (float)imageHeight;
++    easuViewport.minDepth = 0.0f;
++    easuViewport.maxDepth = 1.0f;
++
++    VkRect2D easuScissor{};
++    easuScissor.offset = { 0, 0 };
++    easuScissor.extent = { (uint32)imageWidth, (uint32)imageHeight };
++
++    vkCmdSetViewport(m_state.currentCommandBuffer, 0, 1, &easuViewport);
++    vkCmdSetScissor(m_state.currentCommandBuffer, 0, 1, &easuScissor);
++    vkCmdBeginRenderPass(m_state.currentCommandBuffer, &easuPassInfo, VK_SUBPASS_CONTENTS_INLINE);
++    vkCmdBindPipeline(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, easuPipeline);
++    m_state.currentPipeline = easuPipeline;
++
++    auto easuUniforms = easuShader->FillUniformBlockBuffer(*texView, { imageWidth, imageHeight }, padView);
++    // The intermediate must remain in the game's linear output space. Gamma and
++    // sRGB conversion are applied once, after RCAS, on the final swapchain pass.
++    easuUniforms.applySRGBEncoding = 0;
++    easuUniforms.targetGamma = 1.0f;
++    easuUniforms.displayGamma = 1.0f;
++
++    auto easuUniformOffset = uniformData_uploadUniformDataBufferGetOffset({ (uint8*)&easuUniforms, sizeof(easuUniforms) });
++    vkCmdBindDescriptorSets(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &sourceDescriptor, 1, &easuUniformOffset);
++    vkCmdDraw(m_state.currentCommandBuffer, 6, 1, 0, 0);
++    vkCmdEndRenderPass(m_state.currentCommandBuffer);
++
++    // The render pass transitions the FP16 image to SHADER_READ_ONLY_OPTIMAL;
++    // make the color writes explicitly visible before RCAS samples them.
++    VkMemoryBarrier rcasBarrier{};
++    rcasBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
++    rcasBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
++    rcasBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
++    vkCmdPipelineBarrier(
++        m_state.currentCommandBuffer,
++        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
++        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
++        VK_DEPENDENCY_BY_REGION_BIT,
++        1, &rcasBarrier, 0, nullptr, 0, nullptr);
++
++    const auto rcasPipeline = backbufferBlit_createGraphicsPipeline(
++        m_swapchainDescriptorSetLayout, padView, RendererOutputShader::s_fsr_rcas_shader);
++
++    VkRenderPassBeginInfo finalPassInfo{};
++    finalPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
++    finalPassInfo.renderPass = chainInfo.m_swapchainRenderPass;
++    finalPassInfo.framebuffer = chainInfo.m_swapchainFramebuffers[chainInfo.swapchainImageIndex];
++    finalPassInfo.renderArea.offset = { 0, 0 };
++    finalPassInfo.renderArea.extent = chainInfo.getExtent();
++
++    VkViewport finalViewport{};
++    finalViewport.x = (float)imageX;
++    finalViewport.y = (float)imageY;
++    finalViewport.width = (float)imageWidth;
++    finalViewport.height = (float)imageHeight;
++    finalViewport.minDepth = 0.0f;
++    finalViewport.maxDepth = 1.0f;
++
++    VkRect2D finalScissor{};
++    finalScissor.extent = chainInfo.getExtent();
++
++    vkCmdSetViewport(m_state.currentCommandBuffer, 0, 1, &finalViewport);
++    vkCmdSetScissor(m_state.currentCommandBuffer, 0, 1, &finalScissor);
++    vkCmdBeginRenderPass(m_state.currentCommandBuffer, &finalPassInfo, VK_SUBPASS_CONTENTS_INLINE);
++    vkCmdBindPipeline(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rcasPipeline);
++    m_state.currentPipeline = rcasPipeline;
++
++    auto rcasUniforms = easuShader->FillUniformBlockBuffer(*texView, { imageWidth, imageHeight }, padView);
++    rcasUniforms.textureSrcResolution = { (float)imageWidth, (float)imageHeight };
++    rcasUniforms.nativeResolution = { (float)imageWidth, (float)imageHeight };
++    rcasUniforms.outputResolution = { (float)imageWidth, (float)imageHeight };
++
++    auto rcasUniformOffset = uniformData_uploadUniformDataBufferGetOffset({ (uint8*)&rcasUniforms, sizeof(rcasUniforms) });
++    vkCmdBindDescriptorSets(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &resource.descriptorSet, 1, &rcasUniformOffset);
++    vkCmdDraw(m_state.currentCommandBuffer, 6, 1, 0, 0);
++    vkCmdEndRenderPass(m_state.currentCommandBuffer);
++
++    vkCmdSetViewport(m_state.currentCommandBuffer, 0, 1, &m_state.currentViewport);
++    chainInfo.hasDefinedSwapchainImage = true;
++
++    static bool s_fsrPathLogged = false;
++    if (!s_fsrPathLogged)
++    {
++        cemuLog_log(LogType::Force, "[FSR1] Vulkan EASU + RCAS active · RCAS setting {}", GetConfig().fsr_sharpness.GetValue());
++        s_fsrPathLogged = true;
++    }
++}
++
+ void VulkanRenderer::DrawBackbufferQuad(LatteTextureView* texView, RendererOutputShader* shader, bool useLinearTexFilter, sint32 imageX, sint32 imageY, sint32 imageWidth, sint32 imageHeight, bool padView, bool clearBackground)
+ {
+ 	if(!AcquireNextSwapchainImage(!padView))
+@@ -3173,6 +3627,20 @@ void VulkanRenderer::DrawBackbufferQuad(LatteTextureView* texView, RendererOutpu
+ 	LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;
+ 	draw_endRenderPass();
+ 
++	if (clearBackground)
++		ClearColorbuffer(padView);
++
++	if (shader == RendererOutputShader::s_fsr_easu_shader || shader == RendererOutputShader::s_fsr_easu_shader_ud)
++	{
++		DrawBackbufferQuadFSR(texView, shader, imageX, imageY, imageWidth, imageHeight, padView);
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++        if (!padView) npuCapture();
++#endif
++#endif
++		return;
++	}
++
+ 	// barrier for input texture
+ 	VkMemoryBarrier memoryBarrier{};
+ 	memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+@@ -3209,16 +3677,6 @@ void VulkanRenderer::DrawBackbufferQuad(LatteTextureView* texView, RendererOutpu
+ 
+ 	vkCmdBeginRenderPass(m_state.currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+ 
+-	if (clearBackground)
+-	{
+-		VkClearAttachment clearAttachment{};
+-		clearAttachment.clearValue = {0,0,0,0};
+-		clearAttachment.colorAttachment = 0;
+-		clearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+-		VkClearRect clearExtent = {{{0,0},chainInfo.m_actualExtent}, 0, 1};
+-		vkCmdClearAttachments(m_state.currentCommandBuffer, 1, &clearAttachment, 1, &clearExtent);
+-	}
+-
+ 	vkCmdBindPipeline(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+ 	m_state.currentPipeline = pipeline;
+ 
+@@ -3238,6 +3696,11 @@ void VulkanRenderer::DrawBackbufferQuad(LatteTextureView* texView, RendererOutpu
+ 
+ 	// mark current swapchain image as well defined
+ 	chainInfo.hasDefinedSwapchainImage = true;
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    if (!padView) npuCapture();
++#endif
++#endif
+ }
+ 
+ void VulkanRenderer::CreateDescriptorPool()
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h
+index 2909440..b9f2a6e 100644
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h
+@@ -13,6 +13,8 @@
+ #include "util/containers/flat_hash_map.hpp"
+ #include "util/containers/robin_hood.h"
+ 
++struct VulkanNPUState;
++
+ struct VkSupportedFormatInfo_t
+ {
+ 	bool fmt_d24_unorm_s8_uint{};
+@@ -222,6 +224,9 @@ public:
+ 	static VkSurfaceKHR CreateFramebufferSurface(VkInstance instance, struct WindowSystem::WindowHandleInfo& windowInfo);
+ 
+ 	void AppendOverlayDebugInfo() override;
++#ifdef CEMU_ENABLE_NPU
++    std::optional<double> GetFrameGenerationFps() const override;
++#endif
+ 
+ 	void ImguiInit();
+ 	VkInstance GetVkInstance() const { return m_instance; }
+@@ -499,6 +504,41 @@ private:
+ 
+ 	VkDescriptorSetLayout m_swapchainDescriptorSetLayout;
+ 
++	struct FSRIntermediate
++	{
++		VkImage image{ VK_NULL_HANDLE };
++		VkImageView view{ VK_NULL_HANDLE };
++		VkFramebuffer framebuffer{ VK_NULL_HANDLE };
++		VkImageMemAllocation* allocation{ nullptr };
++		VkDescriptorSet descriptorSet{ VK_NULL_HANDLE };
++		uint32 width{ 0 };
++		uint32 height{ 0 };
++	};
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    VulkanNPUState* m_npu{};
++    void npuInitialize();
++    void npuShutdown();
++    void npuCapture();
++    void npuInvalidate();
++    bool npuPresentGenerated();
++    bool npuIsGeneratedPresent() const;
++    void npuRecordPresentTiming(double sourceThrottleMs,double availableFenceMs,double queueLimitMs,double queuePresentMs);
++    void npuRecordPresent(VkResult result);
++    std::optional<double> npuGetFps() const;
++#endif
++    bool m_npuSupported{}, m_npuImguiMainWindow{};
++    uint64_t m_npuSwapchainGeneration{};
++#endif
++	std::array<FSRIntermediate, 2> m_fsrIntermediate{};
++	VkRenderPass m_fsrRenderPass{ VK_NULL_HANDLE };
++	VkSampler m_fsrSampler{ VK_NULL_HANDLE };
++
++	void fsrEnsureIntermediate(bool padView, uint32 width, uint32 height);
++	void fsrDestroyIntermediate(size_t index);
++	void fsrDestroyResources();
++	void DrawBackbufferQuadFSR(LatteTextureView* texView, RendererOutputShader* easuShader, sint32 imageX, sint32 imageY, sint32 imageWidth, sint32 imageHeight, bool padView);
++
+ 	VkQueue m_graphicsQueue, m_presentQueue;
+ 
+ 	// swapchain
+@@ -569,7 +609,7 @@ private:
+ 	// misc
+ 	void CreatePipelineCache();
+ 	VkPipelineShaderStageCreateInfo CreatePipelineShaderStageCreateInfo(VkShaderStageFlagBits stage, VkShaderModule& module, const char* entryName) const;
+-	VkPipeline backbufferBlit_createGraphicsPipeline(VkDescriptorSetLayout descriptorLayout, bool padView, RendererOutputShader* shader);
++	VkPipeline backbufferBlit_createGraphicsPipeline(VkDescriptorSetLayout descriptorLayout, bool padView, RendererOutputShader* shader, VkRenderPass overrideRenderPass = VK_NULL_HANDLE);
+ 	bool AcquireNextSwapchainImage(bool mainWindow);
+ 	void RecreateSwapchain(bool mainWindow, bool skipCreate = false);
+ 
+diff --git a/src/config/CemuConfig.cpp b/src/config/CemuConfig.cpp
+index 139c290..8f130b1 100644
+--- a/src/config/CemuConfig.cpp
++++ b/src/config/CemuConfig.cpp
+@@ -141,6 +141,15 @@ XMLConfigParser CemuConfig::Load(XMLConfigParser& parser)
+ 	gx2drawdone_sync = graphic.get("GX2DrawdoneSync", true);
+ 	upscale_filter = graphic.get("UpscaleFilter", kBicubicHermiteFilter);
+ 	downscale_filter = graphic.get("DownscaleFilter", kLinearFilter);
++	sint32 fsrSharpnessValue = graphic.get("FSRSharpness", 25);
++	if (fsrSharpnessValue < 0)
++		fsrSharpnessValue = 0;
++	else if (fsrSharpnessValue > 200)
++		fsrSharpnessValue = 200;
++	fsr_sharpness = fsrSharpnessValue;
++#ifdef CEMU_ENABLE_NPU
++    npu_processing_height = graphic.get("NPUProcessingHeight", 1080) == 720 ? 720 : 1080;
++#endif
+ 	fullscreen_scaling = graphic.get("FullscreenScaling", kKeepAspectRatio);
+ 	async_compile = graphic.get("AsyncCompile", async_compile);
+ 	vk_accurate_barriers = graphic.get("vkAccurateBarriers", true); // this used to be "VulkanAccurateBarriers" but because we changed the default to true in 1.27.1 the option name had to be changed
+@@ -374,6 +383,10 @@ XMLConfigParser CemuConfig::Save(XMLConfigParser& parser)
+ 	//graphic.set("PrecompiledShaders", precompiled_shaders.GetValue());
+ 	graphic.set("UpscaleFilter", upscale_filter);
+ 	graphic.set("DownscaleFilter", downscale_filter);
++	graphic.set("FSRSharpness", fsr_sharpness);
++#ifdef CEMU_ENABLE_NPU
++    graphic.set("NPUProcessingHeight", npu_processing_height);
++#endif
+ 	graphic.set("FullscreenScaling", fullscreen_scaling);
+ 	graphic.set("AsyncCompile", async_compile.GetValue());
+ 	graphic.set("vkAccurateBarriers", vk_accurate_barriers);
+diff --git a/src/config/CemuConfig.h b/src/config/CemuConfig.h
+index 48c396f..6e47623 100644
+--- a/src/config/CemuConfig.h
++++ b/src/config/CemuConfig.h
+@@ -94,6 +94,7 @@ enum UpscalingFilter
+ 	kBicubicFilter,
+ 	kBicubicHermiteFilter,
+ 	kNearestNeighborFilter,
++	kFidelityFXFSRFilter,
+ };
+ 
+ enum FullscreenScaling
+@@ -484,6 +485,11 @@ struct CemuConfig
+ 
+ 	ConfigValue<sint32> upscale_filter{kBicubicFilter};
+ 	ConfigValue<sint32> downscale_filter{kLinearFilter};
++#ifdef CEMU_ENABLE_NPU
++    ConfigValue<bool> npu_enabled{false}; // Session-only: start with original frames.
++    ConfigValue<int> npu_processing_height{1080}; // Applied on the next game start.
++#endif
++	ConfigValue<sint32> fsr_sharpness{25}; // FSR1 RCAS stops * 100, matching Eden/Yuzu semantics
+ 	ConfigValue<sint32> fullscreen_scaling{kKeepAspectRatio};
+ 
+ 	// audio
+diff --git a/src/gui/wxgui/GeneralSettings2.cpp b/src/gui/wxgui/GeneralSettings2.cpp
+index f1435fb..dbbc83d 100644
+--- a/src/gui/wxgui/GeneralSettings2.cpp
++++ b/src/gui/wxgui/GeneralSettings2.cpp
+@@ -483,15 +483,51 @@ wxPanel* GeneralSettings2::AddGraphicsPage(wxNotebook* notebook)
+ 	}
+ 
+ 	{
+-		wxString choices[] = { _("Bilinear"), _("Bicubic"), _("Hermite"), _("Nearest Neighbor") };
+-		m_upscale_filter = new wxRadioBox(graphics_panel, wxID_ANY, _("Upscale filter"), wxDefaultPosition, wxDefaultSize, std::size(choices), choices, 5, wxRA_SPECIFY_COLS);
++		wxString upscale_choices[] = { _("Bilinear"), _("Bicubic"), _("Hermite"), _("Nearest Neighbor"), _("AMD FidelityFX FSR") };
++		m_upscale_filter = new wxRadioBox(graphics_panel, wxID_ANY, _("Upscale filter"), wxDefaultPosition, wxDefaultSize, std::size(upscale_choices), upscale_choices, 5, wxRA_SPECIFY_COLS);
+ 		m_upscale_filter->SetToolTip(_("Upscaling filters are used when the game resolution is smaller than the window size"));
+-		m_upscale_filter->Bind(wxEVT_RADIOBOX, [](wxCommandEvent& event) {
++		m_upscale_filter->Bind(wxEVT_RADIOBOX, [this](wxCommandEvent& event) {
+ 			GetConfig().upscale_filter = event.GetSelection();
++			const bool fsrSelected = event.GetSelection() == kFidelityFXFSRFilter;
++			m_fsr_sharpness->Enable(fsrSelected);
++			m_fsr_sharpness_value->Enable(fsrSelected);
+ 		});
+ 		graphics_panel_sizer->Add(m_upscale_filter, 0, wxALL | wxEXPAND, 5);
+ 
+-		m_downscale_filter = new wxRadioBox(graphics_panel, wxID_ANY, _("Downscale filter"), wxDefaultPosition, wxDefaultSize, std::size(choices), choices, 5, wxRA_SPECIFY_COLS);
++		auto* fsr_sharpness_row = new wxBoxSizer(wxHORIZONTAL);
++		fsr_sharpness_row->Add(new wxStaticText(graphics_panel, wxID_ANY, _("FSR RCAS sharpness")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
++		m_fsr_sharpness = new wxSlider(graphics_panel, wxID_ANY, 25, 0, 200, wxDefaultPosition, wxSize(250, -1));
++		m_fsr_sharpness->SetToolTip(_("AMD FSR1 RCAS sharpness stops x100. Matches Eden/Yuzu semantics: 0 is strongest sharpening, 200 is weakest."));
++		fsr_sharpness_row->Add(m_fsr_sharpness, 1, wxALIGN_CENTER_VERTICAL | wxALL, 5);
++		m_fsr_sharpness_value = new wxStaticText(graphics_panel, wxID_ANY, "25");
++		fsr_sharpness_row->Add(m_fsr_sharpness_value, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
++		m_fsr_sharpness->Bind(wxEVT_SLIDER, [this](wxCommandEvent& event) {
++			const sint32 value = event.GetInt();
++			GetConfig().fsr_sharpness = value;
++			m_fsr_sharpness_value->SetLabel(wxString::Format("%d", value));
++		});
++		graphics_panel_sizer->Add(fsr_sharpness_row, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5);
++#ifdef CEMU_ENABLE_NPU
++        auto* npuCheck = new wxCheckBox(graphics_panel, wxID_ANY, _("NPU frame generation"));
++        npuCheck->SetValue(GetConfig().npu_enabled.GetValue());
++        npuCheck->SetToolTip(_("Starts off each session. Requires Vulkan and SDR output. Original frames retain their output resolution. Generated frames use the selected processing resolution. Buffers one to three source frames as needed; late generated frames are skipped."));
++        npuCheck->Bind(wxEVT_CHECKBOX, [](wxCommandEvent& event) { GetConfig().npu_enabled = event.IsChecked(); });
++        npuCheck->Bind(wxEVT_UPDATE_UI, [](wxUpdateUIEvent& event) { event.Check(GetConfig().npu_enabled.GetValue()); });
++        graphics_panel_sizer->Add(npuCheck, 0, wxALL, 5);
++        auto* npuRow = new wxBoxSizer(wxHORIZONTAL);
++        npuRow->Add(new wxStaticText(graphics_panel, wxID_ANY, _("NPU processing")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
++        wxString npuModes[] = {_("1080p / Standard"), _("720p / Performance")};
++        auto* npuMode = new wxChoice(graphics_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, std::size(npuModes), npuModes);
++        npuMode->SetSelection(GetConfig().npu_processing_height.GetValue() == 720 ? 1 : 0);
++        npuMode->SetToolTip(_("Applied on the next game start. 720p reduces GPU and NPU processing, with less detail in generated frames. Original frames retain their output resolution. Output follows the current window or fullscreen size."));
++        npuMode->Bind(wxEVT_CHOICE, [](wxCommandEvent& event) { GetConfig().npu_processing_height = event.GetSelection() == 1 ? 720 : 1080; });
++        npuRow->Add(npuMode, 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
++        graphics_panel_sizer->Add(npuRow, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5);
++        graphics_panel_sizer->Add(new wxStaticText(graphics_panel, wxID_ANY, _("Processing resolution changes apply on the next game start.")), 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
++#endif
++
++		wxString downscale_choices[] = { _("Bilinear"), _("Bicubic"), _("Hermite"), _("Nearest Neighbor") };
++		m_downscale_filter = new wxRadioBox(graphics_panel, wxID_ANY, _("Downscale filter"), wxDefaultPosition, wxDefaultSize, std::size(downscale_choices), downscale_choices, 5, wxRA_SPECIFY_COLS);
+ 		m_downscale_filter->SetToolTip(_("Downscaling filters are used when the game resolution is bigger than the window size"));
+ 		m_downscale_filter->Bind(wxEVT_RADIOBOX, [](wxCommandEvent& event) {
+ 			GetConfig().downscale_filter = event.GetSelection();
+@@ -1922,6 +1958,11 @@ void GeneralSettings2::ApplyConfig()
+ 	m_force_mesh_shaders->SetValue(config.force_mesh_shaders);
+ #endif
+ 	m_upscale_filter->SetSelection(config.upscale_filter);
++	m_fsr_sharpness->SetValue(config.fsr_sharpness.GetValue());
++	m_fsr_sharpness_value->SetLabel(wxString::Format("%d", config.fsr_sharpness.GetValue()));
++	const bool fsrSelected = config.upscale_filter.GetValue() == kFidelityFXFSRFilter;
++	m_fsr_sharpness->Enable(fsrSelected);
++	m_fsr_sharpness_value->Enable(fsrSelected);
+ 	m_downscale_filter->SetSelection(config.downscale_filter);
+ 	m_fullscreen_scaling->SetSelection(config.fullscreen_scaling);
+ 
+diff --git a/src/gui/wxgui/GeneralSettings2.h b/src/gui/wxgui/GeneralSettings2.h
+index 2f7e3b6..7a055ea 100644
+--- a/src/gui/wxgui/GeneralSettings2.h
++++ b/src/gui/wxgui/GeneralSettings2.h
+@@ -77,6 +77,8 @@ private:
+ 	wxCheckBox *m_force_mesh_shaders;
+ #endif
+ 	wxRadioBox* m_upscale_filter, *m_downscale_filter, *m_fullscreen_scaling;
++	wxSlider* m_fsr_sharpness;
++	wxStaticText* m_fsr_sharpness_value;
+ 	wxChoice* m_overlay_position, *m_notification_position, *m_overlay_scale, *m_notification_scale;
+ 	wxCheckBox* m_controller_profile_name, *m_controller_low_battery, *m_shader_compiling, *m_friends_data;
+ 	wxCheckBox *m_overlay_fps, *m_overlay_drawcalls, *m_overlay_cpu, *m_overlay_cpu_per_core,*m_overlay_ram, *m_overlay_vram, *m_overlay_debug;
+diff --git a/src/gui/wxgui/MainWindow.cpp b/src/gui/wxgui/MainWindow.cpp
+index 698bf65..7c02d70 100644
+--- a/src/gui/wxgui/MainWindow.cpp
++++ b/src/gui/wxgui/MainWindow.cpp
+@@ -429,7 +429,11 @@ void MainWindow::DestroyGameListAndStatusBar()
+ 
+ wxString MainWindow::GetInitialWindowTitle()
+ {
+-	return BUILD_VERSION_WITH_NAME_STRING;
++#ifdef CEMU_ENABLE_NPU
++	return wxASCII_STR("Cemu ARM64 [Release | NPU]");
++#else
++	return wxASCII_STR("Cemu ARM64");
++#endif
+ }
+ 
+ void MainWindow::OnClose(wxCloseEvent& event)
+diff --git a/src/gui/wxgui/wxWindowSystem.cpp b/src/gui/wxgui/wxWindowSystem.cpp
+index bb730db..c1c346f 100644
+--- a/src/gui/wxgui/wxWindowSystem.cpp
++++ b/src/gui/wxgui/wxWindowSystem.cpp
+@@ -74,7 +74,11 @@ WindowSystem::WindowInfo& WindowSystem::GetWindowInfo()
+ void WindowSystem::UpdateWindowTitles(bool isIdle, bool isLoading, double fps)
+ {
+ 	std::string windowText;
+-	windowText = BUILD_VERSION_WITH_NAME_STRING;
++#ifdef CEMU_ENABLE_NPU
++	windowText = "Cemu ARM64 [Release | NPU]";
++#else
++	windowText = "Cemu ARM64";
++#endif
+ 
+ 	if (isIdle)
+ 	{
+@@ -120,7 +124,18 @@ void WindowSystem::UpdateWindowTitles(bool isIdle, bool isLoading, double fps)
+ 		graphicMode = "[Apple GPU]";
+ 
+ 	const uint64 titleId = CafeSystem::GetForegroundTitleId();
+-	windowText.append(fmt::format(" - FPS: {:.2f} {} {} [TitleId: {:08x}-{:08x}]", (double)fps, renderer, graphicMode, (uint32)(titleId >> 32), (uint32)(titleId & 0xFFFFFFFF)));
++    std::string fpsText = fmt::format("{:.2f}", fps);
++#ifdef CEMU_ENABLE_NPU
++    if (g_renderer)
++    {
++        if (const auto outputFps = g_renderer->GetFrameGenerationFps())
++        {
++            const char* mode="NPU FG";
++            fpsText = fmt::format("{:.2f} (Native: {:.2f}, {})", *outputFps, fps, mode);
++        }
++    }
++#endif
++	windowText.append(fmt::format(" - FPS: {} {} {} [TitleId: {:08x}-{:08x}]", fpsText, renderer, graphicMode, (uint32)(titleId >> 32), (uint32)(titleId & 0xFFFFFFFF)));
+ 
+ 	if (ActiveSettings::IsOnlineEnabled())
+ 	{
+diff --git a/src/imgui/imgui_impl_vulkan.cpp b/src/imgui/imgui_impl_vulkan.cpp
+index f9a2316..080efca 100644
+--- a/src/imgui/imgui_impl_vulkan.cpp
++++ b/src/imgui/imgui_impl_vulkan.cpp
+@@ -58,6 +58,8 @@ struct ImGui_ImplVulkanH_FrameRenderBuffers
+     VkDeviceSize        IndexBufferSize;
+     VkBuffer            VertexBuffer;
+     VkBuffer            IndexBuffer;
++    uint64_t            LastReadCommand;
++    bool                HasReadCommand;
+ };
+ 
+ // Each viewport will hold 1 ImGui_ImplVulkanH_WindowRenderBuffers
+@@ -89,6 +91,8 @@ static VkBuffer                 g_UploadBuffer = VK_NULL_HANDLE;
+ 
+ // Render buffers
+ static ImGui_ImplVulkanH_WindowRenderBuffers    g_MainWindowRenderBuffers;
++static const ImDrawData* g_LastUploadedDrawData = nullptr;
++static int g_LastUploadedVertices = 0, g_LastUploadedIndices = 0;
+ 
+ // Forward Declarations
+ bool ImGui_ImplVulkan_CreateDeviceObjects();
+@@ -321,7 +325,7 @@ static void ImGui_ImplVulkan_SetupRenderState(ImDrawData* draw_data, VkCommandBu
+ 
+ // Render function
+ // (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
+-void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
++static void ImGui_ImplVulkan_RenderDrawDataInternal(ImDrawData* draw_data, VkCommandBuffer command_buffer, bool replay)
+ {
+     // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
+     int fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
+@@ -333,6 +337,12 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
+ 
+     // Allocate array to store enough vertex/index buffers
+     ImGui_ImplVulkanH_WindowRenderBuffers* wrb = &g_MainWindowRenderBuffers;
++    if (replay && (!wrb->FrameRenderBuffers || g_LastUploadedDrawData != draw_data ||
++        g_LastUploadedVertices != draw_data->TotalVtxCount || g_LastUploadedIndices != draw_data->TotalIdxCount))
++    {
++        cemu_assert_debug(false); // Never overwrite possibly in-flight data on a bad replay.
++        return;
++    }
+     if (wrb->FrameRenderBuffers == NULL)
+     {
+         wrb->Index = 0;
+@@ -341,9 +351,13 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
+         memset(wrb->FrameRenderBuffers, 0, sizeof(ImGui_ImplVulkanH_FrameRenderBuffers) * wrb->Count);
+     }
+     IM_ASSERT(wrb->Count == v->ImageCount);
+-    wrb->Index = (wrb->Index + 1) % wrb->Count;
++    if (!replay) wrb->Index = (wrb->Index + 1) % wrb->Count;
+     ImGui_ImplVulkanH_FrameRenderBuffers* rb = &wrb->FrameRenderBuffers[wrb->Index];
+ 
++    if (!replay)
++    {
++    if (rb->HasReadCommand && v->WaitUploadCommand)
++        v->WaitUploadCommand(v->UploadUser, rb->LastReadCommand);
+     VkResult err;
+ 
+     // Create or resize the vertex/index buffers
+@@ -390,6 +404,10 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
+         vkUnmapMemory(v->Device, rb->VertexBufferMemory);
+         vkUnmapMemory(v->Device, rb->IndexBufferMemory);
+     }
++    g_LastUploadedDrawData = draw_data;
++    g_LastUploadedVertices = draw_data->TotalVtxCount;
++    g_LastUploadedIndices = draw_data->TotalIdxCount;
++    }
+ 
+     // Setup desired Vulkan state
+     ImGui_ImplVulkan_SetupRenderState(draw_data, command_buffer, rb, fb_width, fb_height);
+@@ -456,6 +474,21 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
+        // global_idx_offset += cmd_list->IdxBuffer.Size;
+        // global_vtx_offset += cmd_list->VtxBuffer.Size;
+     }
++    if (v->UploadCommandId)
++    {
++        rb->LastReadCommand = v->UploadCommandId(v->UploadUser);
++        rb->HasReadCommand = true;
++    }
++}
++
++void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
++{
++    ImGui_ImplVulkan_RenderDrawDataInternal(draw_data, command_buffer, false);
++}
++
++void ImGui_ImplVulkan_ReplayDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
++{
++    ImGui_ImplVulkan_RenderDrawDataInternal(draw_data, command_buffer, true);
+ }
+ 
+ void ImGui_ImplVulkan_DestroyFontsTexture()
+@@ -913,6 +946,8 @@ ImTextureID ImGui_ImplVulkan_AddTexture(VkSampler sampler, VkImageView image_vie
+ 
+ void ImGui_ImplVulkan_Shutdown()
+ {
++    g_LastUploadedDrawData = nullptr;
++    g_LastUploadedVertices = g_LastUploadedIndices = 0;
+     ImGui_ImplVulkan_DestroyDeviceObjects();
+ }
+ 
+@@ -1306,6 +1341,8 @@ void ImGui_ImplVulkanH_DestroyFrameRenderBuffers(VkDevice device, ImGui_ImplVulk
+ 
+ void ImGui_ImplVulkanH_DestroyWindowRenderBuffers(VkDevice device, ImGui_ImplVulkanH_WindowRenderBuffers* buffers, const VkAllocationCallbacks* allocator)
+ {
++    g_LastUploadedDrawData = nullptr;
++    g_LastUploadedVertices = g_LastUploadedIndices = 0;
+     for (uint32_t n = 0; n < buffers->Count; n++)
+         ImGui_ImplVulkanH_DestroyFrameRenderBuffers(device, &buffers->FrameRenderBuffers[n], allocator);
+     IM_FREE(buffers->FrameRenderBuffers);
+diff --git a/src/imgui/imgui_impl_vulkan.h b/src/imgui/imgui_impl_vulkan.h
+index 44bcdd5..bb0db04 100644
+--- a/src/imgui/imgui_impl_vulkan.h
++++ b/src/imgui/imgui_impl_vulkan.h
+@@ -41,6 +41,11 @@ struct ImGui_ImplVulkan_InitInfo
+     uint32_t            ImageCount;             // >= MinImageCount
+     const VkAllocationCallbacks* Allocator;
+     void                (*CheckVkResultFn)(VkResult err);
++    // Optional upload lifetime tracking. Wait only when reusing a ring buffer;
++    // replay extends the last-reader command ID without any host-side write.
++    void*               UploadUser;
++    uint64_t            (*UploadCommandId)(void* user);
++    void                (*WaitUploadCommand)(void* user, uint64_t commandId);
+ };
+ 
+ // Called by user code
+@@ -48,6 +53,10 @@ IMGUI_IMPL_API bool     ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, V
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_Shutdown();
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_NewFrame(VkCommandBuffer command_buffer, VkFramebuffer framebuffer, VkExtent2D extent);
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer);
++// Replay the immediately preceding upload without advancing/replacing its buffers.
++// Caller must keep the same draw data and textures alive, and skip replay after
++// swapchain/backend recreation. Both draws must precede the next normal upload.
++IMGUI_IMPL_API void     ImGui_ImplVulkan_ReplayDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer);
+ IMGUI_IMPL_API bool     ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_DestroyFontsTexture();
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_DestroyFontUploadObjects();

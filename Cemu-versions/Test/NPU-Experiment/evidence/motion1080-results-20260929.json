@@ -1,0 +1,170 @@
+{
+  "status": "MOTION1080_SESSION_VERIFIED",
+  "session_closed": true,
+  "started_at": "2026-09-29T09:48:56.9718181+09:00",
+  "ended_at": "2026-09-29T09:49:24.3161791+09:00",
+  "probe_sha256": "fee17ac0d17781f9758844dcf77e7af43c87b6ee53f8d3ce99fb3653a8d0dd7c",
+  "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+  "timing": {
+    "count": 30,
+    "metrics": {
+      "synthetic_gpu_ms": {
+        "mean": 0.12039583039396667,
+        "p50": 0.120416663727,
+        "p95": 0.12302083033,
+        "min": 0.116510413822,
+        "max": 0.123124996994
+      },
+      "pack_gpu_ms": {
+        "mean": 0.540116306258,
+        "p50": 0.576145819267,
+        "p95": 0.607916651825,
+        "min": 0.384010407291,
+        "max": 0.61208331839
+      },
+      "compose_gpu_ms": {
+        "mean": 0.32309200600096666,
+        "p50": 0.321718742146,
+        "p95": 0.332395825218,
+        "min": 0.319374992203,
+        "max": 0.344479158257
+      },
+      "prepare_wall_ms": {
+        "mean": 5.220293333333333,
+        "p50": 4.983,
+        "p95": 5.8281,
+        "min": 4.5289,
+        "max": 6.0541
+      },
+      "npu_wall_ms": {
+        "mean": 19.36053666666667,
+        "p50": 19.3534,
+        "p95": 19.6333,
+        "min": 19.0723,
+        "max": 19.6676
+      },
+      "compose_wall_ms": {
+        "mean": 0.7630366666666667,
+        "p50": 0.7466,
+        "p95": 0.8675,
+        "min": 0.6863,
+        "max": 0.8978
+      },
+      "serial_wall_ms": {
+        "mean": 30.775823333333335,
+        "p50": 30.6425,
+        "p95": 31.7457,
+        "min": 29.5189,
+        "max": 31.8657
+      },
+      "pre_submit_ms": {
+        "mean": 0.029366666666666666,
+        "p50": 0.0238,
+        "p95": 0.0467,
+        "min": 0.0087,
+        "max": 0.1182
+      },
+      "pre_fence_ms": {
+        "mean": 5.128843333333333,
+        "p50": 4.9033,
+        "p95": 5.7153,
+        "min": 4.4455,
+        "max": 6.0107
+      },
+      "post_submit_ms": {
+        "mean": 0.04620333333333333,
+        "p50": 0.0423,
+        "p95": 0.0663,
+        "min": 0.0172,
+        "max": 0.1321
+      },
+      "post_fence_ms": {
+        "mean": 0.6457633333333334,
+        "p50": 0.64,
+        "p95": 0.7723,
+        "min": 0.3817,
+        "max": 0.8085
+      },
+      "downsample_gpu_ms": {
+        "mean": 0.25722742427556666,
+        "p50": 0.255364577099,
+        "p95": 0.275624993271,
+        "min": 0.250416660553,
+        "max": 0.285416659698
+      },
+      "motion_gpu_ms": {
+        "mean": 3.825748170487333,
+        "p50": 3.53781241363,
+        "p95": 4.37749989313,
+        "min": 3.26749992023,
+        "max": 4.85536446479
+      },
+      "lookahead_gpu_ms": {
+        "mean": 0.11616145549753334,
+        "p50": 0.116145830498,
+        "p95": 0.116406247158,
+        "min": 0.115833330505,
+        "max": 0.11645833049
+      },
+      "worker_submit_wall_ms": {
+        "mean": 0.004886666666666667,
+        "p50": 0.0043,
+        "p95": 0.0072,
+        "min": 0.0028,
+        "max": 0.0078
+      },
+      "harness_completion_poll_ms": {
+        "mean": 24.213133333333335,
+        "p50": 24.4711,
+        "p95": 25.8051,
+        "min": 14.7789,
+        "max": 26.0508
+      }
+    },
+    "serial_under_33_333_ms": 30,
+    "gpu_metrics_nested_within_wall_metrics": true,
+    "cemu_costs_excluded": true,
+    "host_call_overlap_mean_ms": 0.5477233333333333,
+    "host_call_overlap_positive_samples": 30
+  },
+  "unattributed_wall_ms": {
+    "mean": 5.431956666666667,
+    "min": 4.154800000000003,
+    "max": 7.1754000000000016
+  },
+  "cemu_integrated": false,
+  "cemu_executed": false,
+  "real_game_quality_validated": false,
+  "simultaneous_device_execution_proven": false,
+  "physical_zero_copy_proven": false,
+  "files": [
+    {
+      "path": "evidence/motion1080-probe-manifest.json",
+      "sha256": "acc32bd79f393e57e992dd8ed5313854df56b93c01131092c0988b8054a7deb8"
+    },
+    {
+      "path": "evidence/motion1080-session-20260929-094856-971.json",
+      "sha256": "854408beacd1aca0c65fd2637fe64b852848ed2e3468c1bd5957f77ab37effd4"
+    },
+    {
+      "path": "MOTION1080-RESULTS.md",
+      "sha256": "49e16030bf53a4cf15ebac656b257dd658ad917cb92e818316f323fb85bea83a"
+    },
+    {
+      "path": "evidence/motion1080-verify-20260929-094856-975/result.json",
+      "sha256": "48c1744eaa5ca0c21c68dfaa377753d9ba7abd21d44b86c98cf5e1d3e755586a"
+    },
+    {
+      "path": "evidence/motion1080-verify-20260929-094856-975/verification.json",
+      "sha256": "8c00626dabda9725f28e3ed3776a36070e8d5a96cc8e47e5a11689cf885c8004"
+    },
+    {
+      "path": "evidence/motion1080-measure-20260929-094913-525/result.json",
+      "sha256": "2a1d7688342774647ecd886c2d314404feddd8112624c09bd2086b1bf954e815"
+    },
+    {
+      "path": "evidence/motion1080-measure-20260929-094913-525/verification.json",
+      "sha256": "15e46c246bb5bd50de37450503f379acae4504f156174f7ac0d6c72c7c7789fa"
+    }
+  ]
+}

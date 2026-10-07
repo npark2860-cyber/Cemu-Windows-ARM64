@@ -1,0 +1,42 @@
+{
+  "processing": [
+    1280,
+    720
+  ],
+  "filter": "ON eligible; report intervals 1.8..2.2 seconds; >=4 seconds after Capture 1/reset",
+  "groups": [
+    {
+      "output": [
+        1429,
+        992
+      ],
+      "intervals": 2,
+      "seconds": 4.026000000005297,
+      "real": 33.782516145057755,
+      "generated": 33.782516145057755,
+      "present": 67.56503229011551,
+      "npu_ms": 7.88714705882353,
+      "motion_ms": 2.203235294117647,
+      "stale": 0.0,
+      "no_slot": 0.0
+    },
+    {
+      "output": [
+        2560,
+        1440
+      ],
+      "intervals": 137,
+      "seconds": 275.7390000000014,
+      "real": 35.00395743801218,
+      "generated": 34.57238341330052,
+      "present": 69.57670521761563,
+      "npu_ms": 7.935138941004794,
+      "motion_ms": 2.0516341690841275,
+      "stale": 119.0,
+      "no_slot": 0.0
+    }
+  ],
+  "npu_errors": [],
+  "not_controlled_AB": true,
+  "scanout_validated": false
+}

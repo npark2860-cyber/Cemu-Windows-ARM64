@@ -1,0 +1,63 @@
+{
+  "status": "INTEROP_ROUNDTRIP_COMPLETED_PROFILE_VERIFICATION_PENDING",
+  "stage": "vulkan_capabilities",
+  "reason": "Synthetic extension-unavailable fixture",
+  "model": "../models/smoke-average-qdq-u8.onnx",
+  "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+  "cemu_executed": false,
+  "full_framegen_validated": false,
+  "application_copy_free_gpu_npu_handoff": true,
+  "qnn_initialized": true,
+  "completed_rounds": 5,
+  "gpu_name": "SYNTHETIC FIXTURE",
+  "external_memory_host": true,
+  "input_memory_flags": 6,
+  "ort_version": "1.24.4",
+  "output_allocator": "QnnHtpShared",
+  "cpu_fallback_disabled": true,
+  "import_handle_type": "HOST_ALLOCATION_BIT_EXT",
+  "diagnostic_gpu_readback_used": true,
+  "output_memory_flags": 6,
+  "backend": "QnnHtp.dll",
+  "offline_fixture": true,
+  "ort_profile": "../evidence/interop-reader-fixture-20260929-082523-057/ort-profile.json",
+  "input_allocator": "QnnHtpShared",
+  "application_cpu_writes_to_shared_payload": false,
+  "rounds": [
+    {
+      "round": 0,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    },
+    {
+      "round": 1,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    },
+    {
+      "round": 2,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    },
+    {
+      "round": 3,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    },
+    {
+      "round": 4,
+      "gpu_write_and_fence_ms": 1.0,
+      "npu_run_ms": 1.0,
+      "gpu_diagnostic_readback_ms": 1.0,
+      "max_oracle_error": 0.5
+    }
+  ]
+}

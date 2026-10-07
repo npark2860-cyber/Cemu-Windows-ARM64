@@ -1,0 +1,8 @@
+{
+  "status": "FILES_VERIFIED_NOT_EXECUTED",
+  "device_loaded": false,
+  "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+  "npu_driver": "30.0.224.10000",
+  "gpu_driver": "31.0.170.0",
+  "next": "Requires a new approved GPU/NPU time slot. Runs correctness gate before timing; no Cemu or display operations."
+}

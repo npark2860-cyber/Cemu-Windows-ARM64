@@ -1,0 +1,7 @@
+{
+  "variant": "Release+SE",
+  "pass": "npu-runtime-20261005",
+  "exit_code": 0,
+  "finished_at": "2026-10-05T08:47:23.4049972+09:00",
+  "device_executed": false
+}

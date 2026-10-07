@@ -1,0 +1,18 @@
+{
+  "status": "OFFLINE_MOTION_READER_TESTS_PASSED",
+  "count": 11,
+  "tests": [
+    "accept_four_shared_and_four_reference_inferences",
+    "reject_missing_measurement_inferences",
+    "reject_cpu_fallback",
+    "accept_four_phase_measured_window_and_host_overlap",
+    "reject_old_three_phase_sequence",
+    "reject_warmup_in_measured_window",
+    "reject_missing_motion_timing",
+    "reject_inconsistent_total",
+    "reject_nan_npu_timing",
+    "reject_negative_overlap",
+    "accept_zero_overlap_without_claiming_parallelism"
+  ],
+  "device_executed": false
+}

@@ -1,0 +1,29 @@
+{
+  "status": "INTEROP_UNSUPPORTED",
+  "started_at": "2026-09-29T08:29:00.1854961+09:00",
+  "ended_at": "2026-09-29T08:29:01.1395075+09:00",
+  "closed": true,
+  "exit_code": 2,
+  "npu_driver_before": "30.0.224.10000",
+  "npu_driver_after": "30.0.224.10000",
+  "gpu_driver_before": "31.0.170.0",
+  "gpu_driver_after": "31.0.170.0",
+  "manifest_sha256": "91c27946443966f228d76801eac4344fee4ce2aa69d4c0382237fc73ef9507b9",
+  "probe_sha256": "3d9c29cbd5f5803353fdde984bcbe3f5331df79b2f1faab4ba86d9503ffbdf5c",
+  "model_sha256": "447cb38952fe343c7f7779271515eeb4a20fa1c1a122ae3d84c80bea14dae779",
+  "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\vulkan-qnn-interop-20260929-082900-184",
+  "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\vulkan-qnn-interop-20260929-082900-184-console.log",
+  "result": {
+    "status": "INTEROP_UNSUPPORTED",
+    "reason": "Dedicated buffer allocation required",
+    "stage": "import_qnn_memory",
+    "gpu_name": "Qualcomm(R) Adreno(TM) X1-85 GPU",
+    "external_memory_host": true,
+    "external_memory_win32": true,
+    "external_semaphore_win32": true,
+    "qnn_initialized": true,
+    "completed_rounds": 0,
+    "zero_copy_proven": false
+  },
+  "error": null
+}

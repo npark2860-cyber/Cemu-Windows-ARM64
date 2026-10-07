@@ -1,0 +1,9 @@
+{
+  "baseline_commit": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+  "branch": "codex/lsfg-release",
+  "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\LSFG-Release\\source",
+  "baseline_source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Release\\source",
+  "package_sha256": "7106178e958d587c1e662403909426a9a8d3928c88d30d6e17fd3ceae8b327ab",
+  "created_at": "2026-09-29T02:31:44.6861980+09:00",
+  "note": "Independent checkout; shared Git object store depends on retained baseline source. No baseline source modified."
+}

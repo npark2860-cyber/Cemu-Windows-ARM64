@@ -1,0 +1,17 @@
+#version 450
+layout(local_size_x=16,local_size_y=16) in;
+layout(set=0,binding=0,rgba8) uniform readonly image2D frameA;
+layout(set=0,binding=1,rgba8) uniform readonly image2D frameB;
+layout(set=0,binding=7,rgba8) uniform writeonly image2D quarterA;
+layout(set=0,binding=8,rgba8) uniform writeonly image2D quarterB;
+void main() {
+    ivec2 p=ivec2(gl_GlobalInvocationID.xy);
+    if(p.x>=480 || p.y>=270) return;
+    vec3 a=vec3(0),b=vec3(0);
+    for(int y=0;y<4;++y) for(int x=0;x<4;++x) {
+        a+=imageLoad(frameA,p*4+ivec2(x,y)).rgb;
+        b+=imageLoad(frameB,p*4+ivec2(x,y)).rgb;
+    }
+    imageStore(quarterA,p,vec4(a/16.0,1));
+    imageStore(quarterB,p,vec4(b/16.0,1));
+}

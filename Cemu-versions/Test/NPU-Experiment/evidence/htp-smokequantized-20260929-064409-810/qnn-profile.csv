@@ -1,0 +1,365 @@
+Msg Timestamp,Message,Time,Unit of Measurement,Timing Source,Event Level,Event Identifier
+0,BACKEND,17289,US,BACKEND,ROOT,RPC (finalize) time
+0,BACKEND,13350,US,BACKEND,ROOT,QNN accelerator (finalize) time
+0,BACKEND,13239,US,BACKEND,ROOT,Accelerator (finalize) time
+0,FINALIZE,34376,US,BACKEND,ROOT,QNN (finalize) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,2483,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,2113,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,23087,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,4110,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,67016,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,4001,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,42921,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,6468,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,8733,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,4893,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,1926,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,148,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,3840,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,886,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,616,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,500,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1023,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,40939,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1268,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,33187,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,2453,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2636,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,1395,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,524,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,115,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,975,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,870,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,613,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,507,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1022,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,39789,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1109,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,31639,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,3235,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2557,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,1249,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,524,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,118,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,955,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,866,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,619,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,506,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1051,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,38641,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1274,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30919,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,2180,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,3026,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,1242,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,530,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,124,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,939,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,888,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,605,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,499,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1014,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,38097,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1142,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,31978,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1374,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,3000,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,603,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,516,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,115,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,964,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,875,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,607,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,495,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1024,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36726,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1105,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,31094,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1348,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2540,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,639,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,519,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,112,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,968,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,876,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,606,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,502,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1021,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36247,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,708,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30546,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1245,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,3106,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,642,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,517,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,115,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,951,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,873,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,611,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,496,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1012,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,40950,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1299,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30558,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1355,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,7095,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,643,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,519,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,123,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,942,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,849,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,606,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,522,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1025,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,35694,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,908,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30253,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1356,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2505,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,672,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,519,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,118,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,913,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,836,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,601,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,506,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1018,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36338,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1108,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30307,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1362,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2980,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,581,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,510,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,112,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,935,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,826,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,608,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,495,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1024,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36689,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1221,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30405,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1351,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,3064,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,648,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,520,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,114,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,870,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,816,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,609,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,502,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1021,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36841,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1326,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30494,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1314,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2529,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,1178,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,519,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,115,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,864,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,857,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,614,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,508,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1019,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,37612,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,2423,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30350,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1114,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,3043,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,682,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,526,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,113,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,909,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,850,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,606,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,502,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1017,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36787,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1119,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30213,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1316,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,3552,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,587,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,516,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,111,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,920,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,847,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,609,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,501,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1023,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,35615,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1093,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,29997,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1411,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2476,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,638,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,521,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,119,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,902,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,868,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,619,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,575,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1021,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36973,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1166,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30428,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,2208,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2521,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,650,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,530,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,123,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,936,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,886,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,610,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,540,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1037,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,37829,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1037,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30971,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1517,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,3641,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,663,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,521,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,120,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,1025,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,854,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,608,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,526,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1038,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36473,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1104,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30154,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,2100,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2527,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,588,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,520,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,115,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,919,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,849,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,608,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,507,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1023,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36503,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1273,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30060,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,2004,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2502,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,664,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,519,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,120,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,910,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,841,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,610,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,495,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1021,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36233,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1094,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30126,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1859,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2533,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,621,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,520,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,112,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,898,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,850,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,606,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,500,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1017,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36340,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1011,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30229,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1872,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2553,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,675,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,520,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,122,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,912,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,835,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,609,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,502,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1015,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,37138,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1192,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,30181,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1997,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2570,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,1198,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,521,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,112,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,894,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,852,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,607,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,497,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1012,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,37129,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1119,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,29844,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,2044,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,3114,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,1008,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,517,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,117,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,915,US,BACKEND,ROOT,QNN (execute) time
+0,BACKEND,4,COUNT,BACKEND,ROOT,Number of HVX threads used
+0,BACKEND,882,US,BACKEND,ROOT,RPC (execute) time
+0,BACKEND,612,US,BACKEND,ROOT,QNN accelerator (execute) time
+0,BACKEND,0,COUNT,BACKEND,ROOT,Num times yield occured
+0,BACKEND,500,US,BACKEND,ROOT,Time for initial VTCM acquire
+0,BACKEND,1020,US,BACKEND,ROOT,Time for HVX + HMX power on and acquire
+0,BACKEND,36713,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+0,NODE,1121,CYCLES,BACKEND,SUB-EVENT,Input OpId_2 (cycles)
+0,NODE,29879,CYCLES,BACKEND,SUB-EVENT,Transpose_token_5_2:OpId_17 (cycles)
+0,NODE,1926,CYCLES,BACKEND,SUB-EVENT,_token_2_2:OpId_22 (cycles)
+0,NODE,2505,CYCLES,BACKEND,SUB-EVENT,Transpose_token_6_2:OpId_27 (cycles)
+0,NODE,1282,CYCLES,BACKEND,SUB-EVENT,Output OpId_3 (cycles)
+0,BACKEND,523,US,BACKEND,ROOT,Accelerator (execute) time
+0,BACKEND,108,US,BACKEND,ROOT,Accelerator (execute excluding wait) time
+0,EXECUTE,951,US,BACKEND,ROOT,QNN (execute) time

@@ -1,0 +1,10 @@
+# VALIDATION ONLY
+# No BOTW hook is used. This isolates GraphicPack -> Cemu -> DualSense raw trigger transport.
+[BotwBowRawConstantValidation]
+moduleMatches = 0x6267BFD0
+.origin = codecave
+
+TriggerCommand:
+.uint 0x00013F04
+
+.adaptiveTriggerRaw right TriggerCommand

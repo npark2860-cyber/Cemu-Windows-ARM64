@@ -1,0 +1,109 @@
+{
+  "status": "ANVIL1080_PIPELINE_VERIFIED",
+  "mode": "Measure",
+  "profile": {
+    "qnn_only": true,
+    "kernel_events": 34
+  },
+  "checks": [
+    {
+      "phase": 0,
+      "input_sha256": "7b29bc2ae351172742a37fe823814250491c2ec8fe142462680b139c8d6d0c46",
+      "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+      "composed_sha256": "d3f4b45d1d9a8f8791aba84396037231fc29e88aaed5e1772721e0344ba3f48f",
+      "max_compose_error": 0,
+      "diagnostic_sha256": "eb3175bc2b710fb7a8d65c2154ea7506b7a59fdd8dfcdefb7fe9f204bfa31462"
+    }
+  ],
+  "timing": {
+    "count": 30,
+    "metrics": {
+      "synthetic_gpu_ms": {
+        "mean": 0.1483402741562,
+        "p50": 0.147812496391,
+        "p95": 0.166302079273,
+        "min": 0.12682291357,
+        "max": 0.169479162529
+      },
+      "pack_gpu_ms": {
+        "mean": 0.3767986019119334,
+        "p50": 0.374479157524,
+        "p95": 0.399583323578,
+        "min": 0.356510407963,
+        "max": 0.405624990097
+      },
+      "compose_gpu_ms": {
+        "mean": 0.3408854083442333,
+        "p50": 0.33749999176,
+        "p95": 0.366406241055,
+        "min": 0.327239575344,
+        "max": 0.367708324356
+      },
+      "prepare_wall_ms": {
+        "mean": 1.03723,
+        "p50": 1.012,
+        "p95": 1.4125,
+        "min": 0.7903,
+        "max": 1.5007
+      },
+      "npu_wall_ms": {
+        "mean": 19.544,
+        "p50": 19.5144,
+        "p95": 19.785,
+        "min": 19.324,
+        "max": 19.8883
+      },
+      "compose_wall_ms": {
+        "mean": 0.8127333333333334,
+        "p50": 0.7715,
+        "p95": 0.9412,
+        "min": 0.6739,
+        "max": 1.5326
+      },
+      "serial_wall_ms": {
+        "mean": 21.395123333333334,
+        "p50": 21.3029,
+        "p95": 21.8377,
+        "min": 21.0198,
+        "max": 22.3159
+      },
+      "pre_submit_ms": {
+        "mean": 0.029663333333333333,
+        "p50": 0.0292,
+        "p95": 0.0507,
+        "min": 0.0142,
+        "max": 0.0514
+      },
+      "pre_fence_ms": {
+        "mean": 0.94721,
+        "p50": 0.9181,
+        "p95": 1.3432,
+        "min": 0.695,
+        "max": 1.4259
+      },
+      "post_submit_ms": {
+        "mean": 0.04484333333333333,
+        "p50": 0.0429,
+        "p95": 0.0545,
+        "min": 0.0329,
+        "max": 0.0992
+      },
+      "post_fence_ms": {
+        "mean": 0.70266,
+        "p50": 0.6684,
+        "p95": 0.8064,
+        "min": 0.5449,
+        "max": 1.4315
+      }
+    },
+    "serial_under_33_333_ms": 30,
+    "gpu_metrics_nested_within_wall_metrics": true,
+    "motion_and_cemu_costs_excluded": true
+  },
+  "timing_scope": "Serialized GPU synthetic-image generation, RGBA8-to-NHWC pack, direct shared-tensor NPU Run and GPU residual compose; includes two host fence waits and output poison. Excludes initialization, disk I/O, diagnostic readback, CPU oracle, ordinary-memory references, motion estimation/warp, Cemu rendering and present. GPU timestamps are nested within wall times; do not add them to wall totals.",
+  "physical_zero_copy_proven": false,
+  "full_framegen_validated": false,
+  "real_game_quality_validated": false,
+  "application_copy_free_gpu_npu_handoff": true,
+  "performance_validation_scope": "Three synthetic patterns. All three audited in Verify; final phase zero audited after 34 Measure rounds. No per-round readback in the measured loop."
+}

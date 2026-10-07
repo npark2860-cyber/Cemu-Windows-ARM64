@@ -1,0 +1,92 @@
+{
+  "recorded_at": "2026-09-29T06:46:19.3378986+09:00",
+  "authorized_by": "User explicitly approved NPU-only execution now; no Cemu or UI use",
+  "execution_window": "2026-09-29 06:44:09 to 06:44:47 KST",
+  "runs": [
+    {
+      "purpose": "UINT8 Conv connection + arithmetic oracle",
+      "id": "htp-smokequantized-20260929-064409-810"
+    },
+    {
+      "purpose": "FP16 Conv connection + arithmetic oracle",
+      "id": "htp-smokefp16-20260929-064424-693"
+    },
+    {
+      "purpose": "Original ANVIL 1080p model HTP support and initial timing with synthetic input",
+      "id": "htp-anvil-20260929-064439-619"
+    }
+  ],
+  "all_exit_codes": 0,
+  "all_profile_providers": "QNNExecutionProvider only",
+  "cpu_fallback_disabled": true,
+  "performance_mode": "balanced",
+  "profiling": "detailed",
+  "anvil_ort_result": {
+    "status": "inference_completed_profile_verification_pending",
+    "ort_version": "1.24.4",
+    "backend": "QnnHtp.dll",
+    "cpu_fallback_disabled": true,
+    "synthetic_input": true,
+    "frame_interpolation_quality_validated": false,
+    "model": "../models/anvil-small-1080p-fp32.onnx",
+    "profile": "../evidence/htp-anvil-20260929-064439-619\\ort-profile_2026-09-29_06-44-39.json",
+    "session_create_ms": 4310.1088,
+    "input_prepare_ms": 19.6089,
+    "first_run_ms": 181.7932,
+    "warmup_runs": 3,
+    "measured_runs": 10,
+    "run_mean_ms": 128.93722,
+    "run_p50_ms": 128.5431,
+    "run_p95_ms": 131.046,
+    "run_min_ms": 127.9844,
+    "run_max_ms": 131.046,
+    "input_bytes": 49766400,
+    "output_bytes": 24883200,
+    "output_validation_ms": 28.4868,
+    "checksum": -24327.6191683,
+    "average_oracle_checked": false,
+    "maximum_oracle_error": 0,
+    "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes Vulkan transfers, motion estimation and present"
+  },
+  "anvil_qnn_metrics": [
+    {
+      "metric": "RPC (execute) time",
+      "measured_samples": 10,
+      "mean_ms": 119.81569999999999,
+      "minimum_ms": 119.369,
+      "maximum_ms": 120.812
+    },
+    {
+      "metric": "QNN accelerator (execute) time",
+      "measured_samples": 10,
+      "mean_ms": 119.27159999999999,
+      "minimum_ms": 118.766,
+      "maximum_ms": 120.21
+    },
+    {
+      "metric": "Accelerator (execute) time",
+      "measured_samples": 10,
+      "mean_ms": 97.5624,
+      "minimum_ms": 97.197,
+      "maximum_ms": 98.588
+    },
+    {
+      "metric": "Accelerator (execute excluding wait) time",
+      "measured_samples": 10,
+      "mean_ms": 97.08070000000002,
+      "minimum_ms": 96.739,
+      "maximum_ms": 98.118
+    },
+    {
+      "metric": "QNN (execute) time",
+      "measured_samples": 10,
+      "mean_ms": 123.43290000000002,
+      "minimum_ms": 122.623,
+      "maximum_ms": 124.782
+    }
+  ],
+  "metrics_note": "Nested times overlap; do not add. QNN accelerator figures include operations such as input/output conversion and layout transforms; not isolated CNN MAC time. Skip first run plus 3 warmups.",
+  "achieved": "Real HTP execution verified for all three models; small-model oracle passed; original ANVIL output finite",
+  "not_achieved": "Realtime 30 generated frames/s, Vulkan-NPU transfer pipeline, Cemu integration, visual quality and concurrent load validation",
+  "followup": "Prepare INT8 calibration and transfer-aware comparison offline; request a new user time slot before further NPU/GPU runs"
+}

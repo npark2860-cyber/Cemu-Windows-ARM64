@@ -1,0 +1,7 @@
+{
+  "status": "FIX1_PACKAGE_FILES_VERIFIED",
+  "executable": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE-Fix1\\runtime\\Cemu-Release-SE-NPU-Fix1.exe",
+  "cemu_sha256": "f34fadbbb6b6ce113e22cde1d20e9aa3a53192f493f3c8787092c9fe5ae7e935",
+  "game_test_pending": true,
+  "cemu_gpu_npu_controller_executed": false
+}

@@ -1,0 +1,317 @@
+[
+  {
+    "path": "CMakeLists.txt",
+    "bytes": 11614,
+    "sha256": "dd1d5e0e99af15881cdf08236af688a945d29edb31bfb47d8cc13eb63106b971"
+  },
+  {
+    "path": "dependencies/npu-cemu/anvil_async_worker.h",
+    "bytes": 5600,
+    "sha256": "cea41fdaf22d959735c7020bfa72573ee094f7f3cce4fe6fce3459310638e951"
+  },
+  {
+    "path": "dependencies/npu-cemu/borrowed_support.h",
+    "bytes": 15789,
+    "sha256": "539d93462cc80a79ed620ba64f285e4868197f262e468d5feac2a98b0c3aeb05"
+  },
+  {
+    "path": "dependencies/npu-cemu/buffered_timeline.h",
+    "bytes": 1275,
+    "sha256": "2af9a420c74f5ae02768fd91522e8cc1ab313ca8806dfc30a580d122badac473"
+  },
+  {
+    "path": "dependencies/npu-cemu/gpu_resources.h",
+    "bytes": 11322,
+    "sha256": "53f19c124514762b419a7992ac03c4f160492326124db7c1f17dffa71241d2de"
+  },
+  {
+    "path": "dependencies/npu-cemu/npu_cemu.cpp",
+    "bytes": 16485,
+    "sha256": "c02a5ea01b36605cb52a89c7fa2ba659159e813caa1aada80e0970055f44ade2"
+  },
+  {
+    "path": "dependencies/npu-cemu/npu_cemu.h",
+    "bytes": 1825,
+    "sha256": "cb03c35ff5fe86bc4abd64b7e2f2d1869c35ba9aa679db4ecd4cade2ad608e21"
+  },
+  {
+    "path": "dependencies/npu-cemu/ort_paths.h",
+    "bytes": 1437,
+    "sha256": "7ef1dd5af482c38ca3a73bb584a1d3d04b9e555a77141c24777c23e618585d56"
+  },
+  {
+    "path": "dependencies/npu-cemu/processing_profile.h",
+    "bytes": 983,
+    "sha256": "327d80d7a8461167fc2a38f724a3ecb0c7c52ba7d18a2166ad2f2070e3e3583c"
+  },
+  {
+    "path": "dependencies/npu-cemu/test_buffered_timeline.cpp",
+    "bytes": 2808,
+    "sha256": "290b21c67b61170b6fbce338f3ba2e2db8791000073de6facd07ed53c73f6176"
+  },
+  {
+    "path": "dependencies/npu-cemu/test_ort_paths.cpp",
+    "bytes": 2476,
+    "sha256": "26b919705a347019cd08e80ae3415a965149450d6dc99bedd618b19a6d33111e"
+  },
+  {
+    "path": "dependencies/npu-cemu/test_processing_profile.cpp",
+    "bytes": 1368,
+    "sha256": "4ad424ab1f2975fdfcf74516bf7e1973c5611773a87e2291fc8067f38662e6cf"
+  },
+  {
+    "path": "i18n/npu/README.md",
+    "bytes": 322,
+    "sha256": "841dfe410aaa5a3ad8d70d0e63f743bfcabc92290bda3f27cc9a5b1d6f6cf4bf"
+  },
+  {
+    "path": "i18n/npu/ko.po",
+    "bytes": 2383,
+    "sha256": "50c1cae09a76ea7b0748bdd9da8d7cdb22bcfcdb21031010273208f0ff64ecee"
+  },
+  {
+    "path": "i18n/npu/npu.pot",
+    "bytes": 1186,
+    "sha256": "4e222e34e780e110b3de3b872d7ba5185faab92ec98a8b0cfaac219f5b2fe49c"
+  },
+  {
+    "path": "src/Cafe/CMakeLists.txt",
+    "bytes": 24506,
+    "sha256": "2d7019c8db4f6b045000d2e0331d8fbd6564c0dfc1c0e7497ef8e4f559c11d6c"
+  },
+  {
+    "path": "src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp",
+    "bytes": 52694,
+    "sha256": "ec3538bc39dfa04a702c666194c8cdc6b3fbedc466f8922588b2ba0b2270feea"
+  },
+  {
+    "path": "src/Cafe/HW/Espresso/Recompiler/PPCRecompiler.cpp",
+    "bytes": 28976,
+    "sha256": "dac395abcca6eb6971a4625bec9e2f903f946559a25385d844c2caf092b1034e"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteCommandProcessor.cpp",
+    "bytes": 59310,
+    "sha256": "0b61d061b349fd7398a0450aee7c4dbe5eb83966b5917d1db13d1ac20b81e766"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteOverlay.cpp",
+    "bytes": 19641,
+    "sha256": "92c4059679771ed8b6dd85484198116dc9859036f85fd03d0bd47fbfacf89b77"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LattePerformanceMonitor.cpp",
+    "bytes": 7702,
+    "sha256": "220c34c3655941b655b1633e15477dde7e84a6e74b2af70373694a5611d314d2"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp",
+    "bytes": 45086,
+    "sha256": "ef7df6c0ce0b04ca18c2ef897981370ffb8ed7738e35ae0378e0315b4ff95bf8"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteShader.cpp",
+    "bytes": 51784,
+    "sha256": "2d8e274bed15434a475db1e42581dbcb5d19e0aa4df3f51dbe129ef16001a462"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteShader.h",
+    "bytes": 5183,
+    "sha256": "6d3c5c0c563b2436049343094b38d08fe668b0c76befcb9baef371bba5cdcbda"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteTextureCache.cpp",
+    "bytes": 14640,
+    "sha256": "78c3a0787239f9425cad7b2429ff2447cfc3955fe513ec5772052cc2b7ae21a1"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteTextureLegacy.cpp",
+    "bytes": 16517,
+    "sha256": "41df51285ad836e1a7dc5d209cfe6fe7315ab29b45d1674c09a1300fd78024b8"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompiler.h",
+    "bytes": 11735,
+    "sha256": "4b42086f03ab8a37668b8472ce67f690a7165c9406e6b7e0c710c37c3017b00e"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp",
+    "bytes": 168913,
+    "sha256": "4e2870d9ffd3a70ed4bb1653876491f734ea278c96be4413c9c8c383a510942a"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp",
+    "bytes": 27857,
+    "sha256": "4b6b16f7d9f7f705d4e9a86f315428fc751b5c95fe5a593c9af051744e61cf14"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Renderer.h",
+    "bytes": 8115,
+    "sha256": "f8e81e77069a12c637f8ef5ad283b1b863b1a0e7cea33de7e18e9910562d5cbe"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp",
+    "bytes": 29241,
+    "sha256": "1a077fbd4dbf57887e1ed1ee525981e6924012dd637b0af5a5cdc0411ad6a53b"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/RendererOuputShader.h",
+    "bytes": 2420,
+    "sha256": "ed1f73c5ca6d346854cfa731ee90bb21e21e0545b6b41534ce8f610b1daaead4"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/LatteTextureViewVk.cpp",
+    "bytes": 9108,
+    "sha256": "78ac7ea7c186f67489a8404932f45431d7a1f91cd26cee24d2344b4cb26c3f4a"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/RendererShaderVk.cpp",
+    "bytes": 25563,
+    "sha256": "63b8360f75b84eb34e56f2b8663a6a046c703cf7f13924d6f6c138d984de8ce2"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/RendererShaderVk.h",
+    "bytes": 1975,
+    "sha256": "a9fb7daf27cb3a24b402dcb3f32bd91135c92e4d7588e73b688dffa2f5e2181d"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp",
+    "bytes": 16849,
+    "sha256": "a68795faa71110d7aa2d1ee5aedae57378aa8653aeaa76dede1ca371fcaf8ce4"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h",
+    "bytes": 3251,
+    "sha256": "ad47efca76df0f81bf7cb343d51e61e693e1b6f98f7e466bde32bd9a8234f762"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h",
+    "bytes": 7699,
+    "sha256": "f2c0e82afe003adf1be4d589b4e98f420cab6f37939189021d9704d4824abc6b"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp",
+    "bytes": 17232,
+    "sha256": "055cd9624e02d45491db5be2740f86d8c864b85618b4a262bba528349bfff9f3"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.cpp",
+    "bytes": 55607,
+    "sha256": "fefeb889645070281966b0a219b541e9fe0486f54c1cbcd21022db8e74a5e461"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanPipelineCompiler.h",
+    "bytes": 4099,
+    "sha256": "5ab48ebfc90fa1d51c841d5d37641d1a782811c291950efd7b4c1cde2ce1e432"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanQuery.cpp",
+    "bytes": 9748,
+    "sha256": "b228f1302ae83519a319dd7da584b42b8b6f7718e37eec8742b7561692c449bc"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+    "bytes": 207736,
+    "sha256": "579ede4ba7db6294fc80efa19e1653864af3d88ec3bcb3051dbeccb265843f7d"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+    "bytes": 43309,
+    "sha256": "7bf364ebb9d37317e834b98bd9fdf65eadf22ff6422edf91db9ae64155c018f6"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp",
+    "bytes": 95557,
+    "sha256": "72760bec34095bc97b21d2d07827a3dc485f63653ef6f81e4da2f80c75fd7ecd"
+  },
+  {
+    "path": "src/Cafe/IOSU/fsa/iosu_fsa.cpp",
+    "bytes": 30995,
+    "sha256": "0fef16f08b23cf657aee3459897739ba1fde268da4cf4b6b6a01d9555be18945"
+  },
+  {
+    "path": "src/Cafe/OS/libs/gx2/GX2_Query.cpp",
+    "bytes": 7088,
+    "sha256": "b7d89b2ed83ad36622b667b7065aac94f3038f233fe2734372ebcf78c2c6ee92"
+  },
+  {
+    "path": "src/Cafe/OS/libs/padscore/padscore.cpp",
+    "bytes": 24740,
+    "sha256": "ed7926ad411c09947222f7222a0bd040bc9a37c111a0033888ae0e1d0613fe64"
+  },
+  {
+    "path": "src/Cafe/OS/libs/vpad/vpad.cpp",
+    "bytes": 36590,
+    "sha256": "858aec06cbce64a3d7088d8624e7187f5709d63aaf64e26882c4ec4883cdec4e"
+  },
+  {
+    "path": "src/Common/ExceptionHandler/ExceptionHandler_win32.cpp",
+    "bytes": 11263,
+    "sha256": "197c5dc43b347f1c278dc3abd74a41604a03d512f3a5b06fe6781bccfcc3c2a1"
+  },
+  {
+    "path": "src/config/CemuConfig.cpp",
+    "bytes": 21665,
+    "sha256": "d14149e6d358f9c31ae3ff99a65d8cb264fe110c88033983389f054b689b7b70"
+  },
+  {
+    "path": "src/config/CemuConfig.h",
+    "bytes": 16151,
+    "sha256": "06a8eea1fd45b7a67c3609797e7d55eba725e4d9cb42373484b4d255e90cd905"
+  },
+  {
+    "path": "src/diagnostics/RuntimeDiagnostics.h",
+    "bytes": 22324,
+    "sha256": "12c3bcfd8b337d3d98efc8e33a740a1a6f1bd0aa5aacab6a89141f18ef41ed18"
+  },
+  {
+    "path": "src/gui/wxgui/GeneralSettings2.cpp",
+    "bytes": 98623,
+    "sha256": "15e71afdf1c2bf36c9b62683dc14df52b8c72f7bf8aa10a04421278938fa46d3"
+  },
+  {
+    "path": "src/gui/wxgui/GeneralSettings2.h",
+    "bytes": 5058,
+    "sha256": "ea8c21d8c33e2bddf65b41689be442e7ada2bc8265389d1afcf8c4c882f8a7af"
+  },
+  {
+    "path": "src/gui/wxgui/MainWindow.cpp",
+    "bytes": 101408,
+    "sha256": "9469a95a44e47fc3cba100384350c431a6c450cd77688632357f67105474c154"
+  },
+  {
+    "path": "src/gui/wxgui/wxCemuConfig.cpp",
+    "bytes": 8270,
+    "sha256": "9a1a8d982716a9595fdab3416ac980e2b7abfbe4b1afd216e6ca2351c9d0e764"
+  },
+  {
+    "path": "src/gui/wxgui/wxCemuConfig.h",
+    "bytes": 4083,
+    "sha256": "10e38e7262ffe3ef9b03a711fffbc2fab23b3afd3be3783dc0137ea4b4b6b987"
+  },
+  {
+    "path": "src/gui/wxgui/wxWindowSystem.cpp",
+    "bytes": 8347,
+    "sha256": "19975b50e8af4eb25f54a3bce414444a4e098153994f0b6b7262dd1bdd1a1cae"
+  },
+  {
+    "path": "src/imgui/imgui_impl_vulkan.cpp",
+    "bytes": 77252,
+    "sha256": "7cc03492bcc7ec121260b1da04ed9f47ad8c8d87982fc4c2d47fddc7a5250031"
+  },
+  {
+    "path": "src/imgui/imgui_impl_vulkan.h",
+    "bytes": 8860,
+    "sha256": "dce6b3530375df5b429b1b01a72fbab40782ddb56062091aa9218d042d71e0b4"
+  },
+  {
+    "path": "src/input/InputManager.cpp",
+    "bytes": 28056,
+    "sha256": "b5c2e66bc92e34b6c01560979d5deb664a15c7288be1c3d45c89ec951947472d"
+  },
+  {
+    "path": "tools/diagnostics/Verify-DiagnosticCoverage.py",
+    "bytes": 15916,
+    "sha256": "051f41fecf60ec0e24352895f0a0b051a94d75a0a2150e7ddd54e83210926960"
+  }
+]

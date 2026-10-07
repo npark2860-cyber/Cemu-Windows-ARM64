@@ -1,0 +1,5 @@
+Msg Timestamp,Message,Time,Unit of Measurement,Timing Source,Event Level,Event Identifier
+0,BACKEND,61506,US,BACKEND,ROOT,RPC (finalize) time
+0,BACKEND,60923,US,BACKEND,ROOT,QNN accelerator (finalize) time
+0,BACKEND,60815,US,BACKEND,ROOT,Accelerator (finalize) time
+0,FINALIZE,1434587,US,BACKEND,ROOT,QNN (finalize) time

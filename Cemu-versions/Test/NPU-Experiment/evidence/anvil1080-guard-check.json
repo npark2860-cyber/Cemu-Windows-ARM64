@@ -1,0 +1,8 @@
+{
+  "tested_at": "2026-09-29T09:02:18.5829563+09:00",
+  "guard_exit": 1,
+  "guard_output": "FAILED: Explicit --run-devices --model --out NEW_DIR --rpc-library ABSOLUTE --shaders --mode Verify|Measure required; no device started",
+  "device_executed": false,
+  "machine": "ARM64",
+  "probe_sha256": "e91b0ad6bdb687bc49060ddd290c11448200d444b911533f502381ee16b8b1bd"
+}

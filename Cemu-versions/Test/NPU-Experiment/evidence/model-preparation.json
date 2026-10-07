@@ -1,0 +1,60 @@
+{
+  "mode": "offline structure validation only; no inference",
+  "onnx_version": "1.20.1",
+  "fixtures": [
+    {
+      "path": "models/smoke-average-qdq-u8.onnx",
+      "sha256": "447cb38952fe343c7f7779271515eeb4a20fa1c1a122ae3d84c80bea14dae779"
+    },
+    {
+      "path": "models/smoke-average-fp32.onnx",
+      "sha256": "2250b1e52ce92e900e1d80a343e8459484ef6deefe3db10a26d16a75ceba6714"
+    }
+  ],
+  "anvil": {
+    "sha256": "65e871aed25b331e3a3747cf9019942121a94af71997476f5804a24b768cd0d8",
+    "ir_version": 8,
+    "operators": {
+      "Constant": 32,
+      "Mod": 4,
+      "Sub": 3,
+      "Unsqueeze": 4,
+      "Concat": 3,
+      "Shape": 1,
+      "Gather": 1,
+      "Cast": 2,
+      "ConstantOfShape": 1,
+      "Reshape": 2,
+      "Slice": 3,
+      "Transpose": 1,
+      "Pad": 1,
+      "Conv": 32,
+      "Relu": 31,
+      "Add": 17,
+      "ConvTranspose": 4
+    },
+    "inputs": [
+      {
+        "name": "input",
+        "shape": [
+          1,
+          6,
+          1080,
+          1920
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "output",
+        "shape": [
+          "Sliceoutput_dim_0",
+          3,
+          "Sliceoutput_dim_2",
+          "Sliceoutput_dim_3"
+        ]
+      }
+    ],
+    "note": "Fixed input; exported output metadata has symbolic axes. ORT must resolve its shape/pad/crop graph. HTP support not yet tested."
+  }
+}

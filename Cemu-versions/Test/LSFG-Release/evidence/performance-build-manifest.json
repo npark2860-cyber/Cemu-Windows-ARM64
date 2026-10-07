@@ -1,0 +1,54 @@
+{
+  "created_at": "2026-09-29T04:27:37.7810375+09:00",
+  "role": "experimental-stock-Release-LSFG-performance-comparison",
+  "base_commit": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+  "executable": "Cemu-lsfg-perf.exe",
+  "sha256": "d58032bae08df5ee4ef3de14e0caf018aa4ebee8a0b010884261483ed1623146",
+  "bytes": 29735936,
+  "pe_machine": "ARM64 (0xAA64)",
+  "window_title": "Cemu ARM64 [LSFG PERF]",
+  "previous_test_sha256": "e2f7899842c93c0bbee13ad9c23581b9f3a74595e80270725784bc8ae6d7ffa2",
+  "previous_test_preserved": true,
+  "target": "Native >=30 FPS, 60 FPS output with even cadence",
+  "changes": [
+    "Remove render-thread half-frame sleep",
+    "Order capture and module work on the same graphics queue without extra capture fence wait",
+    "Batch input/compute/output with one final CPU fence wait, separate input/output command buffers",
+    "Measure source/generated accepted present rates, host costs and return gaps"
+  ],
+  "pdb": "evidence/performance-build-symbols/Cemu_release.pdb",
+  "pdb_sha256": "73c2ead2647c938e9bad91e97bb4467293670a3ef19ec380c5047ffcfe370b96",
+  "cpu_tests": {
+    "checks": 90,
+    "failures": 0,
+    "gpu_submissions": 0,
+    "suites_passed": 2
+  },
+  "gpu_runtime_validation": "NOT RUN; user performs test. No FPS improvement or smooth 60 Hz claim yet.",
+  "source_files": [
+    {
+      "path": "source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanLSFG.cpp",
+      "sha256": "a1a888a50727d5961183c61fa0a72a07fc46c65215c9e9350d8db729783278c4"
+    },
+    {
+      "path": "source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+      "sha256": "75afc2ae016e7bfccc4d9808e06833ed787af4cb4214290eee12c272498cdfa7"
+    },
+    {
+      "path": "source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+      "sha256": "f03c22de36cafc78652ebd32f93858feaafaecdd51aa1bc4e5d5a22faa7436f8"
+    },
+    {
+      "path": "source/src/gui/wxgui/MainWindow.cpp",
+      "sha256": "452f913d678e77f0b1842a15cef7f4493df409ba3c650cf0d489186c735520fa"
+    },
+    {
+      "path": "source/src/gui/wxgui/wxWindowSystem.cpp",
+      "sha256": "18d6c6bf12b2789e55f90b6bdc70526ba06ce656085ffbfebd4fb3306495a34b"
+    },
+    {
+      "path": "source/dependencies/lsfg-cemu-arm64/src/lsfg_cemu.cpp",
+      "sha256": "3a96756f42a250342e9fbb325f9e2f9cf8af7e678d5e28fe9b8ffca1b771a3fe"
+    }
+  ]
+}

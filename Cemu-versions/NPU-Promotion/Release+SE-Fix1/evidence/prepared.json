@@ -1,0 +1,25 @@
+{
+  "time": "2026-09-29T10:26:54.010569+00:00",
+  "parent_manifest_sha256": "be60f231b121ce14ccf73894d1bd3ec5976aecac52539f8dbbcfa782c8e6515e",
+  "base_commit": "9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+  "changes": [
+    {
+      "path": "src/Cafe/OS/libs/snd_core/ax_voice.cpp",
+      "before_sha256": "d01a9045f7e0f701549eb7f9c4fb90d322051203090ae5e6a5597b4210ef2e00",
+      "after_sha256": "ccbcd07e86fde3e185c683aebfdb90f08e854382481f2cfcd9c5a70af98e0a3a"
+    },
+    {
+      "path": "src/gui/wxgui/MainWindow.cpp",
+      "before_sha256": "3dd153d50796074bb909492bcfd19f7a1445c1bfc14bb8c5d8126c353321b524",
+      "after_sha256": "61d3d9904fd78ac6173f225a86da57444de38451c6f692a093a6fb0b949dc1c6"
+    },
+    {
+      "path": "src/gui/wxgui/wxWindowSystem.cpp",
+      "before_sha256": "3e25452c908d052434c11b88510a718274365d972981f8fbce860d083deca03e",
+      "after_sha256": "dce43e742fdd801966b0b5bd4f3504d5cc5c06620fa99cd5988e22f77a9df05d"
+    }
+  ],
+  "unchanged_source_files": 1669,
+  "build_cache": "Copy of verified Release+SE build; identical Q paths and inputs.",
+  "device_executed": false
+}

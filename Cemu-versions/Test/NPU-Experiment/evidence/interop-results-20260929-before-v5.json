@@ -1,0 +1,255 @@
+{
+  "created_at": "2026-09-29T08:37:01.9428098+09:00",
+  "status": "VULKAN_IMPORT_SUCCEEDED_ROUNDTRIP_NOT_VERIFIED",
+  "authorization": "User replied ㄱㄱ to the prepared one-minute independent GPU/NPU test request.",
+  "time_slot": {
+    "start": "2026-09-29T08:26:44.6004679+09:00",
+    "end": "2026-09-29T08:30:37.2853282+09:00",
+    "closed": true,
+    "note": "Initial estimate exceeded while correcting device selection and dedicated-allocation support. User was informed and device execution ended."
+  },
+  "runs": [
+    {
+      "run": "vulkan-qnn-interop-20260929-082644-599",
+      "started_at": "2026-09-29T08:26:44.6004679+09:00",
+      "ended_at": "2026-09-29T08:26:44.9933585+09:00",
+      "exit_code": 2,
+      "stage": "vulkan_capabilities",
+      "reason": "Expected exactly one Adreno device",
+      "probe_sha256": "dde0a14d076043f6f04a5d16a8e3c8884f163f83e6d9657dda766eec34d6055b",
+      "native": {
+        "status": "UNSUPPORTED",
+        "stage": "vulkan_capabilities",
+        "model": "../models/smoke-average-qdq-u8.onnx",
+        "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+        "qnn_initialized": false,
+        "application_copy_free_gpu_npu_handoff": false,
+        "cemu_executed": false,
+        "full_framegen_validated": false,
+        "completed_rounds": 0,
+        "loader_api_version": 4211038,
+        "reason": "Expected exactly one Adreno device"
+      }
+    },
+    {
+      "run": "vulkan-qnn-interop-20260929-082754-339",
+      "started_at": "2026-09-29T08:27:54.3461143+09:00",
+      "ended_at": "2026-09-29T08:27:54.5235769+09:00",
+      "exit_code": 2,
+      "stage": "vulkan_capabilities",
+      "reason": "Expected exactly one Adreno device",
+      "probe_sha256": "e3a23a88edb28806de73c740ad7eceb59430cb6363e86b5b46c0468dbfeda7df",
+      "native": {
+        "status": "UNSUPPORTED",
+        "stage": "vulkan_capabilities",
+        "model": "../models/smoke-average-qdq-u8.onnx",
+        "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+        "qnn_initialized": false,
+        "application_copy_free_gpu_npu_handoff": false,
+        "cemu_executed": false,
+        "full_framegen_validated": false,
+        "completed_rounds": 0,
+        "loader_api_version": 4211038,
+        "vulkan_devices": [
+          {
+            "index": 0,
+            "name": "Qualcomm(R) Adreno(TM) X1-85 GPU",
+            "vendor_id": 20803,
+            "device_id": 909329200,
+            "driver_version_raw": 2151112704,
+            "api_version": 4210983
+          },
+          {
+            "index": 1,
+            "name": "Microsoft Direct3D12 (Qualcomm(R) Adreno(TM) X1-85 GPU)",
+            "vendor_id": 1297040209,
+            "device_id": 909329200,
+            "driver_version_raw": 109060195,
+            "api_version": 4202855
+          },
+          {
+            "index": 2,
+            "name": "Microsoft Direct3D12 (Microsoft Basic Render Driver)",
+            "vendor_id": 5140,
+            "device_id": 140,
+            "driver_version_raw": 109060195,
+            "api_version": 4202855
+          }
+        ],
+        "matching_adreno_devices": 2,
+        "reason": "Expected exactly one Adreno device"
+      }
+    },
+    {
+      "run": "vulkan-qnn-interop-20260929-082900-184",
+      "started_at": "2026-09-29T08:29:00.1854961+09:00",
+      "ended_at": "2026-09-29T08:29:01.1395075+09:00",
+      "exit_code": 2,
+      "stage": "import_qnn_memory",
+      "reason": "Dedicated buffer allocation required",
+      "probe_sha256": "3d9c29cbd5f5803353fdde984bcbe3f5331df79b2f1faab4ba86d9503ffbdf5c",
+      "native": {
+        "status": "UNSUPPORTED",
+        "stage": "import_qnn_memory",
+        "model": "../models/smoke-average-qdq-u8.onnx",
+        "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+        "qnn_initialized": true,
+        "application_copy_free_gpu_npu_handoff": false,
+        "cemu_executed": false,
+        "full_framegen_validated": false,
+        "completed_rounds": 0,
+        "loader_api_version": 4211038,
+        "vulkan_devices": [
+          {
+            "index": 0,
+            "name": "Qualcomm(R) Adreno(TM) X1-85 GPU",
+            "vendor_id": 20803,
+            "device_id": 909329200,
+            "driver_version_raw": 2151112704,
+            "api_version": 4210983
+          },
+          {
+            "index": 1,
+            "name": "Microsoft Direct3D12 (Qualcomm(R) Adreno(TM) X1-85 GPU)",
+            "vendor_id": 1297040209,
+            "device_id": 909329200,
+            "driver_version_raw": 109060195,
+            "api_version": 4202855
+          },
+          {
+            "index": 2,
+            "name": "Microsoft Direct3D12 (Microsoft Basic Render Driver)",
+            "vendor_id": 5140,
+            "device_id": 140,
+            "driver_version_raw": 109060195,
+            "api_version": 4202855
+          }
+        ],
+        "matching_adreno_devices": 1,
+        "gpu_name": "Qualcomm(R) Adreno(TM) X1-85 GPU",
+        "gpu_vendor_id": 20803,
+        "gpu_device_id": 909329200,
+        "gpu_driver_version_raw": 2151112704,
+        "gpu_api_version": 4210983,
+        "external_memory_host": true,
+        "external_memory_win32": true,
+        "external_semaphore_win32": true,
+        "min_imported_host_pointer_alignment": 4096,
+        "host_buffer_external_features": 4,
+        "shared_buffer_usage": 35,
+        "backend": "QnnHtp.dll",
+        "cpu_fallback_disabled": true,
+        "ort_version": "1.24.4",
+        "reason": "Dedicated buffer allocation required"
+      }
+    },
+    {
+      "run": "vulkan-qnn-interop-20260929-083036-678",
+      "started_at": "2026-09-29T08:30:36.6824449+09:00",
+      "ended_at": "2026-09-29T08:30:37.2853282+09:00",
+      "exit_code": 1,
+      "stage": "gpu_npu_gpu_round_0",
+      "reason": "GPU-read NPU output differs from arithmetic oracle",
+      "probe_sha256": "4bd79d85a5ce0624fc50910603f3ac489b44b88029075a97a121715cdd01c210",
+      "native": {
+        "status": "FAILED",
+        "stage": "gpu_npu_gpu_round_0",
+        "model": "../models/smoke-average-qdq-u8.onnx",
+        "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+        "qnn_initialized": true,
+        "application_copy_free_gpu_npu_handoff": false,
+        "cemu_executed": false,
+        "full_framegen_validated": false,
+        "completed_rounds": 0,
+        "loader_api_version": 4211038,
+        "vulkan_devices": [
+          {
+            "index": 0,
+            "name": "Qualcomm(R) Adreno(TM) X1-85 GPU",
+            "vendor_id": 20803,
+            "device_id": 909329200,
+            "driver_version_raw": 2151112704,
+            "api_version": 4210983
+          },
+          {
+            "index": 1,
+            "name": "Microsoft Direct3D12 (Qualcomm(R) Adreno(TM) X1-85 GPU)",
+            "vendor_id": 1297040209,
+            "device_id": 909329200,
+            "driver_version_raw": 109060195,
+            "api_version": 4202855
+          },
+          {
+            "index": 2,
+            "name": "Microsoft Direct3D12 (Microsoft Basic Render Driver)",
+            "vendor_id": 5140,
+            "device_id": 140,
+            "driver_version_raw": 109060195,
+            "api_version": 4202855
+          }
+        ],
+        "matching_adreno_devices": 1,
+        "gpu_name": "Qualcomm(R) Adreno(TM) X1-85 GPU",
+        "gpu_vendor_id": 20803,
+        "gpu_device_id": 909329200,
+        "gpu_driver_version_raw": 2151112704,
+        "gpu_api_version": 4210983,
+        "external_memory_host": true,
+        "external_memory_win32": true,
+        "external_semaphore_win32": true,
+        "min_imported_host_pointer_alignment": 4096,
+        "host_buffer_external_features": 4,
+        "shared_buffer_usage": 35,
+        "external_buffer_dedicated_only": false,
+        "backend": "QnnHtp.dll",
+        "cpu_fallback_disabled": true,
+        "ort_version": "1.24.4",
+        "input_shared_backing_bytes": 12287,
+        "output_shared_backing_bytes": 8191,
+        "input_import_bytes": 8192,
+        "output_import_bytes": 4096,
+        "input_aligned_offset": 0,
+        "output_aligned_offset": 0,
+        "input_memory_type": 4,
+        "output_memory_type": 4,
+        "input_memory_flags": 7,
+        "output_memory_flags": 7,
+        "import_handle_type": "HOST_ALLOCATION_BIT_EXT",
+        "dedicated_buffer_allocations": true,
+        "input_allocator": "QnnHtpShared",
+        "output_allocator": "QnnHtpShared",
+        "reason": "GPU-read NPU output differs from arithmetic oracle"
+      }
+    }
+  ],
+  "failed_run_provider_evidence": {
+    "verified_qnn_only": true,
+    "node_events": 1,
+    "kernel_events": 1,
+    "kernels_without_provider": 0,
+    "providers": [
+      "QNNExecutionProvider"
+    ],
+    "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+  },
+  "confirmed": [
+    "Native Qualcomm GPU vendor 0x5143 selected; Microsoft D3D12 translation adapters excluded.",
+    "GPU 31.0.170.0 advertises host memory import, Win32 external memory and external semaphore extensions.",
+    "QNN shared input/output imported as dedicated Vulkan buffers; alignment 4096, memory type 4, flags 7.",
+    "One QNN-only kernel executed, but first output failed the arithmetic oracle. No complete changing-input roundtrip passed."
+  ],
+  "limitation": "Revision 4 saved raw readback only after validation, so the failing actual bytes were not preserved. Revision 5 saves them before validation.",
+  "diagnosis": {
+    "status": "SOURCE_SUPPORTED_CAUSE_CANDIDATE_NOT_RETESTED",
+    "finding": "ORT 1.24.4 IOBinding::BindInput invokes CopyOneInputAcrossDevices; QNN target is default CPU, shared input has HOST_ACCESSIBLE memory type. A 6144-byte CPU arena allocation is logged at the binding stage before GPU writes.",
+    "proposed_fix": "Direct preallocated Session::Run keeps original shared OrtValues through the CPU-addressable-EP NoCopy execution path. QNN selects memHandle for HOST_ACCESSIBLE tensors. Verbose memHandle binding logs are required for confirmation."
+  },
+  "next_probe": {
+    "revision": 5,
+    "probe_sha256": "ee7db11e50962bba857cbe7acc4294fda1d43c903c2b8ff18b4ef44bacfca407",
+    "build_passed": true,
+    "offline_reader_tests": 8,
+    "device_tested": false,
+    "new_device_time_approval_required": true
+  }
+}

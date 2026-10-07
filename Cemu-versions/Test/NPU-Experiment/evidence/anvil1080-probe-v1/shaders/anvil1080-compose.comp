@@ -1,0 +1,17 @@
+#version 450
+layout(local_size_x=16,local_size_y=16) in;
+layout(set=0,binding=0,rgba8) uniform readonly image2D frameA;
+layout(set=0,binding=1,rgba8) uniform readonly image2D frameB;
+layout(set=0,binding=3,std430) readonly buffer Output { uint words[]; } residual;
+layout(set=0,binding=4,rgba8) uniform writeonly image2D composed;
+uint byteAt(uint i) { return (residual.words[i/4u]>>((i%4u)*8u))&255u; }
+void main() {
+    uvec2 xy=gl_GlobalInvocationID.xy;
+    if(xy.x>=1920u || xy.y>=1080u) return;
+    uint base=(xy.y*1920u+xy.x)*3u;
+    vec3 delta=(vec3(byteAt(base),byteAt(base+1u),byteAt(base+2u))-128.0)*0.00330072408542037;
+    // Diagnostic residual consumer. Synthetic inputs stand in for a prepared pair;
+    // this is not motion estimation or validation of game interpolation quality.
+    vec3 average=(imageLoad(frameA,ivec2(xy)).rgb+imageLoad(frameB,ivec2(xy)).rgb)*0.5;
+    imageStore(composed,ivec2(xy),vec4(clamp(average+delta,0.0,1.0),1.0));
+}

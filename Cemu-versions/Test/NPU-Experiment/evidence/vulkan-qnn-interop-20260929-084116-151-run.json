@@ -1,0 +1,81 @@
+{
+  "status": "INTEROP_ROUNDTRIP_VERIFIED",
+  "started_at": "2026-09-29T08:41:16.1530600+09:00",
+  "ended_at": "2026-09-29T08:41:17.4803750+09:00",
+  "closed": true,
+  "exit_code": 0,
+  "npu_driver_before": "30.0.224.10000",
+  "npu_driver_after": "30.0.224.10000",
+  "gpu_driver_before": "31.0.170.0",
+  "gpu_driver_after": "31.0.170.0",
+  "manifest_sha256": "fcd1632c88d1982c2db1ae4a37adc271fd0bc41aeaa314b61fc0add14bf74cac",
+  "probe_sha256": "ee7db11e50962bba857cbe7acc4294fda1d43c903c2b8ff18b4ef44bacfca407",
+  "model_sha256": "447cb38952fe343c7f7779271515eeb4a20fa1c1a122ae3d84c80bea14dae779",
+  "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\vulkan-qnn-interop-20260929-084116-151",
+  "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\vulkan-qnn-interop-20260929-084116-151-console.log",
+  "result": {
+    "status": "INTEROP_ROUNDTRIP_VERIFIED",
+    "gpu_name": "Qualcomm(R) Adreno(TM) X1-85 GPU",
+    "profile": {
+      "verified_qnn_only": true,
+      "node_events": 5,
+      "kernel_events": 5,
+      "kernels_without_provider": 0,
+      "providers": [
+        "QNNExecutionProvider"
+      ],
+      "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+    },
+    "rounds": [
+      {
+        "round": 0,
+        "max_oracle_error": 0.5,
+        "readback_sha256": "9e55b218121c84698269876a17ad56ad9f561e8f83f0863b6eb90841bd7afd64",
+        "gpu_write_and_fence_ms": 2.0136,
+        "npu_run_ms": 25.4532,
+        "gpu_diagnostic_readback_ms": 0.4351
+      },
+      {
+        "round": 1,
+        "max_oracle_error": 0.5,
+        "readback_sha256": "a5907ad1e83eea94573c9ed04a296fd11913b79f3cf7a9a8a558153d89dbf5fd",
+        "gpu_write_and_fence_ms": 0.3966,
+        "npu_run_ms": 6.6155,
+        "gpu_diagnostic_readback_ms": 0.3701
+      },
+      {
+        "round": 2,
+        "max_oracle_error": 0.5,
+        "readback_sha256": "dfb7ab899179cc870a9d12164754ff9190f06991c5c34ae41ac7d711d3771996",
+        "gpu_write_and_fence_ms": 0.3602,
+        "npu_run_ms": 6.3427,
+        "gpu_diagnostic_readback_ms": 0.3935
+      },
+      {
+        "round": 3,
+        "max_oracle_error": 0.5,
+        "readback_sha256": "5765d9545b007a52412d8e8f21435be8fd9f78cfc3931da4cad87bbcda45a3e7",
+        "gpu_write_and_fence_ms": 0.3452,
+        "npu_run_ms": 6.6336,
+        "gpu_diagnostic_readback_ms": 0.3875
+      },
+      {
+        "round": 4,
+        "max_oracle_error": 0.5,
+        "readback_sha256": "9d6d1fb5fc89dcaf4a9c6d99767940106af0105a9f2b73d6841867fc9a712d27",
+        "gpu_write_and_fence_ms": 0.4049,
+        "npu_run_ms": 6.3875,
+        "gpu_diagnostic_readback_ms": 0.4017
+      }
+    ],
+    "qnn_memhandle_bindings": 10,
+    "qnn_raw_tensor_bindings": 0,
+    "invocation": "direct_preallocated_run",
+    "application_copy_free_gpu_npu_handoff": true,
+    "diagnostic_readback_used": true,
+    "physical_zero_copy_proven": false,
+    "full_framegen_validated": false,
+    "limitation": "Verifies application-level handoff through the same imported RPC allocations with changing small GPU patterns; does not prove no internal driver copies, 1080p image/compute interoperability, performance, or complete frame generation."
+  },
+  "error": null
+}

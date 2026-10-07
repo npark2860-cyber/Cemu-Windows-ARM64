@@ -1,0 +1,7 @@
+[
+{"cat" : "Session","pid" :10812,"tid" :19316,"dur" :455,"ts" :14,"ph" : "X","name" :"model_loading_uri","args" : {}},
+{"cat" : "Session","pid" :10812,"tid" :19316,"dur" :327374,"ts" :1132,"ph" : "X","name" :"session_initialization","args" : {}},
+{"cat" : "Node","pid" :10812,"tid" :19316,"dur" :4095,"ts" :342310,"ph" : "X","name" :"QNNExecutionProvider_QNN_6519748888177052287_1_0_kernel_time","args" : {"parameter_size" : "27","provider" : "QNNExecutionProvider","op_name" : "QNN_6519748888177052287_1","input_type_shape" : [{"uint8":[1,6,32,32]},{"float":[]},{"uint8":[]},{"uint8":[3,6,1,1]},{"float":[]}],"node_index" : "14","output_type_shape" : [{"uint8":[1,3,32,32]}],"activation_size" : "6144","output_size" : "3072","thread_scheduling_stats" : ""}},
+{"cat" : "Session","pid" :10812,"tid" :19316,"dur" :4118,"ts" :342298,"ph" : "X","name" :"SequentialExecutor::Execute","args" : {}},
+{"cat" : "Session","pid" :10812,"tid" :19316,"dur" :4179,"ts" :342251,"ph" : "X","name" :"model_run","args" : {}}
+]

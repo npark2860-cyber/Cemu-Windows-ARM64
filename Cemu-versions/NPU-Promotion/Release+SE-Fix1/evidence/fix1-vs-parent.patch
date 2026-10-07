@@ -1,0 +1,33 @@
+--- parent/src/Cafe/OS/libs/snd_core/ax_voice.cpp
++++ fix1/src/Cafe/OS/libs/snd_core/ax_voice.cpp
+@@ -831,7 +831,7 @@
+ 				uint64_t playbackId = 0;
+ 				std::string error;
+ 				const bool played = EnhancedSoundDualSenseService::PlayBnvib(
+-					route->hapticPath, route->hapticGain, route->hapticLoop, &playbackId, &error, route->hapticLoop || route->hapticFollowTv);
++					_utf8ToPath(route->hapticPath), route->hapticGain, route->hapticLoop, &playbackId, &error, route->hapticLoop || route->hapticFollowTv);
+ 				hapticState.sampleBase = sampleBase;
+ 				hapticState.hapticPath = route->hapticPath;
+ 				hapticState.gain = route->hapticGain;
+--- parent/src/gui/wxgui/MainWindow.cpp
++++ fix1/src/gui/wxgui/MainWindow.cpp
+@@ -430,7 +430,7 @@
+ wxString MainWindow::GetInitialWindowTitle()
+ {
+ #ifdef CEMU_ENABLE_NPU
+-	return wxASCII_STR("Cemu ARM64 [Release+SE | NPU]");
++	return wxASCII_STR("Cemu ARM64 [Release+SE | NPU | Fix 1]");
+ #else
+ 	return wxASCII_STR("Cemu ARM64");
+ #endif
+--- parent/src/gui/wxgui/wxWindowSystem.cpp
++++ fix1/src/gui/wxgui/wxWindowSystem.cpp
+@@ -75,7 +75,7 @@
+ {
+ 	std::string windowText;
+ #ifdef CEMU_ENABLE_NPU
+-	windowText = "Cemu ARM64 [Release+SE | NPU]";
++	windowText = "Cemu ARM64 [Release+SE | NPU | Fix 1]";
+ #else
+ 	windowText = "Cemu ARM64";
+ #endif

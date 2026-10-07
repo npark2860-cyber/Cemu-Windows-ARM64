@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-09-29T07:17:44.8344371+09:00",
+  "status": "SYNTHETIC_CANDIDATE_READY_NOT_NPU_TESTED",
+  "preparation": "evidence/int8-prep-20260929-071500-022764/preparation.json",
+  "files": [
+    {
+      "path": "evidence/probe-build-manifest.json",
+      "bytes": 4394,
+      "sha256": "86c8fd22447b1767de6e2a62e990822cde9a7cd2ee314f0b0eef30989abd31ab"
+    },
+    {
+      "path": "evidence/quantization-tools.json",
+      "bytes": 1144,
+      "sha256": "599e74196f07ba73532e91e1130ab234a233f3689836a51422801dc5934613c3"
+    },
+    {
+      "path": "scripts/prepare_int8_experiment.py",
+      "bytes": 11738,
+      "sha256": "a3a555e92eb66116f084cf3dbbaa4701c1be66d871edf670eb42872807065ced"
+    },
+    {
+      "path": "scripts/prepare_resolution_models.py",
+      "bytes": 10173,
+      "sha256": "ec9b17d97077d50bcb10ff5d6aff1eae7f18406f0d6424c7d79fc9afddb47bbd"
+    },
+    {
+      "path": "run-int8-probe.ps1",
+      "bytes": 6157,
+      "sha256": "6b3096bc98b964f8f79250507c3881e184a91416cf0758730fa02e400178e5f8"
+    },
+    {
+      "path": "INT8-EXPERIMENT.md",
+      "bytes": 3542,
+      "sha256": "2c2ed75d7764ac306415fd455bfc50d6e6df6d5a14a3814bb54c53b93467b753"
+    },
+    {
+      "path": "evidence/int8-prep-20260929-071500-022764/preparation.json",
+      "bytes": 1991,
+      "sha256": "9cce1992ba2365b7d5c49d27b485fe1ff34fb2cac47a19f0a8224df70fbdc110"
+    },
+    {
+      "path": "evidence/int8-prep-20260929-071500-022764/anvil-1080p-synthetic-u8u8.onnx",
+      "bytes": 943947,
+      "sha256": "ec1abb0d5921a5117ff247bc7803287b44be38423af8e84393d8553cee84d95f"
+    },
+    {
+      "path": "evidence/int8-prep-20260929-071500-022764/synthetic-ranges.json",
+      "bytes": 12436,
+      "sha256": "664dc491d55a99f050428a214477f2958a02bc958cf5994f3e1a0cdd0e9a1f4c"
+    }
+  ]
+}

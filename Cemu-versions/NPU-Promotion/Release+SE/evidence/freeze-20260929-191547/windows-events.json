@@ -1,0 +1,62 @@
+[
+  {
+    "TimeCreated": "2026-09-29T19:16:28.3035714+09:00",
+    "Id": 1001,
+    "Message": "오류 버킷 1252884273019900035, 유형 5\r\n이벤트 이름: AppHangB1\r\n응답: 사용할 수 없음\r\nCab ID: 0\r\n\r\n문제 서명:\r\nP1: Cemu-Release-SE-NPU.exe\r\nP2: 0.0.0.0\r\nP3: 6abb86ee\r\nP4: 0792\r\nP5: 67246080\r\nP6: \r\nP7: \r\nP8: \r\nP9: \r\nP10: \r\n\r\n첨부 파일:\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.3ab2bab6-0b04-470d-abb8-2a4655c68025.tmp.WERInternalMetadata.xml\r\n\r\n이 파일은 다음에서 사용할 수 있습니다.\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive\\Critical_Cemu-Release-SE-_b169d7293b1544f4c15a67763dff8899c08522c8_0a80fe50_1a38318e-5b39-4653-8777-bc0bca8f6517\r\n\r\n분석 기호: \r\n해결 방법 재확인: 0\r\n보고서 ID: f5103105-3954-47a2-bfcb-b11898e70cad\r\n보고서 상태: 268435456\r\n해시된 패킷: 921ff52399ac19c00163239bb6065083\r\nCab Guid: 0"
+  },
+  {
+    "TimeCreated": "2026-09-29T19:16:22.5966277+09:00",
+    "Id": 1001,
+    "Message": "오류 버킷 , 유형 0\r\n이벤트 이름: AppHangB1\r\n응답: 사용할 수 없음\r\nCab ID: 0\r\n\r\n문제 서명:\r\nP1: Cemu-Release-SE-NPU.exe\r\nP2: 0.0.0.0\r\nP3: 6abb86ee\r\nP4: 0792\r\nP5: 67246080\r\nP6: \r\nP7: \r\nP8: \r\nP9: \r\nP10: \r\n\r\n첨부 파일:\r\n\r\n이 파일은 다음에서 사용할 수 있습니다.\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportQueue\\Critical_Cemu-Release-SE-_b169d7293b1544f4c15a67763dff8899c08522c8_0a80fe50_1a38318e-5b39-4653-8777-bc0bca8f6517\r\n\r\n분석 기호: \r\n해결 방법 재확인: 0\r\n보고서 ID: f5103105-3954-47a2-bfcb-b11898e70cad\r\n보고서 상태: 4\r\n해시된 패킷: \r\nCab Guid: 0"
+  },
+  {
+    "TimeCreated": "2026-09-29T19:15:54.0079389+09:00",
+    "Id": 1001,
+    "Message": "오류 버킷 1217134716521087971, 유형 4\r\n이벤트 이름: APPCRASH\r\n응답: 사용할 수 없음\r\nCab ID: 0\r\n\r\n문제 서명:\r\nP1: Cemu-Release-SE-NPU.exe\r\nP2: 0.0.0.0\r\nP3: 6abb86ee\r\nP4: Cemu-Release-SE-NPU.exe\r\nP5: 0.0.0.0\r\nP6: 6abb86ee\r\nP7: c0000005\r\nP8: 0000000000ea1560\r\nP9: \r\nP10: \r\n\r\n첨부 파일:\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.f1f675dc-ce81-4320-8864-b00387d6b5d6.tmp.dmp\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.e94ba6b5-2ba1-4973-b982-cfa42521157e.tmp.WERInternalMetadata.xml\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.1cf45a45-abe5-412a-a802-b8ad8803af0e.tmp.csv\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.9723ca7c-f266-42f6-a7ce-77d7f300274c.tmp.txt\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.37012b9e-498a-429b-a8ea-73219e9815a2.tmp.xml\r\n\r\n이 파일은 다음에서 사용할 수 있습니다.\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive\\AppCrash_Cemu-Release-SE-_329f8140b6138958723342fc794cdaaf51e75e8c_0a80fe50_4d6f45fe-6550-446e-8cda-c35ada167682\r\n\r\n분석 기호: \r\n해결 방법 재확인: 0\r\n보고서 ID: e742fe26-0a93-4640-8361-550cef779589\r\n보고서 상태: 268435456\r\n해시된 패킷: a412f5141805e995b0e42193760903e3\r\nCab Guid: 0"
+  },
+  {
+    "TimeCreated": "2026-09-29T19:15:48.2955303+09:00",
+    "Id": 1000,
+    "Message": "오류 있는 응용 프로그램 이름: Cemu-Release-SE-NPU.exe, 버전: 0.0.0.0, 타임스탬프로: 0x6abb86ee\r\n오류 있는 모듈 이름: Cemu-Release-SE-NPU.exe, 버전: 0.0.0.0, 타임스탬프: 0x6abb86ee\r\n예외 코드: 0xc0000005\r\n오류 오프셋: 0x0000000000ea1560\r\n오류 처리 ID: 0x2278\r\n오류 응용 프로그램 시작 시간: 0x1DD4FFB744C4CD0\r\nFaulting 응용 프로그램 경로: C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\Cemu-Release-SE-NPU.exe\r\nFaulting 모듈 경로: C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\Cemu-Release-SE-NPU.exe\r\nReport Id: e742fe26-0a93-4640-8361-550cef779589\r\nFaulting 패키지 전체 이름: \r\nFaulting 패키지 상대 응용 프로그램 ID:  "
+  },
+  {
+    "TimeCreated": "2026-09-29T19:15:29.4218853+09:00",
+    "Id": 1001,
+    "Message": "오류 버킷 1252884273019900035, 유형 5\r\n이벤트 이름: AppHangB1\r\n응답: 사용할 수 없음\r\nCab ID: 0\r\n\r\n문제 서명:\r\nP1: Cemu-Release-SE-NPU.exe\r\nP2: 0.0.0.0\r\nP3: 6abb86ee\r\nP4: 0792\r\nP5: 67246080\r\nP6: \r\nP7: \r\nP8: \r\nP9: \r\nP10: \r\n\r\n첨부 파일:\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.a3bbfc3d-d7f4-42cd-90ec-0c8e87d761b7.tmp.WERInternalMetadata.xml\r\n\r\n이 파일은 다음에서 사용할 수 있습니다.\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive\\Critical_Cemu-Release-SE-_b169d7293b1544f4c15a67763dff8899c08522c8_0a80fe50_0ccb20ff-dc7f-4f7c-96e3-12705c35c2ad\r\n\r\n분석 기호: \r\n해결 방법 재확인: 0\r\n보고서 ID: 1301974d-74ad-4beb-a854-e085bfbe3909\r\n보고서 상태: 268435456\r\n해시된 패킷: 921ff52399ac19c00163239bb6065083\r\nCab Guid: 0"
+  },
+  {
+    "TimeCreated": "2026-09-29T19:15:26.1638045+09:00",
+    "Id": 1001,
+    "Message": "오류 버킷 , 유형 0\r\n이벤트 이름: AppHangB1\r\n응답: 사용할 수 없음\r\nCab ID: 0\r\n\r\n문제 서명:\r\nP1: Cemu-Release-SE-NPU.exe\r\nP2: 0.0.0.0\r\nP3: 6abb86ee\r\nP4: 0792\r\nP5: 67246080\r\nP6: \r\nP7: \r\nP8: \r\nP9: \r\nP10: \r\n\r\n첨부 파일:\r\n\r\n이 파일은 다음에서 사용할 수 있습니다.\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportQueue\\Critical_Cemu-Release-SE-_b169d7293b1544f4c15a67763dff8899c08522c8_0a80fe50_0ccb20ff-dc7f-4f7c-96e3-12705c35c2ad\r\n\r\n분석 기호: \r\n해결 방법 재확인: 0\r\n보고서 ID: 1301974d-74ad-4beb-a854-e085bfbe3909\r\n보고서 상태: 4\r\n해시된 패킷: \r\nCab Guid: 0"
+  },
+  {
+    "TimeCreated": "2026-09-29T19:14:57.6633594+09:00",
+    "Id": 1001,
+    "Message": "오류 버킷 1217134716521087971, 유형 4\r\n이벤트 이름: APPCRASH\r\n응답: 사용할 수 없음\r\nCab ID: 0\r\n\r\n문제 서명:\r\nP1: Cemu-Release-SE-NPU.exe\r\nP2: 0.0.0.0\r\nP3: 6abb86ee\r\nP4: Cemu-Release-SE-NPU.exe\r\nP5: 0.0.0.0\r\nP6: 6abb86ee\r\nP7: c0000005\r\nP8: 0000000000ea1560\r\nP9: \r\nP10: \r\n\r\n첨부 파일:\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.2a978d3f-a20d-49db-8d9c-e87c9c65b29b.tmp.dmp\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.993329f9-f244-4eba-8bb1-3c8a3038d606.tmp.WERInternalMetadata.xml\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.3a11f3b4-5d0c-445a-a191-dce6c6962489.tmp.csv\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.872118bf-0c1e-41f5-884e-0584e227cbe7.tmp.txt\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.7ddb8ae3-3a5f-4f16-ac0b-b72468c67d15.tmp.xml\r\n\r\n이 파일은 다음에서 사용할 수 있습니다.\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive\\AppCrash_Cemu-Release-SE-_329f8140b6138958723342fc794cdaaf51e75e8c_0a80fe50_3c5f1eca-eeb0-4bc6-a54b-e7d3865c105c\r\n\r\n분석 기호: \r\n해결 방법 재확인: 0\r\n보고서 ID: 742cd8f8-d45d-4e84-a7c4-e07cff174639\r\n보고서 상태: 268435456\r\n해시된 패킷: a412f5141805e995b0e42193760903e3\r\nCab Guid: 0"
+  },
+  {
+    "TimeCreated": "2026-09-29T19:14:51.0235177+09:00",
+    "Id": 1000,
+    "Message": "오류 있는 응용 프로그램 이름: Cemu-Release-SE-NPU.exe, 버전: 0.0.0.0, 타임스탬프로: 0x6abb86ee\r\n오류 있는 모듈 이름: Cemu-Release-SE-NPU.exe, 버전: 0.0.0.0, 타임스탬프: 0x6abb86ee\r\n예외 코드: 0xc0000005\r\n오류 오프셋: 0x0000000000ea1560\r\n오류 처리 ID: 0x1DC8\r\n오류 응용 프로그램 시작 시간: 0x1DD4FFAFB6FDC16\r\nFaulting 응용 프로그램 경로: C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\Cemu-Release-SE-NPU.exe\r\nFaulting 모듈 경로: C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\Cemu-Release-SE-NPU.exe\r\nReport Id: 742cd8f8-d45d-4e84-a7c4-e07cff174639\r\nFaulting 패키지 전체 이름: \r\nFaulting 패키지 상대 응용 프로그램 ID:  "
+  },
+  {
+    "TimeCreated": "2026-09-29T19:10:27.9442332+09:00",
+    "Id": 1001,
+    "Message": "오류 버킷 1219616283659941599, 유형 4\r\n이벤트 이름: APPCRASH\r\n응답: 사용할 수 없음\r\nCab ID: 0\r\n\r\n문제 서명:\r\nP1: Cemu-Release-SE-NPU.exe\r\nP2: 0.0.0.0\r\nP3: 6abb86ee\r\nP4: StackHash_0792\r\nP5: 10.0.26100.9568\r\nP6: b43f2138\r\nP7: c0000374\r\nP8: PCH_D1_FROM_ntdll+0x00000000000015F4\r\nP9: \r\nP10: \r\n\r\n첨부 파일:\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.7c4bff40-f9bc-45ac-9d04-1cb336cca3c2.tmp.dmp\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.a5d4605e-69b9-4355-bccf-f8b7c6ba58cb.tmp.WERInternalMetadata.xml\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.2289cf12-80e0-4878-a37d-5341f320982c.tmp.csv\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.b432b32f-2f56-4fe7-bb2a-dcf12d60cf41.tmp.txt\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.d7c21bd1-38a3-4640-a3ff-878c6b2693f5.tmp.xml\r\n\r\n이 파일은 다음에서 사용할 수 있습니다.\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive\\AppCrash_Cemu-Release-SE-_7fe7f27b65fb5f7e449fc1704a2441f939e920_0a80fe50_2bece558-89f3-4a81-8b6d-58ee9cea98ea\r\n\r\n분석 기호: \r\n해결 방법 재확인: 0\r\n보고서 ID: 59be2a8b-3e03-45e7-8c44-748608886339\r\n보고서 상태: 268435456\r\n해시된 패킷: 72672d4a150e6f3d50ecf28c55d536df\r\nCab Guid: 0"
+  },
+  {
+    "TimeCreated": "2026-09-29T19:10:24.4895095+09:00",
+    "Id": 1000,
+    "Message": "오류 있는 응용 프로그램 이름: Cemu-Release-SE-NPU.exe, 버전: 0.0.0.0, 타임스탬프로: 0x6abb86ee\r\n오류 있는 모듈 이름: ntdll.dll, 버전: 10.0.26100.9568, 타임스탬프: 0xb43f2138\r\n예외 코드: 0xc0000374\r\n오류 오프셋: 0x00000000001134d8\r\n오류 처리 ID: 0x361C\r\n오류 응용 프로그램 시작 시간: 0x1DD4FFAA63BC5A1\r\nFaulting 응용 프로그램 경로: C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\Cemu-Release-SE-NPU.exe\r\nFaulting 모듈 경로: C:\\WINDOWS\\SYSTEM32\\ntdll.dll\r\nReport Id: 59be2a8b-3e03-45e7-8c44-748608886339\r\nFaulting 패키지 전체 이름: \r\nFaulting 패키지 상대 응용 프로그램 ID:  "
+  },
+  {
+    "TimeCreated": "2026-09-29T19:09:42.1057875+09:00",
+    "Id": 1001,
+    "Message": "오류 버킷 1219616283659941599, 유형 4\r\n이벤트 이름: APPCRASH\r\n응답: 사용할 수 없음\r\nCab ID: 0\r\n\r\n문제 서명:\r\nP1: Cemu-Release-SE-NPU.exe\r\nP2: 0.0.0.0\r\nP3: 6abb86ee\r\nP4: StackHash_0792\r\nP5: 10.0.26100.9568\r\nP6: b43f2138\r\nP7: c0000374\r\nP8: PCH_D1_FROM_ntdll+0x00000000000015F4\r\nP9: \r\nP10: \r\n\r\n첨부 파일:\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.9297f28d-ce15-4243-a6e9-4448216c229e.tmp.dmp\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.51af06d1-0599-45ea-b9ce-cea76b85180a.tmp.WERInternalMetadata.xml\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.0ae6d71d-d2c3-4b2b-851c-4d3309587d17.tmp.csv\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.697dab91-eee9-4296-b518-eb99e49daae7.tmp.txt\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\Temp\\WER.b4b8789d-ba94-4ece-8910-8624032aa9d3.tmp.xml\r\n\r\n이 파일은 다음에서 사용할 수 있습니다.\r\n\\\\?\\C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive\\AppCrash_Cemu-Release-SE-_7fe7f27b65fb5f7e449fc1704a2441f939e920_0a80fe50_21f0d867-96e5-4948-a2a3-bdca05b217f1\r\n\r\n분석 기호: \r\n해결 방법 재확인: 0\r\n보고서 ID: 710540cf-f0be-40df-bf07-433de13771f3\r\n보고서 상태: 268435456\r\n해시된 패킷: 72672d4a150e6f3d50ecf28c55d536df\r\nCab Guid: 0"
+  },
+  {
+    "TimeCreated": "2026-09-29T19:09:38.5419653+09:00",
+    "Id": 1000,
+    "Message": "오류 있는 응용 프로그램 이름: Cemu-Release-SE-NPU.exe, 버전: 0.0.0.0, 타임스탬프로: 0x6abb86ee\r\n오류 있는 모듈 이름: ntdll.dll, 버전: 10.0.26100.9568, 타임스탬프: 0xb43f2138\r\n예외 코드: 0xc0000374\r\n오류 오프셋: 0x00000000001134d8\r\n오류 처리 ID: 0x24C\r\n오류 응용 프로그램 시작 시간: 0x1DD4FFA892B6FA7\r\nFaulting 응용 프로그램 경로: C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\Cemu-Release-SE-NPU.exe\r\nFaulting 모듈 경로: C:\\WINDOWS\\SYSTEM32\\ntdll.dll\r\nReport Id: 710540cf-f0be-40df-bf07-433de13771f3\r\nFaulting 패키지 전체 이름: \r\nFaulting 패키지 상대 응용 프로그램 ID:  "
+  }
+]

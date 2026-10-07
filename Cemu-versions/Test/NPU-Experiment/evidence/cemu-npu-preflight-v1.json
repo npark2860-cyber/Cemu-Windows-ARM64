@@ -1,0 +1,8 @@
+{
+  "status": "NPU_RELEASE_FILES_VERIFIED_NOT_EXECUTED",
+  "executable": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Release\\runtime\\Cemu-npu-exp-v1.exe",
+  "variant": "Release (NPU EXP v1)",
+  "cemu_executed": false,
+  "gpu_npu_executed": false,
+  "runtime_validation": "Pending a separately agreed test time"
+}

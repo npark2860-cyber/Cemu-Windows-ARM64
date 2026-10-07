@@ -1,0 +1,21 @@
+{
+  "status": "OFFLINE_READER_TESTS_PASSED",
+  "count": 14,
+  "tests": [
+    "accept_hand_computed_nhwc_and_compose",
+    "reject_input_layout_corruption",
+    "reject_stale_input_phase",
+    "reject_output_poison",
+    "reject_bad_residual_consumption",
+    "reject_bad_alpha",
+    "reject_truncated_diagnostic",
+    "accept_complete_qnn_profile",
+    "reject_missing_inferences",
+    "reject_cpu_fallback",
+    "accept_separate_measured_window",
+    "reject_warmup_in_measured_window",
+    "reject_inconsistent_nested_timings",
+    "reject_nonfinite_timing"
+  ],
+  "device_executed": false
+}

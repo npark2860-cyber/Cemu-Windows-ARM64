@@ -1,0 +1,10 @@
+{
+  "locale": "ko",
+  "added_messages": 11,
+  "existing_entries_preserved": 823,
+  "base_catalog_sha256": "0306123a00c0fd672bcfeb29f9e4a0582d933a4694ce78fdc3792e553065e792",
+  "merged_catalog_sha256": "feaeb399e43c2485a41b55e33f67d94b5a6dca3e0e5fc743ec2d685e04d6dc98",
+  "gnu_gettext_lookup_verified": true,
+  "other_languages": "existing translations retained; new messages fall back to English until translated",
+  "game_execution": false
+}

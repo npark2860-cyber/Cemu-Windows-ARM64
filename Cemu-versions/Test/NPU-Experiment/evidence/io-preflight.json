@@ -1,0 +1,55 @@
+{
+  "status": "OFFLINE_CHECKS_PASSED",
+  "device_executed": false,
+  "build_exit_code": 0,
+  "runner_parser": "PASS",
+  "model_equivalence": [
+    {
+      "pattern": 0,
+      "u8_nchw_nhwc_bitwise_equal": true,
+      "max_abs_error_vs_existing_qdq": 0.0
+    },
+    {
+      "pattern": 1,
+      "u8_nchw_nhwc_bitwise_equal": true,
+      "max_abs_error_vs_existing_qdq": 0.0
+    },
+    {
+      "pattern": 2,
+      "u8_nchw_nhwc_bitwise_equal": true,
+      "max_abs_error_vs_existing_qdq": 0.0
+    }
+  ],
+  "preflight": [
+    {
+      "status": "FILES_VERIFIED_NOT_EXECUTED",
+      "variant": "FloatNCHW",
+      "model": "evidence/int8-prep-20260929-071500-022764/anvil-1080p-synthetic-u8u8.onnx",
+      "model_sha256": "ec1abb0d5921a5117ff247bc7803287b44be38423af8e84393d8553cee84d95f",
+      "layout": "NCHW",
+      "host_dtype": "float",
+      "device_loaded": false,
+      "next": "Requires a new user-approved NPU time slot."
+    },
+    {
+      "status": "FILES_VERIFIED_NOT_EXECUTED",
+      "variant": "U8NCHW",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nchw.onnx",
+      "model_sha256": "55b8bae4441de0341d92470091b6174a3cd57b077ed178d14f3a690f658f7699",
+      "layout": "NCHW",
+      "host_dtype": "uint8",
+      "device_loaded": false,
+      "next": "Requires a new user-approved NPU time slot."
+    },
+    {
+      "status": "FILES_VERIFIED_NOT_EXECUTED",
+      "variant": "U8NHWC",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "layout": "NHWC",
+      "host_dtype": "uint8",
+      "device_loaded": false,
+      "next": "Requires a new user-approved NPU time slot."
+    }
+  ]
+}

@@ -1,0 +1,483 @@
+[10:49:35.294] ------- Init Cemu c5205cc -------
+[10:49:35.295] Init Wii U memory space (base: 0x00000296b3000000)
+[10:49:35.295] mlc01 path: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01
+[10:49:35.295] RAM: 15979MB
+[10:49:35.295] Platform: Windows 11 Home 25H2 (Build 26220)
+[10:49:35.295] Used CPU extensions: 
+[10:49:35.302] IOSU_CRYPTO: No otp.bin found. Online mode cannot be used
+[10:49:35.302] IOSU_CRYPTO: No Seeprom.bin found. Online mode cannot be used
+[10:50:11.668] Mounting title 0005000010116100
+[10:50:11.668] Base: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/title/00050000/10116100 [Folder]
+[10:50:11.668] Update: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/title/0005000e/10116100 [Folder]
+[10:50:11.668] DLC: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/title/0005000c/10116100 [Folder]
+[10:50:11.689] COS: System fonts found. Generated shareddata (26609KB)
+[10:50:11.695] Recompiler initialized
+[10:50:11.712] ------- Init Vulkan graphics backend -------
+[10:50:11.730] Vulkan instance version: 1.4
+[10:50:11.784] Using GPU: Qualcomm(R) Adreno(TM) X1-85 GPU
+[10:50:11.784] Driver version: Driver Build: 0eb8636cd3, Id6ce193842, 1782814497
+Date: 06/30/2026
+Compiler Version: E031.52.01.00
+Driver Branch: BVT_187
+
+[10:50:11.784] Vulkan: present_wait extension: unsupported
+[10:50:11.784] VK_EXT_attachment_feedback_loop_layout(_dynamic_state) not supported
+[10:50:11.784] VulkanLimits: UBAlignment 64 nonCoherentAtomSize 1
+[10:50:11.788] Vulkan device memory info:
+[10:50:11.789] Heap 0 - Size 7989MB Flags 0x00000001
+[10:50:11.789] Heap 1 - Size 4095MB Flags 0x00000001
+[10:50:11.789] Memory 0 - HeapIndex 0 Flags 0x00000001
+[10:50:11.789] Memory 1 - HeapIndex 0 Flags 0x00000001
+[10:50:11.789] Memory 2 - HeapIndex 0 Flags 0x00000001
+[10:50:11.789] Memory 3 - HeapIndex 0 Flags 0x0000000b
+[10:50:11.789] Memory 4 - HeapIndex 0 Flags 0x00000007
+[10:50:11.789] Memory 5 - HeapIndex 0 Flags 0x00000007
+[10:50:11.789] Memory 6 - HeapIndex 0 Flags 0x0000000f
+[10:50:11.789] Memory 7 - HeapIndex 1 Flags 0x00000021
+[10:50:11.789] Memory 8 - HeapIndex 0 Flags 0x00000011
+[10:50:11.789] VK_FORMAT_R4G4_UNORM_PACK8 not supported
+[10:50:12.211] ------- Loaded title -------
+[10:50:12.211] TitleId: 00050000-10116100
+[10:50:12.211] TitleVersion: v48
+[10:50:12.211] TitleRegion: JP
+[10:50:12.211] Save path:   C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/save/00050000/10116100/user/ (not present)
+[10:50:12.211] Shader cache file: shaderCache/transferable/0005000010116100.bin
+[10:50:12.211] gameprofile path:  (not present)
+[10:50:12.211] RPX hash (updated): d9a8afa2
+[10:50:12.211] RPX hash (base): 4fc4a17d
+[10:50:12.280] Loaded module 'spacetravel' with checksum 0x7672271d
+[10:50:12.280] RPL link time: 62ms
+[10:50:12.317] HLE scan time: 32ms
+[10:50:12.317] ------- Active settings -------
+[10:50:12.317] CPU-Mode: Multi-core recompiler
+[10:50:12.317] Load shared libraries: true
+[10:50:12.317] Use precompiled shaders: auto
+[10:50:12.317] Full sync at GX2DrawDone: true
+[10:50:12.317] Strict shader mul: true
+[10:50:12.317] Async compile: true
+[10:50:12.317] Console language: 7
+[10:50:14.813] [LSFG] Context prepared 1280x720 preset=Performance100 flow_percent=100 internal_motion=1280x720; no input frames processed
+[10:50:14.813] [LSFG] Startup READY/OFF: shaders=51 pipelines=51 generated=0 borrowed_device=1
+[10:50:14.813] [LSFG-PERF] Target: source >=30 FPS, output 60 FPS with even cadence. Same-queue batched GPU work; render-thread pacing sleep removed.
+[10:50:14.813] [LSFG-PROFILE] timestamp_bits=48 period_ns=52.08333206176758; query reads add no completion wait. Real spans include GPU timeline gaps; not busy utilization. OFF records diagnostic timestamps only.
+[10:50:14.853] [NPU] Startup unavailable: Exception during initialization: No mapping for the Unicode character exists in the target multi-byte code page.. Original frames remain available.
+[10:50:14.943] [LSFG-SURFACE] Recreate begin: generation=0 skip_create=false
+[10:50:14.943] ------- Activate graphic packs -------
+[10:50:14.943] [LSFG-PERF] OFF 1280x720 0.13s: source_present_fps=0.00 generated_present_fps=0.00 accepted_present_fps=0.00 rejected=0 preset=Performance100 flow_percent=100
+[10:50:14.943] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=0.000 overlay_wait_sum=0.000 intentional_sleep=0
+[10:50:14.943] [LSFG-PERF] Present return gaps ms: mean=0.000 max=0.000 under4ms=0 over33ms=0 (not display scanout timing)
+[10:50:14.943] [LSFG-PROFILE] GPU span ms avg/max/n: real=N/A input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[10:50:14.943] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.333/0.941/3 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.122 calls=2 LSFG_tail_fence_wait_sum=0.000
+[10:50:14.943] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:14.959] [LSFG-SURFACE] Recreate complete: generation=1 extent=1429x992
+[10:50:15.114] Applying patch group 'XCX_Aspect' (Codecave: 01800000-01800028)
+[10:50:15.114] Applying patch group 'XCX_Aspect_V102J'
+[10:50:15.115] Activate graphic pack: Xenoblade Chronicles X/Graphics [Presets: 1920x1080,Medium (100%, Default),Medium (100%, Default),Medium (100%, Default)]
+[10:50:15.128] Applying patch group 'XCX_FPS++_Cutscene' (Codecave: 01800100-0180021c)
+[10:50:15.128] Applying patch group 'XCX_FPS++_GameSpeed' (Codecave: 01800300-0180058c)
+[10:50:15.128] Applying patch group 'XCX_FPS++_GameSpeed_V102J'
+[10:50:15.128] Applying patch group 'XCX_FPS++_Overdrive_General' (Codecave: 01800600-01800614)
+[10:50:15.128] Applying patch group 'XCX_FPS++_Overdrive_V102J'
+[10:50:15.128] Applying patch group 'XCX_FPS++_QTE_General' (Codecave: 01800700-018007b8)
+[10:50:15.128] Applying patch group 'XCX_FPS++_QTE_V102J'
+[10:50:15.128] Set vsync frequency to 60 (graphic pack Xenoblade Chronicles X/Mods/FPS++ For XCX)
+[10:50:15.128] Activate graphic pack: Xenoblade Chronicles X/Mods/FPS++ For XCX [Presets: 60FPS Limit (Default)]
+[10:50:15.132] Applying patch group 'XCX_FOV_V102J'
+[10:50:15.132] Activate graphic pack: Xenoblade Chronicles X/Mods/Field of View [Presets: Default FOV]
+[10:50:15.133] Applying patch group 'XCX_FixCameraBug_v102J'
+[10:50:15.133] Activate graphic pack: Xenoblade Chronicles X/Mods/Graphics/Fix Camera Bug
+[10:50:15.136] Applying patch group 'XCX_NoOffline_V102J'
+[10:50:15.136] Activate graphic pack: Xenoblade Chronicles X/Mods/Hide Offline Label
+[10:50:15.139] Applying patch group 'XCX_EMANUAL_V102J'
+[10:50:15.140] Activate graphic pack: Xenoblade Chronicles X/Mods/HUD/Change time from eManual
+[10:50:15.140] Activate graphic pack: Xenoblade Chronicles X/Mods/Korean Localization Test
+[10:50:15.146] Activate graphic pack: Xenoblade Chronicles X/Workarounds/Brightness [Presets: WiiU default - Brightness fix only,No extra exposure - Only brightness fix,No extra saturation (Default),No extra contrast (Default),Default post exposure]
+[10:50:15.155] Activate graphic pack: Xenoblade Chronicles X/Workarounds/Brightness OLD [Presets: Brighter (was NVIDIA),No extra contrast,No extra exposure,1.0 (Default),1.0 (Default),0.002 (Recommended),Default post exposure,No extra saturation (Default)]
+[10:50:15.155] ------- Init Audio backend -------
+[10:50:15.155] DirectSound: available
+[10:50:15.155] XAudio 2.8: available
+[10:50:15.155] Cubeb: available
+[10:50:15.155] ------- Init Audio input backend -------
+[10:50:15.155] Cubeb: available
+[10:50:15.155] ------- Run title -------
+[10:50:15.161] Graphic pack "Graphics" prevents rendertarget size optimization. This warning can be ignored and is intended for graphic pack developers
+[10:50:15.178] Shader cache loaded with 0 shaders. Commited mem 13MB. Took 16ms
+[10:50:15.982] IOSU_ACT: using account default in first slot
+[10:50:16.951] [LSFG-PERF] OFF 1280x720 2.01s: source_present_fps=37.35 generated_present_fps=0.00 accepted_present_fps=37.35 rejected=0 preset=Performance100 flow_percent=100
+[10:50:16.951] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=24.145 overlay_wait_sum=0.000 intentional_sleep=0
+[10:50:16.951] [LSFG-PERF] Present return gaps ms: mean=26.905 max=351.862 under4ms=1 over33ms=6 (not display scanout timing)
+[10:50:16.951] [LSFG-PROFILE] GPU span ms avg/max/n: real=8.767/355.110/70 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[10:50:16.951] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.038/0.131/226 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=6.244 calls=5 LSFG_tail_fence_wait_sum=0.000
+[10:50:16.951] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:18.962] [LSFG-PERF] OFF 1280x720 2.01s: source_present_fps=58.68 generated_present_fps=0.00 accepted_present_fps=58.68 rejected=0 preset=Performance100 flow_percent=100
+[10:50:18.962] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=25.705 overlay_wait_sum=0.000 intentional_sleep=0
+[10:50:18.962] [LSFG-PERF] Present return gaps ms: mean=17.042 max=56.618 under4ms=0 over33ms=1 (not display scanout timing)
+[10:50:18.962] [LSFG-PROFILE] GPU span ms avg/max/n: real=9.402/26.484/118 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[10:50:18.962] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.038/0.301/383 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[10:50:18.962] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:20.967] [LSFG-PERF] OFF 1280x720 2.00s: source_present_fps=60.35 generated_present_fps=0.00 accepted_present_fps=60.35 rejected=0 preset=Performance100 flow_percent=100
+[10:50:20.967] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=32.185 overlay_wait_sum=0.000 intentional_sleep=0
+[10:50:20.967] [LSFG-PERF] Present return gaps ms: mean=16.569 max=28.640 under4ms=0 over33ms=0 (not display scanout timing)
+[10:50:20.967] [LSFG-PROFILE] GPU span ms avg/max/n: real=16.441/28.914/121 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[10:50:20.967] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.080/10.985/484 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[10:50:20.967] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:22.650] [LSFG-PERF] OFF 1280x720 1.68s: source_present_fps=59.43 generated_present_fps=0.00 accepted_present_fps=59.43 rejected=0 preset=Performance100 flow_percent=100
+[10:50:22.650] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=19.755 overlay_wait_sum=0.000 intentional_sleep=0
+[10:50:22.650] [LSFG-PERF] Present return gaps ms: mean=16.663 max=29.138 under4ms=0 over33ms=0 (not display scanout timing)
+[10:50:22.650] [LSFG-PROFILE] GPU span ms avg/max/n: real=15.508/29.978/101 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[10:50:22.650] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.070/12.216/393 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[10:50:22.650] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:22.650] [LSFG] ON: captured=0 generated=0
+[10:50:22.667] [LSFG] Context prepared 1429x992 preset=Performance100 flow_percent=100 internal_motion=1429x992; no input frames processed
+[10:50:22.679] [LSFG] WARMING: source=2 original presented
+[10:50:22.691] [LSFG] WARMING: source=3 original presented
+[10:50:22.705] [LSFG] WARMING: source=4 original presented
+[10:50:22.721] [LSFG] Generated frame 1: 4.785 ms (1429x992)
+[10:50:22.738] [LSFG] Generated frame 2: 4.761 ms (1429x992)
+[10:50:22.754] [LSFG] Generated frame 3: 4.647 ms (1429x992)
+[10:50:22.772] [LSFG] Generated frame 4: 5.575 ms (1429x992)
+[10:50:24.670] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=60.39 generated_present_fps=58.89 accepted_present_fps=119.29 rejected=0 preset=Performance100 flow_percent=100
+[10:50:24.670] [LSFG-PERF] CPU wall ms: module_batch_avg=4.455 capture_submit_sum=5.948 present_host_sum=70.882 overlay_wait_sum=1.034 intentional_sleep=0
+[10:50:24.670] [LSFG-PERF] Present return gaps ms: mean=8.417 max=32.096 under4ms=116 over33ms=0 (not display scanout timing)
+[10:50:24.670] [LSFG-PROFILE] GPU span ms avg/max/n: real=11.548/27.893/120 input_copy=0.036/0.049/118 prepass=1.064/12.314/118 generated=1.296/1.776/118 output_copy=0.040/0.075/118 warmup_excluded=3 query_dropped=0
+[10:50:24.670] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.072/7.220/843 LSFG_vkQueueSubmit_sum=5.226 calls=604 Cemu_fence_wait_sum=2.556 calls=120 LSFG_tail_fence_wait_sum=517.321
+[10:50:24.670] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.027/0.438/121 GPU_real_end_to_prepass_begin=0.116/0.910/118 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:24.703] [LSFG] Generated frame 120: 3.506 ms (1429x992)
+[10:50:26.671] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=60.49 generated_present_fps=59.99 accepted_present_fps=120.48 rejected=0 preset=Performance100 flow_percent=100
+[10:50:26.671] [LSFG-PERF] CPU wall ms: module_batch_avg=3.807 capture_submit_sum=13.100 present_host_sum=64.386 overlay_wait_sum=1.346 intentional_sleep=0
+[10:50:26.671] [LSFG-PERF] Present return gaps ms: mean=8.300 max=29.450 under4ms=121 over33ms=0 (not display scanout timing)
+[10:50:26.671] [LSFG-PROFILE] GPU span ms avg/max/n: real=12.138/19.592/120 input_copy=0.035/0.037/120 prepass=0.908/2.240/120 generated=1.343/14.035/120 output_copy=0.039/0.044/120 warmup_excluded=0 query_dropped=0
+[10:50:26.671] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.060/6.991/843 LSFG_vkQueueSubmit_sum=4.927 calls=600 Cemu_fence_wait_sum=1.276 calls=121 LSFG_tail_fence_wait_sum=436.977
+[10:50:26.671] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.025/0.366/120 GPU_real_end_to_prepass_begin=0.106/0.209/120 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:26.703] [LSFG] Generated frame 240: 3.591 ms (1429x992)
+[10:50:28.671] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=59.49 generated_present_fps=59.99 accepted_present_fps=119.49 rejected=0 preset=Performance100 flow_percent=100
+[10:50:28.671] [LSFG-PERF] CPU wall ms: module_batch_avg=4.893 capture_submit_sum=7.525 present_host_sum=63.134 overlay_wait_sum=1.183 intentional_sleep=0
+[10:50:28.671] [LSFG-PERF] Present return gaps ms: mean=8.369 max=33.351 under4ms=119 over33ms=1 (not display scanout timing)
+[10:50:28.671] [LSFG-PROFILE] GPU span ms avg/max/n: real=11.526/29.187/120 input_copy=0.035/0.038/120 prepass=0.883/1.223/120 generated=1.461/15.048/120 output_copy=0.040/0.062/120 warmup_excluded=0 query_dropped=0
+[10:50:28.671] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.063/0.762/837 LSFG_vkQueueSubmit_sum=7.203 calls=600 Cemu_fence_wait_sum=1.117 calls=119 LSFG_tail_fence_wait_sum=559.881
+[10:50:28.671] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.028/0.101/120 GPU_real_end_to_prepass_begin=0.246/15.655/120 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:28.703] [LSFG] Generated frame 360: 3.571 ms (1429x992)
+[10:50:30.687] [LSFG-PERF] ON 1429x992 2.02s: source_present_fps=60.03 generated_present_fps=60.03 accepted_present_fps=120.05 rejected=0 preset=Performance100 flow_percent=100
+[10:50:30.687] [LSFG-PERF] CPU wall ms: module_batch_avg=3.838 capture_submit_sum=8.133 present_host_sum=62.347 overlay_wait_sum=7.248 intentional_sleep=0
+[10:50:30.687] [LSFG-PERF] Present return gaps ms: mean=8.330 max=25.742 under4ms=121 over33ms=0 (not display scanout timing)
+[10:50:30.687] [LSFG-PROFILE] GPU span ms avg/max/n: real=12.034/21.827/121 input_copy=0.035/0.038/121 prepass=0.882/1.202/121 generated=1.366/7.622/121 output_copy=0.039/0.045/121 warmup_excluded=0 query_dropped=0
+[10:50:30.687] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.058/4.360/847 LSFG_vkQueueSubmit_sum=5.062 calls=605 Cemu_fence_wait_sum=7.134 calls=121 LSFG_tail_fence_wait_sum=444.020
+[10:50:30.687] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.024/0.089/121 GPU_real_end_to_prepass_begin=0.107/0.121/121 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:30.703] [LSFG] Generated frame 480: 3.434 ms (1429x992)
+[10:50:32.687] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=59.98 generated_present_fps=59.98 accepted_present_fps=119.96 rejected=0 preset=Performance100 flow_percent=100
+[10:50:32.687] [LSFG-PERF] CPU wall ms: module_batch_avg=3.819 capture_submit_sum=6.519 present_host_sum=70.758 overlay_wait_sum=1.524 intentional_sleep=0
+[10:50:32.687] [LSFG-PERF] Present return gaps ms: mean=8.336 max=27.470 under4ms=119 over33ms=0 (not display scanout timing)
+[10:50:32.687] [LSFG-PROFILE] GPU span ms avg/max/n: real=11.397/22.515/120 input_copy=0.035/0.050/120 prepass=0.897/2.088/120 generated=1.354/10.710/120 output_copy=0.040/0.046/120 warmup_excluded=0 query_dropped=0
+[10:50:32.687] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.066/6.809/840 LSFG_vkQueueSubmit_sum=4.328 calls=600 Cemu_fence_wait_sum=1.448 calls=120 LSFG_tail_fence_wait_sum=438.554
+[10:50:32.687] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.022/0.108/120 GPU_real_end_to_prepass_begin=0.107/0.123/120 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:32.704] [LSFG] Generated frame 600: 3.973 ms (1429x992)
+[10:50:34.688] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=60.00 generated_present_fps=60.00 accepted_present_fps=119.99 rejected=0 preset=Performance100 flow_percent=100
+[10:50:34.688] [LSFG-PERF] CPU wall ms: module_batch_avg=4.057 capture_submit_sum=5.555 present_host_sum=69.123 overlay_wait_sum=4.667 intentional_sleep=0
+[10:50:34.688] [LSFG-PERF] Present return gaps ms: mean=8.334 max=16.784 under4ms=120 over33ms=0 (not display scanout timing)
+[10:50:34.688] [LSFG-PROFILE] GPU span ms avg/max/n: real=9.898/10.775/120 input_copy=0.038/0.047/120 prepass=0.981/1.259/120 generated=1.477/2.128/120 output_copy=0.053/0.395/120 warmup_excluded=0 query_dropped=0
+[10:50:34.688] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.060/0.486/840 LSFG_vkQueueSubmit_sum=5.216 calls=600 Cemu_fence_wait_sum=4.539 calls=120 LSFG_tail_fence_wait_sum=464.183
+[10:50:34.688] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.024/0.046/120 GPU_real_end_to_prepass_begin=0.114/0.140/120 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:34.704] [LSFG] Generated frame 720: 3.974 ms (1429x992)
+[10:50:36.688] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=60.49 generated_present_fps=59.99 accepted_present_fps=120.49 rejected=0 preset=Performance100 flow_percent=100
+[10:50:36.688] [LSFG-PERF] CPU wall ms: module_batch_avg=3.727 capture_submit_sum=5.868 present_host_sum=63.093 overlay_wait_sum=0.386 intentional_sleep=0
+[10:50:36.688] [LSFG-PERF] Present return gaps ms: mean=8.300 max=17.264 under4ms=121 over33ms=0 (not display scanout timing)
+[10:50:36.688] [LSFG-PROFILE] GPU span ms avg/max/n: real=11.550/13.343/120 input_copy=0.038/0.381/120 prepass=0.896/1.422/120 generated=1.241/1.478/120 output_copy=0.041/0.067/120 warmup_excluded=0 query_dropped=0
+[10:50:36.688] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.063/0.556/843 LSFG_vkQueueSubmit_sum=6.869 calls=600 Cemu_fence_wait_sum=0.314 calls=121 LSFG_tail_fence_wait_sum=421.933
+[10:50:36.688] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.025/0.043/120 GPU_real_end_to_prepass_begin=0.128/0.581/120 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:36.703] [LSFG] Generated frame 840: 3.683 ms (1429x992)
+[10:50:38.700] [LSFG-PERF] ON 1429x992 2.01s: source_present_fps=49.20 generated_present_fps=49.70 accepted_present_fps=98.90 rejected=0 preset=Performance100 flow_percent=100
+[10:50:38.700] [LSFG-PERF] CPU wall ms: module_batch_avg=5.917 capture_submit_sum=5.353 present_host_sum=54.449 overlay_wait_sum=1.553 intentional_sleep=0
+[10:50:38.700] [LSFG-PERF] Present return gaps ms: mean=10.111 max=123.331 under4ms=99 over33ms=5 (not display scanout timing)
+[10:50:38.700] [LSFG-PROFILE] GPU span ms avg/max/n: real=13.370/115.813/100 input_copy=0.035/0.038/100 prepass=0.896/1.457/100 generated=1.269/1.660/100 output_copy=0.042/0.051/100 warmup_excluded=0 query_dropped=0
+[10:50:38.700] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.062/0.356/757 LSFG_vkQueueSubmit_sum=4.532 calls=500 Cemu_fence_wait_sum=1.484 calls=99 LSFG_tail_fence_wait_sum=569.157
+[10:50:38.700] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.027/0.078/100 GPU_real_end_to_prepass_begin=0.112/0.170/100 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:39.088] [LSFG] Generated frame 960: 12.826 ms (1429x992)
+[10:50:40.701] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=52.96 generated_present_fps=52.96 accepted_present_fps=105.93 rejected=0 preset=Performance100 flow_percent=100
+[10:50:40.701] [LSFG-PERF] CPU wall ms: module_batch_avg=13.198 capture_submit_sum=5.403 present_host_sum=61.748 overlay_wait_sum=0.325 intentional_sleep=0
+[10:50:40.701] [LSFG-PERF] Present return gaps ms: mean=9.441 max=21.894 under4ms=106 over33ms=0 (not display scanout timing)
+[10:50:40.701] [LSFG-PROFILE] GPU span ms avg/max/n: real=13.876/16.454/106 input_copy=0.038/0.054/106 prepass=0.886/0.939/106 generated=1.342/1.732/106 output_copy=0.043/0.056/106 warmup_excluded=0 query_dropped=0
+[10:50:40.701] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.058/0.389/1060 LSFG_vkQueueSubmit_sum=6.068 calls=530 Cemu_fence_wait_sum=0.240 calls=106 LSFG_tail_fence_wait_sum=1368.482
+[10:50:40.701] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.029/0.076/106 GPU_real_end_to_prepass_begin=0.116/0.168/106 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:41.365] [LSFG] Generated frame 1080: 13.287 ms (1429x992)
+[10:50:42.715] [LSFG-PERF] ON 1429x992 2.01s: source_present_fps=51.63 generated_present_fps=51.63 accepted_present_fps=103.27 rejected=0 preset=Performance100 flow_percent=100
+[10:50:42.715] [LSFG-PERF] CPU wall ms: module_batch_avg=13.861 capture_submit_sum=5.379 present_host_sum=60.776 overlay_wait_sum=0.590 intentional_sleep=0
+[10:50:42.715] [LSFG-PERF] Present return gaps ms: mean=9.684 max=23.261 under4ms=104 over33ms=0 (not display scanout timing)
+[10:50:42.715] [LSFG-PROFILE] GPU span ms avg/max/n: real=14.098/16.802/104 input_copy=0.052/0.062/104 prepass=0.910/1.425/104 generated=1.418/1.740/104 output_copy=0.054/0.067/104 warmup_excluded=0 query_dropped=0
+[10:50:42.715] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.057/0.344/1040 LSFG_vkQueueSubmit_sum=5.804 calls=520 Cemu_fence_wait_sum=0.500 calls=104 LSFG_tail_fence_wait_sum=1412.415
+[10:50:42.715] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.028/0.051/104 GPU_real_end_to_prepass_begin=0.148/0.192/104 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:43.693] [LSFG] Generated frame 1200: 14.048 ms (1429x992)
+[10:50:44.728] [LSFG-PERF] ON 1429x992 2.01s: source_present_fps=49.19 generated_present_fps=49.19 accepted_present_fps=98.38 rejected=0 preset=Performance100 flow_percent=100
+[10:50:44.728] [LSFG-PERF] CPU wall ms: module_batch_avg=14.480 capture_submit_sum=4.789 present_host_sum=73.008 overlay_wait_sum=0.888 intentional_sleep=0
+[10:50:44.728] [LSFG-PERF] Present return gaps ms: mean=10.165 max=29.769 under4ms=98 over33ms=0 (not display scanout timing)
+[10:50:44.728] [LSFG-PROFILE] GPU span ms avg/max/n: real=14.803/24.710/99 input_copy=0.056/0.368/99 prepass=0.945/1.013/99 generated=1.425/1.789/99 output_copy=0.054/0.070/99 warmup_excluded=0 query_dropped=0
+[10:50:44.728] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.067/9.587/990 LSFG_vkQueueSubmit_sum=5.157 calls=495 Cemu_fence_wait_sum=0.792 calls=99 LSFG_tail_fence_wait_sum=1405.185
+[10:50:44.728] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.029/0.118/99 GPU_real_end_to_prepass_begin=0.153/0.483/99 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:46.255] [LSFG] Generated frame 1320: 14.473 ms (1429x992)
+[10:50:46.737] [LSFG-PERF] ON 1429x992 2.01s: source_present_fps=47.80 generated_present_fps=47.80 accepted_present_fps=95.59 rejected=0 preset=Performance100 flow_percent=100
+[10:50:46.737] [LSFG-PERF] CPU wall ms: module_batch_avg=14.835 capture_submit_sum=5.444 present_host_sum=59.928 overlay_wait_sum=0.380 intentional_sleep=0
+[10:50:46.737] [LSFG-PERF] Present return gaps ms: mean=10.461 max=33.589 under4ms=96 over33ms=1 (not display scanout timing)
+[10:50:46.737] [LSFG-PROFILE] GPU span ms avg/max/n: real=15.156/26.860/96 input_copy=0.074/1.952/96 prepass=1.024/2.728/96 generated=1.646/10.297/96 output_copy=0.056/0.061/96 warmup_excluded=0 query_dropped=0
+[10:50:46.737] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.078/13.698/960 LSFG_vkQueueSubmit_sum=5.240 calls=480 Cemu_fence_wait_sum=0.292 calls=96 LSFG_tail_fence_wait_sum=1395.215
+[10:50:46.737] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.032/0.094/96 GPU_real_end_to_prepass_begin=0.172/2.064/96 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:48.738] [LSFG] Generated frame 1440: 21.076 ms (1429x992)
+[10:50:48.739] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=47.94 generated_present_fps=47.94 accepted_present_fps=95.88 rejected=0 preset=Performance100 flow_percent=100
+[10:50:48.739] [LSFG-PERF] CPU wall ms: module_batch_avg=14.422 capture_submit_sum=6.423 present_host_sum=65.903 overlay_wait_sum=0.886 intentional_sleep=0
+[10:50:48.739] [LSFG-PERF] Present return gaps ms: mean=10.429 max=35.223 under4ms=95 over33ms=2 (not display scanout timing)
+[10:50:48.739] [LSFG-PROFILE] GPU span ms avg/max/n: real=14.447/29.062/96 input_copy=0.055/0.083/96 prepass=1.031/2.290/96 generated=1.694/16.439/96 output_copy=0.057/0.083/96 warmup_excluded=0 query_dropped=0
+[10:50:48.739] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.117/12.112/919 LSFG_vkQueueSubmit_sum=11.019 calls=480 Cemu_fence_wait_sum=0.793 calls=96 LSFG_tail_fence_wait_sum=1348.934
+[10:50:48.739] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.039/0.172/96 GPU_real_end_to_prepass_begin=0.160/0.287/96 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:50.755] [LSFG-PERF] ON 1429x992 2.02s: source_present_fps=55.05 generated_present_fps=55.05 accepted_present_fps=110.10 rejected=0 preset=Performance100 flow_percent=100
+[10:50:50.755] [LSFG-PERF] CPU wall ms: module_batch_avg=7.515 capture_submit_sum=10.591 present_host_sum=79.139 overlay_wait_sum=0.476 intentional_sleep=0
+[10:50:50.755] [LSFG-PERF] Present return gaps ms: mean=9.082 max=161.344 under4ms=111 over33ms=2 (not display scanout timing)
+[10:50:50.755] [LSFG-PROFILE] GPU span ms avg/max/n: real=7.690/15.062/111 input_copy=0.053/0.083/111 prepass=1.083/3.258/111 generated=1.610/3.192/111 output_copy=0.151/10.986/111 warmup_excluded=0 query_dropped=0
+[10:50:50.755] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.071/1.846/886 LSFG_vkQueueSubmit_sum=7.794 calls=555 Cemu_fence_wait_sum=0.364 calls=111 LSFG_tail_fence_wait_sum=802.104
+[10:50:50.755] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.058/0.148/111 GPU_real_end_to_prepass_begin=0.181/0.267/111 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:50.904] [LSFG] Generated frame 1560: 4.510 ms (1429x992)
+[10:50:52.755] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=60.49 generated_present_fps=59.99 accepted_present_fps=120.49 rejected=0 preset=Performance100 flow_percent=100
+[10:50:52.755] [LSFG-PERF] CPU wall ms: module_batch_avg=4.520 capture_submit_sum=6.810 present_host_sum=82.376 overlay_wait_sum=1.353 intentional_sleep=0
+[10:50:52.755] [LSFG-PERF] Present return gaps ms: mean=8.300 max=16.961 under4ms=121 over33ms=0 (not display scanout timing)
+[10:50:52.755] [LSFG-PROFILE] GPU span ms avg/max/n: real=11.289/12.046/120 input_copy=0.070/0.093/120 prepass=1.074/1.100/120 generated=1.498/1.589/120 output_copy=0.064/0.085/120 warmup_excluded=0 query_dropped=0
+[10:50:52.756] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.048/0.467/2163 LSFG_vkQueueSubmit_sum=5.689 calls=600 Cemu_fence_wait_sum=1.245 calls=121 LSFG_tail_fence_wait_sum=515.763
+[10:50:52.756] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.030/0.276/120 GPU_real_end_to_prepass_begin=0.222/0.282/120 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:52.904] [LSFG] Generated frame 1680: 4.501 ms (1429x992)
+[10:50:54.756] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=59.99 generated_present_fps=59.99 accepted_present_fps=119.98 rejected=0 preset=Performance100 flow_percent=100
+[10:50:54.756] [LSFG-PERF] CPU wall ms: module_batch_avg=7.053 capture_submit_sum=8.273 present_host_sum=91.336 overlay_wait_sum=0.508 intentional_sleep=0
+[10:50:54.756] [LSFG-PERF] Present return gaps ms: mean=8.334 max=17.749 under4ms=120 over33ms=0 (not display scanout timing)
+[10:50:54.756] [LSFG-PROFILE] GPU span ms avg/max/n: real=10.514/12.989/120 input_copy=0.069/0.125/120 prepass=1.067/1.105/120 generated=1.599/2.322/120 output_copy=0.072/0.094/120 warmup_excluded=0 query_dropped=0
+[10:50:54.756] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.055/1.343/2107 LSFG_vkQueueSubmit_sum=6.651 calls=600 Cemu_fence_wait_sum=0.379 calls=120 LSFG_tail_fence_wait_sum=811.512
+[10:50:54.756] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.036/0.126/120 GPU_real_end_to_prepass_begin=0.225/0.549/120 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:54.905] [LSFG] Generated frame 1800: 4.787 ms (1429x992)
+[10:50:56.770] [LSFG-PERF] ON 1429x992 2.01s: source_present_fps=58.08 generated_present_fps=58.58 accepted_present_fps=116.66 rejected=0 preset=Performance100 flow_percent=100
+[10:50:56.770] [LSFG-PERF] CPU wall ms: module_batch_avg=6.442 capture_submit_sum=7.554 present_host_sum=90.556 overlay_wait_sum=1.399 intentional_sleep=0
+[10:50:56.770] [LSFG-PERF] Present return gaps ms: mean=8.572 max=68.443 under4ms=116 over33ms=1 (not display scanout timing)
+[10:50:56.770] [LSFG-PROFILE] GPU span ms avg/max/n: real=9.830/25.243/118 input_copy=0.055/0.082/118 prepass=1.091/2.440/118 generated=1.723/10.636/118 output_copy=0.059/0.087/118 warmup_excluded=0 query_dropped=0
+[10:50:56.770] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.064/5.882/1567 LSFG_vkQueueSubmit_sum=8.105 calls=590 Cemu_fence_wait_sum=1.285 calls=117 LSFG_tail_fence_wait_sum=727.237
+[10:50:56.770] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.034/0.117/118 GPU_real_end_to_prepass_begin=0.208/1.223/118 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:50:56.967] [LSFG] Generated frame 1920: 3.305 ms (1429x992)
+[10:50:58.796] [LSFG-PERF] ON 1429x992 2.03s: source_present_fps=39.99 generated_present_fps=39.99 accepted_present_fps=79.98 rejected=0 preset=Performance100 flow_percent=100
+[10:50:58.796] [LSFG-PERF] CPU wall ms: module_batch_avg=6.994 capture_submit_sum=6.629 present_host_sum=51.212 overlay_wait_sum=0.210 intentional_sleep=0
+[10:50:58.796] [LSFG-PERF] Present return gaps ms: mean=12.503 max=34.522 under4ms=81 over33ms=9 (not display scanout timing)
+[10:50:58.796] [LSFG-PROFILE] GPU span ms avg/max/n: real=8.083/25.035/81 input_copy=0.044/0.062/81 prepass=1.064/2.359/81 generated=1.625/13.790/81 output_copy=0.047/0.062/81 warmup_excluded=0 query_dropped=0
+[10:50:58.796] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.095/14.680/597 LSFG_vkQueueSubmit_sum=4.863 calls=405 Cemu_fence_wait_sum=0.147 calls=81 LSFG_tail_fence_wait_sum=544.340
+[10:50:58.796] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.047/0.195/81 GPU_real_end_to_prepass_begin=0.189/1.554/81 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:00.457] [LSFG] Generated frame 2040: 5.363 ms (1429x992)
+[10:51:00.824] [LSFG-PERF] ON 1429x992 2.03s: source_present_fps=30.07 generated_present_fps=30.07 accepted_present_fps=60.13 rejected=0 preset=Performance100 flow_percent=100
+[10:51:00.825] [LSFG-PERF] CPU wall ms: module_batch_avg=7.485 capture_submit_sum=7.998 present_host_sum=40.746 overlay_wait_sum=0.100 intentional_sleep=0
+[10:51:00.825] [LSFG-PERF] Present return gaps ms: mean=16.630 max=44.241 under4ms=61 over33ms=9 (not display scanout timing)
+[10:51:00.825] [LSFG-PROFILE] GPU span ms avg/max/n: real=16.473/28.071/61 input_copy=0.056/0.069/61 prepass=1.376/12.001/61 generated=1.640/1.922/61 output_copy=0.054/0.065/61 warmup_excluded=0 query_dropped=0
+[10:51:00.825] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.090/1.453/397 LSFG_vkQueueSubmit_sum=3.893 calls=305 Cemu_fence_wait_sum=0.035 calls=61 LSFG_tail_fence_wait_sum=438.641
+[10:51:00.825] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.067/0.179/61 GPU_real_end_to_prepass_begin=0.194/0.242/61 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:02.825] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=30.49 generated_present_fps=29.99 accepted_present_fps=60.48 rejected=0 preset=Performance100 flow_percent=100
+[10:51:02.825] [LSFG-PERF] CPU wall ms: module_batch_avg=7.957 capture_submit_sum=4.325 present_host_sum=43.485 overlay_wait_sum=1.505 intentional_sleep=0
+[10:51:02.825] [LSFG-PERF] Present return gaps ms: mean=16.534 max=45.490 under4ms=60 over33ms=7 (not display scanout timing)
+[10:51:02.825] [LSFG-PROFILE] GPU span ms avg/max/n: real=20.296/39.169/60 input_copy=0.064/0.077/60 prepass=1.663/11.066/60 generated=2.065/2.363/60 output_copy=0.064/0.070/60 warmup_excluded=0 query_dropped=0
+[10:51:02.825] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.081/0.481/404 LSFG_vkQueueSubmit_sum=3.478 calls=300 Cemu_fence_wait_sum=1.443 calls=61 LSFG_tail_fence_wait_sum=460.853
+[10:51:02.825] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.038/0.107/60 GPU_real_end_to_prepass_begin=0.210/0.254/60 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:04.457] [LSFG] Generated frame 2160: 4.503 ms (1429x992)
+[10:51:04.857] [LSFG-PERF] ON 1429x992 2.03s: source_present_fps=29.53 generated_present_fps=30.02 accepted_present_fps=59.55 rejected=0 preset=Performance100 flow_percent=100
+[10:51:04.857] [LSFG-PERF] CPU wall ms: module_batch_avg=4.947 capture_submit_sum=4.236 present_host_sum=41.918 overlay_wait_sum=0.105 intentional_sleep=0
+[10:51:04.857] [LSFG-PERF] Present return gaps ms: mean=16.794 max=33.499 under4ms=60 over33ms=2 (not display scanout timing)
+[10:51:04.857] [LSFG-PROFILE] GPU span ms avg/max/n: real=27.494/28.375/61 input_copy=0.054/0.067/61 prepass=1.226/1.389/61 generated=1.714/2.329/61 output_copy=0.054/0.065/61 warmup_excluded=0 query_dropped=0
+[10:51:04.857] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.076/0.371/424 LSFG_vkQueueSubmit_sum=3.536 calls=305 Cemu_fence_wait_sum=0.052 calls=60 LSFG_tail_fence_wait_sum=284.866
+[10:51:04.857] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.036/0.141/61 GPU_real_end_to_prepass_begin=0.185/0.241/61 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:06.864] [LSFG-PERF] ON 1429x992 2.01s: source_present_fps=47.84 generated_present_fps=47.84 accepted_present_fps=95.68 rejected=0 preset=Performance100 flow_percent=100
+[10:51:06.864] [LSFG-PERF] CPU wall ms: module_batch_avg=12.902 capture_submit_sum=9.828 present_host_sum=63.254 overlay_wait_sum=0.514 intentional_sleep=0
+[10:51:06.864] [LSFG-PERF] Present return gaps ms: mean=10.451 max=120.834 under4ms=96 over33ms=4 (not display scanout timing)
+[10:51:06.864] [LSFG-PROFILE] GPU span ms avg/max/n: real=13.102/101.165/96 input_copy=0.046/0.647/96 prepass=1.049/1.809/96 generated=1.522/1.864/96 output_copy=0.045/0.052/96 warmup_excluded=0 query_dropped=0
+[10:51:06.864] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.084/0.394/676 LSFG_vkQueueSubmit_sum=7.897 calls=480 Cemu_fence_wait_sum=0.433 calls=96 LSFG_tail_fence_wait_sum=1206.128
+[10:51:06.864] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.060/0.269/96 GPU_real_end_to_prepass_begin=0.162/0.786/96 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:07.154] [LSFG] Generated frame 2280: 19.625 ms (1429x992)
+[10:51:08.877] [LSFG-PERF] ON 1429x992 2.01s: source_present_fps=40.23 generated_present_fps=40.23 accepted_present_fps=80.46 rejected=0 preset=Performance100 flow_percent=100
+[10:51:08.877] [LSFG-PERF] CPU wall ms: module_batch_avg=19.270 capture_submit_sum=6.049 present_host_sum=59.361 overlay_wait_sum=6.211 intentional_sleep=0
+[10:51:08.877] [LSFG-PERF] Present return gaps ms: mean=12.429 max=33.575 under4ms=80 over33ms=1 (not display scanout timing)
+[10:51:08.877] [LSFG-PROFILE] GPU span ms avg/max/n: real=18.945/27.048/81 input_copy=0.058/0.096/81 prepass=1.045/1.110/81 generated=1.629/2.298/81 output_copy=0.062/0.099/81 warmup_excluded=0 query_dropped=0
+[10:51:08.877] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.073/0.366/791 LSFG_vkQueueSubmit_sum=4.866 calls=405 Cemu_fence_wait_sum=6.105 calls=81 LSFG_tail_fence_wait_sum=1533.765
+[10:51:08.877] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.038/0.159/81 GPU_real_end_to_prepass_begin=0.192/0.298/81 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:09.883] [LSFG] Generated frame 2400: 12.999 ms (1429x992)
+[10:51:10.893] [LSFG-PERF] ON 1429x992 2.02s: source_present_fps=52.57 generated_present_fps=52.57 accepted_present_fps=105.14 rejected=0 preset=Performance100 flow_percent=100
+[10:51:10.893] [LSFG-PERF] CPU wall ms: module_batch_avg=14.735 capture_submit_sum=6.174 present_host_sum=60.057 overlay_wait_sum=0.132 intentional_sleep=0
+[10:51:10.893] [LSFG-PERF] Present return gaps ms: mean=9.511 max=26.209 under4ms=106 over33ms=0 (not display scanout timing)
+[10:51:10.893] [LSFG-PROFILE] GPU span ms avg/max/n: real=13.693/21.678/106 input_copy=0.050/0.058/106 prepass=0.977/1.052/106 generated=1.540/1.843/106 output_copy=0.052/0.067/106 warmup_excluded=0 query_dropped=0
+[10:51:10.893] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.061/0.386/1022 LSFG_vkQueueSubmit_sum=6.031 calls=530 Cemu_fence_wait_sum=0.047 calls=106 LSFG_tail_fence_wait_sum=1532.897
+[10:51:10.893] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.032/0.132/106 GPU_real_end_to_prepass_begin=0.144/0.208/106 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:12.118] [LSFG] Generated frame 2520: 15.588 ms (1429x992)
+[10:51:12.894] [LSFG-PERF] ON 1429x992 2.00s: source_present_fps=52.47 generated_present_fps=52.47 accepted_present_fps=104.95 rejected=0 preset=Performance100 flow_percent=100
+[10:51:12.895] [LSFG-PERF] CPU wall ms: module_batch_avg=14.948 capture_submit_sum=5.275 present_host_sum=60.351 overlay_wait_sum=0.964 intentional_sleep=0
+[10:51:12.895] [LSFG-PERF] Present return gaps ms: mean=9.529 max=20.705 under4ms=105 over33ms=0 (not display scanout timing)
+[10:51:12.895] [LSFG-PROFILE] GPU span ms avg/max/n: real=13.694/15.731/105 input_copy=0.050/0.074/105 prepass=0.974/1.026/105 generated=1.487/1.884/105 output_copy=0.054/0.342/105 warmup_excluded=0 query_dropped=0
+[10:51:12.895] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.058/0.316/1033 LSFG_vkQueueSubmit_sum=5.068 calls=525 Cemu_fence_wait_sum=0.886 calls=105 LSFG_tail_fence_wait_sum=1544.351
+[10:51:12.895] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.029/0.129/105 GPU_real_end_to_prepass_begin=0.144/0.460/105 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:14.614] [LSFG] Generated frame 2640: 17.885 ms (1429x992)
+[10:51:14.910] [LSFG-PERF] ON 1429x992 2.02s: source_present_fps=46.13 generated_present_fps=46.13 accepted_present_fps=92.26 rejected=0 preset=Performance100 flow_percent=100
+[10:51:14.910] [LSFG-PERF] CPU wall ms: module_batch_avg=17.109 capture_submit_sum=5.095 present_host_sum=58.839 overlay_wait_sum=0.255 intentional_sleep=0
+[10:51:14.911] [LSFG-PERF] Present return gaps ms: mean=10.839 max=24.808 under4ms=93 over33ms=0 (not display scanout timing)
+[10:51:14.911] [LSFG-PROFILE] GPU span ms avg/max/n: real=15.948/18.716/93 input_copy=0.059/0.084/93 prepass=1.033/1.099/93 generated=1.644/2.133/93 output_copy=0.060/0.085/93 warmup_excluded=0 query_dropped=0
+[10:51:14.911] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.062/0.338/930 LSFG_vkQueueSubmit_sum=4.687 calls=465 Cemu_fence_wait_sum=0.175 calls=93 LSFG_tail_fence_wait_sum=1566.895
+[10:51:14.911] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.031/0.138/93 GPU_real_end_to_prepass_begin=0.182/0.667/93 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:15.866] [LSFG-SURFACE] Recreate begin: generation=1 skip_create=false
+[10:51:15.866] [LSFG-PERF] ON 1429x992 0.96s: source_present_fps=43.94 generated_present_fps=42.90 accepted_present_fps=86.84 rejected=1 preset=Performance100 flow_percent=100
+[10:51:15.866] [LSFG-PERF] CPU wall ms: module_batch_avg=18.173 capture_submit_sum=2.136 present_host_sum=27.661 overlay_wait_sum=2.242 intentional_sleep=0
+[10:51:15.866] [LSFG-PERF] Present return gaps ms: mean=11.181 max=25.886 under4ms=42 over33ms=0 (not display scanout timing)
+[10:51:15.866] [LSFG-PROFILE] GPU span ms avg/max/n: real=16.810/20.120/42 input_copy=0.063/0.093/42 prepass=1.064/1.127/42 generated=1.594/1.960/42 output_copy=0.065/0.087/42 warmup_excluded=0 query_dropped=0
+[10:51:15.866] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.064/0.343/421 LSFG_vkQueueSubmit_sum=2.426 calls=210 Cemu_fence_wait_sum=2.195 calls=43 LSFG_tail_fence_wait_sum=752.195
+[10:51:15.866] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.029/0.041/42 GPU_real_end_to_prepass_begin=0.187/0.248/42 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:15.866] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0; one-frame delay; scanout cadence unverified
+[10:51:15.866] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[10:51:15.905] [LSFG-SURFACE] Recreate complete: generation=2 extent=2560x1440
+[10:51:15.905] [LSFG-SURFACE] Overlay replay skipped: generation 1 -> 2; real frame restored, history reset pending
+[10:51:15.956] [FSR1] Vulkan EASU + RCAS active · RCAS setting 25
+[10:51:15.956] [LSFG-PERF] ON 1429x992 0.09s: source_present_fps=11.13 generated_present_fps=0.00 accepted_present_fps=11.13 rejected=0 preset=Performance100 flow_percent=100
+[10:51:15.956] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=0.961 overlay_wait_sum=0.000 intentional_sleep=0
+[10:51:15.956] [LSFG-PERF] Present return gaps ms: mean=68.164 max=68.164 under4ms=0 over33ms=1 (not display scanout timing)
+[10:51:15.956] [LSFG-PROFILE] GPU span ms avg/max/n: real=18.351/18.351/1 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[10:51:15.956] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.046/0.076/8 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[10:51:15.956] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:15.986] [LSFG] Context prepared 2560x1440 preset=Performance100 flow_percent=100 internal_motion=2560x1440; no input frames processed
+[10:51:16.017] [LSFG] WARMING: source=2701 original presented
+[10:51:16.046] [LSFG] WARMING: source=2702 original presented
+[10:51:16.076] [LSFG] WARMING: source=2703 original presented
+[10:51:17.886] [LSFG] Generated frame 2760: 22.978 ms (2560x1440)
+[10:51:17.998] [LSFG-PERF] ON 2560x1440 2.01s: source_present_fps=35.79 generated_present_fps=34.30 accepted_present_fps=70.10 rejected=0 preset=Performance100 flow_percent=100
+[10:51:17.998] [LSFG-PERF] CPU wall ms: module_batch_avg=23.176 capture_submit_sum=4.571 present_host_sum=53.514 overlay_wait_sum=7.074 intentional_sleep=0
+[10:51:17.998] [LSFG-PERF] Present return gaps ms: mean=14.346 max=30.169 under4ms=68 over33ms=0 (not display scanout timing)
+[10:51:17.998] [LSFG-PROFILE] GPU span ms avg/max/n: real=18.326/22.425/71 input_copy=0.180/0.245/69 prepass=2.406/2.477/69 generated=3.470/3.750/69 output_copy=0.187/0.261/69 warmup_excluded=3 query_dropped=0
+[10:51:17.998] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.049/0.375/716 LSFG_vkQueueSubmit_sum=3.848 calls=359 Cemu_fence_wait_sum=9.092 calls=70 LSFG_tail_fence_wait_sum=1649.078
+[10:51:17.998] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.038/0.153/72 GPU_real_end_to_prepass_begin=0.520/0.740/69 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:20.023] [LSFG-PERF] ON 2560x1440 2.03s: source_present_fps=36.04 generated_present_fps=36.04 accepted_present_fps=72.08 rejected=0 preset=Performance100 flow_percent=100
+[10:51:20.023] [LSFG-PERF] CPU wall ms: module_batch_avg=23.007 capture_submit_sum=4.453 present_host_sum=53.871 overlay_wait_sum=7.443 intentional_sleep=0
+[10:51:20.023] [LSFG-PERF] Present return gaps ms: mean=13.873 max=29.260 under4ms=73 over33ms=0 (not display scanout timing)
+[10:51:20.023] [LSFG-PROFILE] GPU span ms avg/max/n: real=17.994/19.262/73 input_copy=0.175/0.225/73 prepass=2.416/2.993/73 generated=3.435/3.878/73 output_copy=0.187/0.623/73 warmup_excluded=0 query_dropped=0
+[10:51:20.023] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.052/0.419/730 LSFG_vkQueueSubmit_sum=3.965 calls=365 Cemu_fence_wait_sum=7.327 calls=73 LSFG_tail_fence_wait_sum=1660.506
+[10:51:20.023] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.032/0.095/73 GPU_real_end_to_prepass_begin=0.506/0.594/73 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:21.233] [LSFG] Generated frame 2880: 23.574 ms (2560x1440)
+[10:51:22.052] [LSFG-PERF] ON 2560x1440 2.03s: source_present_fps=35.00 generated_present_fps=35.00 accepted_present_fps=69.99 rejected=0 preset=Performance100 flow_percent=100
+[10:51:22.052] [LSFG-PERF] CPU wall ms: module_batch_avg=23.272 capture_submit_sum=4.779 present_host_sum=55.923 overlay_wait_sum=6.606 intentional_sleep=0
+[10:51:22.052] [LSFG-PERF] Present return gaps ms: mean=14.287 max=33.913 under4ms=71 over33ms=1 (not display scanout timing)
+[10:51:22.052] [LSFG-PROFILE] GPU span ms avg/max/n: real=18.719/23.570/71 input_copy=0.182/0.249/71 prepass=2.408/2.485/71 generated=3.514/3.897/71 output_copy=0.186/0.258/71 warmup_excluded=0 query_dropped=0
+[10:51:22.052] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.049/0.413/788 LSFG_vkQueueSubmit_sum=4.148 calls=355 Cemu_fence_wait_sum=6.497 calls=71 LSFG_tail_fence_wait_sum=1632.756
+[10:51:22.052] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.038/0.170/71 GPU_real_end_to_prepass_begin=0.535/0.766/71 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:24.058] [LSFG-PERF] ON 2560x1440 2.01s: source_present_fps=35.89 generated_present_fps=35.89 accepted_present_fps=71.79 rejected=0 preset=Performance100 flow_percent=100
+[10:51:24.058] [LSFG-PERF] CPU wall ms: module_batch_avg=22.371 capture_submit_sum=4.730 present_host_sum=57.078 overlay_wait_sum=4.864 intentional_sleep=0
+[10:51:24.058] [LSFG-PERF] Present return gaps ms: mean=13.930 max=31.085 under4ms=72 over33ms=0 (not display scanout timing)
+[10:51:24.058] [LSFG-PROFILE] GPU span ms avg/max/n: real=18.345/21.909/72 input_copy=0.166/0.226/72 prepass=2.349/2.456/72 generated=3.362/3.784/72 output_copy=0.168/0.246/72 warmup_excluded=0 query_dropped=0
+[10:51:24.058] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.049/0.429/879 LSFG_vkQueueSubmit_sum=4.176 calls=360 Cemu_fence_wait_sum=4.754 calls=72 LSFG_tail_fence_wait_sum=1590.164
+[10:51:24.058] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.037/0.161/72 GPU_real_end_to_prepass_begin=0.500/0.679/72 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:24.548] [LSFG] Generated frame 3000: 19.759 ms (2560x1440)
+[10:51:26.058] [LSFG-PERF] ON 2560x1440 2.00s: source_present_fps=41.99 generated_present_fps=41.49 accepted_present_fps=83.48 rejected=0 preset=Performance100 flow_percent=100
+[10:51:26.058] [LSFG-PERF] CPU wall ms: module_batch_avg=19.398 capture_submit_sum=4.538 present_host_sum=69.280 overlay_wait_sum=2.500 intentional_sleep=0
+[10:51:26.058] [LSFG-PERF] Present return gaps ms: mean=11.979 max=24.610 under4ms=84 over33ms=0 (not display scanout timing)
+[10:51:26.058] [LSFG-PROFILE] GPU span ms avg/max/n: real=15.441/16.681/83 input_copy=0.147/0.163/83 prepass=2.224/2.578/83 generated=3.164/3.507/83 output_copy=0.149/0.184/83 warmup_excluded=0 query_dropped=0
+[10:51:26.058] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.056/0.318/833 LSFG_vkQueueSubmit_sum=5.098 calls=415 Cemu_fence_wait_sum=2.394 calls=84 LSFG_tail_fence_wait_sum=1587.509
+[10:51:26.058] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.029/0.116/83 GPU_real_end_to_prepass_begin=0.399/0.511/83 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:27.384] [LSFG] Generated frame 3120: 18.866 ms (2560x1440)
+[10:51:28.070] [LSFG-PERF] ON 2560x1440 2.01s: source_present_fps=42.24 generated_present_fps=42.74 accepted_present_fps=84.98 rejected=0 preset=Performance100 flow_percent=100
+[10:51:28.070] [LSFG-PERF] CPU wall ms: module_batch_avg=19.283 capture_submit_sum=4.616 present_host_sum=58.643 overlay_wait_sum=10.149 intentional_sleep=0
+[10:51:28.070] [LSFG-PERF] Present return gaps ms: mean=11.767 max=24.195 under4ms=85 over33ms=0 (not display scanout timing)
+[10:51:28.070] [LSFG-PROFILE] GPU span ms avg/max/n: real=14.891/15.649/86 input_copy=0.139/0.184/86 prepass=2.208/2.259/86 generated=3.077/3.399/86 output_copy=0.140/0.166/86 warmup_excluded=0 query_dropped=0
+[10:51:28.070] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.051/0.402/857 LSFG_vkQueueSubmit_sum=4.642 calls=430 Cemu_fence_wait_sum=10.015 calls=85 LSFG_tail_fence_wait_sum=1637.121
+[10:51:28.070] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.029/0.107/86 GPU_real_end_to_prepass_begin=0.377/0.459/86 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:30.074] [LSFG-PERF] ON 2560x1440 2.00s: source_present_fps=37.93 generated_present_fps=37.93 accepted_present_fps=75.87 rejected=0 preset=Performance100 flow_percent=100
+[10:51:30.074] [LSFG-PERF] CPU wall ms: module_batch_avg=21.905 capture_submit_sum=4.300 present_host_sum=54.486 overlay_wait_sum=9.534 intentional_sleep=0
+[10:51:30.074] [LSFG-PERF] Present return gaps ms: mean=13.181 max=30.189 under4ms=76 over33ms=0 (not display scanout timing)
+[10:51:30.074] [LSFG-PROFILE] GPU span ms avg/max/n: real=16.966/20.900/76 input_copy=0.172/0.246/76 prepass=2.358/2.474/76 generated=3.379/3.864/76 output_copy=0.177/0.263/76 warmup_excluded=0 query_dropped=0
+[10:51:30.074] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.050/0.318/760 LSFG_vkQueueSubmit_sum=4.421 calls=380 Cemu_fence_wait_sum=9.420 calls=76 LSFG_tail_fence_wait_sum=1644.118
+[10:51:30.074] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.031/0.099/76 GPU_real_end_to_prepass_begin=0.484/0.665/76 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:30.568] [LSFG] Generated frame 3240: 24.252 ms (2560x1440)
+[10:51:32.075] [LSFG-PERF] ON 2560x1440 2.00s: source_present_fps=34.48 generated_present_fps=33.98 accepted_present_fps=68.47 rejected=0 preset=Performance100 flow_percent=100
+[10:51:32.075] [LSFG-PERF] CPU wall ms: module_batch_avg=24.728 capture_submit_sum=3.950 present_host_sum=51.564 overlay_wait_sum=9.986 intentional_sleep=0
+[10:51:32.075] [LSFG-PERF] Present return gaps ms: mean=14.605 max=65.891 under4ms=69 over33ms=2 (not display scanout timing)
+[10:51:32.075] [LSFG-PROFILE] GPU span ms avg/max/n: real=18.379/20.530/68 input_copy=0.190/0.307/68 prepass=2.437/2.959/68 generated=3.465/4.147/68 output_copy=0.190/0.228/68 warmup_excluded=0 query_dropped=0
+[10:51:32.075] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.055/0.608/683 LSFG_vkQueueSubmit_sum=4.870 calls=340 Cemu_fence_wait_sum=9.866 calls=69 LSFG_tail_fence_wait_sum=1661.841
+[10:51:32.075] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.030/0.086/68 GPU_real_end_to_prepass_begin=0.543/0.717/68 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:34.059] [LSFG] Generated frame 3360: 19.769 ms (2560x1440)
+[10:51:34.085] [LSFG-PERF] ON 2560x1440 2.01s: source_present_fps=33.34 generated_present_fps=33.83 accepted_present_fps=67.17 rejected=0 preset=Performance100 flow_percent=100
+[10:51:34.085] [LSFG-PERF] CPU wall ms: module_batch_avg=24.561 capture_submit_sum=4.682 present_host_sum=56.024 overlay_wait_sum=9.947 intentional_sleep=0
+[10:51:34.085] [LSFG-PERF] Present return gaps ms: mean=14.888 max=67.120 under4ms=67 over33ms=5 (not display scanout timing)
+[10:51:34.085] [LSFG-PROFILE] GPU span ms avg/max/n: real=18.531/24.397/68 input_copy=0.180/0.265/68 prepass=2.410/2.979/68 generated=3.432/5.254/68 output_copy=0.186/0.271/68 warmup_excluded=0 query_dropped=0
+[10:51:34.085] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.061/1.061/677 LSFG_vkQueueSubmit_sum=4.252 calls=340 Cemu_fence_wait_sum=9.839 calls=67 LSFG_tail_fence_wait_sum=1649.756
+[10:51:34.085] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.037/0.293/68 GPU_real_end_to_prepass_begin=0.519/0.820/68 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:36.104] [LSFG-PERF] ON 2560x1440 2.02s: source_present_fps=38.63 generated_present_fps=38.63 accepted_present_fps=77.26 rejected=0 preset=Performance100 flow_percent=100
+[10:51:36.104] [LSFG-PERF] CPU wall ms: module_batch_avg=21.233 capture_submit_sum=4.451 present_host_sum=61.726 overlay_wait_sum=6.188 intentional_sleep=0
+[10:51:36.104] [LSFG-PERF] Present return gaps ms: mean=12.942 max=67.105 under4ms=78 over33ms=2 (not display scanout timing)
+[10:51:36.104] [LSFG-PROFILE] GPU span ms avg/max/n: real=15.943/19.220/78 input_copy=0.147/0.189/78 prepass=2.366/4.409/78 generated=3.200/4.115/78 output_copy=0.149/0.188/78 warmup_excluded=0 query_dropped=0
+[10:51:36.104] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.053/0.580/780 LSFG_vkQueueSubmit_sum=4.733 calls=390 Cemu_fence_wait_sum=6.059 calls=78 LSFG_tail_fence_wait_sum=1635.427
+[10:51:36.104] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.031/0.082/78 GPU_real_end_to_prepass_begin=0.443/0.985/78 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:37.115] [LSFG] Generated frame 3480: 20.145 ms (2560x1440)
+[10:51:38.119] [LSFG-PERF] ON 2560x1440 2.01s: source_present_fps=41.19 generated_present_fps=41.19 accepted_present_fps=82.39 rejected=0 preset=Performance100 flow_percent=100
+[10:51:38.119] [LSFG-PERF] CPU wall ms: module_batch_avg=19.661 capture_submit_sum=4.492 present_host_sum=67.653 overlay_wait_sum=6.922 intentional_sleep=0
+[10:51:38.119] [LSFG-PERF] Present return gaps ms: mean=12.138 max=26.248 under4ms=83 over33ms=0 (not display scanout timing)
+[10:51:38.119] [LSFG-PROFILE] GPU span ms avg/max/n: real=15.514/17.486/83 input_copy=0.148/0.556/83 prepass=2.234/2.592/83 generated=3.117/3.478/83 output_copy=0.146/0.167/83 warmup_excluded=0 query_dropped=0
+[10:51:38.119] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.059/0.408/830 LSFG_vkQueueSubmit_sum=4.474 calls=415 Cemu_fence_wait_sum=6.797 calls=83 LSFG_tail_fence_wait_sum=1611.049
+[10:51:38.119] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.030/0.118/83 GPU_real_end_to_prepass_begin=0.395/0.824/83 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:39.881] [LSFG] Generated frame 3600: 19.119 ms (2560x1440)
+[10:51:40.119] [LSFG-PERF] ON 2560x1440 2.00s: source_present_fps=43.99 generated_present_fps=43.99 accepted_present_fps=87.99 rejected=0 preset=Performance100 flow_percent=100
+[10:51:40.119] [LSFG-PERF] CPU wall ms: module_batch_avg=18.705 capture_submit_sum=5.214 present_host_sum=62.173 overlay_wait_sum=7.880 intentional_sleep=0
+[10:51:40.119] [LSFG-PERF] Present return gaps ms: mean=11.365 max=24.424 under4ms=88 over33ms=0 (not display scanout timing)
+[10:51:40.119] [LSFG-PROFILE] GPU span ms avg/max/n: real=14.273/16.744/88 input_copy=0.138/0.162/88 prepass=2.214/2.666/88 generated=3.051/3.395/88 output_copy=0.140/0.165/88 warmup_excluded=0 query_dropped=0
+[10:51:40.119] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.056/0.503/846 LSFG_vkQueueSubmit_sum=4.457 calls=440 Cemu_fence_wait_sum=7.726 calls=88 LSFG_tail_fence_wait_sum=1625.033
+[10:51:40.119] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.035/0.119/88 GPU_real_end_to_prepass_begin=0.378/0.415/88 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:42.123] [LSFG-PERF] ON 2560x1440 2.00s: source_present_fps=40.93 generated_present_fps=40.93 accepted_present_fps=81.85 rejected=0 preset=Performance100 flow_percent=100
+[10:51:42.123] [LSFG-PERF] CPU wall ms: module_batch_avg=19.511 capture_submit_sum=4.497 present_host_sum=45.622 overlay_wait_sum=5.583 intentional_sleep=0
+[10:51:42.123] [LSFG-PERF] Present return gaps ms: mean=12.217 max=25.514 under4ms=82 over33ms=0 (not display scanout timing)
+[10:51:42.123] [LSFG-PROFILE] GPU span ms avg/max/n: real=17.072/18.622/82 input_copy=0.135/0.159/82 prepass=2.207/2.240/82 generated=3.051/3.513/82 output_copy=0.136/0.158/82 warmup_excluded=0 query_dropped=0
+[10:51:42.123] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.036/0.281/1086 LSFG_vkQueueSubmit_sum=6.202 calls=410 Cemu_fence_wait_sum=5.459 calls=82 LSFG_tail_fence_wait_sum=1578.250
+[10:51:42.123] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.032/0.252/82 GPU_real_end_to_prepass_begin=0.378/0.832/82 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:42.810] [LSFG] Generated frame 3720: 18.436 ms (2560x1440)
+[10:51:44.135] [LSFG-PERF] ON 2560x1440 2.01s: source_present_fps=42.24 generated_present_fps=42.24 accepted_present_fps=84.48 rejected=0 preset=Performance100 flow_percent=100
+[10:51:44.135] [LSFG-PERF] CPU wall ms: module_batch_avg=18.793 capture_submit_sum=5.123 present_host_sum=44.647 overlay_wait_sum=9.144 intentional_sleep=0
+[10:51:44.135] [LSFG-PERF] Present return gaps ms: mean=11.837 max=26.674 under4ms=85 over33ms=0 (not display scanout timing)
+[10:51:44.135] [LSFG-PROFILE] GPU span ms avg/max/n: real=16.263/19.676/85 input_copy=0.139/0.561/85 prepass=2.222/2.663/85 generated=2.991/3.477/85 output_copy=0.133/0.161/85 warmup_excluded=0 query_dropped=0
+[10:51:44.135] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.037/0.404/1148 LSFG_vkQueueSubmit_sum=4.775 calls=425 Cemu_fence_wait_sum=9.018 calls=85 LSFG_tail_fence_wait_sum=1577.096
+[10:51:44.135] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.032/0.118/85 GPU_real_end_to_prepass_begin=0.374/0.814/85 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:45.670] [LSFG] Generated frame 3840: 18.173 ms (2560x1440)
+[10:51:46.141] [LSFG-PERF] ON 2560x1440 2.01s: source_present_fps=41.38 generated_present_fps=41.38 accepted_present_fps=82.76 rejected=0 preset=Performance100 flow_percent=100
+[10:51:46.141] [LSFG-PERF] CPU wall ms: module_batch_avg=19.273 capture_submit_sum=5.155 present_host_sum=44.347 overlay_wait_sum=7.319 intentional_sleep=0
+[10:51:46.141] [LSFG-PERF] Present return gaps ms: mean=12.083 max=25.456 under4ms=83 over33ms=0 (not display scanout timing)
+[10:51:46.141] [LSFG-PROFILE] GPU span ms avg/max/n: real=16.750/18.097/83 input_copy=0.135/0.158/83 prepass=2.237/3.193/83 generated=3.047/3.466/83 output_copy=0.135/0.150/83 warmup_excluded=0 query_dropped=0
+[10:51:46.141] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.035/0.362/1143 LSFG_vkQueueSubmit_sum=4.195 calls=415 Cemu_fence_wait_sum=7.170 calls=83 LSFG_tail_fence_wait_sum=1581.273
+[10:51:46.141] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.032/0.163/83 GPU_real_end_to_prepass_begin=0.374/0.818/83 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:48.164] [LSFG-PERF] ON 2560x1440 2.02s: source_present_fps=40.53 generated_present_fps=40.53 accepted_present_fps=81.06 rejected=0 preset=Performance100 flow_percent=100
+[10:51:48.164] [LSFG-PERF] CPU wall ms: module_batch_avg=19.495 capture_submit_sum=4.910 present_host_sum=48.949 overlay_wait_sum=5.352 intentional_sleep=0
+[10:51:48.164] [LSFG-PERF] Present return gaps ms: mean=12.337 max=26.322 under4ms=82 over33ms=0 (not display scanout timing)
+[10:51:48.164] [LSFG-PROFILE] GPU span ms avg/max/n: real=17.123/18.936/82 input_copy=0.137/0.163/82 prepass=2.254/3.387/82 generated=3.044/3.618/82 output_copy=0.142/0.536/82 warmup_excluded=0 query_dropped=0
+[10:51:48.164] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.037/0.269/1131 LSFG_vkQueueSubmit_sum=4.533 calls=410 Cemu_fence_wait_sum=5.232 calls=82 LSFG_tail_fence_wait_sum=1578.444
+[10:51:48.164] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.033/0.116/82 GPU_real_end_to_prepass_begin=0.379/0.549/82 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:48.596] [LSFG] Generated frame 3960: 19.304 ms (2560x1440)
+[10:51:50.181] [LSFG-PERF] ON 2560x1440 2.02s: source_present_fps=39.16 generated_present_fps=39.16 accepted_present_fps=78.32 rejected=0 preset=Performance100 flow_percent=100
+[10:51:50.181] [LSFG-PERF] CPU wall ms: module_batch_avg=20.227 capture_submit_sum=7.703 present_host_sum=46.230 overlay_wait_sum=3.693 intentional_sleep=0
+[10:51:50.181] [LSFG-PERF] Present return gaps ms: mean=12.768 max=66.490 under4ms=79 over33ms=2 (not display scanout timing)
+[10:51:50.181] [LSFG-PROFILE] GPU span ms avg/max/n: real=17.169/18.448/79 input_copy=0.135/0.158/79 prepass=2.236/2.962/79 generated=3.057/3.666/79 output_copy=0.137/0.159/79 warmup_excluded=0 query_dropped=0
+[10:51:50.181] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.038/0.475/1169 LSFG_vkQueueSubmit_sum=4.352 calls=395 Cemu_fence_wait_sum=3.604 calls=79 LSFG_tail_fence_wait_sum=1577.244
+[10:51:50.181] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.073/0.220/79 GPU_real_end_to_prepass_begin=0.372/0.706/79 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:51.670] [LSFG] Generated frame 4080: 20.220 ms (2560x1440)
+[10:51:51.801] [LSFG-SURFACE] Recreate begin: generation=2 skip_create=false
+[10:51:51.802] [LSFG-PERF] ON 2560x1440 1.62s: source_present_fps=39.50 generated_present_fps=38.88 accepted_present_fps=78.38 rejected=1 preset=Performance100 flow_percent=100
+[10:51:51.802] [LSFG-PERF] CPU wall ms: module_batch_avg=19.724 capture_submit_sum=7.310 present_host_sum=50.622 overlay_wait_sum=3.782 intentional_sleep=0
+[10:51:51.802] [LSFG-PERF] Present return gaps ms: mean=12.521 max=25.810 under4ms=64 over33ms=0 (not display scanout timing)
+[10:51:51.802] [LSFG-PROFILE] GPU span ms avg/max/n: real=16.622/17.712/64 input_copy=0.137/0.159/64 prepass=2.224/2.609/64 generated=3.099/3.660/64 output_copy=0.138/0.151/64 warmup_excluded=0 query_dropped=0
+[10:51:51.802] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.048/0.640/961 LSFG_vkQueueSubmit_sum=3.634 calls=320 Cemu_fence_wait_sum=3.671 calls=65 LSFG_tail_fence_wait_sum=1246.861
+[10:51:51.802] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.089/0.697/64 GPU_real_end_to_prepass_begin=0.373/0.429/64 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:51.802] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0; one-frame delay; scanout cadence unverified
+[10:51:51.802] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[10:51:51.828] [LSFG-SURFACE] Recreate complete: generation=3 extent=1429x992
+[10:51:51.828] [LSFG-SURFACE] Overlay replay skipped: generation 2 -> 3; real frame restored, history reset pending
+[10:51:51.833] [LSFG-PERF] ON 2560x1440 0.03s: source_present_fps=31.63 generated_present_fps=0.00 accepted_present_fps=31.63 rejected=0 preset=Performance100 flow_percent=100
+[10:51:51.833] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=0.471 overlay_wait_sum=0.000 intentional_sleep=0
+[10:51:51.833] [LSFG-PERF] Present return gaps ms: mean=57.451 max=57.451 under4ms=0 over33ms=1 (not display scanout timing)
+[10:51:51.833] [LSFG-PROFILE] GPU span ms avg/max/n: real=21.334/21.334/1 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[10:51:51.833] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.040/0.066/13 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[10:51:51.833] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:51.869] [LSFG] Context prepared 1429x992 preset=Performance100 flow_percent=100 internal_motion=1429x992; no input frames processed
+[10:51:51.891] [LSFG] WARMING: source=4095 original presented
+[10:51:51.920] [LSFG] WARMING: source=4096 original presented
+[10:51:51.953] [LSFG] WARMING: source=4097 original presented
+[10:51:53.309] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0; one-frame delay; scanout cadence unverified
+[10:51:53.309] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[10:51:53.316] [LSFG-PERF] ON 1429x992 1.45s: source_present_fps=47.01 generated_present_fps=44.24 accepted_present_fps=91.25 rejected=0 preset=Performance100 flow_percent=100
+[10:51:53.316] [LSFG-PERF] CPU wall ms: module_batch_avg=15.746 capture_submit_sum=7.089 present_host_sum=37.278 overlay_wait_sum=0.134 intentional_sleep=0
+[10:51:53.316] [LSFG-PERF] Present return gaps ms: mean=10.854 max=33.686 under4ms=64 over33ms=1 (not display scanout timing)
+[10:51:53.316] [LSFG-PROFILE] GPU span ms avg/max/n: real=15.739/16.915/67 input_copy=0.049/0.075/64 prepass=0.996/1.346/64 generated=1.450/2.217/64 output_copy=0.054/0.057/64 warmup_excluded=3 query_dropped=0
+[10:51:53.316] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.050/0.588/1014 LSFG_vkQueueSubmit_sum=5.316 calls=334 Cemu_fence_wait_sum=13.292 calls=73 LSFG_tail_fence_wait_sum=1032.873
+[10:51:53.316] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=0.083/0.312/67 GPU_real_end_to_prepass_begin=0.141/0.166/64 queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[10:51:53.316] [LSFG] Shutdown: captured=4161 generated=4149 dispatches=415800 resets=3
+[10:51:53.316] [LSFG] Resources: context_builds=4 history_clears=3

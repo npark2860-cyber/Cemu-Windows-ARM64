@@ -1,0 +1,13 @@
+#version 450
+layout(local_size_x=16, local_size_y=16) in;
+layout(set=0,binding=0,rgba8) uniform writeonly image2D frameA;
+layout(set=0,binding=1,rgba8) uniform writeonly image2D frameB;
+layout(push_constant) uniform Params { uint phase; } pc;
+uint channel(uint pixel, uint c) { return ((c*2073600u+pixel)*7u+11u+pc.phase*31u)%251u; }
+void main() {
+    uvec2 xy=gl_GlobalInvocationID.xy;
+    if(xy.x>=1920u || xy.y>=1080u) return;
+    uint p=xy.y*1920u+xy.x;
+    imageStore(frameA,ivec2(xy),vec4(channel(p,0),channel(p,1),channel(p,2),255)/255.0);
+    imageStore(frameB,ivec2(xy),vec4(channel(p,3),channel(p,4),channel(p,5),255)/255.0);
+}

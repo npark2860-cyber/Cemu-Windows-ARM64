@@ -1,0 +1,8 @@
+{
+  "status": "FILES_VERIFIED_NOT_EXECUTED",
+  "stage": "SmokeQuantized",
+  "architecture": "ARM64",
+  "runtime": "ORT QNN 1.24.4 / QAIRT 2.42",
+  "device_loaded": false,
+  "next": "Add -Run only when ready for NPU use. Agents must first obtain the user time slot."
+}

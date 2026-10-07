@@ -1,0 +1,673 @@
+{
+  "created_at": "2026-09-29T08:46:46.399877+00:00",
+  "status": "BUILT_DEVICE_TEST_PENDING",
+  "variant": "Release / NPU RC1 / 1080p and 720p",
+  "base_commit": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+  "base_manifest_sha256": "b608c43e2582a75e406cada9968b5135ad49ac0518cf48d9c11400b7037def37",
+  "base_package": "NPU-Release-v4",
+  "executable": "runtime/Cemu-NPU-Release.exe",
+  "cemu_sha256": "aa00dfc2261f8173eed1ef6406e34dcd7c417e450e6136d9ff241c001133ff8e",
+  "module_abi": 2,
+  "module_sha256": "b4b5de1a1c8e09cfd4671b2db9c4c3bd66b3a39a8631a5249394c544da40267d",
+  "npu_driver": {
+    "version": "30.0.224.10000",
+    "inf": "oem73.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{F01A9D53-3FF6-48D2-9F97-C8A7004BE10C}\\0000",
+    "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+    "rpc_sha256": "218057045fb448f60585b03de05476e8673d4c14da5a94d8c7fb3a1f1264c3a1"
+  },
+  "gpu_driver": {
+    "version": "31.0.170.0",
+    "inf": "oem36.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000",
+    "description": "Qualcomm(R) Adreno(TM) X1-85 GPU"
+  },
+  "profiles": [
+    {
+      "height": 1080,
+      "width": 1920,
+      "mode": "Standard"
+    },
+    {
+      "height": 720,
+      "width": 1280,
+      "mode": "Performance"
+    }
+  ],
+  "profile_changes_apply": "next game start",
+  "default_profile": 1080,
+  "enabled_by_default": false,
+  "legacy_gpu_lsfg_linked": false,
+  "lossless_dll_required": false,
+  "cpu_tests": [
+    {
+      "test": "test-processing-profile",
+      "exit_code": 0,
+      "output": "PROFILE_CPU_CONTRACT_PASSED checks=27"
+    },
+    {
+      "test": "test-buffered-timeline",
+      "exit_code": 0,
+      "output": "{\"status\":\"BUFFERED_TIMELINE_TESTS_PASSED\",\"checks\":17,\"gpu_npu_executed\":false}"
+    },
+    {
+      "test": "test-ort-paths",
+      "exit_code": 0,
+      "output": "old_path_exception=No mapping for the Unicode character exists in the target multi-byte code page.\nprocess_acp=949 old_path_throws=1 old_path_roundtrips=0\nORT_PATH_TESTS_PASSED checks=7 gpu_npu_executed=false"
+    },
+    {
+      "test": "test-overlay-contract",
+      "exit_code": 0,
+      "output": "{\"status\":\"OVERLAY_CPU_CONTRACT_PASSED\",\"checks\":485,\"gpu_npu_executed\":false}"
+    }
+  ],
+  "shared_mlc_path": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\LSFG-Release\\runtime-experiment\\portable\\mlc01",
+  "portable_config_seed": "Independent v4 copy; existing MLC path preserved; saved games not copied or modified",
+  "device_executed_by_agent": false,
+  "new_720p_device_validated": false,
+  "game_test_pending": true,
+  "four_variant_rollout_complete": false,
+  "files": [
+    {
+      "path": "evidence/asset-checks.json",
+      "bytes": 2671,
+      "sha256": "e9d899b1ae2d7b9c2f5878b88afb4acb778c24f1174399661c68fc2cd6eb3e2b"
+    },
+    {
+      "path": "evidence/cemu-npu-build-rc1.log",
+      "bytes": 1603351,
+      "sha256": "3fd2917de2ff075f6e9500fa9010d40ad02d07b853c1c9070783112e3199159d"
+    },
+    {
+      "path": "evidence/npu-cpu-build-rc1.log",
+      "bytes": 327,
+      "sha256": "1ed29e931c71c359d487f3f1cdddd9e2812da47d883c10c48ab15919c39b3a19"
+    },
+    {
+      "path": "evidence/npu-cpu-tests-rc1.json",
+      "bytes": 774,
+      "sha256": "540b48730506b3715e95628f7bbd7c5f09f6baf76e72fcfff7864afb24fc5323"
+    },
+    {
+      "path": "evidence/npu-module-build-rc1.log",
+      "bytes": 490,
+      "sha256": "1962fcf6306cc8af1de9ac2e6f11a2b33e4975b25ef730476da12a92c6aaa8c6"
+    },
+    {
+      "path": "evidence/npu-probe-build-rc1.log",
+      "bytes": 763,
+      "sha256": "a3dd3321191d6b9462c46acaa93b949feb50e1e3011e0b0a18ab2246ca46abec"
+    },
+    {
+      "path": "module-source/anvil_async_worker.h",
+      "bytes": 5600,
+      "sha256": "cea41fdaf22d959735c7020bfa72573ee094f7f3cce4fe6fce3459310638e951"
+    },
+    {
+      "path": "module-source/asset-checks.json",
+      "bytes": 2671,
+      "sha256": "e9d899b1ae2d7b9c2f5878b88afb4acb778c24f1174399661c68fc2cd6eb3e2b"
+    },
+    {
+      "path": "module-source/before-source.json",
+      "bytes": 4242,
+      "sha256": "671c9f0f62fa0cf812aa652045c1f3e28da9efd10557336c957d162ab3f50e3e"
+    },
+    {
+      "path": "module-source/borrowed_support.h",
+      "bytes": 15789,
+      "sha256": "539d93462cc80a79ed620ba64f285e4868197f262e468d5feac2a98b0c3aeb05"
+    },
+    {
+      "path": "module-source/buffered_timeline.h",
+      "bytes": 1275,
+      "sha256": "2af9a420c74f5ae02768fd91522e8cc1ab313ca8806dfc30a580d122badac473"
+    },
+    {
+      "path": "module-source/build-cemu.cmd",
+      "bytes": 400,
+      "sha256": "2680b8b460ed7ffd674c117873576db53fe59bcf18c56132255912a6c149b722"
+    },
+    {
+      "path": "module-source/build-cemu.ps1",
+      "bytes": 1561,
+      "sha256": "e86f87d8040ad5f33856404066aeed9c34721d95eee847d29558343671d8da92"
+    },
+    {
+      "path": "module-source/build-cpu-contract.cmd",
+      "bytes": 471,
+      "sha256": "4a38ee800e6057295de8aebebe57931600f9e6cad9b215489a10c9953d996b00"
+    },
+    {
+      "path": "module-source/build-module.cmd",
+      "bytes": 1207,
+      "sha256": "185438353ffa035a2b395960d4f2bec2656ffd0fbee4a4f73c2eefb91153de85"
+    },
+    {
+      "path": "module-source/build-probe.cmd",
+      "bytes": 600,
+      "sha256": "5a39455f78b4e8074aea5ec57b889c1224e17b828d0068b7ab20e18a43a61230"
+    },
+    {
+      "path": "module-source/gpu_resources.h",
+      "bytes": 11322,
+      "sha256": "53f19c124514762b419a7992ac03c4f160492326124db7c1f17dffa71241d2de"
+    },
+    {
+      "path": "module-source/module-smoke-probe.cpp",
+      "bytes": 5187,
+      "sha256": "b5f20714862e05742ed0f4ba579b08683763e574d0894a189dae75bcb19380c4"
+    },
+    {
+      "path": "module-source/npu_cemu.cpp",
+      "bytes": 16485,
+      "sha256": "c02a5ea01b36605cb52a89c7fa2ba659159e813caa1aada80e0970055f44ade2"
+    },
+    {
+      "path": "module-source/npu_cemu.h",
+      "bytes": 1781,
+      "sha256": "7626f84843a22836416179d8bb3afc9997051c60619330d0cd63d630783c6e16"
+    },
+    {
+      "path": "module-source/ort_paths.h",
+      "bytes": 1437,
+      "sha256": "7ef1dd5af482c38ca3a73bb584a1d3d04b9e555a77141c24777c23e618585d56"
+    },
+    {
+      "path": "module-source/package.py",
+      "bytes": 6260,
+      "sha256": "dc6cf21a7b0fe59cf4746fa4c04e51a09c2d268a48072119057e8fdb36b50509"
+    },
+    {
+      "path": "module-source/prepare_assets.py",
+      "bytes": 6589,
+      "sha256": "5fd8e7fd2372abb292ca2c900d32ade1058d85f2a1bf18651f917ff53ca91699"
+    },
+    {
+      "path": "module-source/prepare_cpu_contract_test.py",
+      "bytes": 7189,
+      "sha256": "fe1b0dce60709c07f17f45941a0611036d8aabfb79a60e984646d5874ab028a5"
+    },
+    {
+      "path": "module-source/prepare_sources.py",
+      "bytes": 15706,
+      "sha256": "05072ecf1208b76647ad852d119397a55a4afcab7703b6fe84191370ec0856c7"
+    },
+    {
+      "path": "module-source/processing_profile.h",
+      "bytes": 983,
+      "sha256": "327d80d7a8461167fc2a38f724a3ecb0c7c52ba7d18a2166ad2f2070e3e3583c"
+    },
+    {
+      "path": "module-source/shader-sources/1080p/motion1080-compose.comp",
+      "bytes": 1542,
+      "sha256": "a96b60b416269f79f9340bebab922f7c08a38ea08bd55cc025d41eecc34f7c51"
+    },
+    {
+      "path": "module-source/shader-sources/1080p/motion1080-downsample.comp",
+      "bytes": 681,
+      "sha256": "52aafb745ebf35033e7bf6379e52f95aac5defe2e0ef631fce97d735115cbafb"
+    },
+    {
+      "path": "module-source/shader-sources/1080p/motion1080-flow.comp",
+      "bytes": 2839,
+      "sha256": "ad47e0224d768e890cab7f5fc8dcb3ae487afaead6c6040cdfc7d62320b02b62"
+    },
+    {
+      "path": "module-source/shader-sources/1080p/motion1080-generate.comp",
+      "bytes": 796,
+      "sha256": "c3fe5794ee027db75c3f157779544180f442182faba4969d791aaab9d972fdf9"
+    },
+    {
+      "path": "module-source/shader-sources/1080p/motion1080-pack.comp",
+      "bytes": 1971,
+      "sha256": "9b464e335954f9454c198f392ae4a3eeecc87c7dbf0324d6171bdb4c7b097e43"
+    },
+    {
+      "path": "module-source/shader-sources/720p/motion1080-compose.comp",
+      "bytes": 1542,
+      "sha256": "7c5fe74c90c1018be4b30df21bd94843737a9c931629d86652ec7b5be7b08393"
+    },
+    {
+      "path": "module-source/shader-sources/720p/motion1080-downsample.comp",
+      "bytes": 681,
+      "sha256": "328c70f16050739db7d76b07a988a5b5556b8503421d20fb78550355a68fee62"
+    },
+    {
+      "path": "module-source/shader-sources/720p/motion1080-flow.comp",
+      "bytes": 2837,
+      "sha256": "f1a83783da6ebf67e0571b69e08389e76240540cace9a2af41c793aa65b444d4"
+    },
+    {
+      "path": "module-source/shader-sources/720p/motion1080-generate.comp",
+      "bytes": 795,
+      "sha256": "ee81c967a97d7306bff0d42048ba1de301a65d28181d1075631bb1fef9e397af"
+    },
+    {
+      "path": "module-source/shader-sources/720p/motion1080-pack.comp",
+      "bytes": 1964,
+      "sha256": "ec48e5f783ab448daec70286fe4b498fd600cae82530b279cf2cf94b52b248dd"
+    },
+    {
+      "path": "module-source/test_buffered_timeline.cpp",
+      "bytes": 2808,
+      "sha256": "290b21c67b61170b6fbce338f3ba2e2db8791000073de6facd07ed53c73f6176"
+    },
+    {
+      "path": "module-source/test_ort_paths.cpp",
+      "bytes": 2476,
+      "sha256": "26b919705a347019cd08e80ae3415a965149450d6dc99bedd618b19a6d33111e"
+    },
+    {
+      "path": "module-source/test_processing_profile.cpp",
+      "bytes": 1368,
+      "sha256": "4ad424ab1f2975fdfcf74516bf7e1973c5611773a87e2291fc8067f38662e6cf"
+    },
+    {
+      "path": "probe_process.ps1",
+      "bytes": 1756,
+      "sha256": "e4ad982303ce62b5e814385c02d5d92af35fd342fa327d3f1d76d6a3c8d9723d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2375,
+      "sha256": "2108c2c6e0b533e7fe945c4ecdfe54affa839bbb961942e0c103ada09961a821"
+    },
+    {
+      "path": "run-module-check.ps1",
+      "bytes": 1701,
+      "sha256": "62676e880fd888aaae080c90476a56c752fe644bbe01462363869297a7fc3bd1"
+    },
+    {
+      "path": "runtime/Cemu-NPU-Release.exe",
+      "bytes": 29532672,
+      "sha256": "aa00dfc2261f8173eed1ef6406e34dcd7c417e450e6136d9ff241c001133ff8e"
+    },
+    {
+      "path": "runtime/cemu_npu.dll",
+      "bytes": 320512,
+      "sha256": "b4b5de1a1c8e09cfd4671b2db9c4c3bd66b3a39a8631a5249394c544da40267d"
+    },
+    {
+      "path": "runtime/libqnnhtpv73.cat",
+      "bytes": 12216,
+      "sha256": "c42e151d507d4dfb383638638a5a94623742bda3db973e06f6c3039f5b12a166"
+    },
+    {
+      "path": "runtime/libQnnHtpV73Skel.so",
+      "bytes": 10249464,
+      "sha256": "b1f0c26b1722a220742802f57647ed70ce89f574f115e5789baa27a81b9def7a"
+    },
+    {
+      "path": "runtime/libqnnhtpv81.cat",
+      "bytes": 12216,
+      "sha256": "8a676539af68eaf902f371829c5c5704c7d6de1fd3be7485a4bc32a41d0b605c"
+    },
+    {
+      "path": "runtime/libQnnHtpV81Skel.so",
+      "bytes": 11271968,
+      "sha256": "a3e62af7044227804bc229437107cb54425e05f43d57cc26a876dd94d54a0cfc"
+    },
+    {
+      "path": "runtime/module-smoke-probe.exe",
+      "bytes": 322048,
+      "sha256": "ad791eed2e4a964b9a5c1c06d4a9084c76654a86756f5960a4c60cc6515c9945"
+    },
+    {
+      "path": "runtime/npu/1080p/anvil-u8nhwc.onnx",
+      "bytes": 954257,
+      "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c"
+    },
+    {
+      "path": "runtime/npu/1080p/shaders/motion1080-compose.spv",
+      "bytes": 5912,
+      "sha256": "118272fdfd2aa6c7fb19e99dbefe0fd0420696e68c5db0fc000b2fc4e5ec0d1a"
+    },
+    {
+      "path": "runtime/npu/1080p/shaders/motion1080-downsample.spv",
+      "bytes": 2832,
+      "sha256": "ede06889d191e1fc74462d4f012a538fbd91fe30c4cdac5a783cf480b180084d"
+    },
+    {
+      "path": "runtime/npu/1080p/shaders/motion1080-flow.spv",
+      "bytes": 10344,
+      "sha256": "af17add1d7bad775816d78996a74e49cd748d329ea9b8e662a377d664a87af8c"
+    },
+    {
+      "path": "runtime/npu/1080p/shaders/motion1080-generate.spv",
+      "bytes": 3664,
+      "sha256": "234f4ed023d48d79fc07104042142ce06b4ec10088367afb5af3a183ac8200f9"
+    },
+    {
+      "path": "runtime/npu/1080p/shaders/motion1080-pack.spv",
+      "bytes": 8576,
+      "sha256": "691782ae630be5fc0b77bec84c42643afd7207d314826856726e644f88af7b57"
+    },
+    {
+      "path": "runtime/npu/720p/anvil-u8nhwc.onnx",
+      "bytes": 954097,
+      "sha256": "f4633a9d1e905f8823004efd63de65f512e36962d87d8598e7ef5469d18ae2ac"
+    },
+    {
+      "path": "runtime/npu/720p/shaders/motion1080-compose.spv",
+      "bytes": 5912,
+      "sha256": "e541b42b22d8fbaac08b2b4c72c847a2f6421720b7e729f23bd2c49f9f066390"
+    },
+    {
+      "path": "runtime/npu/720p/shaders/motion1080-downsample.spv",
+      "bytes": 2832,
+      "sha256": "d1bf2d536dfa5a12836ba92307722f3f10b8a7aca2000c7efa2a22c22dbb81b5"
+    },
+    {
+      "path": "runtime/npu/720p/shaders/motion1080-flow.spv",
+      "bytes": 10344,
+      "sha256": "9aecaeba3f56a2a80ca1648621f4b9c2822bd7a4d0d359e6f7a6847d01231969"
+    },
+    {
+      "path": "runtime/npu/720p/shaders/motion1080-generate.spv",
+      "bytes": 3664,
+      "sha256": "3f90fc462bc187201a1f699da31202befa6c3ffd2d14110fd87bd0c3be800076"
+    },
+    {
+      "path": "runtime/npu/720p/shaders/motion1080-pack.spv",
+      "bytes": 8576,
+      "sha256": "3c1b58514bb2cb383892b6a348075e28707a4184910055ae017b078d1ab4c05b"
+    },
+    {
+      "path": "runtime/onnxruntime.dll",
+      "bytes": 31656984,
+      "sha256": "b9cd2d115383d964e9842f4e2ba54fa15acee01aa9b2cac5d384523b81328a58"
+    },
+    {
+      "path": "runtime/onnxruntime_providers_qnn.dll",
+      "bytes": 5099592,
+      "sha256": "43029629bb3b35fe98d92fa32e8fcd9960510f3a64ff11e706101b57590734f0"
+    },
+    {
+      "path": "runtime/onnxruntime_providers_shared.dll",
+      "bytes": 41504,
+      "sha256": "e6609e50306d9395dfae4f0c3e616bb8152da7211b0048dde4dd7f188690d358"
+    },
+    {
+      "path": "runtime/QnnHtp.dll",
+      "bytes": 4564672,
+      "sha256": "ba47c8b3830991099f4977a9bc0acb45df82a218306b9240ea5d4060f7d9262d"
+    },
+    {
+      "path": "runtime/QnnHtpPrepare.dll",
+      "bytes": 176059072,
+      "sha256": "54e4d0a48538c1701e458a4320fa4423634ad8fdd695f522d4f52f29061283bc"
+    },
+    {
+      "path": "runtime/QnnHtpV73Stub.dll",
+      "bytes": 1021120,
+      "sha256": "778828b7331a4eb7b120dbdff263a5bf03fc7691d9b6e9afd7efbfa3935cdb98"
+    },
+    {
+      "path": "runtime/QnnHtpV81Stub.dll",
+      "bytes": 1021120,
+      "sha256": "ab9994db8317cac4d0063d655b0220366fcb156e8facc7fc21a0a0b5da86812c"
+    },
+    {
+      "path": "runtime/QnnSystem.dll",
+      "bytes": 4522176,
+      "sha256": "6b5fab5dd874e6ec16978894161c4d40a32bdc9b876f6743d6ac09b098474976"
+    },
+    {
+      "path": "runtime/resources/ar/‏‏cemu.mo",
+      "bytes": 81849,
+      "sha256": "ab764de7e6ee508a7ba1b5741cda1d020d80c7a206b32d2d614a3f1266be2ae6"
+    },
+    {
+      "path": "runtime/resources/ca/cemu.mo",
+      "bytes": 56852,
+      "sha256": "faf52ad24a921f2a1463b957484f73319a735f63c58a65356fdf907acfed1a90"
+    },
+    {
+      "path": "runtime/resources/de/cemu.mo",
+      "bytes": 69412,
+      "sha256": "6e0a9e9e255b0c304f37d98bed5ff838b3bdce18ec7cdb29799bdcf8f03ee304"
+    },
+    {
+      "path": "runtime/resources/es/cemu.mo",
+      "bytes": 68744,
+      "sha256": "8c88fc62786ff8176f71b581c1d7bfff0c5c05af8361ae1137ac5c70cad5a14d"
+    },
+    {
+      "path": "runtime/resources/fr/cemu.mo",
+      "bytes": 73978,
+      "sha256": "47b81c8cc305c345395198907440915585b484252583be9d75c11f4cecca1458"
+    },
+    {
+      "path": "runtime/resources/he/cemu.mo",
+      "bytes": 23202,
+      "sha256": "a20a20902cc198f4b43a4024b0741072b6e3226170304375058432bf47f0e2ba"
+    },
+    {
+      "path": "runtime/resources/hu/cemu.mo",
+      "bytes": 72404,
+      "sha256": "82a5ddccb0fed0bd583068ca8ec50ed417fc9ece433ef2f02421e09393065c6e"
+    },
+    {
+      "path": "runtime/resources/it/cemu.mo",
+      "bytes": 71398,
+      "sha256": "a46522bfebdcf59f41e1e813a4f9b2a2c0b5ab73ae814a910fb3f4bdacd2f2d0"
+    },
+    {
+      "path": "runtime/resources/ja/cemu.mo",
+      "bytes": 68243,
+      "sha256": "cabfdcbd0c9e70c7dc60f62c41e4b59e725d7ed31149c5bf6f172d97a5e43c97"
+    },
+    {
+      "path": "runtime/resources/ko/cemu.mo",
+      "bytes": 71668,
+      "sha256": "0306123a00c0fd672bcfeb29f9e4a0582d933a4694ce78fdc3792e553065e792"
+    },
+    {
+      "path": "runtime/resources/nb/cemu.mo",
+      "bytes": 41128,
+      "sha256": "5231c0da3ae57ad7b833e5aab180a63790edddb9da12d39208ede895ee929b70"
+    },
+    {
+      "path": "runtime/resources/nl/cemu.mo",
+      "bytes": 54744,
+      "sha256": "e9d12c4e84d8b08f1dbd8335364a4c99937be66ca70b8f24b0fb9b120b1e2d6e"
+    },
+    {
+      "path": "runtime/resources/pl/cemu.mo",
+      "bytes": 17105,
+      "sha256": "69c2f8e4ac7fe019e55e9249b87f9f6d66e3e67cc558036fe42c841b1f614dc6"
+    },
+    {
+      "path": "runtime/resources/pt/cemu.mo",
+      "bytes": 61652,
+      "sha256": "121726bf3a061df6bba1c59e48c86125a71be8603fa27a861c21ee1072babec9"
+    },
+    {
+      "path": "runtime/resources/ru/cemu.mo",
+      "bytes": 91888,
+      "sha256": "eafd3467afebd0da25655bb8d35dabde5f41b98e90664abff9f2e6fc096cfdc7"
+    },
+    {
+      "path": "runtime/resources/sharedFonts/CafeCn.ttf",
+      "bytes": 9664448,
+      "sha256": "6afd751a9bb76bc788efb50a138c6f3765624ee84d8d8203be04d871ade40a6a"
+    },
+    {
+      "path": "runtime/resources/sharedFonts/CafeKr.ttf",
+      "bytes": 5626464,
+      "sha256": "c3c326f6ce1899e391dc4996b10a0c30558c5b8f36dfbaa418976862b3e2dffb"
+    },
+    {
+      "path": "runtime/resources/sharedFonts/CafeStd.ttf",
+      "bytes": 5363768,
+      "sha256": "59e2494727b8e7a7bbf48c8749f2dbc07d438c9fabeaa9847a08ec690f9888a1"
+    },
+    {
+      "path": "runtime/resources/sharedFonts/CafeTw.ttf",
+      "bytes": 6593548,
+      "sha256": "c8f9e16345dbc3b6e165fe12435486a748e730ebe6002b5d713efe73d171d51c"
+    },
+    {
+      "path": "runtime/resources/sv/cemu.mo",
+      "bytes": 67980,
+      "sha256": "44da08ec554463dcaeb809e991f759e4e6780a83ce1555c921697e990a061b18"
+    },
+    {
+      "path": "runtime/resources/tr/cemu.mo",
+      "bytes": 28711,
+      "sha256": "a4c710ecce610082a842d500d657bc035cdbfb31931f5b6ac4a3587ac562c073"
+    },
+    {
+      "path": "runtime/resources/uk/cemu.mo",
+      "bytes": 58231,
+      "sha256": "d0e8077d2ae33b4aa0199f0fc1d31d075031d2329abd98fb0b0d2a8568023f78"
+    },
+    {
+      "path": "runtime/resources/zh/cemu.mo",
+      "bytes": 60704,
+      "sha256": "9cd96960af03262c898642b661700578c7f02704d06fb663224dc4a93989218d"
+    },
+    {
+      "path": "runtime/rpc-path.txt",
+      "bytes": 104,
+      "sha256": "8d4b51375f43b5a9bc53fcbbfefbb449c7147aed5a3feb908cffae5ab09d952b"
+    },
+    {
+      "path": "source-overlay/CMakeLists.txt",
+      "bytes": 11298,
+      "sha256": "2fd1bdf2d349e0af767a0539123d098584fe0d17650122225937f3aa6867c663"
+    },
+    {
+      "path": "source-overlay/dependencies/npu-cemu/npu_cemu.h",
+      "bytes": 1781,
+      "sha256": "7626f84843a22836416179d8bb3afc9997051c60619330d0cd63d630783c6e16"
+    },
+    {
+      "path": "source-overlay/src/Cafe/CMakeLists.txt",
+      "bytes": 23813,
+      "sha256": "6dee3a80b43b86622eb12a3a413a121539786028db9ca008cfcfa9eba2f1dae6"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Core/LatteOverlay.cpp",
+      "bytes": 19014,
+      "sha256": "d4bd8cff97fa445a30ae531ceab85b27806768f99d49fffd7100bbdc6ebb3260"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp",
+      "bytes": 45086,
+      "sha256": "ef7df6c0ce0b04ca18c2ef897981370ffb8ed7738e35ae0378e0315b4ff95bf8"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Core/LatteShader.cpp",
+      "bytes": 52323,
+      "sha256": "121401dabea12843bc59dee0d7a41b50f330fb838daa16e379a57c852fe6e15f"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Core/LatteShader.h",
+      "bytes": 5183,
+      "sha256": "6d3c5c0c563b2436049343094b38d08fe668b0c76befcb9baef371bba5cdcbda"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp",
+      "bytes": 168913,
+      "sha256": "4e2870d9ffd3a70ed4bb1653876491f734ea278c96be4413c9c8c383a510942a"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp",
+      "bytes": 27857,
+      "sha256": "4b6b16f7d9f7f705d4e9a86f315428fc751b5c95fe5a593c9af051744e61cf14"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Renderer/Renderer.h",
+      "bytes": 7914,
+      "sha256": "01c6df8ab563e79f82ef138a71a67580e70abb3a05d16525d6c32c9b060b9533"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp",
+      "bytes": 29241,
+      "sha256": "1a077fbd4dbf57887e1ed1ee525981e6924012dd637b0af5a5cdc0411ad6a53b"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Renderer/RendererOuputShader.h",
+      "bytes": 2420,
+      "sha256": "ed1f73c5ca6d346854cfa731ee90bb21e21e0545b6b41534ce8f610b1daaead4"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp",
+      "bytes": 15775,
+      "sha256": "ebc82944da609780a570d549e2d4f472e3e3ad0c4caf30c293c18b303035bf55"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h",
+      "bytes": 3155,
+      "sha256": "eaae2e153e69e761a1d70fe3c916daa2f390d1408416161b8b060d3fee1cc334"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h",
+      "bytes": 7699,
+      "sha256": "4655ff09ff598921268c8517f22d611da9404781da40447c64a29129ec880024"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp",
+      "bytes": 17212,
+      "sha256": "855d17f9eb8301214bcf6ede2ec94043236c58b4e66520076b5b8080fc1881f7"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+      "bytes": 190203,
+      "sha256": "275f89ad5e7dca1aedabbe20511328c86e5c4e69e3c04374d0132982f46c754c"
+    },
+    {
+      "path": "source-overlay/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+      "bytes": 40761,
+      "sha256": "2fe4581ef95921c2d42af77f0d9654ad5f230d8a49ff1bb94a9ab0fec3d5b3c8"
+    },
+    {
+      "path": "source-overlay/src/config/CemuConfig.cpp",
+      "bytes": 21103,
+      "sha256": "e88de52e7d57039ed6df824a5d94279e8e2c305c90f61a017806ba78ed5cc50a"
+    },
+    {
+      "path": "source-overlay/src/config/CemuConfig.h",
+      "bytes": 15577,
+      "sha256": "67b162d15afa23dccbc78425ddd2d6268a506077ed6d100f03dc41ed29fc89c3"
+    },
+    {
+      "path": "source-overlay/src/gui/wxgui/GeneralSettings2.cpp",
+      "bytes": 96097,
+      "sha256": "b8d84ffa5f1d2b0c25b09a77096d20e835057d99b17bd3ec8d5a59816ccde72d"
+    },
+    {
+      "path": "source-overlay/src/gui/wxgui/GeneralSettings2.h",
+      "bytes": 5058,
+      "sha256": "ea8c21d8c33e2bddf65b41689be442e7ada2bc8265389d1afcf8c4c882f8a7af"
+    },
+    {
+      "path": "source-overlay/src/gui/wxgui/MainWindow.cpp",
+      "bytes": 90481,
+      "sha256": "1a6bcf0b590723e51241f96a113079e11c0285aebff0e0c948016c8fbd31d397"
+    },
+    {
+      "path": "source-overlay/src/gui/wxgui/wxWindowSystem.cpp",
+      "bytes": 8712,
+      "sha256": "d630b9932117ec2c9c78652be7bf28ca67a1677c2f35d859e1e4bae67c5c36a0"
+    },
+    {
+      "path": "source-overlay/src/imgui/imgui_impl_vulkan.cpp",
+      "bytes": 77193,
+      "sha256": "2602d25a9ca4c36308056fc7b24f8173dff9b4008783028cb5baa86d6195bb07"
+    },
+    {
+      "path": "source-overlay/src/imgui/imgui_impl_vulkan.h",
+      "bytes": 8849,
+      "sha256": "85b45cd27f099d33a3d3a54371f024e6d8d012c54e59fbd55ad6f0633597add6"
+    },
+    {
+      "path": "verify-build.ps1",
+      "bytes": 1263,
+      "sha256": "170b8f48bef0107ff584f9771be9dd57a2b4a94b12026c88ee6bdbfe8d33aa90"
+    }
+  ],
+  "limitations": "New ABI/profile resource wiring requires device validation. Prior user game test was v4/1080p. 720p model uses unchanged synthetic quantization scales; no new game-quality or scanout-cadence validation. NPU ON processes both buffered real and generated frames at the chosen resolution."
+}

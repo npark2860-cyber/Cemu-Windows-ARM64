@@ -1,0 +1,328 @@
+{
+  "schema": "cemu-version-catalog.v1",
+  "repository": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64.git",
+  "roles": [
+    {
+      "role": "Release",
+      "branch": "final-adreno-compat-arm64",
+      "source_commit": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+      "source_path": "Release/source",
+      "build": {
+        "run_id": 34314391691,
+        "url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/actions/runs/34314391691",
+        "branch": "final-adreno-compat-arm64",
+        "commit": "d359c53da77dddac6c34554d3b894099896b070e",
+        "workflow": ".github/workflows/final-adreno-compat-arm64.yml",
+        "workflow_name": "[Release] Cemu Windows ARM64",
+        "created_at": "2026-09-09T05:19:07Z",
+        "artifact_id": 10090402862,
+        "artifact_name": "cemu-arm64-release",
+        "artifact_digest": "sha256:1e1d4c4fa6c10e3ef2389322e66c0b1f8d146f9ee2a969cd2215c629a59dcd3f",
+        "archive_download_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/actions/artifacts/10090402862/zip",
+        "artifact_size": 11925707,
+        "expires_at": "2026-12-08T05:19:07Z"
+      },
+      "download_status": "downloaded; GitHub archive SHA-256 verified",
+      "verification": "source HEAD/branch/remote/submodule, GitHub archive digest and extracted file SHA-256 verified; runtime not tested",
+      "runtime_tested": false,
+      "role_kind": "baseline",
+      "source_binary_relation": "HEAD differs from CI build only in ACTIVE_BRANCH_ROLES.md and BRANCH_POLICY.md",
+      "archive_path": "Release\\archives\\cemu-arm64-release-run-34314391691.zip",
+      "binary_path": "Release\\binaries\\run-34314391691",
+      "files": [
+        {
+          "path": "Cemu.exe",
+          "size": 29107200,
+          "sha256": "d2d77ee6961d9f834740ae450653a9f9235da27f43f3b82ed35ca7b2acc56abb",
+          "pe_machine": "AA64 (ARM64)"
+        }
+      ]
+    },
+    {
+      "role": "Release+SE",
+      "branch": "codex/generic-voice-haptics",
+      "source_commit": "9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+      "source_path": "Release+SE/source",
+      "role_kind": "baseline",
+      "selected_by_user": "User explicitly confirms C:\\Emulators\\Cemu_arm64\\Cemu_se_test.exe is the final SE version.",
+      "pull_request": {
+        "number": 5,
+        "url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/pull/5",
+        "state": "open",
+        "draft": true,
+        "base_branch": "test_SE"
+      },
+      "build": {
+        "run_id": 35507685980,
+        "url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/actions/runs/35507685980",
+        "branch": "build/test-se-once",
+        "commit": "e851c8377c2c0fbcdc9042cf3971f60f0395d78b",
+        "workflow": ".github/workflows/final-adreno-compat-arm64.yml",
+        "workflow_name": "[Test_SE] Cemu Windows ARM64",
+        "created_at": "2026-09-20T11:23:11Z",
+        "artifact_id": 10603854428,
+        "artifact_name": "cemu-arm64-test-se-astra",
+        "artifact_digest": "sha256:2ff370b000729a95b5355f40f545e32a8ef90b6240928bc964e7f1224715c50a",
+        "archive_download_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/actions/artifacts/10603854428/zip",
+        "artifact_size": 12009182,
+        "expires_at": "2026-12-19T11:23:11Z"
+      },
+      "source_binary_relation": "Build commit is a direct child of PR head; only .github/workflows/final-adreno-compat-arm64.yml differs",
+      "download_status": "downloaded; GitHub archive SHA-256 verified",
+      "verification": "source HEAD/branch/remote/submodule, GitHub archive digest and extracted file SHA-256 verified; runtime not tested",
+      "runtime_tested": false,
+      "archive_path": "Release+SE/archives/cemu-arm64-test-se-astra-run-35507685980.zip",
+      "binary_path": "Release+SE/binaries/run-35507685980",
+      "files": [
+        {
+          "path": "Cemu.exe",
+          "size": 29433856,
+          "sha256": "e8791dbea63e85111c1b9a4feab98f31ca469b1802caf379aa5120cffa2dc9c8",
+          "pe_machine": "AA64 (ARM64)"
+        }
+      ],
+      "installed_baseline_path": "C:\\Emulators\\Cemu_arm64\\Cemu_se_test.exe",
+      "installed_baseline_sha256": "e8791dbea63e85111c1b9a4feab98f31ca469b1802caf379aa5120cffa2dc9c8"
+    },
+    {
+      "role": "Diagnostics",
+      "branch": "fix/arm64-diagnostics-ui-artifact-gate",
+      "source_commit": "6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+      "source_path": "Diagnostics/source",
+      "build": {
+        "run_id": 34314435136,
+        "url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/actions/runs/34314435136",
+        "branch": "fix/arm64-diagnostics-ui-artifact-gate",
+        "commit": "4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934",
+        "workflow": ".github/workflows/diagnostics-arm64.yml",
+        "workflow_name": "[Diagnostics] Cemu Windows ARM64",
+        "created_at": "2026-09-09T05:19:46Z",
+        "artifact_id": 10090415571,
+        "artifact_name": "cemu-arm64-diagnostics",
+        "artifact_digest": "sha256:864a3bf5f69e06f6ad8602d45792f9748b8972d8e5df6bcb04f322f87dd3addc",
+        "archive_download_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/actions/artifacts/10090415571/zip",
+        "artifact_size": 11981459,
+        "expires_at": "2026-12-08T05:19:47Z"
+      },
+      "download_status": "downloaded; GitHub archive SHA-256 verified",
+      "verification": "source HEAD/branch/remote/submodule, GitHub archive digest and extracted file SHA-256 verified; runtime not tested",
+      "runtime_tested": false,
+      "role_kind": "baseline",
+      "source_binary_relation": "HEAD differs from CI build only in ACTIVE_BRANCH_ROLES.md and BRANCH_POLICY.md",
+      "archive_path": "Diagnostics\\archives\\cemu-arm64-diagnostics-run-34314435136.zip",
+      "binary_path": "Diagnostics\\binaries\\run-34314435136",
+      "files": [
+        {
+          "path": "Cemu-Diagnostics.exe",
+          "size": 29267968,
+          "sha256": "5845e2b2a52bc777a3a03290ec3795f867947f7adfa2d9ac3caef6cf6dc7c6ba",
+          "pe_machine": "AA64 (ARM64)"
+        }
+      ]
+    },
+    {
+      "role": "Diagnostics+SE",
+      "branch": "feat/enhanced-sound-experience-v1",
+      "source_commit": "b18d8faae5a4b2316974ef4907e0739a9e3a5c2b",
+      "source_path": "Diagnostics+SE/source",
+      "build": {
+        "run_id": 35435066660,
+        "url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/actions/runs/35435066660",
+        "branch": "feat/enhanced-sound-experience-v1",
+        "commit": "b18d8faae5a4b2316974ef4907e0739a9e3a5c2b",
+        "workflow": ".github/workflows/enhanced-sound-cue-capture-v2-arm64.yml",
+        "workflow_name": "Enhanced Sound Cue Capture V2 ARM64",
+        "created_at": "2026-09-19T09:34:28Z",
+        "artifact_id": 10583025097,
+        "artifact_name": "Cemu-EnhancedSound-CueCaptureV2-ARM64",
+        "artifact_digest": "sha256:c382bc2c0aa22a59f677eb1435040c652392bd5b14f5ef66683c35ffe1cd457d",
+        "archive_download_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/actions/artifacts/10583025097/zip",
+        "artifact_size": 11999296,
+        "expires_at": "2026-12-18T09:34:29Z"
+      },
+      "download_status": "downloaded; GitHub archive SHA-256 verified",
+      "verification": "source HEAD/branch/remote/submodule, GitHub archive digest and extracted file SHA-256 verified; runtime not tested",
+      "runtime_tested": false,
+      "role_kind": "baseline",
+      "source_binary_relation": "Exact source commit match",
+      "archive_path": "Diagnostics+SE\\archives\\Cemu-EnhancedSound-CueCaptureV2-ARM64-run-35435066660.zip",
+      "binary_path": "Diagnostics+SE\\binaries\\run-35435066660",
+      "files": [
+        {
+          "path": "Cemu-EnhancedSound-CueCaptureV2-ARM64.exe",
+          "size": 29275648,
+          "sha256": "5ecfc2aa639e7d10af7a2a30f06518350e9eb7ed32573c19a91e570ccc6c2c17",
+          "pe_machine": "AA64 (ARM64)"
+        },
+        {
+          "path": "README-CUE-CAPTURE-V2.txt",
+          "size": 922,
+          "sha256": "3414efd61349255db96af5c8e1a2d6ad0ae219aaa83b1ffd7c4e764d4b85c78b"
+        },
+        {
+          "path": "graphicPacks\\BreathOfTheWild\\EnhancedSoundExperience\\rules.txt",
+          "size": 345,
+          "sha256": "7ea368e6f423112e544a9321d95aa5a4a7d91533a4055c0cbeac3b9802d4071f"
+        },
+        {
+          "path": "graphicPacks\\BreathOfTheWild\\EnhancedSoundExperience\\sound_routes.ini",
+          "size": 1261,
+          "sha256": "34a0cd6c4e9d01acbb1a0d9d6a6203170c54c0c1c79232803448c4e80c3be8fe"
+        }
+      ]
+    }
+  ],
+  "collected_at": "2026-09-29T02:02:11.6683441+09:00",
+  "baseline_roles": [
+    "Release",
+    "Release+SE",
+    "Diagnostics",
+    "Diagnostics+SE"
+  ],
+  "historical_snapshots": [
+    {
+      "role": "Test",
+      "branch": "test/se-fingerprint-index-v1",
+      "source_commit": "668acee48ae048a86d663546b56ca5494ae1a77c",
+      "source_path": "Test/source",
+      "build": {
+        "run_id": 35453884407,
+        "url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/actions/runs/35453884407",
+        "branch": "test/se-fingerprint-index-v1",
+        "commit": "668acee48ae048a86d663546b56ca5494ae1a77c",
+        "workflow": ".github/workflows/final-adreno-compat-arm64.yml",
+        "workflow_name": "[Test] Cemu ARM64 Release+SE + Haptics + Raw Trigger",
+        "created_at": "2026-09-19T16:06:22Z",
+        "artifact_id": 10587499174,
+        "artifact_name": "cemu-arm64-test-release-se-haptics-raw-trigger-v1",
+        "artifact_digest": "sha256:bdb7c993ea1b36e35d00b1ffd904e9952bad58c572e33b7416e95f9a1b55711a",
+        "archive_download_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/actions/artifacts/10587499174/zip",
+        "artifact_size": 11999773,
+        "expires_at": "2026-12-18T16:06:22Z"
+      },
+      "download_status": "downloaded; GitHub archive SHA-256 verified",
+      "verification": "source HEAD, branch, remote, submodules, archive SHA-256, extracted file hashes verified; runtime not tested",
+      "runtime_tested": false,
+      "archive_path": "Test\\archives\\cemu-arm64-test-release-se-haptics-raw-trigger-v1-run-35453884407.zip",
+      "binary_path": "Test\\binaries\\run-35453884407",
+      "files": [
+        {
+          "path": "Cemu.exe",
+          "size": 29286400,
+          "sha256": "af5f2a541aae9d2a7b15f2c4e2c9313b783eb03282ab202a34e10d2c57794cf7",
+          "pe_machine": "AA64 (ARM64)"
+        }
+      ],
+      "role_kind": "temporary-experiment",
+      "source_binary_relation": "Exact source commit match",
+      "archive_note": "Historical 2026-09-19 SE fingerprint test snapshot. Superseded by user-selected PR #5."
+    },
+    {
+      "role": "Release+SE",
+      "branch": "Release+SE",
+      "source_commit": "240b52c853f3d8a7b111c74dd95277ba50866204",
+      "source_path": "Release+SE/history/source-240b52c853f3",
+      "build": {
+        "run_id": 35399518440,
+        "url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/actions/runs/35399518440",
+        "branch": "build/release-se-once",
+        "commit": "bccd0f9a31f114857e45bb178415faeed271182b",
+        "workflow": ".github/workflows/final-adreno-compat-arm64.yml",
+        "workflow_name": "[Release] Cemu Windows ARM64",
+        "created_at": "2026-09-18T22:00:11Z",
+        "artifact_id": 10571013058,
+        "artifact_name": "cemu-arm64-release",
+        "artifact_digest": "sha256:e55436daec5f25adcc4967f48cec6fb7c65745a4d1b8be34257cf4e949bb4477",
+        "archive_download_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/actions/artifacts/10571013058/zip",
+        "artifact_size": 11985490,
+        "expires_at": "2026-12-17T22:00:11Z"
+      },
+      "download_status": "DISCARDED at explicit user request; EXE and ZIP sent to Recycle Bin",
+      "verification": "source HEAD/branch/remote/submodule, GitHub archive digest and extracted file SHA-256 verified; runtime not tested",
+      "runtime_tested": false,
+      "role_kind": "historical-reference",
+      "source_binary_relation": "Older CI build from build/release-se-once; source code differs from current role HEAD",
+      "latest_se_work": {
+        "source": "PR #5",
+        "catalog_role": "Test",
+        "status": "Open draft PR targeting test_SE, not yet promoted to Release+SE"
+      },
+      "archive_path": "Release+SE\\archives\\cemu-arm64-release-run-35399518440.zip",
+      "binary_path": "Release+SE\\binaries\\run-35399518440",
+      "files": [
+        {
+          "path": "Cemu.exe",
+          "size": 29247488,
+          "sha256": "17231aa75f907d3804b27ee40762e9940c70443f33ca807157b80790fcb4d496",
+          "pe_machine": "AA64 (ARM64)"
+        }
+      ],
+      "archive_note": "Former upstream Release+SE snapshot and Cemu_se.exe distribution; user designates Cemu_se_test.exe / PR #5 as final SE baseline.",
+      "baseline_use": "prohibited; historical source comparison only",
+      "artifact_files_present": false
+    }
+  ],
+  "installed_binary_matches": [
+    {
+      "installed_path": "C:\\Emulators\\Cemu_arm64\\Cemu_se_test.exe",
+      "sha256": "e8791dbea63e85111c1b9a4feab98f31ca469b1802caf379aa5120cffa2dc9c8",
+      "size": 29433856,
+      "matched_roles": [
+        "Release+SE (user-selected final SE)"
+      ],
+      "matched_build_runs": [
+        35507685980
+      ],
+      "matched_build_commits": [
+        "e851c8377c2c0fbcdc9042cf3971f60f0395d78b"
+      ],
+      "status": "EXACT_SHA256_MATCH"
+    },
+    {
+      "installed_path": "C:\\Emulators\\Cemu_arm64\\Cemu_se.exe",
+      "sha256": "17231aa75f907d3804b27ee40762e9940c70443f33ca807157b80790fcb4d496",
+      "size": 29247488,
+      "matched_roles": [
+        "Historical Release+SE"
+      ],
+      "matched_build_runs": [
+        35399518440
+      ],
+      "matched_build_commits": [
+        "bccd0f9a31f114857e45bb178415faeed271182b"
+      ],
+      "status": "DISCARDED_AFTER_EXACT_SHA256_MATCH",
+      "present": false
+    },
+    {
+      "installed_path": "C:\\Emulators\\Cemu_arm64\\Cemu-Diagnostics.exe",
+      "sha256": "5845e2b2a52bc777a3a03290ec3795f867947f7adfa2d9ac3caef6cf6dc7c6ba",
+      "size": 29267968,
+      "matched_roles": [
+        "Diagnostics"
+      ],
+      "matched_build_runs": [
+        34314435136
+      ],
+      "matched_build_commits": [
+        "4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934"
+      ],
+      "status": "EXACT_SHA256_MATCH"
+    },
+    {
+      "installed_path": "C:\\Emulators\\Cemu_arm64\\Cemu.exe",
+      "sha256": "d2d77ee6961d9f834740ae450653a9f9235da27f43f3b82ed35ca7b2acc56abb",
+      "size": 29107200,
+      "matched_roles": [
+        "Release"
+      ],
+      "matched_build_runs": [
+        34314391691
+      ],
+      "matched_build_commits": [
+        "d359c53da77dddac6c34554d3b894099896b070e"
+      ],
+      "status": "EXACT_SHA256_MATCH"
+    }
+  ]
+}

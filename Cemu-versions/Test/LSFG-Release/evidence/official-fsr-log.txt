@@ -1,0 +1,85 @@
+[02:49:06.218] ------- Init Cemu d359c53 -------
+[02:49:06.219] Init Wii U memory space (base: 0x000001dd46000000)
+[02:49:06.219] mlc01 path: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01
+[02:49:06.219] RAM: 15979MB
+[02:49:06.219] Platform: Windows 11 Home 25H2 (Build 26220)
+[02:49:06.219] Used CPU extensions: 
+[02:49:06.226] IOSU_CRYPTO: No otp.bin found. Online mode cannot be used
+[02:49:06.226] IOSU_CRYPTO: No Seeprom.bin found. Online mode cannot be used
+[02:49:06.300] Mounting title 00050000101c9300
+[02:49:06.300] Base: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/title/00050000/101c9300 [Folder]
+[02:49:06.300] Update: Not present
+[02:49:06.300] DLC: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/title/0005000c/101c9300 [Folder]
+[02:49:06.302] Thread quantum set to 100000
+[02:49:06.307] Shared font CafeCn.ttf is not present
+[02:49:06.317] Recompiler initialized
+[02:49:06.324] ------- Init Vulkan graphics backend -------
+[02:49:06.358] Vulkan instance version: 1.4
+[02:49:06.505] Using GPU: Qualcomm(R) Adreno(TM) X1-85 GPU
+[02:49:06.505] Driver version: Driver Build: 0eb8636cd3, Id6ce193842, 1782814497
+Date: 06/30/2026
+Compiler Version: E031.52.01.00
+Driver Branch: BVT_187
+
+[02:49:06.505] Vulkan: present_wait extension: unsupported
+[02:49:06.505] VK_EXT_attachment_feedback_loop_layout(_dynamic_state) not supported
+[02:49:06.505] VulkanLimits: UBAlignment 64 nonCoherentAtomSize 1
+[02:49:06.519] Vulkan device memory info:
+[02:49:06.519] Heap 0 - Size 7989MB Flags 0x00000001
+[02:49:06.519] Heap 1 - Size 4095MB Flags 0x00000001
+[02:49:06.519] Memory 0 - HeapIndex 0 Flags 0x00000001
+[02:49:06.519] Memory 1 - HeapIndex 0 Flags 0x00000001
+[02:49:06.519] Memory 2 - HeapIndex 0 Flags 0x00000001
+[02:49:06.519] Memory 3 - HeapIndex 0 Flags 0x0000000b
+[02:49:06.519] Memory 4 - HeapIndex 0 Flags 0x00000007
+[02:49:06.519] Memory 5 - HeapIndex 0 Flags 0x00000007
+[02:49:06.519] Memory 6 - HeapIndex 0 Flags 0x0000000f
+[02:49:06.519] Memory 7 - HeapIndex 1 Flags 0x00000021
+[02:49:06.519] Memory 8 - HeapIndex 0 Flags 0x00000011
+[02:49:06.520] VK_FORMAT_R4G4_UNORM_PACK8 not supported
+[02:49:07.939] ------- Loaded title -------
+[02:49:07.939] TitleId: 00050000-101c9300
+[02:49:07.939] TitleVersion: v0
+[02:49:07.939] TitleRegion: JP
+[02:49:07.940] Save path:   C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/save/00050000/101C9300/user/
+[02:49:07.940] Shader cache file: shaderCache/transferable/00050000101c9300.bin
+[02:49:07.940] gameprofile path: gameProfiles/00050000101c9300.ini
+[02:49:07.940] RPX hash (updated): dcac9927
+[02:49:07.940] RPX hash (base): dcac9927
+[02:49:07.940] Graphic pack: Using modified RAM mapping 10000000-a0000000 (+1310720KiB)
+[02:49:07.940] Graphic pack: Using modified RAM mapping a0000000-e0000000 (+589824KiB)
+[02:49:08.053] Loaded module 'u-king' with checksum 0x6d2dc472
+[02:49:08.053] RPL link time: 110ms
+[02:49:08.114] HLE scan time: 62ms
+[02:49:08.114] ------- Active settings -------
+[02:49:08.114] CPU-Mode: Multi-core recompiler (gameprofile)
+[02:49:08.114] Load shared libraries: true (gameprofile)
+[02:49:08.114] Use precompiled shaders: auto (gameprofile)
+[02:49:08.114] Full sync at GX2DrawDone: true
+[02:49:08.114] Strict shader mul: true
+[02:49:08.114] Async compile: true
+[02:49:08.114] Console language: 7
+[02:49:09.060] ------- Activate graphic packs -------
+[02:49:09.071] Syntax error while parsing patch for graphic pack 'C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/graphicPacks/downloadedGraphicPacks/BreathOfTheWild/BowAdaptiveTriggerV208/rules.txt':
+[02:49:09.071] Line 1075: Error in assembler: Instruction '.ADAPTIVETRIGGERRAW' is unknown or not supported
+[02:49:09.071] Error while processing "C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/graphicPacks/downloadedGraphicPacks/BreathOfTheWild/BowAdaptiveTriggerV208/patch_bow.asm". No patches for this graphic pack will be applied.
+[02:49:09.071] Activate graphic pack: The Legend of Zelda: Breath of the Wild/Mods/Controller/Bow Adaptive Trigger
+[02:49:09.075] Activate graphic pack: The Legend of Zelda: Breath of the Wild/Korean Translation
+[02:49:09.076] Activate graphic pack: The Legend of Zelda: Breath of the Wild/Enhancements/DualSense Experience - Unified
+[02:49:09.125] Activate graphic pack: The Legend of Zelda: Breath of the Wild/Enhancements [Presets: Disabled (Default),Enabled,Normal Reflections,Low (4 samples, Default),Ultra (8x, Default)]
+[02:49:09.361] Activate graphic pack: The Legend of Zelda: Breath of the Wild/Graphics [Presets: 16:9 (Default),960x540,Edge HUD (Default),Disabled (Default),Normal FXAA (Default),Medium (100%, Default),Medium (Lower Draw Distance, Sharper Shadows)]
+[02:49:09.363] Activate graphic pack: The Legend of Zelda: Breath of the Wild/Mods/Draw Distance [Presets: Extreme (2x, requires Extended Memory pack!),Ultra (1.5x, requires Extended Memory pack!),Medium (Default),Medium (Default),Normal (Default)]
+[02:49:09.365] Activate graphic pack: The Legend of Zelda: Breath of the Wild/Mods/Extended Memory
+[02:49:09.417] Set vsync frequency to 60 (graphic pack The Legend of Zelda: Breath of the Wild/Mods/FPS++)
+[02:49:09.417] Activate graphic pack: The Legend of Zelda: Breath of the Wild/Mods/FPS++ [Presets: Advanced Settings,60FPS Limit (Default),60FPS (ideal for 240/120/60Hz displays),Automatically Limit In Few Cutscenes (Recommended),Disabled (Default, dynamically adjust game speed),8 Frames Averaged (Default),Performance Fence (Default),Disabled (Default)]
+[02:49:09.495] Activate graphic pack: The Legend of Zelda: Breath of the Wild/Mods/Glowing Guardian Color [Presets: Energy Blue,Varied (Default),Malice Red (Default),Varied (Default),Varied (Default)]
+[02:49:09.495] ------- Init Audio backend -------
+[02:49:09.495] DirectSound: available
+[02:49:09.495] XAudio 2.8: available
+[02:49:09.495] Cubeb: available
+[02:49:09.495] ------- Init Audio input backend -------
+[02:49:09.495] Cubeb: available
+[02:49:09.495] ------- Run title -------
+[02:49:09.499] Graphic pack "Graphics" prevents rendertarget size optimization. This warning can be ignored and is intended for graphic pack developers
+[02:49:11.078] Shader cache loaded with 4845 shaders. Commited mem 423MB. Took 1579ms
+[02:49:12.684] IOSU_ACT: using account default in first slot

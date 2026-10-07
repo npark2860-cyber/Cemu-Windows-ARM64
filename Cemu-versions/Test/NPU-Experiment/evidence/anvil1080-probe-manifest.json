@@ -1,0 +1,159 @@
+{
+  "created_at": "2026-09-29T09:10:56.6759714+09:00",
+  "status": "REVISION_2_PREPARED_NOT_DEVICE_TESTED",
+  "revision": 2,
+  "machine": "ARM64 0xAA64",
+  "build_exit_code": 0,
+  "probe_sha256": "b711bbdae5e83a46520e20e117c5616c427a36431dc5b6eab5125159f6904bf3",
+  "model": {
+    "variant": "U8NHWC",
+    "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+    "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+    "input_shape": [
+      1,
+      1080,
+      1920,
+      6
+    ],
+    "output_shape": [
+      1,
+      1080,
+      1920,
+      3
+    ],
+    "host_dtype": "uint8",
+    "input_bytes": 12441600,
+    "output_bytes": 6220800,
+    "node_count": 250,
+    "operators": {
+      "Constant": 8,
+      "DequantizeLinear": 128,
+      "Transpose": 2,
+      "Pad": 1,
+      "QuantizeLinear": 56,
+      "Conv": 32,
+      "Add": 17,
+      "ConvTranspose": 4,
+      "Slice": 2
+    },
+    "weights_and_scales_unchanged": true,
+    "input_scale": 0.003921568859368563,
+    "input_zero_point": 0,
+    "output_scale": 0.00330072408542037,
+    "output_zero_point": 128,
+    "layout": "NHWC"
+  },
+  "reference_output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+  "driver": {
+    "version": "30.0.224.10000",
+    "inf": "oem73.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{F01A9D53-3FF6-48D2-9F97-C8A7004BE10C}\\0000",
+    "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+    "rpc_sha256": "218057045fb448f60585b03de05476e8673d4c14da5a94d8c7fb3a1f1264c3a1"
+  },
+  "graphics": {
+    "version": "31.0.170.0",
+    "inf": "oem36.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000",
+    "description": "Qualcomm(R) Adreno(TM) X1-85 GPU"
+  },
+  "python": {
+    "path": "C:/Users/angel/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe",
+    "sha256": "38bc3e8cdbea071d2cb2db79e3fcaa622f8c3ff8636b313569aa514497dbf6fc"
+  },
+  "files": [
+    {
+      "path": "src/anvil1080_pipeline_probe.cpp",
+      "sha256": "825a0c90cbde757cb5ce75f79b96bea1e0c681addd7066a29bc6dd014402c0bf"
+    },
+    {
+      "path": "src/anvil1080_vulkan_support.h",
+      "sha256": "70f036b134bf7a2b66f8856667f0bff67bb2dc910091b22f46954ff627bfcea5"
+    },
+    {
+      "path": "runtime/anvil1080-pipeline-probe.exe",
+      "sha256": "b711bbdae5e83a46520e20e117c5616c427a36431dc5b6eab5125159f6904bf3"
+    },
+    {
+      "path": "build-anvil1080-probe.cmd",
+      "sha256": "a9c3fd81c7701b0f47b9224b2db5cfd75cdb4cb5f60f19d939e3fc44510082a1"
+    },
+    {
+      "path": "run-anvil1080-probe.ps1",
+      "sha256": "abdb36b5de2a8c2060a1657ffcac7363f964bbcf7452169ce3f25665ef0b4b6c"
+    },
+    {
+      "path": "scripts/read_anvil1080_result.py",
+      "sha256": "9112237fc440275cccf871f1f18d75f4a87a9b8829178020be90c2537df37c5b"
+    },
+    {
+      "path": "scripts/test_anvil1080_reader.py",
+      "sha256": "097315e8c909f695a634afbedfe1ec61989aea1749b2e2bda56665de02d47a46"
+    },
+    {
+      "path": "ANVIL1080-EXPERIMENT.md",
+      "sha256": "403a1681d057d160132053e21661702fa0ac13ef901f735f5f0bf72b5f6b1839"
+    },
+    {
+      "path": "evidence/interop-probe-manifest.json",
+      "sha256": "fcd1632c88d1982c2db1ae4a37adc271fd0bc41aeaa314b61fc0add14bf74cac"
+    },
+    {
+      "path": "evidence/tuning-probe-manifest.json",
+      "sha256": "69cf45c09967be8b238510ee15e9c22084bd693d656a77f7c1080cd1027e20b4"
+    },
+    {
+      "path": "tools/glslang-16.6.0/bin/glslang.exe",
+      "sha256": "9643709c02c83e26773f96b6a87f197ab2e84f78be0879ad8fb3619418b5d9ad"
+    },
+    {
+      "path": "evidence/glslang-16.6.0-origin.json",
+      "sha256": "64dc884110478f33f17f4d26c5a065fb6b2dc7a675fe23fc1f5ce8713ef9cb6d"
+    },
+    {
+      "path": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c"
+    },
+    {
+      "path": "shaders/anvil1080-generate.comp",
+      "sha256": "e11433771ffd0cada495e376a2dff841a4618c0cb854c64fed47e89c2b22d8b8"
+    },
+    {
+      "path": "shaders/anvil1080-generate.spv",
+      "sha256": "305f4ad1d78864aed9c10643a1d28cc53b4c3108cdd25cd97a6c1ef751208996"
+    },
+    {
+      "path": "shaders/anvil1080-pack.comp",
+      "sha256": "5bd7fe326c604127c01950e324324d5fc75e3a2082314aec398e458fb25f448f"
+    },
+    {
+      "path": "shaders/anvil1080-pack.spv",
+      "sha256": "30ee550fcd9ba65708e350d7a2ffe19cda85767ef01a5ff3d3c7632f209e8407"
+    },
+    {
+      "path": "shaders/anvil1080-compose.comp",
+      "sha256": "25c892e3d0113bb4e61bbbc5032bc2c38c8fa9f93c819fc6aa00a3c9dab05a9e"
+    },
+    {
+      "path": "shaders/anvil1080-compose.spv",
+      "sha256": "8d2b2cb6773b343bbfa7a270551e085132494fa248129bebf9187be4b9f5ac15"
+    }
+  ],
+  "verification": {
+    "phases": 3,
+    "qnn_inferences": 6,
+    "expected_memhandle_bindings": 6,
+    "expected_raw_reference_bindings": 6
+  },
+  "measurement": {
+    "first_runs": 1,
+    "warmup_runs": 3,
+    "measured_runs": 30,
+    "phase_cycle": 3,
+    "qnn_profile": "off",
+    "performance": "balanced",
+    "ort_profile": true
+  },
+  "scope": "Standalone 1080p synthetic Vulkan images to shared ANVIL NHWC input, direct QNN HTP Run, GPU residual compose. No Cemu, motion alignment or game quality validation.",
+  "revision_note": "Explicit three uint loads per four RGB pixels replace the dynamic byteAt function path. Prior GPU compose matched first-word reuse exactly across all 6220800 channels; cause below SPIR-V is not proven."
+}

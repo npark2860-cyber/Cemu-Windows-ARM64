@@ -1,0 +1,110 @@
+[08:02:45.293] ------- Init Cemu c5205cc -------
+[08:02:45.293] Init Wii U memory space (base: 0x000001df54000000)
+[08:02:45.293] mlc01 path: C:/Users/angel/AppData/Roaming/Cemu/mlc01
+[08:02:45.293] RAM: 15979MB
+[08:02:45.293] Platform: Windows 11 Home 25H2 (Build 26220)
+[08:02:45.293] Used CPU extensions: 
+[08:02:45.295] IOSU_CRYPTO: No otp.bin found. Online mode cannot be used
+[08:02:45.295] IOSU_CRYPTO: No Seeprom.bin found. Online mode cannot be used
+[08:02:47.559] Mounting title 000500001011b900
+[08:02:47.559] Base: C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/1011b900 [Folder]
+[08:02:47.559] Update: C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/0005000e/1011b900 [Folder]
+[08:02:47.559] DLC: Not present
+[08:02:47.580] COS: System fonts found. Generated shareddata (26609KB)
+[08:02:47.587] Recompiler initialized
+[08:02:47.606] ------- Init Vulkan graphics backend -------
+[08:02:47.629] Vulkan instance version: 1.4
+[08:02:47.714] Using GPU: Qualcomm(R) Adreno(TM) X1-85 GPU
+[08:02:47.714] Driver version: Driver Build: 0eb8636cd3, Id6ce193842, 1782814497
+Date: 06/30/2026
+Compiler Version: E031.52.01.00
+Driver Branch: BVT_187
+
+[08:02:47.714] Vulkan: present_wait extension: unsupported
+[08:02:47.714] VK_EXT_attachment_feedback_loop_layout(_dynamic_state) not supported
+[08:02:47.714] VulkanLimits: UBAlignment 64 nonCoherentAtomSize 1
+[08:02:47.719] Vulkan device memory info:
+[08:02:47.719] Heap 0 - Size 7989MB Flags 0x00000001
+[08:02:47.719] Heap 1 - Size 4095MB Flags 0x00000001
+[08:02:47.719] Memory 0 - HeapIndex 0 Flags 0x00000001
+[08:02:47.719] Memory 1 - HeapIndex 0 Flags 0x00000001
+[08:02:47.719] Memory 2 - HeapIndex 0 Flags 0x00000001
+[08:02:47.719] Memory 3 - HeapIndex 0 Flags 0x0000000b
+[08:02:47.719] Memory 4 - HeapIndex 0 Flags 0x00000007
+[08:02:47.719] Memory 5 - HeapIndex 0 Flags 0x00000007
+[08:02:47.719] Memory 6 - HeapIndex 0 Flags 0x0000000f
+[08:02:47.719] Memory 7 - HeapIndex 1 Flags 0x00000021
+[08:02:47.719] Memory 8 - HeapIndex 0 Flags 0x00000011
+[08:02:47.719] VK_FORMAT_R4G4_UNORM_PACK8 not supported
+[08:02:48.489] ------- Loaded title -------
+[08:02:48.489] TitleId: 00050000-1011b900
+[08:02:48.489] TitleVersion: v16
+[08:02:48.489] TitleRegion: JP
+[08:02:48.489] Save path:   C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/save/00050000/1011B900/user/
+[08:02:48.489] Shader cache file: shaderCache/transferable/000500001011b900.bin
+[08:02:48.489] gameprofile path:  (not present)
+[08:02:48.489] RPX hash (updated): b8611392
+[08:02:48.489] RPX hash (base): b8611392
+[08:02:48.536] Loaded module 'prj_010' with checksum 0xaf5d1a85
+[08:02:48.536] RPL link time: 47ms
+[08:02:48.565] Patching Bayonetta 2 audio bug at: 0x035272a4
+[08:02:48.573] HLE scan time: 31ms
+[08:02:48.573] ------- Active settings -------
+[08:02:48.573] CPU-Mode: Multi-core recompiler
+[08:02:48.573] Load shared libraries: true
+[08:02:48.573] Use precompiled shaders: auto
+[08:02:48.573] Full sync at GX2DrawDone: true
+[08:02:48.573] Strict shader mul: true
+[08:02:48.573] Async compile: true
+[08:02:48.573] Console language: 0
+[08:02:50.352] [NPU] READY/OFF: ANVIL U8 NHWC processing=1280x720, native-resolution originals, 5 shared slots; QNN worker and borrowed Vulkan queue. No inference at startup. Adaptive 1-3 frame buffering, cached block motion and immutable overlay replay.
+[08:02:50.462] [NPU-SURFACE] Recreate begin: generation=0 skip_create=false
+[08:02:50.462] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0 buffered_frames=0 held_real=0; native originals preserved; scanout cadence unverified
+[08:02:50.462] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[08:02:50.462] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[08:02:50.463] ------- Activate graphic packs -------
+[08:02:50.466] Activate graphic pack: Bayonetta 2/Enhancements/Contrasty [Presets: Default]
+[08:02:50.472] Applying patch group 'Bayo2_AspectRatio_V0' (Codecave: 01800000-01800038)
+[08:02:50.472] Activate graphic pack: Bayonetta 2/Graphics [Presets: 2560x1440,Ultra,16x]
+[08:02:50.473] Applying patch group 'Bayo2USv0' (Codecave: 01800100-01800124)
+[08:02:50.473] Activate graphic pack: Bayonetta 2/Mods/60 FPS Cutscenes
+[08:02:50.474] Applying patch group 'Bayo2USv0'
+[08:02:50.474] Activate graphic pack: Bayonetta 2/Mods/Disable Vsync
+[08:02:50.475] Applying patch group 'Bayo2USv0_GP'
+[08:02:50.475] Activate graphic pack: Bayonetta 2/Mods/Force Maximum LOD
+[08:02:50.476] Applying patch group 'Bayonetta2_DynamicShadows_v0'
+[08:02:50.476] Activate graphic pack: Bayonetta 2/Workarounds/Dynamic Shadows (Vulkan)
+[08:02:50.477] Activate graphic pack: Bayonetta 2/Workarounds/Portal
+[08:02:50.477] ------- Init Audio backend -------
+[08:02:50.477] DirectSound: available
+[08:02:50.477] XAudio 2.8: available
+[08:02:50.477] Cubeb: available
+[08:02:50.477] ------- Init Audio input backend -------
+[08:02:50.477] Cubeb: available
+[08:02:50.477] ------- Run title -------
+[08:02:50.512] [NPU-SURFACE] Recreate complete: generation=1 extent=2560x1440
+[08:02:50.513] Graphic pack "Graphic Options" prevents rendertarget size optimization. This warning can be ignored and is intended for graphic pack developers
+[08:02:50.712] Shader cache loaded with 512 shaders. Commited mem 142MB. Took 198ms
+[08:02:50.799] Failed to create graphics pipeline. Error -13
+[08:02:50.829] Failed to create graphics pipeline. Error -13
+[08:02:51.528] IOSU_ACT: using account default in first slot
+[08:03:49.570] Failed to create graphics pipeline. Error -13
+[08:04:40.032] Failed to create graphics pipeline. Error -13
+[08:06:22.501] [NPU-SURFACE] Recreate begin: generation=1 skip_create=false
+[08:06:22.544] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0 buffered_frames=0 held_real=0; native originals preserved; scanout cadence unverified
+[08:06:22.544] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[08:06:22.544] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[08:06:22.598] [NPU-SURFACE] Recreate complete: generation=2 extent=2560x1415
+[08:06:22.926] [NPU-SURFACE] Recreate begin: generation=2 skip_create=false
+[08:06:22.961] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0 buffered_frames=0 held_real=0; native originals preserved; scanout cadence unverified
+[08:06:22.961] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[08:06:22.961] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[08:06:22.999] [NPU-SURFACE] Recreate complete: generation=3 extent=2560x1440
+[08:06:23.268] [NPU-SURFACE] Recreate begin: generation=3 skip_create=false
+[08:06:23.300] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0 buffered_frames=0 held_real=0; native originals preserved; scanout cadence unverified
+[08:06:23.300] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[08:06:23.300] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[08:06:23.326] [NPU-SURFACE] Recreate complete: generation=4 extent=1429x963
+[08:06:25.777] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0 buffered_frames=0 held_real=0; native originals preserved; scanout cadence unverified
+[08:06:25.777] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[08:06:25.777] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize

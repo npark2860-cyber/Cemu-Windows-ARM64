@@ -1,0 +1,79 @@
+[05:30:28.290] ------- Init Cemu c5205cc -------
+[05:30:28.291] Init Wii U memory space (base: 0x000001c40e000000)
+[05:30:28.291] mlc01 path: C:/Users/angel/AppData/Roaming/Cemu/mlc01
+[05:30:28.291] RAM: 15979MB
+[05:30:28.291] Platform: Windows 11 Home 25H2 (Build 26220)
+[05:30:28.291] Used CPU extensions: 
+[05:30:28.300] IOSU_CRYPTO: No otp.bin found. Online mode cannot be used
+[05:30:28.300] IOSU_CRYPTO: No Seeprom.bin found. Online mode cannot be used
+[05:30:39.154] Mounting title 000500001014db00
+[05:30:39.154] Base: C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/1014db00 [Folder]
+[05:30:39.154] Update: C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/0005000e/1014db00 [Folder]
+[05:30:39.154] DLC: Not present
+[05:30:39.189] COS: System fonts found. Generated shareddata (26609KB)
+[05:30:39.197] Recompiler initialized
+[05:30:39.210] ------- Init Vulkan graphics backend -------
+[05:30:39.311] Vulkan instance version: 1.4
+[05:30:39.458] Using GPU: Qualcomm(R) Adreno(TM) X1-85 GPU
+[05:30:39.458] Driver version: Driver Build: 0eb8636cd3, Id6ce193842, 1782814497
+Date: 06/30/2026
+Compiler Version: E031.52.01.00
+Driver Branch: BVT_187
+
+[05:30:39.458] Vulkan: present_wait extension: unsupported
+[05:30:39.458] VK_EXT_attachment_feedback_loop_layout(_dynamic_state) not supported
+[05:30:39.458] VulkanLimits: UBAlignment 64 nonCoherentAtomSize 1
+[05:30:39.465] Vulkan device memory info:
+[05:30:39.465] Heap 0 - Size 7989MB Flags 0x00000001
+[05:30:39.465] Heap 1 - Size 4095MB Flags 0x00000001
+[05:30:39.465] Memory 0 - HeapIndex 0 Flags 0x00000001
+[05:30:39.465] Memory 1 - HeapIndex 0 Flags 0x00000001
+[05:30:39.465] Memory 2 - HeapIndex 0 Flags 0x00000001
+[05:30:39.465] Memory 3 - HeapIndex 0 Flags 0x0000000b
+[05:30:39.465] Memory 4 - HeapIndex 0 Flags 0x00000007
+[05:30:39.465] Memory 5 - HeapIndex 0 Flags 0x00000007
+[05:30:39.465] Memory 6 - HeapIndex 0 Flags 0x0000000f
+[05:30:39.465] Memory 7 - HeapIndex 1 Flags 0x00000021
+[05:30:39.465] Memory 8 - HeapIndex 0 Flags 0x00000011
+[05:30:39.466] VK_FORMAT_R4G4_UNORM_PACK8 not supported
+[05:30:39.615] ------- Loaded title -------
+[05:30:39.615] TitleId: 00050000-1014db00
+[05:30:39.615] TitleVersion: v32
+[05:30:39.615] TitleRegion: JP
+[05:30:39.615] Save path:   C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/save/00050000/1014DB00/user/
+[05:30:39.615] Shader cache file: shaderCache/transferable/000500001014db00.bin
+[05:30:39.615] gameprofile path:  (not present)
+[05:30:39.615] RPX hash (updated): 52f48c53
+[05:30:39.615] RPX hash (base): 52f48c53
+[05:30:39.615] Loaded module 'bayonetloader' with checksum 0xa5d97255
+[05:30:39.615] RPL link time: 0ms
+[05:30:39.615] HLE scan time: 0ms
+[05:30:39.615] ------- Active settings -------
+[05:30:39.615] CPU-Mode: Multi-core recompiler
+[05:30:39.615] Load shared libraries: true
+[05:30:39.615] Use precompiled shaders: auto
+[05:30:39.615] Full sync at GX2DrawDone: true
+[05:30:39.615] Strict shader mul: true
+[05:30:39.615] Async compile: true
+[05:30:39.615] Console language: 0
+[05:30:42.057] [NPU] READY/OFF: ANVIL U8 NHWC processing=1280x720, native-resolution originals, 5 shared slots; QNN worker and borrowed Vulkan queue. No inference at startup. Adaptive 1-3 frame buffering, cached block motion and immutable overlay replay.
+[05:30:42.195] [NPU-SURFACE] Recreate begin: generation=0 skip_create=false
+[05:30:42.195] ------- Activate graphic packs -------
+[05:30:42.195] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0 buffered_frames=0 held_real=0; native originals preserved; scanout cadence unverified
+[05:30:42.196] ------- Init Audio backend -------
+[05:30:42.196] DirectSound: available
+[05:30:42.196] XAudio 2.8: available
+[05:30:42.196] Cubeb: available
+[05:30:42.196] ------- Init Audio input backend -------
+[05:30:42.196] Cubeb: available
+[05:30:42.196] ------- Run title -------
+[05:30:42.196] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[05:30:42.196] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[05:30:42.221] [NPU-SURFACE] Recreate complete: generation=1 extent=1429x992
+[05:30:42.305] Shader cache loaded with 335 shaders. Commited mem 17MB. Took 81ms
+[05:30:42.743] Loaded module 'bayonetwu' with checksum 0x62350931
+[05:30:43.075] IOSU_ACT: using account default in first slot
+[05:30:43.585] [FSR1] Vulkan EASU + RCAS active · RCAS setting 25
+[05:33:18.575] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0 buffered_frames=0 held_real=0; native originals preserved; scanout cadence unverified
+[05:33:18.575] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[05:33:18.575] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize

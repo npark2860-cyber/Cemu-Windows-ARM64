@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<content>
+    <logflag>0</logflag>
+    <advanced_ppc_logging>false</advanced_ppc_logging>
+    <mlc_path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01</mlc_path>
+    <permanent_storage>true</permanent_storage>
+    <proxy_server></proxy_server>
+    <play_boot_sound>false</play_boot_sound>
+    <console_language>7</console_language>
+    <GamePaths/>
+    <GameCache/>
+    <GraphicPack>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/Bayonetta2/Enhancements/Contrasty/rules.txt">
+            <Preset>
+                <preset>Default</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/Bayonetta2/Graphics/rules.txt">
+            <Preset>
+                <category>Resolution</category>
+                <preset>2560x1440</preset>
+            </Preset>
+            <Preset>
+                <category>Shadow Quality</category>
+                <preset>Ultra</preset>
+            </Preset>
+            <Preset>
+                <category>Anisotropic Filtering Quality</category>
+                <preset>16x</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/Bayonetta2/Mods/60FPSCutscenes/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/Bayonetta2/Mods/DisableVsync/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/SkylandersSwapForce/Workarounds/PortalStabilityFix/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/Bayonetta2/Mods/HighLOD/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/Workarounds/GrassWorkaround/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/Bayonetta2/Workarounds/DynamicShadows/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/!Override/IntelShadows/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/WindWakerHD_Anisotropic/rules.txt">
+            <Preset>
+                <preset>x1 (Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/Bayonetta2/Workarounds/Portal/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/Bayonetta_Resolution/rules.txt">
+            <Preset>
+                <preset>1920x1080</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/SuperMario3DWorld_Shadows/rules.txt">
+            <Preset>
+                <preset>High (200%)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/BowAdaptiveTriggerV208/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/XenobladeChroniclesX/Mods/FOVSetting/rules.txt">
+            <Preset>
+                <preset>Default FOV</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/BreathOfTheWild_Korean/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/DualSenseExperience/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/Enhancements/rules.txt">
+            <Preset>
+                <category>Clarity</category>
+                <preset>Disabled (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Depth Of Field</category>
+                <preset>Enabled</preset>
+            </Preset>
+            <Preset>
+                <category>Reflections</category>
+                <preset>Normal Reflections</preset>
+            </Preset>
+            <Preset>
+                <category>Reflection Range</category>
+                <preset>Low (4 samples, Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Anisotropic Filtering</category>
+                <preset>Ultra (8x, Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/Graphics/rules.txt">
+            <Preset>
+                <category>Aspect Ratio</category>
+                <preset>16:9 (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Ultrawide HUD Mode</category>
+                <preset>Edge HUD (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Shadows</category>
+                <preset>Medium (100%, Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Resolution</category>
+                <preset>1920x1080 (Full HD)</preset>
+            </Preset>
+            <Preset>
+                <category>Square HUD Mode</category>
+                <preset>Disabled (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Anti-Aliasing</category>
+                <preset>Normal FXAA (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Shadow Draw Distance</category>
+                <preset>Medium (Lower Draw Distance, Sharper Shadows)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/TwilightPrincessHD_Bloom/rules.txt">
+            <Preset>
+                <category>Bloom</category>
+                <preset>Very High (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Bloom Strength</category>
+                <preset>100% (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Area-Specific Bloom Tint Strength</category>
+                <preset>100% (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Shadow World Color Grading</category>
+                <preset>Very Dark (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Shadow World Brightness</category>
+                <preset>60% (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Shadow World Saturation</category>
+                <preset>60% (Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/Mods/DrawDistance/rules.txt">
+            <Preset>
+                <category>NPC, Enemies And Other Entities</category>
+                <preset>Extreme (2x, requires Extended Memory pack!)</preset>
+            </Preset>
+            <Preset>
+                <category>Texture Distance Detail (LOD)</category>
+                <preset>Normal (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Terrain, Buildings, Bushes And Other Objects</category>
+                <preset>Ultra (1.5x, requires Extended Memory pack!)</preset>
+            </Preset>
+            <Preset>
+                <category>Trees (2D Billboards)</category>
+                <preset>Medium (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Grass Blades Density</category>
+                <preset>Medium (Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/SuperMario3DWorld_Contrasty/rules.txt">
+            <Preset>
+                <preset>Default</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/Mods/ExtendedMemory/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/Mods/FPS++/rules.txt">
+            <Preset>
+                <category>Mode</category>
+                <preset>Advanced Settings</preset>
+            </Preset>
+            <Preset>
+                <category>Fence Type</category>
+                <preset>Performance Fence (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>FPS Limit</category>
+                <preset>60FPS Limit (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Framerate Limit</category>
+                <preset>60FPS (ideal for 240/120/60Hz displays)</preset>
+            </Preset>
+            <Preset>
+                <category>Cutscene FPS Limit</category>
+                <preset>Automatically Limit In Few Cutscenes (Recommended)</preset>
+            </Preset>
+            <Preset>
+                <category>Static Mode</category>
+                <preset>Disabled (Default, dynamically adjust game speed)</preset>
+            </Preset>
+            <Preset>
+                <category>Debug Options</category>
+                <preset>Disabled (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Frame Average</category>
+                <preset>8 Frames Averaged (Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/BreathOfTheWild/Mods/GlowingGuardianColor/rules.txt">
+            <Preset>
+                <category>Ancient Armor</category>
+                <preset>Energy Blue</preset>
+            </Preset>
+            <Preset>
+                <category>Ancient Weapons</category>
+                <preset>Varied (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Decayed Guardian</category>
+                <preset>Malice Red (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Guardian, Stalker, Scout and Guardian Weapons</category>
+                <preset>Varied (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Guardian + Skywatcher</category>
+                <preset>Varied (Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/KirbyRainbow_InvisibleLineFix/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/SuperMario3DWorld_Anisotropic/rules.txt">
+            <Preset>
+                <preset>1x (Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/XenobladeChroniclesX/Workarounds/Brightness/rules.txt">
+            <Preset>
+                <category>Standard presets</category>
+                <preset>WiiU default - Brightness fix only</preset>
+            </Preset>
+            <Preset>
+                <category>Exposure and brightness fix</category>
+                <preset>No extra exposure - Only brightness fix</preset>
+            </Preset>
+            <Preset>
+                <category>Contrast</category>
+                <preset>No extra contrast (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Saturation - Darkens image</category>
+                <preset>No extra saturation (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Exposure after colour grading</category>
+                <preset>Default post exposure</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/NewSuperMarioBrosU/Enhancements/NegativeLOD/rules.txt">
+            <Preset>
+                <preset>Default LOD</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/NewSuperMarioBrosU/Graphics/rules.txt">
+            <Preset>
+                <category>TV Resolution</category>
+                <preset>2560x1440</preset>
+            </Preset>
+            <Preset>
+                <category>Gamepad Resolution</category>
+                <preset>1920x1080</preset>
+            </Preset>
+            <Preset>
+                <category>Shadow Quality</category>
+                <preset>Extreme</preset>
+            </Preset>
+            <Preset>
+                <category>Blur Quality</category>
+                <preset>Extreme</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/NewSuperMarioBrosU/Workarounds/CrashFix/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/SuperMario3DWorld_Korean_ABXY/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/TekkenTagTournament2/Mods/ReduceInputLag/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/WindWakerHD_NoSSAO/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/SuperMario3DWorld_Resolution/rules.txt">
+            <Preset>
+                <preset>1920x1080</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/TwilightPrincessHD_Anisotropic/rules.txt">
+            <Preset>
+                <preset>x1 (Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/TekkenTagTournament2_FOV/rules.txt">
+            <Preset>
+                <preset>Default FOV</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/WindWakerHD_Resolution/rules.txt">
+            <Preset>
+                <preset>1920x1080 (Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/XenobladeChroniclesX/Graphics/rules.txt">
+            <Preset>
+                <category>Resolution</category>
+                <preset>1920x1080</preset>
+            </Preset>
+            <Preset>
+                <category>Skell Cockpit Resolution</category>
+                <preset>Medium (100%, Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Shadow Quality</category>
+                <preset>Medium (100%, Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Post-Processing Effect Quality</category>
+                <preset>Medium (100%, Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/TekkenTagTournament2_Resolution/rules.txt">
+            <Preset>
+                <preset>2560x1440</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/TwilightPrincessHD_Contrasty/rules.txt">
+            <Preset>
+                <preset>default</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/TwilightPrincessHD_Korean_Translation/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/TwilightPrincessHD_NegativeLOD/rules.txt">
+            <Preset>
+                <preset>LOD Default</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/TwilightPrincessHD_Resolution/rules.txt">
+            <Preset>
+                <preset>1920x1080 (Native)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/WindWakerHD_Contrasty/rules.txt">
+            <Preset>
+                <preset>Default</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/WindWakerHD_Kor/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/WindWakerHD_LODBias/rules.txt">
+            <Preset>
+                <preset>LOD Default</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/WindWakerHD_Shadows/rules.txt">
+            <Preset>
+                <preset>High (200%)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/XenobladeChroniclesX/Mods/60FPS/rules.txt">
+            <Preset>
+                <category>FPS Limit</category>
+                <preset>60FPS Limit (Default)</preset>
+            </Preset>
+        </Entry>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/XenobladeChroniclesX/Mods/GraphicsFixCameraBug/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/XenobladeChroniclesX/Mods/HudChangeTimeFromEmanual/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/XenobladeChroniclesX/Mods/HideOfflineLabel/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/XenobladeChroniclesX/Mods/XenobladeChroniclesX_KoreanLocalization_Test2/rules.txt"/>
+        <Entry filename="graphicPacks/downloadedGraphicPacks/XenobladeChroniclesX/Workarounds/BrightnessOLD/rules.txt">
+            <Preset>
+                <category>Option</category>
+                <preset>Brighter (was NVIDIA)</preset>
+            </Preset>
+            <Preset>
+                <category>Lift</category>
+                <preset>0.002 (Recommended)</preset>
+            </Preset>
+            <Preset>
+                <category>Contrast</category>
+                <preset>No extra contrast</preset>
+            </Preset>
+            <Preset>
+                <category>Exposure</category>
+                <preset>No extra exposure</preset>
+            </Preset>
+            <Preset>
+                <category>Glare</category>
+                <preset>1.0 (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Post Exposure</category>
+                <preset>Default post exposure</preset>
+            </Preset>
+            <Preset>
+                <category>Gamma</category>
+                <preset>1.0 (Default)</preset>
+            </Preset>
+            <Preset>
+                <category>Vibrance</category>
+                <preset>No extra saturation (Default)</preset>
+            </Preset>
+        </Entry>
+    </GraphicPack>
+    <Graphic>
+        <api>1</api>
+        <device>435100000600000012c56000140012c5</device>
+        <vkDevice>435100000600000012c56000140012c5</vkDevice>
+        <mtlDevice>0</mtlDevice>
+        <VSync>0</VSync>
+        <OverrideAppGammaPreference>false</OverrideAppGammaPreference>
+        <OverrideGammaValue>2.2</OverrideGammaValue>
+        <UserDisplayGamma>2.2</UserDisplayGamma>
+        <GX2DrawdoneSync>true</GX2DrawdoneSync>
+        <UpscaleFilter>4</UpscaleFilter>
+        <DownscaleFilter>3</DownscaleFilter>
+        <FSRSharpness>25</FSRSharpness>
+        <FullscreenScaling>0</FullscreenScaling>
+        <AsyncCompile>true</AsyncCompile>
+        <vkAccurateBarriers>true</vkAccurateBarriers>
+        <Overlay>
+            <Position>3</Position>
+            <TextColor>4294967295</TextColor>
+            <TextScale>100</TextScale>
+            <FPS>true</FPS>
+            <DrawCalls>false</DrawCalls>
+            <CPUUsage>true</CPUUsage>
+            <CPUPerCoreUsage>false</CPUPerCoreUsage>
+            <RAMUsage>true</RAMUsage>
+            <VRAMUsage>true</VRAMUsage>
+            <Debug>false</Debug>
+        </Overlay>
+        <Notification>
+            <Position>1</Position>
+            <TextColor>4294967295</TextColor>
+            <TextScale>100</TextScale>
+            <ControllerProfiles>true</ControllerProfiles>
+            <ControllerBattery>false</ControllerBattery>
+            <ShaderCompiling>true</ShaderCompiling>
+            <FriendService>true</FriendService>
+        </Notification>
+    </Graphic>
+    <Audio>
+        <api>2</api>
+        <delay>2</delay>
+        <TVChannels>2</TVChannels>
+        <PadChannels>1</PadChannels>
+        <InputChannels>0</InputChannels>
+        <TVVolume>32</TVVolume>
+        <PadVolume>20</PadVolume>
+        <InputVolume>54</InputVolume>
+        <PortalVolume>100</PortalVolume>
+        <TVDevice>default</TVDevice>
+        <PadDevice></PadDevice>
+        <InputDevice></InputDevice>
+        <PortalDevice></PortalDevice>
+    </Audio>
+    <Account>
+        <PersistentId>2147483649</PersistentId>
+        <OnlineEnabled>false</OnlineEnabled>
+        <ActiveService>0</ActiveService>
+    </Account>
+    <AccountService/>
+    <Debug>
+        <CrashDumpWindows>0</CrashDumpWindows>
+        <GDBPort>1337</GDBPort>
+    </Debug>
+    <Input>
+        <DSUC host="127.0.0.1" port="26760"/>
+    </Input>
+    <EmulatedUsbDevices>
+        <EmulateSkylanderPortal>false</EmulateSkylanderPortal>
+        <EmulateInfinityBase>false</EmulateInfinityBase>
+        <EmulateDimensionsToypad>false</EmulateDimensionsToypad>
+    </EmulatedUsbDevices>
+    <language>0</language>
+    <msw_theme>1</msw_theme>
+    <use_discord_presence>false</use_discord_presence>
+    <fullscreen_menubar>true</fullscreen_menubar>
+    <feral_gamemode>false</feral_gamemode>
+    <check_update>false</check_update>
+    <receive_untested_updates>false</receive_untested_updates>
+    <save_screenshot>true</save_screenshot>
+    <vk_warning>false</vk_warning>
+    <gp_download>false</gp_download>
+    <macos_disclaimer>false</macos_disclaimer>
+    <fullscreen>false</fullscreen>
+    <window_position>
+        <x>934</x>
+        <y>168</y>
+    </window_position>
+    <window_size>
+        <x>1447</x>
+        <y>1064</y>
+    </window_size>
+    <window_maximized>false</window_maximized>
+    <open_pad>false</open_pad>
+    <pad_position>
+        <x>-1</x>
+        <y>-1</y>
+    </pad_position>
+    <pad_size>
+        <x>-1</x>
+        <y>-1</y>
+    </pad_size>
+    <pad_maximized>false</pad_maximized>
+    <show_icon_column>true</show_icon_column>
+    <GameList>
+        <style>0</style>
+        <order>[0, 1, 2, 3, 4, 5, 6, 7, 8]</order>
+        <name_width>500</name_width>
+        <version_width>101</version_width>
+        <dlc_width>72</dlc_width>
+        <game_time_width>119</game_time_width>
+        <game_started_width>127</game_started_width>
+        <region_width>419</region_width>
+        <title_id>0</title_id>
+    </GameList>
+    <RecentLaunchFiles>
+        <Entry>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/101c9300</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/101c9300</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/1014db00</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/1011b900</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/101aff00</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/1014d200</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/10116100</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/101beb00</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/10100600</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/10106100</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/10101c00</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/10116300</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/10143400</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/1019c800</Entry>
+        <Entry>C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/10195900</Entry>
+    </RecentLaunchFiles>
+    <RecentNFCFiles>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Twilight Princess\[MOD _ MAX LEVEL] Wolf Link.bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Breath of the Wild\Revali.bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Breath of the Wild\Urbosa.bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Breath of the Wild\Daruk.bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Breath of the Wild\Zelda.bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Tears of the Kingdom\Link (TotK).bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Tears of the Kingdom\Ganondorf (TotK).bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Tears of the Kingdom\Riju.bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Tears of the Kingdom\Sidon.bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Tears of the Kingdom\Zelda (TotK).bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Tears of the Kingdom\UNOFFICIAL\Mineru.bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Tears of the Kingdom\Yunobo.bin</Entry>
+        <Entry>C:\Emulators\Cemu_2.5\Amiibo\The Legend of Zelda Amiibo\Breath of the Wild\Mipha.bin</Entry>
+        <Entry>E:\surface backup\Downloads\Most Complete Amiibo Set - March 4 2017\The Legend of Zelda\The Legend of Zelda Twilight Princess\[ZTP] 01 - Wolf Link.bin</Entry>
+        <Entry>E:\surface backup\Downloads\Most Complete Amiibo Set - March 4 2017\The Legend of Zelda\The Legend of Zelda Breath of the Wild\[ZBW] 05 - Zelda.bin</Entry>
+    </RecentNFCFiles>
+    <Hotkeys>
+        <modifiers>0 -1</modifiers>
+        <ExitFullscreen>27 -1</ExitFullscreen>
+        <ToggleFullscreen>350 -1</ToggleFullscreen>
+        <ToggleFullscreenAlt>8205 -1</ToggleFullscreenAlt>
+        <TakeScreenshot>351 -1</TakeScreenshot>
+        <ToggleFastForward>0 -1</ToggleFastForward>
+        <ExitApplication>0 -1</ExitApplication>
+    </Hotkeys>
+</content>

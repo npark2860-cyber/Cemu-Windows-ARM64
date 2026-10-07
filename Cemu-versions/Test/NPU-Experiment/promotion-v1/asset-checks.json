@@ -1,0 +1,83 @@
+{
+  "status": "CPU_MODEL_AND_SHADER_CHECKS_PASSED_NOT_DEVICE_TESTED",
+  "original_model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+  "720p_model_sha256": "f4633a9d1e905f8823004efd63de65f512e36962d87d8598e7ef5469d18ae2ac",
+  "weights_and_quantizers_unchanged": true,
+  "720p_zero_pad_removed": true,
+  "network_shapes_verified": 53,
+  "cpu_proxy_checks": [
+    {
+      "bitwise_equal": true,
+      "output_shape": [
+        1,
+        32,
+        48,
+        3
+      ]
+    },
+    {
+      "bitwise_equal": true,
+      "output_shape": [
+        1,
+        32,
+        48,
+        3
+      ]
+    },
+    {
+      "bitwise_equal": true,
+      "output_shape": [
+        1,
+        32,
+        48,
+        3
+      ]
+    }
+  ],
+  "1080p_model_and_shaders_byte_identical_to_v4": true,
+  "assets": [
+    {
+      "path": "assets\\npu\\1080p\\shaders\\motion1080-generate.spv",
+      "sha256": "234f4ed023d48d79fc07104042142ce06b4ec10088367afb5af3a183ac8200f9"
+    },
+    {
+      "path": "assets\\npu\\1080p\\shaders\\motion1080-pack.spv",
+      "sha256": "691782ae630be5fc0b77bec84c42643afd7207d314826856726e644f88af7b57"
+    },
+    {
+      "path": "assets\\npu\\1080p\\shaders\\motion1080-compose.spv",
+      "sha256": "118272fdfd2aa6c7fb19e99dbefe0fd0420696e68c5db0fc000b2fc4e5ec0d1a"
+    },
+    {
+      "path": "assets\\npu\\1080p\\shaders\\motion1080-downsample.spv",
+      "sha256": "ede06889d191e1fc74462d4f012a538fbd91fe30c4cdac5a783cf480b180084d"
+    },
+    {
+      "path": "assets\\npu\\1080p\\shaders\\motion1080-flow.spv",
+      "sha256": "af17add1d7bad775816d78996a74e49cd748d329ea9b8e662a377d664a87af8c"
+    },
+    {
+      "path": "assets\\npu\\720p\\shaders\\motion1080-generate.spv",
+      "sha256": "3f90fc462bc187201a1f699da31202befa6c3ffd2d14110fd87bd0c3be800076"
+    },
+    {
+      "path": "assets\\npu\\720p\\shaders\\motion1080-pack.spv",
+      "sha256": "3c1b58514bb2cb383892b6a348075e28707a4184910055ae017b078d1ab4c05b"
+    },
+    {
+      "path": "assets\\npu\\720p\\shaders\\motion1080-compose.spv",
+      "sha256": "e541b42b22d8fbaac08b2b4c72c847a2f6421720b7e729f23bd2c49f9f066390"
+    },
+    {
+      "path": "assets\\npu\\720p\\shaders\\motion1080-downsample.spv",
+      "sha256": "d1bf2d536dfa5a12836ba92307722f3f10b8a7aca2000c7efa2a22c22dbb81b5"
+    },
+    {
+      "path": "assets\\npu\\720p\\shaders\\motion1080-flow.spv",
+      "sha256": "9aecaeba3f56a2a80ca1648621f4b9c2822bd7a4d0d359e6f7a6847d01231969"
+    }
+  ],
+  "gpu_npu_executed": false,
+  "720p_full_resolution_inference_executed": false,
+  "720p_game_quality_validated": false
+}

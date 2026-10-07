@@ -1,0 +1,8 @@
+{
+  "status": "NPU_RELEASE_FILES_VERIFIED_NOT_EXECUTED",
+  "executable": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Release-v4\\runtime\\Cemu-npu-exp-v4.exe",
+  "variant": "Release (NPU EXP v4 - Flow Cache)",
+  "cemu_executed": false,
+  "gpu_npu_executed": false,
+  "runtime_validation": "Standalone flow comparison passed; this game package has not been launched by the agent"
+}

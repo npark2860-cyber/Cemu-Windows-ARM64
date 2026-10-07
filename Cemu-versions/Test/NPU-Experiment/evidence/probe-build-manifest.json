@@ -1,0 +1,133 @@
+{
+  "created_at": "2026-09-29T06:41:37.7877921+09:00",
+  "baseline_sha256": "ced1fa7b1291dd29fec78188165651634e6e8a9a07025afc2904e35b63737504",
+  "native_architecture": "ARM64",
+  "ort_version": "1.24.4",
+  "qairt_version": "2.42.0.251225135753_193295",
+  "build_exit_code": 0,
+  "offline_model_checks": 3,
+  "profile_gate_tests": 7,
+  "device_executed": false,
+  "files": [
+    {
+      "path": "runtime/libqnnhtpv73.cat",
+      "bytes": 12216,
+      "sha256": "c42e151d507d4dfb383638638a5a94623742bda3db973e06f6c3039f5b12a166"
+    },
+    {
+      "path": "runtime/libQnnHtpV73Skel.so",
+      "bytes": 10249464,
+      "sha256": "b1f0c26b1722a220742802f57647ed70ce89f574f115e5789baa27a81b9def7a"
+    },
+    {
+      "path": "runtime/libqnnhtpv81.cat",
+      "bytes": 12216,
+      "sha256": "8a676539af68eaf902f371829c5c5704c7d6de1fd3be7485a4bc32a41d0b605c"
+    },
+    {
+      "path": "runtime/libQnnHtpV81Skel.so",
+      "bytes": 11271968,
+      "sha256": "a3e62af7044227804bc229437107cb54425e05f43d57cc26a876dd94d54a0cfc"
+    },
+    {
+      "path": "runtime/npu-probe.exe",
+      "bytes": 319488,
+      "sha256": "59517848f33dfbe26a9fe0f5208c41a227471949d2f7981c0f867bcb992602d9"
+    },
+    {
+      "path": "runtime/npu-probe.pdb",
+      "bytes": 7319552,
+      "sha256": "d7ae746284bc035b4d85c5e21a5335348130e4bd2b08ec6808373d8b856fbb30"
+    },
+    {
+      "path": "runtime/onnxruntime_providers_qnn.dll",
+      "bytes": 5099592,
+      "sha256": "43029629bb3b35fe98d92fa32e8fcd9960510f3a64ff11e706101b57590734f0"
+    },
+    {
+      "path": "runtime/onnxruntime_providers_shared.dll",
+      "bytes": 41504,
+      "sha256": "e6609e50306d9395dfae4f0c3e616bb8152da7211b0048dde4dd7f188690d358"
+    },
+    {
+      "path": "runtime/onnxruntime.dll",
+      "bytes": 31656984,
+      "sha256": "b9cd2d115383d964e9842f4e2ba54fa15acee01aa9b2cac5d384523b81328a58"
+    },
+    {
+      "path": "runtime/QnnHtp.dll",
+      "bytes": 4564672,
+      "sha256": "ba47c8b3830991099f4977a9bc0acb45df82a218306b9240ea5d4060f7d9262d"
+    },
+    {
+      "path": "runtime/QnnHtpPrepare.dll",
+      "bytes": 176059072,
+      "sha256": "54e4d0a48538c1701e458a4320fa4423634ad8fdd695f522d4f52f29061283bc"
+    },
+    {
+      "path": "runtime/QnnHtpV73Stub.dll",
+      "bytes": 1021120,
+      "sha256": "778828b7331a4eb7b120dbdff263a5bf03fc7691d9b6e9afd7efbfa3935cdb98"
+    },
+    {
+      "path": "runtime/QnnHtpV81Stub.dll",
+      "bytes": 1021120,
+      "sha256": "ab9994db8317cac4d0063d655b0220366fcb156e8facc7fc21a0a0b5da86812c"
+    },
+    {
+      "path": "runtime/QnnSystem.dll",
+      "bytes": 4522176,
+      "sha256": "6b5fab5dd874e6ec16978894161c4d40a32bdc9b876f6743d6ac09b098474976"
+    },
+    {
+      "path": "models/ANVIL-LICENSE",
+      "bytes": 1067,
+      "sha256": "7cc016c9d53cdcc370c3e3e8c9053250061fa3a15580f049528a0aacb7b08ad0"
+    },
+    {
+      "path": "models/anvil-small-1080p-fp32.onnx",
+      "bytes": 3441349,
+      "sha256": "65e871aed25b331e3a3747cf9019942121a94af71997476f5804a24b768cd0d8"
+    },
+    {
+      "path": "models/smoke-average-fp32.onnx",
+      "bytes": 306,
+      "sha256": "2250b1e52ce92e900e1d80a343e8459484ef6deefe3db10a26d16a75ceba6714"
+    },
+    {
+      "path": "models/smoke-average-qdq-u8.onnx",
+      "bytes": 432,
+      "sha256": "447cb38952fe343c7f7779271515eeb4a20fa1c1a122ae3d84c80bea14dae779"
+    },
+    {
+      "path": "src/npu_probe.cpp",
+      "bytes": 12099,
+      "sha256": "bec8a7082eff11e7d2f71bf7f548dd3d400d8de540754f750e06d20ae0134acc"
+    },
+    {
+      "path": "scripts/prepare_models.py",
+      "bytes": 3729,
+      "sha256": "35e7f4fda27b82e2d63a07c0f71fcbe49e81d923b9ca645a23c706e3c5bb2ef4"
+    },
+    {
+      "path": "scripts/read-qnn-profile.ps1",
+      "bytes": 925,
+      "sha256": "adbdb0d2e5801125a80cf8021d2f25f92c05125582efcd4f04e8b7512d9e1a35"
+    },
+    {
+      "path": "scripts/test-profile-gate.ps1",
+      "bytes": 1292,
+      "sha256": "062d8a052c0bdeca71e4022a6f09c94a4e49de6b2249de75fd20787507cf4085"
+    },
+    {
+      "path": "run-probe.ps1",
+      "bytes": 3113,
+      "sha256": "ac8b8c2395f02bf79bedba1cd64eb4034d47d955454b2cf20a56fd5b04c49b81"
+    },
+    {
+      "path": "build-probe.cmd",
+      "bytes": 610,
+      "sha256": "b0085e475a020cac6ce6130285688b62934e96f725b19a8f1caa7e9366158372"
+    }
+  ]
+}

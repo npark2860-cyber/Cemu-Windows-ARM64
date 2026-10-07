@@ -1,0 +1,1827 @@
+[
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineJumpStop00",
+    "format": "FWAV",
+    "offset": 7680,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 17773,
+    "channels": 1,
+    "info": 7744,
+    "data": 7872,
+    "endian": ">",
+    "seconds": 0.5554,
+    "channel_info": [
+      7784
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearShallowSlow01",
+    "format": "FWAV",
+    "offset": 18112,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 34167,
+    "channels": 1,
+    "info": 18176,
+    "data": 18304,
+    "endian": ">",
+    "seconds": 1.0677,
+    "channel_info": [
+      18216
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearVeryShallowMdlSpd02",
+    "format": "FWAV",
+    "offset": 37888,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 42713,
+    "channels": 1,
+    "info": 37952,
+    "data": 38080,
+    "endian": ">",
+    "seconds": 1.3348,
+    "channel_info": [
+      37992
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineAdd00",
+    "format": "FWAV",
+    "offset": 62528,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 19276,
+    "channels": 1,
+    "info": 62592,
+    "data": 62720,
+    "endian": ">",
+    "seconds": 0.6024,
+    "channel_info": [
+      62632
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearVeryShallowSlow02",
+    "format": "FWAV",
+    "offset": 73792,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 34169,
+    "channels": 1,
+    "info": 73856,
+    "data": 73984,
+    "endian": ">",
+    "seconds": 1.0678,
+    "channel_info": [
+      73896
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "MotorcycleEngineIdling",
+    "format": "FWAV",
+    "offset": 93568,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 5726,
+    "samples": 93036,
+    "channels": 1,
+    "info": 93632,
+    "data": 93760,
+    "endian": ">",
+    "seconds": 2.9074,
+    "channel_info": [
+      93672
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearShallowMdlSpd02",
+    "format": "FWAV",
+    "offset": 147008,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 45847,
+    "channels": 1,
+    "info": 147072,
+    "data": 147200,
+    "endian": ">",
+    "seconds": 1.4327,
+    "channel_info": [
+      147112
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearShallowMdlSpd03",
+    "format": "FWAV",
+    "offset": 173440,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 36053,
+    "channels": 1,
+    "info": 173504,
+    "data": 173632,
+    "endian": ">",
+    "seconds": 1.1267,
+    "channel_info": [
+      173544
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "MotorcycleEngineRunoutIdling",
+    "format": "FWAV",
+    "offset": 194304,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 4970,
+    "samples": 67860,
+    "channels": 1,
+    "info": 194368,
+    "data": 194496,
+    "endian": ">",
+    "seconds": 2.1206,
+    "channel_info": [
+      194408
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineJump02",
+    "format": "FWAV",
+    "offset": 233344,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 16999,
+    "channels": 1,
+    "info": 233408,
+    "data": 233536,
+    "endian": ">",
+    "seconds": 0.5312,
+    "channel_info": [
+      233448
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterFrontDeepFast",
+    "format": "FWAV",
+    "offset": 243328,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 9758,
+    "samples": 92672,
+    "channels": 1,
+    "info": 243392,
+    "data": 243520,
+    "endian": ">",
+    "seconds": 2.896,
+    "channel_info": [
+      243432
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearVeryShallowSlow03",
+    "format": "FWAV",
+    "offset": 296512,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 40895,
+    "channels": 1,
+    "info": 296576,
+    "data": 296704,
+    "endian": ">",
+    "seconds": 1.278,
+    "channel_info": [
+      296616
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineAdd01",
+    "format": "FWAV",
+    "offset": 320128,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 17098,
+    "channels": 1,
+    "info": 320192,
+    "data": 320320,
+    "endian": ">",
+    "seconds": 0.5343,
+    "channel_info": [
+      320232
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearVeryShallowMdlSpd03",
+    "format": "FWAV",
+    "offset": 330176,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 44779,
+    "channels": 1,
+    "info": 330240,
+    "data": 330368,
+    "endian": ">",
+    "seconds": 1.3993,
+    "channel_info": [
+      330280
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "MotorcycleEngine",
+    "format": "FWAV",
+    "offset": 356032,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 784,
+    "samples": 102590,
+    "channels": 1,
+    "info": 356096,
+    "data": 356224,
+    "endian": ">",
+    "seconds": 3.2059,
+    "channel_info": [
+      356136
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearShallowSlow00",
+    "format": "FWAV",
+    "offset": 414912,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 52245,
+    "channels": 1,
+    "info": 414976,
+    "data": 415104,
+    "endian": ">",
+    "seconds": 1.6327,
+    "channel_info": [
+      415016
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineJumpStop01",
+    "format": "FWAV",
+    "offset": 444992,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 16163,
+    "channels": 1,
+    "info": 445056,
+    "data": 445184,
+    "endian": ">",
+    "seconds": 0.5051,
+    "channel_info": [
+      445096
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearShallowSlow02",
+    "format": "FWAV",
+    "offset": 454464,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 43775,
+    "channels": 1,
+    "info": 454528,
+    "data": 454656,
+    "endian": ">",
+    "seconds": 1.368,
+    "channel_info": [
+      454568
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "MotorcycleEngineRunout",
+    "format": "FWAV",
+    "offset": 479744,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 6776,
+    "samples": 108207,
+    "channels": 1,
+    "info": 479808,
+    "data": 479936,
+    "endian": ">",
+    "seconds": 3.3815,
+    "channel_info": [
+      479848
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineStart02",
+    "format": "FWAV",
+    "offset": 541824,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 23688,
+    "channels": 1,
+    "info": 541888,
+    "data": 542016,
+    "endian": ">",
+    "seconds": 0.7402,
+    "channel_info": [
+      541928
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterForRain",
+    "format": "FWAV",
+    "offset": 555584,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 49687,
+    "channels": 1,
+    "info": 555648,
+    "data": 555776,
+    "endian": ">",
+    "seconds": 1.5527,
+    "channel_info": [
+      555688
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineJump00",
+    "format": "FWAV",
+    "offset": 584256,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 19943,
+    "channels": 1,
+    "info": 584320,
+    "data": 584448,
+    "endian": ">",
+    "seconds": 0.6232,
+    "channel_info": [
+      584360
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearShallowMdlSpd01",
+    "format": "FWAV",
+    "offset": 595904,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 51242,
+    "channels": 1,
+    "info": 595968,
+    "data": 596096,
+    "endian": ">",
+    "seconds": 1.6013,
+    "channel_info": [
+      596008
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearVeryShallowMdlSpd01",
+    "format": "FWAV",
+    "offset": 625472,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 46977,
+    "channels": 1,
+    "info": 625536,
+    "data": 625664,
+    "endian": ">",
+    "seconds": 1.468,
+    "channel_info": [
+      625576
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearVeryShallowSlow01",
+    "format": "FWAV",
+    "offset": 652544,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 32197,
+    "channels": 1,
+    "info": 652608,
+    "data": 652736,
+    "endian": ">",
+    "seconds": 1.0062,
+    "channel_info": [
+      652648
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearVeryShallowSlow00",
+    "format": "FWAV",
+    "offset": 671168,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 18381,
+    "channels": 1,
+    "info": 671232,
+    "data": 671360,
+    "endian": ">",
+    "seconds": 0.5744,
+    "channel_info": [
+      671272
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineAdd02",
+    "format": "FWAV",
+    "offset": 681920,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 16043,
+    "channels": 1,
+    "info": 681984,
+    "data": 682112,
+    "endian": ">",
+    "seconds": 0.5013,
+    "channel_info": [
+      682024
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearVeryShallowMdlSpd00",
+    "format": "FWAV",
+    "offset": 691328,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 37375,
+    "channels": 1,
+    "info": 691392,
+    "data": 691520,
+    "endian": ">",
+    "seconds": 1.168,
+    "channel_info": [
+      691432
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterFrontShallowFast",
+    "format": "FWAV",
+    "offset": 712960,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 98191,
+    "channels": 1,
+    "info": 713024,
+    "data": 713152,
+    "endian": ">",
+    "seconds": 3.0685,
+    "channel_info": [
+      713064
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearShallowMdlSpd00",
+    "format": "FWAV",
+    "offset": 769344,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 42704,
+    "channels": 1,
+    "info": 769408,
+    "data": 769536,
+    "endian": ">",
+    "seconds": 1.3345,
+    "channel_info": [
+      769448
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineStart",
+    "format": "FWAV",
+    "offset": 793984,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 23724,
+    "channels": 1,
+    "info": 794048,
+    "data": 794176,
+    "endian": ">",
+    "seconds": 0.7414,
+    "channel_info": [
+      794088
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineJump01",
+    "format": "FWAV",
+    "offset": 807808,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 16164,
+    "channels": 1,
+    "info": 807872,
+    "data": 808000,
+    "endian": ">",
+    "seconds": 0.5051,
+    "channel_info": [
+      807912
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "MotorcycleEngineOffThrottle",
+    "format": "FWAV",
+    "offset": 817280,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 6818,
+    "samples": 158808,
+    "channels": 1,
+    "info": 817344,
+    "data": 817472,
+    "endian": ">",
+    "seconds": 4.9627,
+    "channel_info": [
+      817384
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineJumpStop02",
+    "format": "FWAV",
+    "offset": 908288,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 16999,
+    "channels": 1,
+    "info": 908352,
+    "data": 908480,
+    "endian": ">",
+    "seconds": 0.5312,
+    "channel_info": [
+      908392
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_WaterRearShallowSlow03",
+    "format": "FWAV",
+    "offset": 918272,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 42709,
+    "channels": 1,
+    "info": 918336,
+    "data": 918464,
+    "endian": ">",
+    "seconds": 1.3347,
+    "channel_info": [
+      918376
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle.bars",
+    "track": "Motorcycle_EngineStart03",
+    "format": "FWAV",
+    "offset": 942912,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 23780,
+    "channels": 1,
+    "info": 942976,
+    "data": 943104,
+    "endian": ">",
+    "seconds": 0.7431,
+    "channel_info": [
+      943016
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_GrassLeaf_Pl_SurfFast_00",
+    "format": "FWAV",
+    "offset": 4224,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 546,
+    "samples": 66062,
+    "channels": 1,
+    "info": 4288,
+    "data": 4416,
+    "endian": ">",
+    "seconds": 2.0644,
+    "channel_info": [
+      4328
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_WoodThin_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 42240,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 13258,
+    "samples": 146388,
+    "channels": 1,
+    "info": 42304,
+    "data": 42432,
+    "endian": ">",
+    "seconds": 4.5746,
+    "channel_info": [
+      42344
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_GrassLeaf_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 126144,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 434,
+    "samples": 62056,
+    "channels": 1,
+    "info": 126208,
+    "data": 126336,
+    "endian": ">",
+    "seconds": 1.9392,
+    "channel_info": [
+      126248
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_Soil_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 161856,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 5264,
+    "samples": 128956,
+    "channels": 1,
+    "info": 161920,
+    "data": 162048,
+    "endian": ">",
+    "seconds": 4.0299,
+    "channel_info": [
+      161960
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_SnowShallow_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 235776,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 2128,
+    "samples": 60260,
+    "channels": 1,
+    "info": 235840,
+    "data": 235968,
+    "endian": ">",
+    "seconds": 1.8831,
+    "channel_info": [
+      235880
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_StoneLight_Pl_DragSlipWeak_00",
+    "format": "FWAV",
+    "offset": 270464,
+    "codec": 2,
+    "loop": true,
+    "rate": 30000,
+    "loop_start": 7392,
+    "samples": 108576,
+    "channels": 1,
+    "info": 270528,
+    "data": 270656,
+    "endian": ">",
+    "seconds": 3.6192,
+    "channel_info": [
+      270568
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_HeavySnow_Cmn_DragSmall_Body00",
+    "format": "FWAV",
+    "offset": 332736,
+    "codec": 2,
+    "loop": true,
+    "rate": 28000,
+    "loop_start": 1582,
+    "samples": 84464,
+    "channels": 1,
+    "info": 332800,
+    "data": 332928,
+    "endian": ">",
+    "seconds": 3.0166,
+    "channel_info": [
+      332840
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_HeavySand_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 381248,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 700,
+    "samples": 65453,
+    "channels": 1,
+    "info": 381312,
+    "data": 381440,
+    "endian": ">",
+    "seconds": 2.0454,
+    "channel_info": [
+      381352
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_GrassWithMud_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 418880,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 686,
+    "samples": 69699,
+    "channels": 1,
+    "info": 418944,
+    "data": 419072,
+    "endian": ">",
+    "seconds": 2.1781,
+    "channel_info": [
+      418984
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_BonePile_Pl_DragSlipWeak_00",
+    "format": "FWAV",
+    "offset": 458944,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 6804,
+    "samples": 140131,
+    "channels": 1,
+    "info": 459008,
+    "data": 459136,
+    "endian": ">",
+    "seconds": 4.3791,
+    "channel_info": [
+      459048
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_SnowShallow_Pl_DragSlipWeak_00",
+    "format": "FWAV",
+    "offset": 539264,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 5222,
+    "samples": 102321,
+    "channels": 1,
+    "info": 539328,
+    "data": 539456,
+    "endian": ">",
+    "seconds": 3.1975,
+    "channel_info": [
+      539368
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_HeavySand_Cmn_DragBig_Body00",
+    "format": "FWAV",
+    "offset": 598016,
+    "codec": 2,
+    "loop": true,
+    "rate": 30000,
+    "loop_start": 2996,
+    "samples": 89582,
+    "channels": 1,
+    "info": 598080,
+    "data": 598208,
+    "endian": ">",
+    "seconds": 2.9861,
+    "channel_info": [
+      598120
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_Grass_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 649472,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 728,
+    "samples": 64028,
+    "channels": 1,
+    "info": 649536,
+    "data": 649664,
+    "endian": ">",
+    "seconds": 2.0009,
+    "channel_info": [
+      649576
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_GrassWithMud_Pl_SurfFast_02",
+    "format": "FWAV",
+    "offset": 686336,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 854,
+    "samples": 68858,
+    "channels": 1,
+    "info": 686400,
+    "data": 686528,
+    "endian": ">",
+    "seconds": 2.1518,
+    "channel_info": [
+      686440
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_GrassMoss_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 725952,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 644,
+    "samples": 61331,
+    "channels": 1,
+    "info": 726016,
+    "data": 726144,
+    "endian": ">",
+    "seconds": 1.9166,
+    "channel_info": [
+      726056
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_StoneLight_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 761280,
+    "codec": 2,
+    "loop": true,
+    "rate": 30000,
+    "loop_start": 406,
+    "samples": 48367,
+    "channels": 1,
+    "info": 761344,
+    "data": 761472,
+    "endian": ">",
+    "seconds": 1.6122,
+    "channel_info": [
+      761384
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_Grass_Pl_DragSlipWeak_00",
+    "format": "FWAV",
+    "offset": 789184,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 94434,
+    "channels": 1,
+    "info": 789248,
+    "data": 789376,
+    "endian": ">",
+    "seconds": 2.9511,
+    "channel_info": [
+      789288
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_Soil_Pl_DragSlipWeak_00",
+    "format": "FWAV",
+    "offset": 843392,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 1470,
+    "samples": 84030,
+    "channels": 1,
+    "info": 843456,
+    "data": 843584,
+    "endian": ">",
+    "seconds": 2.6259,
+    "channel_info": [
+      843496
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_HeavySnow_Pl_SurfEdge_00",
+    "format": "FWAV",
+    "offset": 891648,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 1232,
+    "samples": 67748,
+    "channels": 1,
+    "info": 891712,
+    "data": 891840,
+    "endian": ">",
+    "seconds": 2.1171,
+    "channel_info": [
+      891752
+    ]
+  },
+  {
+    "bars": "D_GameROMMotorcycle_Mt.bars",
+    "track": "Mt_GrassMoss_Pl_DragSlipWeak_00",
+    "format": "FWAV",
+    "offset": 930624,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 2492,
+    "samples": 155980,
+    "channels": 1,
+    "info": 930688,
+    "data": 930816,
+    "endian": ">",
+    "seconds": 4.8744,
+    "channel_info": [
+      930728
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_WheelieStartEngine",
+    "format": "FWAV",
+    "offset": 8320,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 25371,
+    "channels": 1,
+    "info": 8384,
+    "data": 8512,
+    "endian": ">",
+    "seconds": 0.7928,
+    "channel_info": [
+      8424
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_ChassisSkidding",
+    "format": "FWAV",
+    "offset": 23104,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 3668,
+    "samples": 24441,
+    "channels": 1,
+    "info": 23168,
+    "data": 23296,
+    "endian": ">",
+    "seconds": 0.7638,
+    "channel_info": [
+      23208
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireLow02Strong",
+    "format": "FWAV",
+    "offset": 37312,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 59971,
+    "channels": 1,
+    "info": 37376,
+    "data": 37504,
+    "endian": ">",
+    "seconds": 2.1418,
+    "channel_info": [
+      37416
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireLow01Strong",
+    "format": "FWAV",
+    "offset": 71808,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 20859,
+    "channels": 1,
+    "info": 71872,
+    "data": 72000,
+    "endian": ">",
+    "seconds": 0.745,
+    "channel_info": [
+      71912
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_Disappear",
+    "format": "FWAV",
+    "offset": 83968,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 45556,
+    "channels": 1,
+    "info": 84032,
+    "data": 84160,
+    "endian": ">",
+    "seconds": 1.4236,
+    "channel_info": [
+      84072
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_WheelLandFall00",
+    "format": "FWAV",
+    "offset": 110272,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 11746,
+    "channels": 1,
+    "info": 110336,
+    "data": 110464,
+    "endian": ">",
+    "seconds": 0.3671,
+    "channel_info": [
+      110376
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_SlipInWater",
+    "format": "FWAV",
+    "offset": 117248,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 5544,
+    "samples": 36947,
+    "channels": 1,
+    "info": 117312,
+    "data": 117440,
+    "endian": ">",
+    "seconds": 1.1546,
+    "channel_info": [
+      117352
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_ChargeEnergy",
+    "format": "FWAV",
+    "offset": 138624,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 64685,
+    "channels": 1,
+    "info": 138688,
+    "data": 138816,
+    "endian": ">",
+    "seconds": 2.0214,
+    "channel_info": [
+      138728
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_HitCrash",
+    "format": "FWAV",
+    "offset": 175872,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 14858,
+    "channels": 1,
+    "info": 175936,
+    "data": 176064,
+    "endian": ">",
+    "seconds": 0.4643,
+    "channel_info": [
+      175976
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_WheelLandFall01",
+    "format": "FWAV",
+    "offset": 184640,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 13350,
+    "channels": 1,
+    "info": 184704,
+    "data": 184832,
+    "endian": ">",
+    "seconds": 0.4172,
+    "channel_info": [
+      184744
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_MachineOpenEnd",
+    "format": "FWAV",
+    "offset": 192512,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 8061,
+    "channels": 1,
+    "info": 192576,
+    "data": 192704,
+    "endian": ">",
+    "seconds": 0.2519,
+    "channel_info": [
+      192616
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_WheelFrictionCmnBrake",
+    "format": "FWAV",
+    "offset": 197376,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 47119,
+    "channels": 1,
+    "info": 197440,
+    "data": 197568,
+    "endian": ">",
+    "seconds": 1.4725,
+    "channel_info": [
+      197480
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireLow02",
+    "format": "FWAV",
+    "offset": 224576,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 59971,
+    "channels": 1,
+    "info": 224640,
+    "data": 224768,
+    "endian": ">",
+    "seconds": 2.1418,
+    "channel_info": [
+      224680
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireHigh00Strong",
+    "format": "FWAV",
+    "offset": 259072,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 71939,
+    "channels": 1,
+    "info": 259136,
+    "data": 259264,
+    "endian": ">",
+    "seconds": 2.5692,
+    "channel_info": [
+      259176
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_MachineOpenSlide",
+    "format": "FWAV",
+    "offset": 300416,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 16579,
+    "channels": 1,
+    "info": 300480,
+    "data": 300608,
+    "endian": ">",
+    "seconds": 0.5181,
+    "channel_info": [
+      300520
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_Appear",
+    "format": "FWAV",
+    "offset": 310144,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 133873,
+    "channels": 1,
+    "info": 310208,
+    "data": 310336,
+    "endian": ">",
+    "seconds": 4.1835,
+    "channel_info": [
+      310248
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireMid01Strong",
+    "format": "FWAV",
+    "offset": 386880,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 58437,
+    "channels": 1,
+    "info": 386944,
+    "data": 387072,
+    "endian": ">",
+    "seconds": 2.087,
+    "channel_info": [
+      386984
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_MachineOpenStart",
+    "format": "FWAV",
+    "offset": 420544,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 9204,
+    "channels": 1,
+    "info": 420608,
+    "data": 420736,
+    "endian": ">",
+    "seconds": 0.2876,
+    "channel_info": [
+      420648
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_SlipOnroad",
+    "format": "FWAV",
+    "offset": 426048,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 8260,
+    "samples": 27781,
+    "channels": 1,
+    "info": 426112,
+    "data": 426240,
+    "endian": ">",
+    "seconds": 0.8682,
+    "channel_info": [
+      426152
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "MotorcycleNoGasSmokeShort",
+    "format": "FWAV",
+    "offset": 442176,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 8570,
+    "channels": 1,
+    "info": 442240,
+    "data": 442368,
+    "endian": ">",
+    "seconds": 0.2678,
+    "channel_info": [
+      442280
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireMid00",
+    "format": "FWAV",
+    "offset": 447360,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 48582,
+    "channels": 1,
+    "info": 447424,
+    "data": 447552,
+    "endian": ">",
+    "seconds": 1.7351,
+    "channel_info": [
+      447464
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "MotorcycleSlottleOn",
+    "format": "FWAV",
+    "offset": 475392,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 3474,
+    "channels": 1,
+    "info": 475456,
+    "data": 475584,
+    "endian": ">",
+    "seconds": 0.1086,
+    "channel_info": [
+      475496
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_WheelieStartWind",
+    "format": "FWAV",
+    "offset": 477632,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 51984,
+    "channels": 2,
+    "info": 477696,
+    "data": 477888,
+    "endian": ">",
+    "seconds": 1.6245,
+    "channel_info": [
+      477744,
+      477764
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_GrassTrackLoopFast",
+    "format": "FWAV",
+    "offset": 537408,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 1778,
+    "samples": 36231,
+    "channels": 1,
+    "info": 537472,
+    "data": 537600,
+    "endian": ">",
+    "seconds": 1.1322,
+    "channel_info": [
+      537512
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireHigh01",
+    "format": "FWAV",
+    "offset": 558336,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 56991,
+    "channels": 1,
+    "info": 558400,
+    "data": 558528,
+    "endian": ">",
+    "seconds": 2.0354,
+    "channel_info": [
+      558440
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_BodyLand00",
+    "format": "FWAV",
+    "offset": 591168,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 17329,
+    "channels": 1,
+    "info": 591232,
+    "data": 591360,
+    "endian": ">",
+    "seconds": 0.5415,
+    "channel_info": [
+      591272
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_WheelFrictionCmn",
+    "format": "FWAV",
+    "offset": 601344,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 54449,
+    "channels": 1,
+    "info": 601408,
+    "data": 601536,
+    "endian": ">",
+    "seconds": 1.7015,
+    "channel_info": [
+      601448
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_ThrottleOff",
+    "format": "FWAV",
+    "offset": 632704,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 35803,
+    "channels": 1,
+    "info": 632768,
+    "data": 632896,
+    "endian": ">",
+    "seconds": 1.1188,
+    "channel_info": [
+      632808
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_WheelLandFall02",
+    "format": "FWAV",
+    "offset": 653440,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 12778,
+    "channels": 1,
+    "info": 653504,
+    "data": 653632,
+    "endian": ">",
+    "seconds": 0.3993,
+    "channel_info": [
+      653544
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireHigh01Strong",
+    "format": "FWAV",
+    "offset": 660992,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 56991,
+    "channels": 1,
+    "info": 661056,
+    "data": 661184,
+    "endian": ">",
+    "seconds": 2.0354,
+    "channel_info": [
+      661096
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_GrassCut",
+    "format": "FWAV",
+    "offset": 693824,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 4466,
+    "samples": 83033,
+    "channels": 1,
+    "info": 693888,
+    "data": 694016,
+    "endian": ">",
+    "seconds": 2.5948,
+    "channel_info": [
+      693928
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "MotorcycleBrakeLever",
+    "format": "FWAV",
+    "offset": 741504,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 7217,
+    "channels": 1,
+    "info": 741568,
+    "data": 741696,
+    "endian": ">",
+    "seconds": 0.2255,
+    "channel_info": [
+      741608
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "MotorcycleNoGas",
+    "format": "FWAV",
+    "offset": 745856,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 63302,
+    "channels": 1,
+    "info": 745920,
+    "data": 746048,
+    "endian": ">",
+    "seconds": 1.9782,
+    "channel_info": [
+      745960
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireMid00Strong",
+    "format": "FWAV",
+    "offset": 782272,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 48582,
+    "channels": 1,
+    "info": 782336,
+    "data": 782464,
+    "endian": ">",
+    "seconds": 1.7351,
+    "channel_info": [
+      782376
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_SlipOffroad",
+    "format": "FWAV",
+    "offset": 810304,
+    "codec": 2,
+    "loop": true,
+    "rate": 32000,
+    "loop_start": 2548,
+    "samples": 41190,
+    "channels": 1,
+    "info": 810368,
+    "data": 810496,
+    "endian": ">",
+    "seconds": 1.2872,
+    "channel_info": [
+      810408
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireHigh00",
+    "format": "FWAV",
+    "offset": 834112,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 71939,
+    "channels": 1,
+    "info": 834176,
+    "data": 834304,
+    "endian": ">",
+    "seconds": 2.5692,
+    "channel_info": [
+      834216
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_ChargeEnergyFairy",
+    "format": "FWAV",
+    "offset": 875456,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 90959,
+    "channels": 1,
+    "info": 875520,
+    "data": 875648,
+    "endian": ">",
+    "seconds": 2.8425,
+    "channel_info": [
+      875560
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_ChargeFinish",
+    "format": "FWAV",
+    "offset": 927680,
+    "codec": 2,
+    "loop": false,
+    "rate": 32000,
+    "loop_start": 0,
+    "samples": 35557,
+    "channels": 1,
+    "info": 927744,
+    "data": 927872,
+    "endian": ">",
+    "seconds": 1.1112,
+    "channel_info": [
+      927784
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireMid01",
+    "format": "FWAV",
+    "offset": 948224,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 58437,
+    "channels": 1,
+    "info": 948288,
+    "data": 948416,
+    "endian": ">",
+    "seconds": 2.087,
+    "channel_info": [
+      948328
+    ]
+  },
+  {
+    "bars": "GameROMMotorcycle.bars",
+    "track": "Motorcycle_AfterFireLow01",
+    "format": "FWAV",
+    "offset": 981888,
+    "codec": 2,
+    "loop": false,
+    "rate": 28000,
+    "loop_start": 0,
+    "samples": 20859,
+    "channels": 1,
+    "info": 981952,
+    "data": 982080,
+    "endian": ">",
+    "seconds": 0.745,
+    "channel_info": [
+      981992
+    ]
+  }
+]

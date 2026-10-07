@@ -1,0 +1,8 @@
+{
+  "cause": "Both existing diagnostics and NPU integration declared the same loaded Vulkan entry point.",
+  "change": "Retain one vkCmdWriteTimestamp entry; both users share the same loader binding.",
+  "all_four_variants_declare_once": true,
+  "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h",
+  "sha256": "f2c0e82afe003adf1be4d589b4e98f420cab6f37939189021d9704d4824abc6b",
+  "device_executed": false
+}

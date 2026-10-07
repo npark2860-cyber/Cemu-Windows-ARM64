@@ -1,0 +1,86 @@
+[04:45:11.026] ------- Init Cemu d359c53 -------
+[04:45:11.026] Init Wii U memory space (base: 0x0000028e0a000000)
+[04:45:11.026] mlc01 path: C:/Users/angel/AppData/Roaming/Cemu/mlc01
+[04:45:11.026] RAM: 15979MB
+[04:45:11.026] Platform: Windows 11 Home 25H2 (Build 26220)
+[04:45:11.026] Used CPU extensions: 
+[04:45:11.033] IOSU_CRYPTO: No otp.bin found. Online mode cannot be used
+[04:45:11.033] IOSU_CRYPTO: No Seeprom.bin found. Online mode cannot be used
+[04:45:14.685] Mounting title 000500001011b900
+[04:45:14.685] Base: C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/00050000/1011b900 [Folder]
+[04:45:14.685] Update: C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/title/0005000e/1011b900 [Folder]
+[04:45:14.685] DLC: Not present
+[04:45:14.687] Shared font CafeCn.ttf is not present
+[04:45:14.696] Recompiler initialized
+[04:45:14.717] ------- Init Vulkan graphics backend -------
+[04:45:14.882] Vulkan instance version: 1.4
+[04:45:15.012] Using GPU: Qualcomm(R) Adreno(TM) X1-85 GPU
+[04:45:15.012] Driver version: Driver Build: 0eb8636cd3, Id6ce193842, 1782814497
+Date: 06/30/2026
+Compiler Version: E031.52.01.00
+Driver Branch: BVT_187
+
+[04:45:15.012] Vulkan: present_wait extension: unsupported
+[04:45:15.012] VK_EXT_attachment_feedback_loop_layout(_dynamic_state) not supported
+[04:45:15.012] VulkanLimits: UBAlignment 64 nonCoherentAtomSize 1
+[04:45:15.021] Vulkan device memory info:
+[04:45:15.022] Heap 0 - Size 7989MB Flags 0x00000001
+[04:45:15.022] Heap 1 - Size 4095MB Flags 0x00000001
+[04:45:15.022] Memory 0 - HeapIndex 0 Flags 0x00000001
+[04:45:15.022] Memory 1 - HeapIndex 0 Flags 0x00000001
+[04:45:15.022] Memory 2 - HeapIndex 0 Flags 0x00000001
+[04:45:15.022] Memory 3 - HeapIndex 0 Flags 0x0000000b
+[04:45:15.022] Memory 4 - HeapIndex 0 Flags 0x00000007
+[04:45:15.022] Memory 5 - HeapIndex 0 Flags 0x00000007
+[04:45:15.022] Memory 6 - HeapIndex 0 Flags 0x0000000f
+[04:45:15.022] Memory 7 - HeapIndex 1 Flags 0x00000021
+[04:45:15.022] Memory 8 - HeapIndex 0 Flags 0x00000011
+[04:45:15.022] VK_FORMAT_R4G4_UNORM_PACK8 not supported
+[04:45:15.897] ------- Loaded title -------
+[04:45:15.897] TitleId: 00050000-1011b900
+[04:45:15.897] TitleVersion: v16
+[04:45:15.897] TitleRegion: JP
+[04:45:15.897] Save path:   C:/Users/angel/AppData/Roaming/Cemu/mlc01/usr/save/00050000/1011B900/user/
+[04:45:15.897] Shader cache file: shaderCache/transferable/000500001011b900.bin
+[04:45:15.897] gameprofile path:  (not present)
+[04:45:15.897] RPX hash (updated): b8611392
+[04:45:15.897] RPX hash (base): b8611392
+[04:45:15.940] Loaded module 'prj_010' with checksum 0xaf5d1a85
+[04:45:15.940] RPL link time: 47ms
+[04:45:15.965] Patching Bayonetta 2 audio bug at: 0x035272a4
+[04:45:15.973] HLE scan time: 31ms
+[04:45:15.973] ------- Active settings -------
+[04:45:15.973] CPU-Mode: Multi-core recompiler
+[04:45:15.973] Load shared libraries: true
+[04:45:15.973] Use precompiled shaders: auto
+[04:45:15.973] Full sync at GX2DrawDone: true
+[04:45:15.973] Strict shader mul: true
+[04:45:15.973] Async compile: true
+[04:45:15.973] Console language: 0
+[04:45:16.184] ------- Activate graphic packs -------
+[04:45:16.200] Activate graphic pack: Bayonetta 2/Enhancements/Contrasty [Presets: Default]
+[04:45:16.262] Applying patch group 'Bayo2_AspectRatio_V0' (Codecave: 01800000-01800038)
+[04:45:16.262] Activate graphic pack: Bayonetta 2/Graphics [Presets: 2560x1440,Ultra,16x]
+[04:45:16.267] Applying patch group 'Bayo2USv0' (Codecave: 01800100-01800124)
+[04:45:16.267] Activate graphic pack: Bayonetta 2/Mods/60 FPS Cutscenes
+[04:45:16.272] Applying patch group 'Bayo2USv0'
+[04:45:16.273] Activate graphic pack: Bayonetta 2/Mods/Disable Vsync
+[04:45:16.277] Applying patch group 'Bayo2USv0_GP'
+[04:45:16.277] Activate graphic pack: Bayonetta 2/Mods/Force Maximum LOD
+[04:45:16.282] Applying patch group 'Bayonetta2_DynamicShadows_v0'
+[04:45:16.282] Activate graphic pack: Bayonetta 2/Workarounds/Dynamic Shadows (Vulkan)
+[04:45:16.287] Activate graphic pack: Bayonetta 2/Workarounds/Portal
+[04:45:16.287] ------- Init Audio backend -------
+[04:45:16.287] DirectSound: available
+[04:45:16.287] XAudio 2.8: available
+[04:45:16.287] Cubeb: available
+[04:45:16.287] ------- Init Audio input backend -------
+[04:45:16.287] Cubeb: available
+[04:45:16.287] ------- Run title -------
+[04:45:16.290] Graphic pack "Graphic Options" prevents rendertarget size optimization. This warning can be ignored and is intended for graphic pack developers
+[04:45:16.517] Shader cache loaded with 577 shaders. Commited mem 92MB. Took 226ms
+[04:45:16.566] Failed to create graphics pipeline. Error -13
+[04:45:16.582] Failed to create graphics pipeline. Error -13
+[04:45:16.614] Failed to create graphics pipeline. Error -13
+[04:45:17.313] IOSU_ACT: using account default in first slot
+[04:45:17.317] OSGetSharedData() called by game but no shareddata fonts loaded. Use placeholder font

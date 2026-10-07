@@ -1,0 +1,63 @@
+[
+  {
+    "installed_path": "C:\\Emulators\\Cemu_arm64\\Cemu_se_test.exe",
+    "sha256": "e8791dbea63e85111c1b9a4feab98f31ca469b1802caf379aa5120cffa2dc9c8",
+    "size": 29433856,
+    "matched_roles": [
+      "Release+SE (user-selected final SE)"
+    ],
+    "matched_build_runs": [
+      35507685980
+    ],
+    "matched_build_commits": [
+      "e851c8377c2c0fbcdc9042cf3971f60f0395d78b"
+    ],
+    "status": "EXACT_SHA256_MATCH"
+  },
+  {
+    "installed_path": "C:\\Emulators\\Cemu_arm64\\Cemu_se.exe",
+    "sha256": "17231aa75f907d3804b27ee40762e9940c70443f33ca807157b80790fcb4d496",
+    "size": 29247488,
+    "matched_roles": [
+      "Historical Release+SE"
+    ],
+    "matched_build_runs": [
+      35399518440
+    ],
+    "matched_build_commits": [
+      "bccd0f9a31f114857e45bb178415faeed271182b"
+    ],
+    "status": "DISCARDED_AFTER_EXACT_SHA256_MATCH",
+    "present": false
+  },
+  {
+    "installed_path": "C:\\Emulators\\Cemu_arm64\\Cemu-Diagnostics.exe",
+    "sha256": "5845e2b2a52bc777a3a03290ec3795f867947f7adfa2d9ac3caef6cf6dc7c6ba",
+    "size": 29267968,
+    "matched_roles": [
+      "Diagnostics"
+    ],
+    "matched_build_runs": [
+      34314435136
+    ],
+    "matched_build_commits": [
+      "4a7d4a61bb6b8ffc2f1bda36c2c91f2c3a055934"
+    ],
+    "status": "EXACT_SHA256_MATCH"
+  },
+  {
+    "installed_path": "C:\\Emulators\\Cemu_arm64\\Cemu.exe",
+    "sha256": "d2d77ee6961d9f834740ae450653a9f9235da27f43f3b82ed35ca7b2acc56abb",
+    "size": 29107200,
+    "matched_roles": [
+      "Release"
+    ],
+    "matched_build_runs": [
+      34314391691
+    ],
+    "matched_build_commits": [
+      "d359c53da77dddac6c34554d3b894099896b070e"
+    ],
+    "status": "EXACT_SHA256_MATCH"
+  }
+]

@@ -1,0 +1,110 @@
+{
+  "created_at": "2026-09-29T07:43:23.794451+09:00",
+  "status": "THIRD_U8_NHWC_RUN_VERIFIED",
+  "run": "htp-io-u8nhwc-20260929-074227-880",
+  "time_slot": {
+    "authorization": "After discussing possible boot activity, the user explicitly said 지금 괜찮아. Repeated the same 10 measured runs once.",
+    "start": "2026-09-29T07:42:27.8827392+09:00",
+    "end": "2026-09-29T07:42:33.9117904+09:00",
+    "closed": true
+  },
+  "run_record": {
+    "status": "HTP_IO_VARIANT_VERIFIED",
+    "variant": "U8NHWC",
+    "started_at": "2026-09-29T07:42:27.8827392+09:00",
+    "ended_at": "2026-09-29T07:42:33.9117904+09:00",
+    "exit_code": 0,
+    "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+    "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+    "probe_sha256": "9045a2127994d531de9f93057bc63bdfe18aa70ddb86eb07c8c931d3e35eb9b3",
+    "settings": "balanced, detailed profiling, same logical synthetic image",
+    "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-io-u8nhwc-20260929-074227-880-console.log",
+    "result": {
+      "status": "HTP_IO_VARIANT_VERIFIED",
+      "variant": "U8NHWC",
+      "run_mean_ms": 36.01213,
+      "run_p50_ms": 36.0582,
+      "run_p95_ms": 36.2528,
+      "input_shape": [
+        1,
+        1080,
+        1920,
+        6
+      ],
+      "output_shape": [
+        1,
+        1080,
+        1920,
+        3
+      ],
+      "host_dtype": "uint8",
+      "layout": "NHWC",
+      "profile_evidence": {
+        "verified_qnn_only": true,
+        "node_events": 14,
+        "kernel_events": 14,
+        "kernels_without_provider": 0,
+        "providers": [
+          "QNNExecutionProvider"
+        ],
+        "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+      },
+      "accelerator_metrics": [
+        {
+          "name": "Accelerator (execute excluding wait) time",
+          "mean_ms": 18.1479,
+          "samples": 10
+        },
+        {
+          "name": "Accelerator (execute) time",
+          "mean_ms": 18.601,
+          "samples": 10
+        },
+        {
+          "name": "QNN accelerator (execute) time",
+          "mean_ms": 30.198900000000002,
+          "samples": 10
+        },
+        {
+          "name": "RPC (execute) time",
+          "mean_ms": 30.682,
+          "samples": 10
+        },
+        {
+          "name": "QNN (execute) time",
+          "mean_ms": 31.574599999999997,
+          "samples": 10
+        }
+      ],
+      "metrics_overlap_do_not_add": true,
+      "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes external quantization, packing, output dequantization, Vulkan transfers, motion estimation and present",
+      "external_conversion_costs_measured": false,
+      "game_quality_validated": false
+    },
+    "error": null,
+    "quality_validated": false,
+    "external_conversion_costs_measured": false
+  },
+  "mean_ms": 36.01213,
+  "p50_ms": 36.0582,
+  "p95_ms": 36.2528,
+  "min_ms": 35.6988,
+  "max_ms": 36.2528,
+  "max_minus_min_ms": 0.554000000000002,
+  "previous_first_mean_ms": 34.3743,
+  "previous_repeat_mean_ms": 38.38438,
+  "mean_reduction_vs_repeat_percent": 6.18024831975924,
+  "accelerator_excluding_wait_ms": 18.1479,
+  "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+  "output_identical_to_both_previous_runs": true,
+  "profile_transpose_node_names": [],
+  "boot_or_background_load_telemetry_recorded": false,
+  "device_clocks_recorded": false,
+  "interpretation": "Mean and variability improved from the immediately prior run. Device execution excluding wait remained about 18.1ms. Boot/background activity was not instrumented; causation is not established. Mean still exceeds the 33.3ms budget before external conversion/GPU stages.",
+  "cemu_executed": false,
+  "ui_control": false,
+  "forced_termination": false,
+  "external_conversion_costs_measured": false,
+  "gpu_transfers_measured": false,
+  "game_quality_validated": false
+}

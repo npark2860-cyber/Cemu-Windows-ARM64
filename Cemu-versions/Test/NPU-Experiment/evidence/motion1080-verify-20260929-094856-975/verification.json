@@ -1,0 +1,57 @@
+{
+  "status": "MOTION1080_PIPELINE_VERIFIED",
+  "mode": "Verify",
+  "profile": {
+    "qnn_only": true,
+    "kernel_events": 8
+  },
+  "checks": [
+    {
+      "phase": 0,
+      "known_motion_or_cut_match_fraction": 1.0,
+      "valid_warp_fraction": 0.9925925925925926,
+      "input_sha256": "c8630d6f596a646209e83c5d26501f6ba0da745b62a8271816906f306978a3e6",
+      "output_sha256": "7156810724b0e7493003e3da2e067566e30ada57996e911d817a9ba105fd433a",
+      "composed_sha256": "7cb6120b9cb4a8d41abd803daa18a742d6fd36447a212f262d0fd5db3adb511f",
+      "diagnostic_sha256": "0095f3b6d1d91f5f0e723b7bbfcb36b2d24e0a3a7cebdbbdf130b15f52ec464c",
+      "max_compose_error": 0
+    },
+    {
+      "phase": 1,
+      "known_motion_or_cut_match_fraction": 1.0,
+      "valid_warp_fraction": 0.9655555555555555,
+      "input_sha256": "238086d0e34dc250222ed2fa6f6a0f32311075ba5a0ae5df1d4ce90cf6b76f03",
+      "output_sha256": "ca7f77c948f7e28d15734be1144ccfe976348b13ca8cb2fdfc397f5fac996ec3",
+      "composed_sha256": "6fea1ff135ef8cf94bdd12fde6e4be23b3b5a869ffa5ada553a6b741fbd337e7",
+      "diagnostic_sha256": "f5beac437959df0ff2f5b0273d66d1138e8529013e074a987e6669cb62b2b86e",
+      "max_compose_error": 0
+    },
+    {
+      "phase": 2,
+      "known_motion_or_cut_match_fraction": 1.0,
+      "valid_warp_fraction": 0.966574074074074,
+      "input_sha256": "356e38d0f05352135cb8c57df5dd04d11fa09dc414d4f011ba88d451abd0e796",
+      "output_sha256": "e242c8fda1090ae3b4c98992acbf89c656f564baf1950232ddb572d294af05ea",
+      "composed_sha256": "b2e00cf9d1c7e04908a2391fc06478da184f205d8362f443e788ad9067936d3c",
+      "diagnostic_sha256": "690caa483d888d03d414034958f17dde6dfd21072a48c5cf27b26abd0ddeb4f6",
+      "max_compose_error": 0
+    },
+    {
+      "phase": 3,
+      "known_motion_or_cut_match_fraction": 1.0,
+      "valid_warp_fraction": 0.0,
+      "input_sha256": "0bd7f676d45529c49f922cd2282b3bc9b36d81d30b05ccc152af5e966c650fd5",
+      "output_sha256": "92a56052e22c574a4a505a03c007bedbe7d1f51edb6fa754f9a07b5d4102783d",
+      "composed_sha256": "55f330846e89e7f79ac68987085c80ff6ed54c7da173ce74e197adf059b0a30e",
+      "diagnostic_sha256": "c32a6e30fc5c2e8fed7e42438248425fb00c3d4eb499e20576dbb1354bad0ad0",
+      "max_compose_error": 0
+    }
+  ],
+  "timing": null,
+  "timing_scope": "Standalone synthetic image generation, quarter-resolution bidirectional block matching, midpoint warp/NHWC pack, worker-thread QNN Run and GPU residual compose. Independent next-image generation overlaps the host NPU call. Includes benchmark completion polling and serialized GPU fences. Excludes real Cemu rendering, present, game quality and sustained contention. Host-call overlap is not proof of simultaneous device execution.",
+  "physical_zero_copy_proven": false,
+  "full_framegen_validated": false,
+  "real_game_quality_validated": false,
+  "application_copy_free_gpu_npu_handoff": true,
+  "performance_validation_scope": "Four static/translation/cut fixtures. All four audited in Verify; final phase one audited after 34 Measure rounds. No per-round readback in the measured loop."
+}

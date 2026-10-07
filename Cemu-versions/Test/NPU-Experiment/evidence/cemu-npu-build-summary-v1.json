@@ -1,0 +1,9 @@
+{
+  "status": "BUILT_NOT_RUNTIME_TESTED",
+  "variant": "Release (NPU EXP v1)",
+  "cemu_sha256": "d4e0a93815c9630f4d9d47a949e13c52e495f4cf4b0ab215ae1bb7f7bc210818",
+  "module_sha256": "00564d62e2f6b375d113fe89e55a6944d154660d39f6fc48f5f47abe801c2228",
+  "files": 46,
+  "cpu_timeline_checks": 17,
+  "device_executed": false
+}

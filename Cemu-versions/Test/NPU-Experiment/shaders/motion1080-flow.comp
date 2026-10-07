@@ -1,0 +1,32 @@
+#version 450
+layout(local_size_x=8,local_size_y=8) in;
+layout(set=0,binding=5,std430) writeonly buffer Forward { ivec4 f[]; } forwardFlow;
+layout(set=0,binding=6,std430) writeonly buffer Backward { ivec4 f[]; } backwardFlow;
+layout(set=0,binding=7,rgba8) uniform readonly image2D quarterA;
+layout(set=0,binding=8,rgba8) uniform readonly image2D quarterB;
+void main() {
+    ivec2 block=ivec2(gl_GlobalInvocationID.xy);
+    if(block.x>=120 || block.y>=68) return;
+    bool reverse=gl_GlobalInvocationID.z!=0u;
+    ivec2 base=block*4,best=ivec2(0);
+    float minimum=1000.0;
+    if(base.y+3<270) {
+        // Exhaustive initial prototype: +/-16 full-resolution pixels, 16x16 blocks.
+        // Fixed bounded search; not a replacement for production dense optical flow.
+        for(int dy=-4;dy<=4;++dy) for(int dx=-4;dx<=4;++dx) {
+            ivec2 d=ivec2(dx,dy),target=base+d;
+            if(any(lessThan(target,ivec2(0))) || target.x+3>=480 || target.y+3>=270) continue;
+            float cost=0.0;
+            for(int y=0;y<4;++y) for(int x=0;x<4;++x) {
+                ivec2 p=base+ivec2(x,y),q=p+d;
+                vec3 a=reverse?imageLoad(quarterB,p).rgb:imageLoad(quarterA,p).rgb;
+                vec3 b=reverse?imageLoad(quarterA,q).rgb:imageLoad(quarterB,q).rgb;
+                cost+=dot(abs(a-b),vec3(1.0/48.0));
+            }
+            if(cost<minimum || (cost==minimum && dot(vec2(d),vec2(d))<dot(vec2(best),vec2(best)))) {minimum=cost;best=d;}
+        }
+    }
+    ivec4 value=ivec4(best*4,minimum<0.03?1:0,int(round(minimum*1000000.0)));
+    uint index=uint(block.y*120+block.x);
+    if(reverse) backwardFlow.f[index]=value; else forwardFlow.f[index]=value;
+}

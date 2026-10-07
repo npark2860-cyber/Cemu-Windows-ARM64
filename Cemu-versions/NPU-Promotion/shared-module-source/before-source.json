@@ -1,0 +1,113 @@
+{
+  "base_commit": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+  "files": [
+    {
+      "path": "CMakeLists.txt",
+      "sha256": "c4cd14e7e33dee73aeae6a4690385f1e7652efa8a2a1e73c24ae2c4d5b96ff9d"
+    },
+    {
+      "path": "dependencies/npu-cemu/npu_cemu.h",
+      "sha256": "a5619f83b5372ea42db410b226b1210b6f20858e260c88d1d286cf1f8f99c28c"
+    },
+    {
+      "path": "src/Cafe/CMakeLists.txt",
+      "sha256": "143d5a2aba80c745b3c06ad2a8a6558c50907345d347330204070534090f598f"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Core/LatteOverlay.cpp",
+      "sha256": "43d2e16d2c2536e114e987bdab1b047ed83875abff074bb8e3cf39a29ef95ee2"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp",
+      "sha256": "ef7df6c0ce0b04ca18c2ef897981370ffb8ed7738e35ae0378e0315b4ff95bf8"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Core/LatteShader.cpp",
+      "sha256": "121401dabea12843bc59dee0d7a41b50f330fb838daa16e379a57c852fe6e15f"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Core/LatteShader.h",
+      "sha256": "6d3c5c0c563b2436049343094b38d08fe668b0c76befcb9baef371bba5cdcbda"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp",
+      "sha256": "4e2870d9ffd3a70ed4bb1653876491f734ea278c96be4413c9c8c383a510942a"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp",
+      "sha256": "4b6b16f7d9f7f705d4e9a86f315428fc751b5c95fe5a593c9af051744e61cf14"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Renderer.h",
+      "sha256": "302cda6dbaa5e793b7300de507441cf877eb2021fe4136a3da3ee06d481e8e8b"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp",
+      "sha256": "1a077fbd4dbf57887e1ed1ee525981e6924012dd637b0af5a5cdc0411ad6a53b"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/RendererOuputShader.h",
+      "sha256": "ed1f73c5ca6d346854cfa731ee90bb21e21e0545b6b41534ce8f610b1daaead4"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp",
+      "sha256": "1f835818b3dac0c09211b609a409db8d61255b24097de368b146ab3f26706a75"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h",
+      "sha256": "2b8faba4822c2ecf89a5d40cd3893627cb4eddf7c171c6ffd71cb2ebce0546d1"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h",
+      "sha256": "4655ff09ff598921268c8517f22d611da9404781da40447c64a29129ec880024"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanLSFG.cpp",
+      "sha256": "906883e8b3db570507329c029c0b5ff35fb5f9b7a15ce8b6e799282a8e954cf6"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp",
+      "sha256": "1d8a22c134be341aae403f0f1858c3c3bb8560ad8f07c4bbcff3817cd8f25926"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+      "sha256": "cded10a6e4194f55667ed2dc462d364f46e4b6d5946236609e0a52440432dc88"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+      "sha256": "ef8578334fe7d9cff29bfbc13afaf668ecc74629baf30e53aaede6a86f425725"
+    },
+    {
+      "path": "src/config/CemuConfig.cpp",
+      "sha256": "e22359d32f4ed3f9e95508e0f1778d33934d047281bdd5aa667f4b32f81eaddc"
+    },
+    {
+      "path": "src/config/CemuConfig.h",
+      "sha256": "acb5b1703634f7cf592e868d3973f9f7f2e5deb2cde61ccb634ce5591cbba8bf"
+    },
+    {
+      "path": "src/gui/wxgui/GeneralSettings2.cpp",
+      "sha256": "5dd117c7b0b1d90c0880018a9482b22cadf4f4c13119d678176d11ab7d8a0e67"
+    },
+    {
+      "path": "src/gui/wxgui/GeneralSettings2.h",
+      "sha256": "ea8c21d8c33e2bddf65b41689be442e7ada2bc8265389d1afcf8c4c882f8a7af"
+    },
+    {
+      "path": "src/gui/wxgui/MainWindow.cpp",
+      "sha256": "c9f512d7307853810c0063567ddc2629364e59d130e64c67f82afed7e4b21347"
+    },
+    {
+      "path": "src/gui/wxgui/wxWindowSystem.cpp",
+      "sha256": "563d554ea9d66333853d5767c704fa2ad77d84ac6353b5d5d183d05489fb4bef"
+    },
+    {
+      "path": "src/imgui/imgui_impl_vulkan.cpp",
+      "sha256": "2602d25a9ca4c36308056fc7b24f8173dff9b4008783028cb5baa86d6195bb07"
+    },
+    {
+      "path": "src/imgui/imgui_impl_vulkan.h",
+      "sha256": "85b45cd27f099d33a3d3a54371f024e6d8d012c54e59fbd55ad6f0633597add6"
+    }
+  ]
+}

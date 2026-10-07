@@ -1,0 +1,211 @@
+{
+  "created_at": "2026-09-29T08:28:59.7018254+09:00",
+  "status": "PREPARED_NOT_DEVICE_TESTED",
+  "build_exit_code": 0,
+  "machine": "ARM64 0xAA64",
+  "probe_sha256": "3d9c29cbd5f5803353fdde984bcbe3f5331df79b2f1faab4ba86d9503ffbdf5c",
+  "model": {
+    "path": "models/smoke-average-qdq-u8.onnx",
+    "sha256": "447cb38952fe343c7f7779271515eeb4a20fa1c1a122ae3d84c80bea14dae779",
+    "input_shape": [
+      1,
+      6,
+      32,
+      32
+    ],
+    "output_shape": [
+      1,
+      3,
+      32,
+      32
+    ],
+    "dtype": "uint8",
+    "rounds": 5
+  },
+  "driver": {
+    "version": "30.0.224.10000",
+    "inf": "oem73.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{F01A9D53-3FF6-48D2-9F97-C8A7004BE10C}\\0000",
+    "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+    "rpc_sha256": "218057045fb448f60585b03de05476e8673d4c14da5a94d8c7fb3a1f1264c3a1"
+  },
+  "graphics": {
+    "version": "31.0.170.0",
+    "inf": "oem36.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000",
+    "description": "Qualcomm(R) Adreno(TM) X1-85 GPU"
+  },
+  "files": [
+    {
+      "path": "src/npu_vulkan_interop_probe.cpp",
+      "sha256": "35b26fff4a17f9e808a5a2439187ff78233e2e42a288a653c5ed358791f45254"
+    },
+    {
+      "path": "runtime/npu-vulkan-interop-probe.exe",
+      "sha256": "3d9c29cbd5f5803353fdde984bcbe3f5331df79b2f1faab4ba86d9503ffbdf5c"
+    },
+    {
+      "path": "build-interop-probe.cmd",
+      "sha256": "49f565624adc54b581c0c9c34f56e7c335d1366ec92109f6635ac088f2fabe01"
+    },
+    {
+      "path": "run-interop-probe.ps1",
+      "sha256": "d44b25ea876b071431ed2e9c7d85550705e4ecd908c1ca1050dc06cfa0796bb3"
+    },
+    {
+      "path": "scripts/read-interop-result.ps1",
+      "sha256": "b1b272756b99e45891f426893728f36965e9b4c00231c8ca695c1fff034ce02f"
+    },
+    {
+      "path": "scripts/test-interop-result.ps1",
+      "sha256": "3c2acc07d93249c9b99764976d70d0d85a9eb37f3702a808ccd517422baf8bc2"
+    },
+    {
+      "path": "scripts/read-qnn-profile.ps1",
+      "sha256": "adbdb0d2e5801125a80cf8021d2f25f92c05125582efcd4f04e8b7512d9e1a35"
+    },
+    {
+      "path": "ZERO-COPY-EXPERIMENT.md",
+      "sha256": "4cf76457595418c5681d37da9905c8b45c52c4430e4989a16938c09edbe19aae"
+    },
+    {
+      "path": "models/smoke-average-qdq-u8.onnx",
+      "sha256": "447cb38952fe343c7f7779271515eeb4a20fa1c1a122ae3d84c80bea14dae779"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_av1std_decode.h",
+      "sha256": "501c8e5a35877a25c0dd75a980f874bb8249daacad69b2ca298c3102cfbeb5f1"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_av1std_encode.h",
+      "sha256": "0fe434b225676b7668287136d1da620182c04809756c1bf5f323ead00f869d4b"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_av1std.h",
+      "sha256": "4507d6630d60cd54bc27bd5fd25ef496589153b0e1cbe39d7b0fb787fb496116"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_h264std_decode.h",
+      "sha256": "f0a9beae6a4a4655556d566f7df1f65cd63d3882822114f8d489a0bfb03f7b5a"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_h264std_encode.h",
+      "sha256": "be516b4b8b97dd57dd4628240a11daf5da6bdf248b48dd264a6e9aa152d77e10"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_h264std.h",
+      "sha256": "b37b96706863769376f0279961344d5cb505f1481ace7342bea428df6bb45136"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_h265std_decode.h",
+      "sha256": "deb0dca982d61e445b261068ea4e26b8c8501f6bbe0a25a6b40a8c5bc020a83a"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_h265std_encode.h",
+      "sha256": "de03085ce0d704b2dab0149b097fd504b5159ae147d8577012bf234a29433793"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_h265std.h",
+      "sha256": "40618f6d7e27dfb4ce98537d585276a7308914a892a667f27e39bb5d36c7eb8d"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_vp9std_decode.h",
+      "sha256": "f079ed20e8e88fadc89f82572deefbd30dad2ede7569c0ced95f8c1f18cb4d27"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codec_vp9std.h",
+      "sha256": "3e233ddb1eee787ff663a29e7449a191f2cc7381cf078011ece6f69dfb70aec2"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vk_video/vulkan_video_codecs_common.h",
+      "sha256": "8da2219805fb7f2f0a08a2bd6b9e881bc60eee1d1247f4d5a4cdf34fd27fd2ac"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vk_icd.h",
+      "sha256": "e27c0758d430357ecbd4dcb9f8510ad07ec93495f07980e0b74669f229bf0f8d"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vk_layer.h",
+      "sha256": "a726112d6501770911c36ce1a1cf5ff6df6b182765e8cf2775016ac704c3a7bc"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vk_platform.h",
+      "sha256": "23417b1203d8e1d6900d576dc01099346d8523a179390f5209de08e6e439ebc5"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_android.h",
+      "sha256": "94ed6baec7c3053d71ec1f01d9661c041970551576d7594a08933d1c98fb02a6"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_beta.h",
+      "sha256": "5bbb21a07683a66b768b41e56d05dc5b626c46d8e511ec7ba9d24aee1e1697f5"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_core.h",
+      "sha256": "2f7aa635db9a068294c70de0f90d74c869602c132c30f306cb73b973a3f9b502"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_directfb.h",
+      "sha256": "1f6d6dfeb4bf6bf050e6df045f630d3a7240d93a46948181dab8061db14f1185"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_fuchsia.h",
+      "sha256": "8338f0ed34280b5f5e7766c79bf8999876b961ab2f31f1f1122296d3830d68bb"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_ggp.h",
+      "sha256": "4c60230dbc2d1d2b01f4d6272b7b604f49a86bbfe80ec7de8e7fad17d3116bbc"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_ios.h",
+      "sha256": "6ae5dab8df3ec8633fdf592db1fa7e03725bbc66ea672d5cfbef6dce689f3d71"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_macos.h",
+      "sha256": "c2193e23a1135a398c766c948103dcca9a252605339dbf3b0e6f9ebbecbe7556"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_metal.h",
+      "sha256": "6218b7fc232c114d62643979c9a7c164c79874d2581c7387a72f8561b90db46f"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_ohos.h",
+      "sha256": "d1c98a1f0b442b9fbe90497e7dfd070117cfe53313efafd1c88f98ff0828ab91"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_screen.h",
+      "sha256": "dfa2c0f63ad400f47244d1ffc406665e1f1257d2bf5c492c479be60926b67ad6"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_vi.h",
+      "sha256": "683e3e0111151a5e447ad3b69db34d2abee312a6ec24b2125323e3adcf5a67d9"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_wayland.h",
+      "sha256": "e7a5c86176e3553f62bead239bec5119e2aba5905a9df987a39e958c623e4c2f"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_win32.h",
+      "sha256": "44b000b0ed817cd82b8242f317a7db7e841dcc352103cc86ef48a13af63fe070"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_xcb.h",
+      "sha256": "4adc043b601c2d4ab757d43874e55523f22f5cdf174c48a05ddf13a790e642ad"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_xlib_xrandr.h",
+      "sha256": "3a86336bcb878c759a2875294076158467d8d66c605eb2996312c916b78fb9a8"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan_xlib.h",
+      "sha256": "25b689032e9594d6ede0483e009ca47eb918a7265b044a3dea1d807a7f1f9c56"
+    },
+    {
+      "path": "../LSFG-Release/package-original/lsfg-cemu-arm64/third_party/vulkan_headers/include/vulkan/vulkan.h",
+      "sha256": "dfb52fde20c963f4d74829a7a07aef1e822e6fa0df4ea45a26c7effb7c286802"
+    }
+  ],
+  "scope": "Conditional small GPU/NPU shared-buffer functional experiment. No device execution during preparation.",
+  "revision": 3,
+  "revision_note": "Select native Qualcomm vendor 0x5143 from captured inventory, excluding Microsoft D3D12 translation adapters with Adreno in their names."
+}

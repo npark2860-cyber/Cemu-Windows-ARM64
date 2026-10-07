@@ -1,0 +1,31 @@
+{
+  "status": "FAILED",
+  "started_at": "2026-09-29T09:04:49.7911289+09:00",
+  "ended_at": "2026-09-29T09:05:01.9738709+09:00",
+  "closed": true,
+  "manifest_sha256": "444dbf6f57f3d435d73e698a87f720cd1230100428247314bdc925c9abde500b",
+  "probe_sha256": "e91b0ad6bdb687bc49060ddd290c11448200d444b911533f502381ee16b8b1bd",
+  "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+  "runs": [
+    {
+      "mode": "Verify",
+      "status": "FAILED",
+      "started_at": "2026-09-29T09:04:49.7934475+09:00",
+      "ended_at": "2026-09-29T09:05:01.9526047+09:00",
+      "closed": true,
+      "exit_code": 1,
+      "manifest_sha256": "444dbf6f57f3d435d73e698a87f720cd1230100428247314bdc925c9abde500b",
+      "probe_sha256": "e91b0ad6bdb687bc49060ddd290c11448200d444b911533f502381ee16b8b1bd",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\anvil1080-verify-20260929-090449-792",
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\anvil1080-verify-20260929-090449-792-console.log",
+      "npu_driver_before": "30.0.224.10000",
+      "gpu_driver_before": "31.0.170.0",
+      "npu_driver_after": "30.0.224.10000",
+      "gpu_driver_after": "31.0.170.0",
+      "result": null,
+      "error": "Native probe failed with exit 1; inspect result.json and console log. Measurement gate stays closed."
+    }
+  ],
+  "error": "Native probe failed with exit 1; inspect result.json and console log. Measurement gate stays closed."
+}

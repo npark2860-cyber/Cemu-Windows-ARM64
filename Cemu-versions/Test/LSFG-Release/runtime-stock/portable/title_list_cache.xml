@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<title_list>
+ <title titleId="0005000010100600" version="0" sdk_version="20703" group_id="00001006" app_type="80000000">
+  <region>1</region>
+  <name>TEKKEN TAG TOURNAMENT 2 Wii U EDITION</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/10100600</path>
+ </title>
+ <title titleId="0005000010101c00" version="16" sdk_version="20703" group_id="0000101c" app_type="80000000">
+  <region>1</region>
+  <name>New SUPER MARIO BROS. U</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/10101c00</path>
+ </title>
+ <title titleId="0005000010106100" version="1" sdk_version="20922" group_id="0000101c" app_type="80000000">
+  <region>1</region>
+  <name>SUPER MARIO 3D WORLD</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/10106100</path>
+ </title>
+ <title titleId="0005000010116100" version="16" sdk_version="21003" group_id="00001161" app_type="80000000">
+  <region>1</region>
+  <name>XenobladeX</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/10116100</path>
+ </title>
+ <title titleId="0005000010116300" version="0" sdk_version="20811" group_id="00001163" app_type="80000000">
+  <region>1</region>
+  <name>The Wonderful 101</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/10116300</path>
+ </title>
+ <title titleId="000500001011b900" version="1" sdk_version="21003" group_id="000011b9" app_type="80000000">
+  <region>1</region>
+  <name>BAYONETTA 2</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/1011b900</path>
+ </title>
+ <title titleId="0005000010143400" version="0" sdk_version="20911" group_id="00001434" app_type="80000000">
+  <region>1</region>
+  <name>THE LEGEND OF ZELDA The Wind Waker HD</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/10143400</path>
+ </title>
+ <title titleId="000500001014d200" version="1" sdk_version="21004" group_id="000014d2" app_type="80000000">
+  <region>1</region>
+  <name>零 ～濡鴉ノ巫女～</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/1014d200</path>
+ </title>
+ <title titleId="000500001014db00" version="16" sdk_version="20922" group_id="000014db" app_type="80000000">
+  <region>1</region>
+  <name>BAYONETTA</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/1014db00</path>
+ </title>
+ <title titleId="0005000010150a00" version="0" sdk_version="20911" group_id="0000150a" app_type="80000000">
+  <region>1</region>
+  <name>BUBBLE BOBBLE</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/10150a00</path>
+ </title>
+ <title titleId="000500001015e100" version="0" sdk_version="20922" group_id="000015e1" app_type="80000000">
+  <region>2</region>
+  <name>Advance Wars</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/1015e100</path>
+ </title>
+ <title titleId="0005000010195900" version="0" sdk_version="21107" group_id="00001959" app_type="80000000">
+  <region>1</region>
+  <name>New スーパーマリオブラザーズ</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/10195900</path>
+ </title>
+ <title titleId="000500001019c800" version="82" sdk_version="21213" group_id="000019c8" app_type="80000000">
+  <region>1</region>
+  <name>THE LEGEND OF ZELDA Twilight Princess HD</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/1019c800</path>
+ </title>
+ <title titleId="00050000101aff00" version="16" sdk_version="21212" group_id="00001aff" app_type="80000000">
+  <region>1</region>
+  <name>Star Fox Zero</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/101aff00</path>
+ </title>
+ <title titleId="00050000101beb00" version="0" sdk_version="21212" group_id="00001aff" app_type="80000000">
+  <region>1</region>
+  <name>Star Fox Guard</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/101beb00</path>
+ </title>
+ <title titleId="00050000101c9300" version="0" sdk_version="21301" group_id="00001c93" app_type="80000000">
+  <region>1</region>
+  <name>The Legend of Zelda Breath of the Wild</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/101c9300</path>
+ </title>
+ <title titleId="00050000101da500" version="0" sdk_version="21213" group_id="00001da5" app_type="80000000">
+  <region>2</region>
+  <name>Advance Wars: Dual Strike</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/00050000/101da500</path>
+ </title>
+ <title titleId="0005000c10101c00" version="16" sdk_version="20806" group_id="0000101c" app_type="0800000e">
+  <region>1</region>
+  <name>New SUPER MARIO BROS. U</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000c/10101c00</path>
+ </title>
+ <title titleId="0005000c10116100" version="0" sdk_version="21003" group_id="00001161" app_type="0800000e">
+  <region>1</region>
+  <name>XenobladeX</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000c/10116100</path>
+ </title>
+ <title titleId="0005000c101c9300" version="80" sdk_version="21301" group_id="00001c93" app_type="0800000e">
+  <region>1</region>
+  <name>The Legend of Zelda Breath of the Wild</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000c/101c9300</path>
+ </title>
+ <title titleId="0005000e10101c00" version="65" sdk_version="20806" group_id="0000101c" app_type="0800001b">
+  <region>1</region>
+  <name>New SUPER MARIO BROS. U</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000e/10101c00</path>
+ </title>
+ <title titleId="0005000e10116100" version="48" sdk_version="21003" group_id="00001161" app_type="0800001b">
+  <region>1</region>
+  <name>XenobladeX</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000e/10116100</path>
+ </title>
+ <title titleId="0005000e10116300" version="16" sdk_version="20811" group_id="00001163" app_type="0800001b">
+  <region>1</region>
+  <name>The Wonderful 101</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000e/10116300</path>
+ </title>
+ <title titleId="0005000e1011b900" version="16" sdk_version="21003" group_id="000011b9" app_type="0800001b">
+  <region>1</region>
+  <name>BAYONETTA 2</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000e/1011b900</path>
+ </title>
+ <title titleId="0005000e1019c800" version="82" sdk_version="21213" group_id="000019c8" app_type="0800001b">
+  <region>1</region>
+  <name>THE LEGEND OF ZELDA Twilight Princess HD</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000e/1019c800</path>
+ </title>
+ <title titleId="0005000e101aff00" version="16" sdk_version="21212" group_id="00001aff" app_type="0800001b">
+  <region>1</region>
+  <name>Star Fox Zero</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000e/101aff00</path>
+ </title>
+ <title titleId="0005000e101c9300" version="208" sdk_version="21301" group_id="00001c93" app_type="0800001b">
+  <region>1</region>
+  <name>The Legend of Zelda Breath of the Wild</name>
+  <format>1</format>
+  <path>C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-stock/portable/mlc01/usr/title/0005000e/101c9300</path>
+ </title>
+</title_list>

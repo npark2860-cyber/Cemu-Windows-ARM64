@@ -1,0 +1,9 @@
+{
+  "recorded_at": "2026-09-29T09:08:56.682773+00:00",
+  "user_report": "테스트 다 해봤고 아주 잘 된 것 같아",
+  "candidate_manifest_sha256": "5981cd28313e2b702eb2e65cc6952b4d07920e4e8c40531b906f936562f7c0f9",
+  "candidate_executable_sha256": "aa00dfc2261f8173eed1ef6406e34dcd7c417e450e6136d9ff241c001133ff8e",
+  "latest_log_sha256": "b3ee3ff198dba6eac9ff27303cbd13dabedf231743a012647afa306c5ed6417f",
+  "agent_executed_gpu_npu_cemu": false,
+  "scope": "User reported overall RC1 success. Retained last game log independently confirms 720p model and window/fullscreen presentation. Other variants not yet game tested."
+}

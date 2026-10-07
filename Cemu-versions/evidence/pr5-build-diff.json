@@ -1,0 +1,273 @@
+{
+  "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/compare/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa...e851c8377c2c0fbcdc9042cf3971f60f0395d78b",
+  "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/compare/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa...e851c8377c2c0fbcdc9042cf3971f60f0395d78b",
+  "permalink_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/compare/npark2860-cyber:9c0b899...npark2860-cyber:e851c83",
+  "diff_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/compare/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa...e851c8377c2c0fbcdc9042cf3971f60f0395d78b.diff",
+  "patch_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/compare/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa...e851c8377c2c0fbcdc9042cf3971f60f0395d78b.patch",
+  "base_commit": {
+    "sha": "9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+    "node_id": "C_kwDOT3q2ANoAKDljMGI4OTllYjMxNzkyMzUzOTA5YWM3ZmY4MWVkNDJiMmRkN2Y4ZmE",
+    "commit": {
+      "author": {
+        "name": "npark2860-cyber",
+        "email": "npark2860@gmail.com",
+        "date": "2026-09-20T11:20:30Z"
+      },
+      "committer": {
+        "name": "npark2860-cyber",
+        "email": "npark2860@gmail.com",
+        "date": "2026-09-20T11:20:30Z"
+      },
+      "message": "fix(haptics): enable compatible HID motor output for BNVIB amplitudes",
+      "tree": {
+        "sha": "24a7a9444872f683d9469c8a299db0fecd343142",
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/trees/24a7a9444872f683d9469c8a299db0fecd343142"
+      },
+      "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/commits/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+    "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+    "comments_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa/comments",
+    "author": {
+      "login": "npark2860-cyber",
+      "id": 300044211,
+      "node_id": "U_kgDOEeJPsw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/npark2860-cyber",
+      "html_url": "https://github.com/npark2860-cyber",
+      "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+      "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+      "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+      "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+      "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+      "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "npark2860-cyber",
+      "id": 300044211,
+      "node_id": "U_kgDOEeJPsw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/npark2860-cyber",
+      "html_url": "https://github.com/npark2860-cyber",
+      "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+      "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+      "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+      "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+      "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+      "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "b3ee0affb9387969d446231e28d480ed5966a002",
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/b3ee0affb9387969d446231e28d480ed5966a002",
+        "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/b3ee0affb9387969d446231e28d480ed5966a002"
+      }
+    ]
+  },
+  "merge_base_commit": {
+    "sha": "9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+    "node_id": "C_kwDOT3q2ANoAKDljMGI4OTllYjMxNzkyMzUzOTA5YWM3ZmY4MWVkNDJiMmRkN2Y4ZmE",
+    "commit": {
+      "author": {
+        "name": "npark2860-cyber",
+        "email": "npark2860@gmail.com",
+        "date": "2026-09-20T11:20:30Z"
+      },
+      "committer": {
+        "name": "npark2860-cyber",
+        "email": "npark2860@gmail.com",
+        "date": "2026-09-20T11:20:30Z"
+      },
+      "message": "fix(haptics): enable compatible HID motor output for BNVIB amplitudes",
+      "tree": {
+        "sha": "24a7a9444872f683d9469c8a299db0fecd343142",
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/trees/24a7a9444872f683d9469c8a299db0fecd343142"
+      },
+      "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/commits/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+    "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+    "comments_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa/comments",
+    "author": {
+      "login": "npark2860-cyber",
+      "id": 300044211,
+      "node_id": "U_kgDOEeJPsw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/npark2860-cyber",
+      "html_url": "https://github.com/npark2860-cyber",
+      "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+      "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+      "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+      "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+      "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+      "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "npark2860-cyber",
+      "id": 300044211,
+      "node_id": "U_kgDOEeJPsw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/npark2860-cyber",
+      "html_url": "https://github.com/npark2860-cyber",
+      "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+      "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+      "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+      "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+      "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+      "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "b3ee0affb9387969d446231e28d480ed5966a002",
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/b3ee0affb9387969d446231e28d480ed5966a002",
+        "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/b3ee0affb9387969d446231e28d480ed5966a002"
+      }
+    ]
+  },
+  "status": "ahead",
+  "ahead_by": 1,
+  "behind_by": 0,
+  "total_commits": 1,
+  "commits": [
+    {
+      "sha": "e851c8377c2c0fbcdc9042cf3971f60f0395d78b",
+      "node_id": "C_kwDOT3q2ANoAKGU4NTFjODM3N2MyYzBmYmNkYzkwNDJjZjM5NzFmNjBmMDM5NWQ3OGI",
+      "commit": {
+        "author": {
+          "name": "npark2860-cyber",
+          "email": "npark2860@gmail.com",
+          "date": "2026-09-20T11:23:10Z"
+        },
+        "committer": {
+          "name": "npark2860-cyber",
+          "email": "npark2860@gmail.com",
+          "date": "2026-09-20T11:23:10Z"
+        },
+        "message": "build: Test_SE 0xFC haptic output fix Astra carrier",
+        "tree": {
+          "sha": "039bf4272ef2d9c256f1b792ff76f662be12eeb9",
+          "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/trees/039bf4272ef2d9c256f1b792ff76f662be12eeb9"
+        },
+        "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/git/commits/e851c8377c2c0fbcdc9042cf3971f60f0395d78b",
+        "comment_count": 0,
+        "verification": {
+          "verified": false,
+          "reason": "unsigned",
+          "signature": null,
+          "payload": null,
+          "verified_at": null
+        }
+      },
+      "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/e851c8377c2c0fbcdc9042cf3971f60f0395d78b",
+      "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/e851c8377c2c0fbcdc9042cf3971f60f0395d78b",
+      "comments_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/e851c8377c2c0fbcdc9042cf3971f60f0395d78b/comments",
+      "author": {
+        "login": "npark2860-cyber",
+        "id": 300044211,
+        "node_id": "U_kgDOEeJPsw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/npark2860-cyber",
+        "html_url": "https://github.com/npark2860-cyber",
+        "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+        "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+        "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+        "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+        "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+        "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "committer": {
+        "login": "npark2860-cyber",
+        "id": 300044211,
+        "node_id": "U_kgDOEeJPsw",
+        "avatar_url": "https://avatars.githubusercontent.com/u/300044211?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/npark2860-cyber",
+        "html_url": "https://github.com/npark2860-cyber",
+        "followers_url": "https://api.github.com/users/npark2860-cyber/followers",
+        "following_url": "https://api.github.com/users/npark2860-cyber/following{/other_user}",
+        "gists_url": "https://api.github.com/users/npark2860-cyber/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/npark2860-cyber/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/npark2860-cyber/subscriptions",
+        "organizations_url": "https://api.github.com/users/npark2860-cyber/orgs",
+        "repos_url": "https://api.github.com/users/npark2860-cyber/repos",
+        "events_url": "https://api.github.com/users/npark2860-cyber/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/npark2860-cyber/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "parents": [
+        {
+          "sha": "9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+          "url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/commits/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+          "html_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/commit/9c0b899eb31792353909ac7ff81ed42b2dd7f8fa"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "sha": "e8e40a3516dea345e0cc6767b13507b8c306df0d",
+      "filename": ".github/workflows/final-adreno-compat-arm64.yml",
+      "status": "modified",
+      "additions": 6,
+      "deletions": 6,
+      "changes": 12,
+      "blob_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/blob/e851c8377c2c0fbcdc9042cf3971f60f0395d78b/.github%2Fworkflows%2Ffinal-adreno-compat-arm64.yml",
+      "raw_url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/raw/e851c8377c2c0fbcdc9042cf3971f60f0395d78b/.github%2Fworkflows%2Ffinal-adreno-compat-arm64.yml",
+      "contents_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/contents/.github%2Fworkflows%2Ffinal-adreno-compat-arm64.yml?ref=e851c8377c2c0fbcdc9042cf3971f60f0395d78b",
+      "patch": "@@ -1,9 +1,9 @@\n-name: \"[Release] Cemu Windows ARM64\"\n+name: \"[Test_SE] Cemu Windows ARM64\"\n \n on:\n   push:\n     branches:\n-      - final-adreno-compat-arm64\n+      - build/test-se-once\n   workflow_dispatch:\n \n concurrency:\n@@ -24,11 +24,11 @@ jobs:\n         with:\n           submodules: recursive\n \n-      - name: Assert Release branch role\n+      - name: Assert Test_SE build carrier\n         shell: pwsh\n         run: |\n-          if (\"${{ github.ref }}\" -ne \"refs/heads/final-adreno-compat-arm64\") {\n-            throw \"Release workflow ran on unexpected ref: ${{ github.ref }}\"\n+          if (\"${{ github.ref }}\" -ne \"refs/heads/build/test-se-once\") {\n+            throw \"Test_SE build workflow ran on unexpected ref: ${{ github.ref }}\"\n           }\n           $guard = Get-Content 'ROLE_GUARD_RELEASE.txt' -Raw\n           foreach ($required in @(\n@@ -201,5 +201,5 @@ jobs:\n       - name: Upload artifact\n         uses: actions/upload-artifact@v6\n         with:\n-          name: cemu-arm64-release\n+          name: cemu-arm64-test-se-astra\n           path: ./bin/Cemu.exe"
+    }
+  ]
+}

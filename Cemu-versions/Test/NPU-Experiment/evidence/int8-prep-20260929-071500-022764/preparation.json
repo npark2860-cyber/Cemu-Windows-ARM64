@@ -1,0 +1,67 @@
+{
+  "status": "SYNTHETIC_INT8_PREPARED_NOT_NPU_TESTED",
+  "created_at": "2026-09-29T07:15:01.362550+09:00",
+  "model": "evidence/int8-prep-20260929-071500-022764/anvil-1080p-synthetic-u8u8.onnx",
+  "sha256": "ec1abb0d5921a5117ff247bc7803287b44be38423af8e84393d8553cee84d95f",
+  "model_bytes": 943947,
+  "source_sha256": "65e871aed25b331e3a3747cf9019942121a94af71997476f5804a24b768cd0d8",
+  "input_shape": [
+    1,
+    6,
+    1080,
+    1920
+  ],
+  "output_shape": [
+    1,
+    3,
+    1080,
+    1920
+  ],
+  "input_bytes": 49766400,
+  "output_bytes": 24883200,
+  "weight_bits": 8,
+  "activation_bits": 8,
+  "storage": "UINT8, per-tensor QDQ; INT32 bias",
+  "host_io": "FLOAT32 unchanged from FP16 baseline",
+  "quantized_core_coverage": {
+    "Pad": 1,
+    "Conv": 32,
+    "Add": 17,
+    "ConvTranspose": 4,
+    "Slice": 2
+  },
+  "quantization_tools": "ORT 1.24.4 x64 CPU, QNN config, QDQQuantizer; ONNX 1.20.1",
+  "calibration": {
+    "kind": "synthetic proxy ranges for performance/compatibility only",
+    "proxy_shape": [
+      1,
+      6,
+      136,
+      240
+    ],
+    "samples": 4,
+    "random_seed": 20260929,
+    "patterns": [
+      "all-zero",
+      "all-one",
+      "gradient/checker pair shifted 3px",
+      "uniform noise"
+    ],
+    "cpu_threads": 1,
+    "tensors_calibrated": 88,
+    "representative_game_data": false,
+    "full_resolution_calibrated": false
+  },
+  "tiny_proxy_validation": {
+    "finite": true,
+    "nonconstant": true,
+    "max_abs_error": 0.1354469135403633,
+    "rmse": 0.018647941280461964,
+    "game_quality_claim": false
+  },
+  "prepare_seconds": 1.344077899993863,
+  "npu_executed": false,
+  "full_1080p_inference_executed": false,
+  "quality_validated": false,
+  "limitations": "Synthetic low-resolution activation ranges reused at 1080p. May clip real activations and give poor game output. Candidate is for NPU speed/compatibility only, with no Cemu integration or GPU transfers."
+}

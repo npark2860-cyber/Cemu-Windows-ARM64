@@ -1,0 +1,22 @@
+[
+  {
+    "test": "test-processing-profile",
+    "exit_code": 0,
+    "output": "PROFILE_CPU_CONTRACT_PASSED checks=27"
+  },
+  {
+    "test": "test-buffered-timeline",
+    "exit_code": 0,
+    "output": "{\"status\":\"BUFFERED_TIMELINE_TESTS_PASSED\",\"checks\":17,\"gpu_npu_executed\":false}"
+  },
+  {
+    "test": "test-ort-paths",
+    "exit_code": 0,
+    "output": "old_path_exception=No mapping for the Unicode character exists in the target multi-byte code page.\nprocess_acp=949 old_path_throws=1 old_path_roundtrips=0\nORT_PATH_TESTS_PASSED checks=7 gpu_npu_executed=false"
+  },
+  {
+    "test": "test-overlay-contract",
+    "exit_code": 0,
+    "output": "{\"status\":\"OVERLAY_CPU_CONTRACT_PASSED\",\"checks\":485,\"gpu_npu_executed\":false}"
+  }
+]

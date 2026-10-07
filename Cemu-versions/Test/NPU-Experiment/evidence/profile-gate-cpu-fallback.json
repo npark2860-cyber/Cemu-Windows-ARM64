@@ -1,0 +1,16 @@
+[
+  {
+    "args": {
+      "provider": "QNNExecutionProvider"
+    },
+    "name": "kernel_time",
+    "cat": "Node"
+  },
+  {
+    "args": {
+      "provider": "CPUExecutionProvider"
+    },
+    "name": "kernel_time",
+    "cat": "Node"
+  }
+]

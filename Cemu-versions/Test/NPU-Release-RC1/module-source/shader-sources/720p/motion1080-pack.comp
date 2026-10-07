@@ -1,0 +1,37 @@
+#version 450
+layout(local_size_x=256) in;
+layout(set=0,binding=0,rgba8) uniform readonly image2D frameA;
+layout(set=0,binding=1,rgba8) uniform readonly image2D frameB;
+layout(set=0,binding=2,std430) writeonly buffer Input { uint words[]; } target;
+layout(set=0,binding=5,std430) readonly buffer Forward { ivec4 f[]; } forwardFlow;
+layout(set=0,binding=6,std430) readonly buffer Backward { ivec4 f[]; } backwardFlow;
+layout(set=0,binding=9,rgba8) uniform writeonly image2D warpedA;
+layout(set=0,binding=10,rgba8) uniform writeonly image2D warpedB;
+uint pack4(uint a,uint b,uint c,uint d) {return a|(b<<8)|(c<<16)|(d<<24);}
+void main() {
+    uint pair=gl_GlobalInvocationID.x;
+    if(pair>=460800u) return;
+    uvec3 a[2],b[2];
+    for(uint n=0u;n<2u;++n) {
+        uint pixel=pair*2u+n;
+        ivec2 p=ivec2(pixel%1280u,pixel/1280u),block=p/16;
+        ivec4 f=forwardFlow.f[block.y*80+block.x];
+        ivec2 q=p+f.xy;
+        bool valid=all(greaterThanEqual(q,ivec2(0))) && q.x<1280 && q.y<720;
+        ivec2 rb=clamp(q/16,ivec2(0),ivec2(79,44));
+        ivec4 r=backwardFlow.f[rb.y*80+rb.x];
+        valid=valid && f.z!=0 && r.z!=0 && all(equal(f.xy+r.xy,ivec2(0)));
+        ivec2 pa=p-f.xy/2,pb=p+f.xy/2;
+        valid=valid && all(greaterThanEqual(pa,ivec2(0))) && all(greaterThanEqual(pb,ivec2(0))) &&
+            pa.x<1280 && pa.y<720 && pb.x<1280 && pb.y<720;
+        // Unreliable/disoccluded regions preserve the current frame. No extrapolation.
+        vec3 va=valid?imageLoad(frameA,pa).rgb:imageLoad(frameB,p).rgb;
+        vec3 vb=valid?imageLoad(frameB,pb).rgb:imageLoad(frameB,p).rgb;
+        a[n]=uvec3(round(va*255.0)); b[n]=uvec3(round(vb*255.0));
+        imageStore(warpedA,p,vec4(va,valid?1.0:0.0));
+        imageStore(warpedB,p,vec4(vb,1.0));
+    }
+    target.words[pair*3u]=pack4(a[0].r,a[0].g,a[0].b,b[0].r);
+    target.words[pair*3u+1u]=pack4(b[0].g,b[0].b,a[1].r,a[1].g);
+    target.words[pair*3u+2u]=pack4(a[1].b,b[1].r,b[1].g,b[1].b);
+}

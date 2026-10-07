@@ -1,0 +1,13 @@
+{
+  "status": "UNSUPPORTED",
+  "stage": "vulkan_capabilities",
+  "model": "../models/smoke-average-qdq-u8.onnx",
+  "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+  "qnn_initialized": false,
+  "application_copy_free_gpu_npu_handoff": false,
+  "cemu_executed": false,
+  "full_framegen_validated": false,
+  "completed_rounds": 0,
+  "loader_api_version": 4211038,
+  "reason": "Expected exactly one Adreno device"
+}

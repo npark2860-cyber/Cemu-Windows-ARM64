@@ -1,0 +1,14 @@
+{
+  "role": "Release",
+  "sha256": "d2d77ee6961d9f834740ae450653a9f9235da27f43f3b82ed35ca7b2acc56abb",
+  "exe": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\LSFG-Release\\runtime-stock\\Cemu.exe",
+  "game": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\LSFG-Release\\runtime-stock\\portable\\mlc01\\usr\\title\\00050000\\101c9300",
+  "process_id": 32296,
+  "started_at": "2026-09-29T02:29:07.8652917+09:00",
+  "status": "EXITED",
+  "termination": "process exited; see UI observation record for user close versus failure",
+  "watchdog_kill": false,
+  "exit_code": 0,
+  "ended_at": "2026-09-29T02:30:31.7764746+09:00",
+  "duration_seconds": 83.91
+}

@@ -1,0 +1,202 @@
+[
+  {
+    "path": "CMakeLists.txt",
+    "bytes": 12732,
+    "sha256": "7891a17981f23643ba1162d9fdf8fae577ea5b229445af100e29717ccb5cef83"
+  },
+  {
+    "path": "dependencies/npu-cemu/anvil_async_worker.h",
+    "bytes": 5600,
+    "sha256": "cea41fdaf22d959735c7020bfa72573ee094f7f3cce4fe6fce3459310638e951"
+  },
+  {
+    "path": "dependencies/npu-cemu/borrowed_support.h",
+    "bytes": 15789,
+    "sha256": "539d93462cc80a79ed620ba64f285e4868197f262e468d5feac2a98b0c3aeb05"
+  },
+  {
+    "path": "dependencies/npu-cemu/buffered_timeline.h",
+    "bytes": 1275,
+    "sha256": "2af9a420c74f5ae02768fd91522e8cc1ab313ca8806dfc30a580d122badac473"
+  },
+  {
+    "path": "dependencies/npu-cemu/gpu_resources.h",
+    "bytes": 11322,
+    "sha256": "53f19c124514762b419a7992ac03c4f160492326124db7c1f17dffa71241d2de"
+  },
+  {
+    "path": "dependencies/npu-cemu/npu_cemu.cpp",
+    "bytes": 16485,
+    "sha256": "c02a5ea01b36605cb52a89c7fa2ba659159e813caa1aada80e0970055f44ade2"
+  },
+  {
+    "path": "dependencies/npu-cemu/npu_cemu.h",
+    "bytes": 1825,
+    "sha256": "cb03c35ff5fe86bc4abd64b7e2f2d1869c35ba9aa679db4ecd4cade2ad608e21"
+  },
+  {
+    "path": "dependencies/npu-cemu/ort_paths.h",
+    "bytes": 1437,
+    "sha256": "7ef1dd5af482c38ca3a73bb584a1d3d04b9e555a77141c24777c23e618585d56"
+  },
+  {
+    "path": "dependencies/npu-cemu/processing_profile.h",
+    "bytes": 983,
+    "sha256": "327d80d7a8461167fc2a38f724a3ecb0c7c52ba7d18a2166ad2f2070e3e3583c"
+  },
+  {
+    "path": "dependencies/npu-cemu/test_buffered_timeline.cpp",
+    "bytes": 2808,
+    "sha256": "290b21c67b61170b6fbce338f3ba2e2db8791000073de6facd07ed53c73f6176"
+  },
+  {
+    "path": "dependencies/npu-cemu/test_ort_paths.cpp",
+    "bytes": 2476,
+    "sha256": "26b919705a347019cd08e80ae3415a965149450d6dc99bedd618b19a6d33111e"
+  },
+  {
+    "path": "dependencies/npu-cemu/test_processing_profile.cpp",
+    "bytes": 1368,
+    "sha256": "4ad424ab1f2975fdfcf74516bf7e1973c5611773a87e2291fc8067f38662e6cf"
+  },
+  {
+    "path": "i18n/npu/README.md",
+    "bytes": 322,
+    "sha256": "841dfe410aaa5a3ad8d70d0e63f743bfcabc92290bda3f27cc9a5b1d6f6cf4bf"
+  },
+  {
+    "path": "i18n/npu/ko.po",
+    "bytes": 2383,
+    "sha256": "50c1cae09a76ea7b0748bdd9da8d7cdb22bcfcdb21031010273208f0ff64ecee"
+  },
+  {
+    "path": "i18n/npu/npu.pot",
+    "bytes": 1186,
+    "sha256": "4e222e34e780e110b3de3b872d7ba5185faab92ec98a8b0cfaac219f5b2fe49c"
+  },
+  {
+    "path": "src/Cafe/CMakeLists.txt",
+    "bytes": 24536,
+    "sha256": "98850e90dbe4d9c1a11c222fd9aba384720ae082936c50bfa431a4813da11c94"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteOverlay.cpp",
+    "bytes": 19641,
+    "sha256": "92c4059679771ed8b6dd85484198116dc9859036f85fd03d0bd47fbfacf89b77"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp",
+    "bytes": 45086,
+    "sha256": "ef7df6c0ce0b04ca18c2ef897981370ffb8ed7738e35ae0378e0315b4ff95bf8"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteShader.cpp",
+    "bytes": 52323,
+    "sha256": "121401dabea12843bc59dee0d7a41b50f330fb838daa16e379a57c852fe6e15f"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Core/LatteShader.h",
+    "bytes": 5183,
+    "sha256": "6d3c5c0c563b2436049343094b38d08fe668b0c76befcb9baef371bba5cdcbda"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp",
+    "bytes": 168913,
+    "sha256": "4e2870d9ffd3a70ed4bb1653876491f734ea278c96be4413c9c8c383a510942a"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp",
+    "bytes": 27857,
+    "sha256": "4b6b16f7d9f7f705d4e9a86f315428fc751b5c95fe5a593c9af051744e61cf14"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Renderer.h",
+    "bytes": 8115,
+    "sha256": "f8e81e77069a12c637f8ef5ad283b1b863b1a0e7cea33de7e18e9910562d5cbe"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp",
+    "bytes": 29241,
+    "sha256": "1a077fbd4dbf57887e1ed1ee525981e6924012dd637b0af5a5cdc0411ad6a53b"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/RendererOuputShader.h",
+    "bytes": 2420,
+    "sha256": "ed1f73c5ca6d346854cfa731ee90bb21e21e0545b6b41534ce8f610b1daaead4"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp",
+    "bytes": 16181,
+    "sha256": "8fd311c06a536baee843641cf85d9c3251ce9f3860148433062f69424c96a914"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h",
+    "bytes": 3251,
+    "sha256": "ad47efca76df0f81bf7cb343d51e61e693e1b6f98f7e466bde32bd9a8234f762"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h",
+    "bytes": 7701,
+    "sha256": "e1c1f63a8ae2c23b0d063745fb2c0128693d8ca8252a93a6cb646d24ef66d656"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp",
+    "bytes": 17232,
+    "sha256": "055cd9624e02d45491db5be2740f86d8c864b85618b4a262bba528349bfff9f3"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+    "bytes": 195008,
+    "sha256": "12e57df02b5b5ad03488ab5e8fc0c6c17ec74b07675285f65deb9652990887bc"
+  },
+  {
+    "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+    "bytes": 41773,
+    "sha256": "57255a2262f1689a7a98e270afc2f53a33ccc40288775de0250638f630bf9214"
+  },
+  {
+    "path": "src/Cafe/OS/libs/snd_core/ax_voice.cpp",
+    "bytes": 55200,
+    "sha256": "ccbcd07e86fde3e185c683aebfdb90f08e854382481f2cfcd9c5a70af98e0a3a"
+  },
+  {
+    "path": "src/config/CemuConfig.cpp",
+    "bytes": 21807,
+    "sha256": "cbd5c5142cf9c57f4972f4324129a64ccaf3fe92cb390def9d7940a1e4e2deff"
+  },
+  {
+    "path": "src/config/CemuConfig.h",
+    "bytes": 16193,
+    "sha256": "35af357c42d548b4a7b8b6c4ef0063299294ff98e47c8e021998fa40759df4b9"
+  },
+  {
+    "path": "src/gui/wxgui/GeneralSettings2.cpp",
+    "bytes": 99308,
+    "sha256": "1ce280fa173ee918d25ec3aee789c29e72124ac322722eb3904bf2d9acd4e5c0"
+  },
+  {
+    "path": "src/gui/wxgui/GeneralSettings2.h",
+    "bytes": 5101,
+    "sha256": "d9b5f932f192b08e3104b4b7c0b2b453249dd18556ac212b3e882172ae6362a7"
+  },
+  {
+    "path": "src/gui/wxgui/MainWindow.cpp",
+    "bytes": 87969,
+    "sha256": "61d3d9904fd78ac6173f225a86da57444de38451c6f692a093a6fb0b949dc1c6"
+  },
+  {
+    "path": "src/gui/wxgui/wxWindowSystem.cpp",
+    "bytes": 8336,
+    "sha256": "dce43e742fdd801966b0b5bd4f3504d5cc5c06620fa99cd5988e22f77a9df05d"
+  },
+  {
+    "path": "src/imgui/imgui_impl_vulkan.cpp",
+    "bytes": 77252,
+    "sha256": "7cc03492bcc7ec121260b1da04ed9f47ad8c8d87982fc4c2d47fddc7a5250031"
+  },
+  {
+    "path": "src/imgui/imgui_impl_vulkan.h",
+    "bytes": 8860,
+    "sha256": "dce6b3530375df5b429b1b01a72fbab40782ddb56062091aa9218d042d71e0b4"
+  }
+]

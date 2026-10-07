@@ -1,0 +1,18 @@
+{
+  "status": "OFFLINE_MOTION_ORACLE_TESTS_PASSED",
+  "count": 11,
+  "tests": [
+    "accept_static",
+    "accept_forward_translation",
+    "accept_reverse_translation",
+    "accept_scene_cut",
+    "reject_corrupt_aligned_input",
+    "reject_wrong_motion_direction",
+    "reject_stale_npu_output",
+    "reject_bad_composed_pixel",
+    "reject_wrong_fallback_mask",
+    "reject_cut_frame_modification",
+    "reject_truncated_flow"
+  ],
+  "device_executed": false
+}

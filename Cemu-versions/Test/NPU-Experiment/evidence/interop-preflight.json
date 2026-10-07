@@ -1,0 +1,8 @@
+{
+  "status": "FILES_VERIFIED_NOT_EXECUTED",
+  "device_loaded": false,
+  "model": "models/smoke-average-qdq-u8.onnx",
+  "npu_driver": "30.0.224.10000",
+  "gpu_driver": "31.0.170.0",
+  "next": "Requires a new user-approved GPU/NPU time slot. Capability gate precedes QNN loading."
+}

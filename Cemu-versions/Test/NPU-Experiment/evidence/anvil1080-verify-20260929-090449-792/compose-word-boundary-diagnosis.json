@@ -1,0 +1,7 @@
+{
+  "hypothesis": "Three byteAt calls reuse the first RGB channel uint word even when the next channel crosses its boundary",
+  "max_error": 0,
+  "channels_over_tolerance": 0,
+  "total_channels": 6220800,
+  "note": "CPU model of observed behavior; compiler/driver cause not yet proven"
+}

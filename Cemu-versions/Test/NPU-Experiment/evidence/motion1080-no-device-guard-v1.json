@@ -1,0 +1,6 @@
+{
+  "status": "EXPLICIT_RUN_GUARD_PASSED",
+  "exit_code": 1,
+  "message": "FAILED: Explicit --run-devices --model --out NEW_DIR --rpc-library ABSOLUTE --shaders --mode Verify|Measure required; no device started",
+  "device_started": false
+}

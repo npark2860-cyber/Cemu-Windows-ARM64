@@ -1,0 +1,380 @@
+{
+  "target_root": "C:\\Emulators\\Cemu_arm64",
+  "source_manifest": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\NPU-BUILD.json",
+  "source_manifest_sha256": "1344620e04800f4e472dbe4208894836eb93ec7cf3e02e2d2842d770fd525c7e",
+  "backup_root": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\evidence\\npu-runtime-20261005\\installed-before",
+  "receipt": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\evidence\\npu-runtime-20261005\\installed-result.json",
+  "files": [
+    {
+      "relative_path": "Cemu-Release-SE-NPU.exe",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\Cemu-Release-SE-NPU.exe",
+      "sha256": "cc0078218022977988b8b2b31ed53a1f14cf62d5001c70864c382b6c2de20ed7",
+      "bytes": 29863424,
+      "before_sha256": "64f3d9048e0e957d76023338af42852fb30803538022e753504c8d37a0a6da70"
+    },
+    {
+      "relative_path": "cemu_npu.dll",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\cemu_npu.dll",
+      "sha256": "d377a5d2ae33166d4c73e540c400c3eac22a40ae31bb20ab630e25e732beb839",
+      "bytes": 321536,
+      "before_sha256": "d377a5d2ae33166d4c73e540c400c3eac22a40ae31bb20ab630e25e732beb839"
+    },
+    {
+      "relative_path": "libqnnhtpv73.cat",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\libqnnhtpv73.cat",
+      "sha256": "c42e151d507d4dfb383638638a5a94623742bda3db973e06f6c3039f5b12a166",
+      "bytes": 12216,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "libQnnHtpV73Skel.so",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\libQnnHtpV73Skel.so",
+      "sha256": "b1f0c26b1722a220742802f57647ed70ce89f574f115e5789baa27a81b9def7a",
+      "bytes": 10249464,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "libqnnhtpv81.cat",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\libqnnhtpv81.cat",
+      "sha256": "8a676539af68eaf902f371829c5c5704c7d6de1fd3be7485a4bc32a41d0b605c",
+      "bytes": 12216,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "libQnnHtpV81Skel.so",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\libQnnHtpV81Skel.so",
+      "sha256": "a3e62af7044227804bc229437107cb54425e05f43d57cc26a876dd94d54a0cfc",
+      "bytes": 11271968,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "npu/1080p/anvil-u8nhwc.onnx",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\1080p\\anvil-u8nhwc.onnx",
+      "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "bytes": 954257,
+      "before_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c"
+    },
+    {
+      "relative_path": "npu/1080p/shaders/motion1080-compose.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\1080p\\shaders\\motion1080-compose.spv",
+      "sha256": "118272fdfd2aa6c7fb19e99dbefe0fd0420696e68c5db0fc000b2fc4e5ec0d1a",
+      "bytes": 5912,
+      "before_sha256": "118272fdfd2aa6c7fb19e99dbefe0fd0420696e68c5db0fc000b2fc4e5ec0d1a"
+    },
+    {
+      "relative_path": "npu/1080p/shaders/motion1080-downsample.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\1080p\\shaders\\motion1080-downsample.spv",
+      "sha256": "ede06889d191e1fc74462d4f012a538fbd91fe30c4cdac5a783cf480b180084d",
+      "bytes": 2832,
+      "before_sha256": "ede06889d191e1fc74462d4f012a538fbd91fe30c4cdac5a783cf480b180084d"
+    },
+    {
+      "relative_path": "npu/1080p/shaders/motion1080-flow.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\1080p\\shaders\\motion1080-flow.spv",
+      "sha256": "af17add1d7bad775816d78996a74e49cd748d329ea9b8e662a377d664a87af8c",
+      "bytes": 10344,
+      "before_sha256": "af17add1d7bad775816d78996a74e49cd748d329ea9b8e662a377d664a87af8c"
+    },
+    {
+      "relative_path": "npu/1080p/shaders/motion1080-generate.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\1080p\\shaders\\motion1080-generate.spv",
+      "sha256": "234f4ed023d48d79fc07104042142ce06b4ec10088367afb5af3a183ac8200f9",
+      "bytes": 3664,
+      "before_sha256": "234f4ed023d48d79fc07104042142ce06b4ec10088367afb5af3a183ac8200f9"
+    },
+    {
+      "relative_path": "npu/1080p/shaders/motion1080-pack.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\1080p\\shaders\\motion1080-pack.spv",
+      "sha256": "691782ae630be5fc0b77bec84c42643afd7207d314826856726e644f88af7b57",
+      "bytes": 8576,
+      "before_sha256": "691782ae630be5fc0b77bec84c42643afd7207d314826856726e644f88af7b57"
+    },
+    {
+      "relative_path": "npu/720p/anvil-u8nhwc.onnx",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\720p\\anvil-u8nhwc.onnx",
+      "sha256": "f4633a9d1e905f8823004efd63de65f512e36962d87d8598e7ef5469d18ae2ac",
+      "bytes": 954097,
+      "before_sha256": "f4633a9d1e905f8823004efd63de65f512e36962d87d8598e7ef5469d18ae2ac"
+    },
+    {
+      "relative_path": "npu/720p/shaders/motion1080-compose.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\720p\\shaders\\motion1080-compose.spv",
+      "sha256": "e541b42b22d8fbaac08b2b4c72c847a2f6421720b7e729f23bd2c49f9f066390",
+      "bytes": 5912,
+      "before_sha256": "e541b42b22d8fbaac08b2b4c72c847a2f6421720b7e729f23bd2c49f9f066390"
+    },
+    {
+      "relative_path": "npu/720p/shaders/motion1080-downsample.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\720p\\shaders\\motion1080-downsample.spv",
+      "sha256": "d1bf2d536dfa5a12836ba92307722f3f10b8a7aca2000c7efa2a22c22dbb81b5",
+      "bytes": 2832,
+      "before_sha256": "d1bf2d536dfa5a12836ba92307722f3f10b8a7aca2000c7efa2a22c22dbb81b5"
+    },
+    {
+      "relative_path": "npu/720p/shaders/motion1080-flow.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\720p\\shaders\\motion1080-flow.spv",
+      "sha256": "9aecaeba3f56a2a80ca1648621f4b9c2822bd7a4d0d359e6f7a6847d01231969",
+      "bytes": 10344,
+      "before_sha256": "9aecaeba3f56a2a80ca1648621f4b9c2822bd7a4d0d359e6f7a6847d01231969"
+    },
+    {
+      "relative_path": "npu/720p/shaders/motion1080-generate.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\720p\\shaders\\motion1080-generate.spv",
+      "sha256": "3f90fc462bc187201a1f699da31202befa6c3ffd2d14110fd87bd0c3be800076",
+      "bytes": 3664,
+      "before_sha256": "3f90fc462bc187201a1f699da31202befa6c3ffd2d14110fd87bd0c3be800076"
+    },
+    {
+      "relative_path": "npu/720p/shaders/motion1080-pack.spv",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\npu\\720p\\shaders\\motion1080-pack.spv",
+      "sha256": "3c1b58514bb2cb383892b6a348075e28707a4184910055ae017b078d1ab4c05b",
+      "bytes": 8576,
+      "before_sha256": "3c1b58514bb2cb383892b6a348075e28707a4184910055ae017b078d1ab4c05b"
+    },
+    {
+      "relative_path": "onnxruntime.dll",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\onnxruntime.dll",
+      "sha256": "b9cd2d115383d964e9842f4e2ba54fa15acee01aa9b2cac5d384523b81328a58",
+      "bytes": 31656984,
+      "before_sha256": "b9cd2d115383d964e9842f4e2ba54fa15acee01aa9b2cac5d384523b81328a58"
+    },
+    {
+      "relative_path": "onnxruntime_providers_qnn.dll",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\onnxruntime_providers_qnn.dll",
+      "sha256": "43029629bb3b35fe98d92fa32e8fcd9960510f3a64ff11e706101b57590734f0",
+      "bytes": 5099592,
+      "before_sha256": "43029629bb3b35fe98d92fa32e8fcd9960510f3a64ff11e706101b57590734f0"
+    },
+    {
+      "relative_path": "onnxruntime_providers_shared.dll",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\onnxruntime_providers_shared.dll",
+      "sha256": "e6609e50306d9395dfae4f0c3e616bb8152da7211b0048dde4dd7f188690d358",
+      "bytes": 41504,
+      "before_sha256": "e6609e50306d9395dfae4f0c3e616bb8152da7211b0048dde4dd7f188690d358"
+    },
+    {
+      "relative_path": "QnnHtp.dll",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\QnnHtp.dll",
+      "sha256": "ba47c8b3830991099f4977a9bc0acb45df82a218306b9240ea5d4060f7d9262d",
+      "bytes": 4564672,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "QnnHtpPrepare.dll",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\QnnHtpPrepare.dll",
+      "sha256": "54e4d0a48538c1701e458a4320fa4423634ad8fdd695f522d4f52f29061283bc",
+      "bytes": 176059072,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "QnnHtpV73Stub.dll",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\QnnHtpV73Stub.dll",
+      "sha256": "778828b7331a4eb7b120dbdff263a5bf03fc7691d9b6e9afd7efbfa3935cdb98",
+      "bytes": 1021120,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "QnnHtpV81Stub.dll",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\QnnHtpV81Stub.dll",
+      "sha256": "ab9994db8317cac4d0063d655b0220366fcb156e8facc7fc21a0a0b5da86812c",
+      "bytes": 1021120,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "QnnSystem.dll",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\QnnSystem.dll",
+      "sha256": "6b5fab5dd874e6ec16978894161c4d40a32bdc9b876f6743d6ac09b098474976",
+      "bytes": 4522176,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/ar/‏‏cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\ar\\‏‏cemu.mo",
+      "sha256": "ab764de7e6ee508a7ba1b5741cda1d020d80c7a206b32d2d614a3f1266be2ae6",
+      "bytes": 81849,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/ca/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\ca\\cemu.mo",
+      "sha256": "faf52ad24a921f2a1463b957484f73319a735f63c58a65356fdf907acfed1a90",
+      "bytes": 56852,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/de/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\de\\cemu.mo",
+      "sha256": "6e0a9e9e255b0c304f37d98bed5ff838b3bdce18ec7cdb29799bdcf8f03ee304",
+      "bytes": 69412,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/es/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\es\\cemu.mo",
+      "sha256": "8c88fc62786ff8176f71b581c1d7bfff0c5c05af8361ae1137ac5c70cad5a14d",
+      "bytes": 68744,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/fr/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\fr\\cemu.mo",
+      "sha256": "47b81c8cc305c345395198907440915585b484252583be9d75c11f4cecca1458",
+      "bytes": 73978,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/he/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\he\\cemu.mo",
+      "sha256": "a20a20902cc198f4b43a4024b0741072b6e3226170304375058432bf47f0e2ba",
+      "bytes": 23202,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/hu/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\hu\\cemu.mo",
+      "sha256": "82a5ddccb0fed0bd583068ca8ec50ed417fc9ece433ef2f02421e09393065c6e",
+      "bytes": 72404,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/it/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\it\\cemu.mo",
+      "sha256": "a46522bfebdcf59f41e1e813a4f9b2a2c0b5ab73ae814a910fb3f4bdacd2f2d0",
+      "bytes": 71398,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/ja/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\ja\\cemu.mo",
+      "sha256": "cabfdcbd0c9e70c7dc60f62c41e4b59e725d7ed31149c5bf6f172d97a5e43c97",
+      "bytes": 68243,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/ko/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\ko\\cemu.mo",
+      "sha256": "74d72993ab1be589fc4e23b1bcc1fd2dae3f6a893b096fccd61760773c2c133f",
+      "bytes": 70519,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/nb/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\nb\\cemu.mo",
+      "sha256": "5231c0da3ae57ad7b833e5aab180a63790edddb9da12d39208ede895ee929b70",
+      "bytes": 41128,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/nl/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\nl\\cemu.mo",
+      "sha256": "e9d12c4e84d8b08f1dbd8335364a4c99937be66ca70b8f24b0fb9b120b1e2d6e",
+      "bytes": 54744,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/pl/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\pl\\cemu.mo",
+      "sha256": "69c2f8e4ac7fe019e55e9249b87f9f6d66e3e67cc558036fe42c841b1f614dc6",
+      "bytes": 17105,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/pt/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\pt\\cemu.mo",
+      "sha256": "121726bf3a061df6bba1c59e48c86125a71be8603fa27a861c21ee1072babec9",
+      "bytes": 61652,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/ru/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\ru\\cemu.mo",
+      "sha256": "eafd3467afebd0da25655bb8d35dabde5f41b98e90664abff9f2e6fc096cfdc7",
+      "bytes": 91888,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/sharedFonts/CafeCn.ttf",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\sharedFonts\\CafeCn.ttf",
+      "sha256": "6afd751a9bb76bc788efb50a138c6f3765624ee84d8d8203be04d871ade40a6a",
+      "bytes": 9664448,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/sharedFonts/CafeKr.ttf",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\sharedFonts\\CafeKr.ttf",
+      "sha256": "c3c326f6ce1899e391dc4996b10a0c30558c5b8f36dfbaa418976862b3e2dffb",
+      "bytes": 5626464,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/sharedFonts/CafeStd.ttf",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\sharedFonts\\CafeStd.ttf",
+      "sha256": "59e2494727b8e7a7bbf48c8749f2dbc07d438c9fabeaa9847a08ec690f9888a1",
+      "bytes": 5363768,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/sharedFonts/CafeTw.ttf",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\sharedFonts\\CafeTw.ttf",
+      "sha256": "c8f9e16345dbc3b6e165fe12435486a748e730ebe6002b5d713efe73d171d51c",
+      "bytes": 6593548,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/sv/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\sv\\cemu.mo",
+      "sha256": "44da08ec554463dcaeb809e991f759e4e6780a83ce1555c921697e990a061b18",
+      "bytes": 67980,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/tr/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\tr\\cemu.mo",
+      "sha256": "a4c710ecce610082a842d500d657bc035cdbfb31931f5b6ac4a3587ac562c073",
+      "bytes": 28711,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/uk/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\uk\\cemu.mo",
+      "sha256": "d0e8077d2ae33b4aa0199f0fc1d31d075031d2329abd98fb0b0d2a8568023f78",
+      "bytes": 58231,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "resources/zh/cemu.mo",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\resources\\zh\\cemu.mo",
+      "sha256": "9cd96960af03262c898642b661700578c7f02704d06fb663224dc4a93989218d",
+      "bytes": 60704,
+      "before_sha256": null
+    },
+    {
+      "relative_path": "rpc-path.txt",
+      "source": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\runtime\\rpc-path.txt",
+      "sha256": "8d4b51375f43b5a9bc53fcbbfefbb449c7147aed5a3feb908cffae5ab09d952b",
+      "bytes": 104,
+      "before_sha256": "8d4b51375f43b5a9bc53fcbbfefbb449c7147aed5a3feb908cffae5ab09d952b"
+    }
+  ],
+  "protected_executables": [
+    {
+      "relative_path": "Cemu-Diagnostics.exe",
+      "sha256": "5845e2b2a52bc777a3a03290ec3795f867947f7adfa2d9ac3caef6cf6dc7c6ba"
+    },
+    {
+      "relative_path": "Cemu-Release-NPU.exe",
+      "sha256": "77ba0e01d922c0ffd73565844413efdf6d7579c5b117abf2b7da3b48cd4862b6"
+    },
+    {
+      "relative_path": "Cemu.exe",
+      "sha256": "d2d77ee6961d9f834740ae450653a9f9235da27f43f3b82ed35ca7b2acc56abb"
+    },
+    {
+      "relative_path": "Cemu_se_test.exe",
+      "sha256": "e8791dbea63e85111c1b9a4feab98f31ca469b1802caf379aa5120cffa2dc9c8"
+    }
+  ],
+  "module_abi": 3,
+  "portable_mode_created": false,
+  "cemu_or_devices_executed": false
+}

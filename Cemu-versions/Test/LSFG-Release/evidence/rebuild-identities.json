@@ -1,0 +1,10 @@
+[
+  {
+    "file": "Cemu-official.exe",
+    "sha256": "d2d77ee6961d9f834740ae450653a9f9235da27f43f3b82ed35ca7b2acc56abb"
+  },
+  {
+    "file": "Cemu-rebuilt-stock.exe",
+    "sha256": "dde2a914eab3bca24c57fa73e447bf0cfb72c259819e4312fe717166dc9556cb"
+  }
+]

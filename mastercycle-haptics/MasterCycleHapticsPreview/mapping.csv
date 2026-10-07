@@ -1,0 +1,9 @@
+track,state,source,loop,seconds
+MotorcycleEngineIdling,idle,D_GameROMMotorcycle.bars,True,2.9074
+Motorcycle_EngineJump02,jump,D_GameROMMotorcycle.bars,False,0.5312
+MotorcycleEngine,driving_unsplit,D_GameROMMotorcycle.bars,True,3.2059
+Motorcycle_EngineJump00,jump,D_GameROMMotorcycle.bars,False,0.6232
+Motorcycle_EngineJump01,jump,D_GameROMMotorcycle.bars,False,0.5051
+MotorcycleEngineOffThrottle,coasting_not_low_speed,D_GameROMMotorcycle.bars,True,4.9627
+Motorcycle_WheelFrictionCmnBrake,brake_friction,GameROMMotorcycle.bars,True,1.4725
+MotorcycleBrakeLever,brake_lever,GameROMMotorcycle.bars,False,0.2255

@@ -1,0 +1,2 @@
+old_exception=No mapping for the Unicode character exists in the target multi-byte code page.
+HAPTIC_PATH_CPU_VERIFIED acp=949 files=12 old_throws=12 old_failed=12 checks=3386 gpu_npu_controller_cemu_executed=false

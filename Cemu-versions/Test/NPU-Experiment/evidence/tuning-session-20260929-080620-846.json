@@ -1,0 +1,700 @@
+{
+  "status": "COMPLETED",
+  "authorization": "User replied 진행해 to the prepared 1–2 minute six-run NPU comparison request.",
+  "started_at": "2026-09-29T08:06:20.8495696+09:00",
+  "ended_at": "2026-09-29T08:06:58.5812727+09:00",
+  "closed": true,
+  "driver": "30.0.224.10000",
+  "sequence": [
+    "Baseline",
+    "NoQnnProfile",
+    "ReuseHost",
+    "SharedBalanced",
+    "SharedSustained",
+    "Baseline"
+  ],
+  "iterations": 30,
+  "runs": [
+    {
+      "status": "HTP_TUNING_VARIANT_VERIFIED",
+      "variant": "Baseline",
+      "started_at": "2026-09-29T08:06:21.2716501+09:00",
+      "ended_at": "2026-09-29T08:06:28.5344218+09:00",
+      "exit_code": 0,
+      "driver_before": "30.0.224.10000",
+      "driver_after": "30.0.224.10000",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "probe_sha256": "e7559b83e8e4d572f8d54a6c2815c231a4e052569f859af97033ff0cf5e254eb",
+      "manifest_sha256": "69cf45c09967be8b238510ee15e9c22084bd693d656a77f7c1080cd1027e20b4",
+      "settings": {
+        "variant": "Baseline",
+        "qnn_profile": "detailed",
+        "performance": "balanced",
+        "shared": false,
+        "reuse": false
+      },
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-baseline-20260929-080621-270-console.log",
+      "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-baseline-20260929-080621-270",
+      "result": {
+        "status": "HTP_TUNING_VARIANT_VERIFIED",
+        "variant": "Baseline",
+        "settings": {
+          "variant": "Baseline",
+          "qnn_profile": "detailed",
+          "performance": "balanced",
+          "shared": false,
+          "reuse": false
+        },
+        "run_mean_ms": 36.57193,
+        "run_p50_ms": 36.4743,
+        "run_p95_ms": 37.8665,
+        "run_min_ms": 35.6783,
+        "run_max_ms": 38.8426,
+        "run_samples_ms": [
+          36.4743,
+          35.9236,
+          36.7005,
+          36.9611,
+          36.0534,
+          36.2061,
+          36.0849,
+          36.6556,
+          36.8039,
+          36.0386,
+          35.9856,
+          35.6783,
+          35.8313,
+          36.2517,
+          36.7527,
+          35.7716,
+          35.7028,
+          36.1197,
+          36.1244,
+          38.8426,
+          36.6402,
+          37.0455,
+          36.6241,
+          36.8173,
+          37.7508,
+          37.5196,
+          37.8665,
+          36.879,
+          36.5964,
+          36.4558
+        ],
+        "input_shape": [
+          1,
+          1080,
+          1920,
+          6
+        ],
+        "output_shape": [
+          1,
+          1080,
+          1920,
+          3
+        ],
+        "host_dtype": "uint8",
+        "layout": "NHWC",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 34,
+          "kernel_events": 34,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [
+          {
+            "name": "Accelerator (execute excluding wait) time",
+            "mean_ms": 18.149766666666665,
+            "samples": 30
+          },
+          {
+            "name": "Accelerator (execute) time",
+            "mean_ms": 18.608933333333333,
+            "samples": 30
+          },
+          {
+            "name": "QNN accelerator (execute) time",
+            "mean_ms": 30.2472,
+            "samples": 30
+          },
+          {
+            "name": "RPC (execute) time",
+            "mean_ms": 30.769866666666665,
+            "samples": 30
+          },
+          {
+            "name": "QNN (execute) time",
+            "mean_ms": 31.731933333333334,
+            "samples": 30
+          }
+        ],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "Synchronous ORT Run wall time with completion synchronization for bound outputs; ORT profiling retained, QNN profiling selected per variant; dynamic allocation only for non-reuse variants. Fixed input initialized once; excludes changing-frame input preparation, external quantization/packing/dequantization, Vulkan transfers, motion estimation and present",
+        "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+        "reference_output_identical": true,
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    },
+    {
+      "status": "HTP_TUNING_VARIANT_VERIFIED",
+      "variant": "NoQnnProfile",
+      "started_at": "2026-09-29T08:06:28.9012474+09:00",
+      "ended_at": "2026-09-29T08:06:34.4602297+09:00",
+      "exit_code": 0,
+      "driver_before": "30.0.224.10000",
+      "driver_after": "30.0.224.10000",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "probe_sha256": "e7559b83e8e4d572f8d54a6c2815c231a4e052569f859af97033ff0cf5e254eb",
+      "manifest_sha256": "69cf45c09967be8b238510ee15e9c22084bd693d656a77f7c1080cd1027e20b4",
+      "settings": {
+        "variant": "NoQnnProfile",
+        "qnn_profile": "off",
+        "performance": "balanced",
+        "shared": false,
+        "reuse": false
+      },
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-noqnnprofile-20260929-080628-901-console.log",
+      "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-noqnnprofile-20260929-080628-901",
+      "result": {
+        "status": "HTP_TUNING_VARIANT_VERIFIED",
+        "variant": "NoQnnProfile",
+        "settings": {
+          "variant": "NoQnnProfile",
+          "qnn_profile": "off",
+          "performance": "balanced",
+          "shared": false,
+          "reuse": false
+        },
+        "run_mean_ms": 19.92281,
+        "run_p50_ms": 19.8737,
+        "run_p95_ms": 20.1963,
+        "run_min_ms": 19.7559,
+        "run_max_ms": 20.2736,
+        "run_samples_ms": [
+          20.0081,
+          19.8356,
+          20.0745,
+          20.1963,
+          19.8328,
+          19.794,
+          19.798,
+          19.824,
+          20.0659,
+          19.8815,
+          20.0675,
+          19.8285,
+          19.8409,
+          19.8989,
+          19.8165,
+          19.8131,
+          19.9615,
+          19.7559,
+          19.8823,
+          20.0884,
+          20.0772,
+          19.8544,
+          19.8168,
+          20.0255,
+          20.2736,
+          19.8737,
+          19.8803,
+          19.9294,
+          19.8383,
+          19.8509
+        ],
+        "input_shape": [
+          1,
+          1080,
+          1920,
+          6
+        ],
+        "output_shape": [
+          1,
+          1080,
+          1920,
+          3
+        ],
+        "host_dtype": "uint8",
+        "layout": "NHWC",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 34,
+          "kernel_events": 34,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "Synchronous ORT Run wall time with completion synchronization for bound outputs; ORT profiling retained, QNN profiling selected per variant; dynamic allocation only for non-reuse variants. Fixed input initialized once; excludes changing-frame input preparation, external quantization/packing/dequantization, Vulkan transfers, motion estimation and present",
+        "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+        "reference_output_identical": true,
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    },
+    {
+      "status": "HTP_TUNING_VARIANT_VERIFIED",
+      "variant": "ReuseHost",
+      "started_at": "2026-09-29T08:06:34.7495987+09:00",
+      "ended_at": "2026-09-29T08:06:40.3325242+09:00",
+      "exit_code": 0,
+      "driver_before": "30.0.224.10000",
+      "driver_after": "30.0.224.10000",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "probe_sha256": "e7559b83e8e4d572f8d54a6c2815c231a4e052569f859af97033ff0cf5e254eb",
+      "manifest_sha256": "69cf45c09967be8b238510ee15e9c22084bd693d656a77f7c1080cd1027e20b4",
+      "settings": {
+        "variant": "ReuseHost",
+        "qnn_profile": "off",
+        "performance": "balanced",
+        "shared": false,
+        "reuse": true
+      },
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-reusehost-20260929-080634-749-console.log",
+      "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-reusehost-20260929-080634-749",
+      "result": {
+        "status": "HTP_TUNING_VARIANT_VERIFIED",
+        "variant": "ReuseHost",
+        "settings": {
+          "variant": "ReuseHost",
+          "qnn_profile": "off",
+          "performance": "balanced",
+          "shared": false,
+          "reuse": true
+        },
+        "run_mean_ms": 20.0157666667,
+        "run_p50_ms": 19.9106,
+        "run_p95_ms": 20.2429,
+        "run_min_ms": 19.77,
+        "run_max_ms": 22.3446,
+        "run_samples_ms": [
+          19.8904,
+          19.9102,
+          19.8954,
+          19.8365,
+          19.9143,
+          19.8651,
+          19.9106,
+          19.77,
+          19.8503,
+          20.0207,
+          20.1391,
+          20.2429,
+          19.9526,
+          19.9694,
+          20.0866,
+          19.9392,
+          19.8991,
+          19.9691,
+          19.9213,
+          19.9093,
+          19.9198,
+          19.8232,
+          20.0166,
+          19.8453,
+          19.8706,
+          22.3446,
+          20.0735,
+          19.9128,
+          19.9088,
+          19.8657
+        ],
+        "input_shape": [
+          1,
+          1080,
+          1920,
+          6
+        ],
+        "output_shape": [
+          1,
+          1080,
+          1920,
+          3
+        ],
+        "host_dtype": "uint8",
+        "layout": "NHWC",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 34,
+          "kernel_events": 34,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "Synchronous ORT Run wall time with completion synchronization for bound outputs; ORT profiling retained, QNN profiling selected per variant; dynamic allocation only for non-reuse variants. Fixed input initialized once; excludes changing-frame input preparation, external quantization/packing/dequantization, Vulkan transfers, motion estimation and present",
+        "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+        "reference_output_identical": true,
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    },
+    {
+      "status": "HTP_TUNING_VARIANT_VERIFIED",
+      "variant": "SharedBalanced",
+      "started_at": "2026-09-29T08:06:40.6527514+09:00",
+      "ended_at": "2026-09-29T08:06:46.0927605+09:00",
+      "exit_code": 0,
+      "driver_before": "30.0.224.10000",
+      "driver_after": "30.0.224.10000",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "probe_sha256": "e7559b83e8e4d572f8d54a6c2815c231a4e052569f859af97033ff0cf5e254eb",
+      "manifest_sha256": "69cf45c09967be8b238510ee15e9c22084bd693d656a77f7c1080cd1027e20b4",
+      "settings": {
+        "variant": "SharedBalanced",
+        "qnn_profile": "off",
+        "performance": "balanced",
+        "shared": true,
+        "reuse": true,
+        "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll"
+      },
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-sharedbalanced-20260929-080640-652-console.log",
+      "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-sharedbalanced-20260929-080640-652",
+      "result": {
+        "status": "HTP_TUNING_VARIANT_VERIFIED",
+        "variant": "SharedBalanced",
+        "settings": {
+          "variant": "SharedBalanced",
+          "qnn_profile": "off",
+          "performance": "balanced",
+          "shared": true,
+          "reuse": true,
+          "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll"
+        },
+        "run_mean_ms": 19.59808,
+        "run_p50_ms": 19.5723,
+        "run_p95_ms": 19.8284,
+        "run_min_ms": 19.4849,
+        "run_max_ms": 19.9114,
+        "run_samples_ms": [
+          19.5662,
+          19.6392,
+          19.9114,
+          19.6575,
+          19.5678,
+          19.5025,
+          19.5678,
+          19.504,
+          19.536,
+          19.5778,
+          19.4865,
+          19.5692,
+          19.5286,
+          19.5269,
+          19.5723,
+          19.5923,
+          19.5558,
+          19.537,
+          19.4849,
+          19.5749,
+          19.6848,
+          19.5888,
+          19.5442,
+          19.7769,
+          19.5761,
+          19.609,
+          19.8284,
+          19.5912,
+          19.6452,
+          19.6392
+        ],
+        "input_shape": [
+          1,
+          1080,
+          1920,
+          6
+        ],
+        "output_shape": [
+          1,
+          1080,
+          1920,
+          3
+        ],
+        "host_dtype": "uint8",
+        "layout": "NHWC",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 34,
+          "kernel_events": 34,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "Synchronous ORT Run wall time with completion synchronization for bound outputs; ORT profiling retained, QNN profiling selected per variant; dynamic allocation only for non-reuse variants. Fixed input initialized once; excludes changing-frame input preparation, external quantization/packing/dequantization, Vulkan transfers, motion estimation and present",
+        "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+        "reference_output_identical": true,
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    },
+    {
+      "status": "HTP_TUNING_VARIANT_VERIFIED",
+      "variant": "SharedSustained",
+      "started_at": "2026-09-29T08:06:46.3835546+09:00",
+      "ended_at": "2026-09-29T08:06:52.1105903+09:00",
+      "exit_code": 0,
+      "driver_before": "30.0.224.10000",
+      "driver_after": "30.0.224.10000",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "probe_sha256": "e7559b83e8e4d572f8d54a6c2815c231a4e052569f859af97033ff0cf5e254eb",
+      "manifest_sha256": "69cf45c09967be8b238510ee15e9c22084bd693d656a77f7c1080cd1027e20b4",
+      "settings": {
+        "variant": "SharedSustained",
+        "qnn_profile": "off",
+        "performance": "sustained_high_performance",
+        "shared": true,
+        "reuse": true,
+        "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll"
+      },
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-sharedsustained-20260929-080646-383-console.log",
+      "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-sharedsustained-20260929-080646-383",
+      "result": {
+        "status": "HTP_TUNING_VARIANT_VERIFIED",
+        "variant": "SharedSustained",
+        "settings": {
+          "variant": "SharedSustained",
+          "qnn_profile": "off",
+          "performance": "sustained_high_performance",
+          "shared": true,
+          "reuse": true,
+          "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll"
+        },
+        "run_mean_ms": 19.6416,
+        "run_p50_ms": 19.5919,
+        "run_p95_ms": 20.0409,
+        "run_min_ms": 19.5074,
+        "run_max_ms": 20.0531,
+        "run_samples_ms": [
+          20.0409,
+          19.6526,
+          19.6079,
+          19.5239,
+          19.6206,
+          19.6905,
+          19.5662,
+          19.5831,
+          19.5499,
+          19.5579,
+          19.5237,
+          19.6537,
+          19.5919,
+          19.6039,
+          19.5473,
+          19.541,
+          19.7733,
+          20.0531,
+          19.7185,
+          19.7273,
+          19.7989,
+          19.7215,
+          19.6207,
+          19.5693,
+          19.5267,
+          19.519,
+          19.5074,
+          19.565,
+          19.7259,
+          19.5664
+        ],
+        "input_shape": [
+          1,
+          1080,
+          1920,
+          6
+        ],
+        "output_shape": [
+          1,
+          1080,
+          1920,
+          3
+        ],
+        "host_dtype": "uint8",
+        "layout": "NHWC",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 34,
+          "kernel_events": 34,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "Synchronous ORT Run wall time with completion synchronization for bound outputs; ORT profiling retained, QNN profiling selected per variant; dynamic allocation only for non-reuse variants. Fixed input initialized once; excludes changing-frame input preparation, external quantization/packing/dequantization, Vulkan transfers, motion estimation and present",
+        "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+        "reference_output_identical": true,
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    },
+    {
+      "status": "HTP_TUNING_VARIANT_VERIFIED",
+      "variant": "Baseline",
+      "started_at": "2026-09-29T08:06:52.4056896+09:00",
+      "ended_at": "2026-09-29T08:06:58.5750559+09:00",
+      "exit_code": 0,
+      "driver_before": "30.0.224.10000",
+      "driver_after": "30.0.224.10000",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "probe_sha256": "e7559b83e8e4d572f8d54a6c2815c231a4e052569f859af97033ff0cf5e254eb",
+      "manifest_sha256": "69cf45c09967be8b238510ee15e9c22084bd693d656a77f7c1080cd1027e20b4",
+      "settings": {
+        "variant": "Baseline",
+        "qnn_profile": "detailed",
+        "performance": "balanced",
+        "shared": false,
+        "reuse": false
+      },
+      "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-baseline-20260929-080652-405-console.log",
+      "run_directory": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-tuning-baseline-20260929-080652-405",
+      "result": {
+        "status": "HTP_TUNING_VARIANT_VERIFIED",
+        "variant": "Baseline",
+        "settings": {
+          "variant": "Baseline",
+          "qnn_profile": "detailed",
+          "performance": "balanced",
+          "shared": false,
+          "reuse": false
+        },
+        "run_mean_ms": 36.5602366667,
+        "run_p50_ms": 36.4854,
+        "run_p95_ms": 37.4617,
+        "run_min_ms": 35.7308,
+        "run_max_ms": 37.7635,
+        "run_samples_ms": [
+          36.704,
+          36.3304,
+          35.7523,
+          36.0306,
+          35.952,
+          35.8745,
+          36.4851,
+          36.7097,
+          36.0217,
+          35.9607,
+          36.1264,
+          35.8696,
+          37.4617,
+          36.0123,
+          36.0427,
+          35.7308,
+          36.2646,
+          36.882,
+          37.0724,
+          36.4854,
+          36.7521,
+          36.9881,
+          37.3527,
+          37.089,
+          37.7635,
+          37.364,
+          37.356,
+          36.6951,
+          36.5151,
+          37.1626
+        ],
+        "input_shape": [
+          1,
+          1080,
+          1920,
+          6
+        ],
+        "output_shape": [
+          1,
+          1080,
+          1920,
+          3
+        ],
+        "host_dtype": "uint8",
+        "layout": "NHWC",
+        "profile_evidence": {
+          "verified_qnn_only": true,
+          "node_events": 34,
+          "kernel_events": 34,
+          "kernels_without_provider": 0,
+          "providers": [
+            "QNNExecutionProvider"
+          ],
+          "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+        },
+        "accelerator_metrics": [
+          {
+            "name": "Accelerator (execute excluding wait) time",
+            "mean_ms": 18.084633333333336,
+            "samples": 30
+          },
+          {
+            "name": "Accelerator (execute) time",
+            "mean_ms": 18.541033333333335,
+            "samples": 30
+          },
+          {
+            "name": "QNN accelerator (execute) time",
+            "mean_ms": 30.172333333333334,
+            "samples": 30
+          },
+          {
+            "name": "RPC (execute) time",
+            "mean_ms": 30.697333333333336,
+            "samples": 30
+          },
+          {
+            "name": "QNN (execute) time",
+            "mean_ms": 31.63463333333333,
+            "samples": 30
+          }
+        ],
+        "metrics_overlap_do_not_add": true,
+        "timing_scope": "Synchronous ORT Run wall time with completion synchronization for bound outputs; ORT profiling retained, QNN profiling selected per variant; dynamic allocation only for non-reuse variants. Fixed input initialized once; excludes changing-frame input preparation, external quantization/packing/dequantization, Vulkan transfers, motion estimation and present",
+        "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+        "reference_output_identical": true,
+        "external_conversion_costs_measured": false,
+        "game_quality_validated": false
+      },
+      "error": null,
+      "quality_validated": false,
+      "external_conversion_costs_measured": false
+    }
+  ],
+  "error": null
+}

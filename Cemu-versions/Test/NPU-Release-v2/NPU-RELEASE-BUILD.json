@@ -1,0 +1,451 @@
+{
+  "created_at": "2026-09-29T10:51:10.7607974+09:00",
+  "status": "BUILT_NOT_RUNTIME_TESTED",
+  "variant": "Release (NPU EXP v2)",
+  "base_commit": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+  "base_gpu_lsfg_sha256": "ced1fa7b1291dd29fec78188165651634e6e8a9a07025afc2904e35b63737504",
+  "cemu_machine": "ARM64 0xAA64",
+  "executable": "runtime/Cemu-npu-exp-v2.exe",
+  "cemu_sha256": "55cf03f0f5b00259a6c72147e31c716eb60f8b47abbc8e51f9c24d7cadb55c81",
+  "module_sha256": "6eb9cb8acc8d722ebc7c21bc7b0a972618d7f8c4c256abe7ac6064f31be6600a",
+  "model": {
+    "variant": "U8NHWC",
+    "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+    "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+    "input_shape": [
+      1,
+      1080,
+      1920,
+      6
+    ],
+    "output_shape": [
+      1,
+      1080,
+      1920,
+      3
+    ],
+    "host_dtype": "uint8",
+    "input_bytes": 12441600,
+    "output_bytes": 6220800,
+    "node_count": 250,
+    "operators": {
+      "Constant": 8,
+      "DequantizeLinear": 128,
+      "Transpose": 2,
+      "Pad": 1,
+      "QuantizeLinear": 56,
+      "Conv": 32,
+      "Add": 17,
+      "ConvTranspose": 4,
+      "Slice": 2
+    },
+    "weights_and_scales_unchanged": true,
+    "input_scale": 0.003921568859368563,
+    "input_zero_point": 0,
+    "output_scale": 0.00330072408542037,
+    "output_zero_point": 128,
+    "layout": "NHWC"
+  },
+  "npu_driver": {
+    "version": "30.0.224.10000",
+    "inf": "oem73.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{F01A9D53-3FF6-48D2-9F97-C8A7004BE10C}\\0000",
+    "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+    "rpc_sha256": "218057045fb448f60585b03de05476e8673d4c14da5a94d8c7fb3a1f1264c3a1"
+  },
+  "gpu_driver": {
+    "version": "31.0.170.0",
+    "inf": "oem36.inf",
+    "registry_key": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000",
+    "description": "Qualcomm(R) Adreno(TM) X1-85 GPU"
+  },
+  "files": [
+    {
+      "path": "runtime/anvil-1080p-u8nhwc.onnx",
+      "bytes": 954257,
+      "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c"
+    },
+    {
+      "path": "runtime/cemu_npu.dll",
+      "bytes": 318464,
+      "sha256": "6eb9cb8acc8d722ebc7c21bc7b0a972618d7f8c4c256abe7ac6064f31be6600a"
+    },
+    {
+      "path": "runtime/Cemu-npu-exp-v2.exe",
+      "bytes": 29782528,
+      "sha256": "55cf03f0f5b00259a6c72147e31c716eb60f8b47abbc8e51f9c24d7cadb55c81"
+    },
+    {
+      "path": "runtime/libqnnhtpv73.cat",
+      "bytes": 12216,
+      "sha256": "c42e151d507d4dfb383638638a5a94623742bda3db973e06f6c3039f5b12a166"
+    },
+    {
+      "path": "runtime/libQnnHtpV73Skel.so",
+      "bytes": 10249464,
+      "sha256": "b1f0c26b1722a220742802f57647ed70ce89f574f115e5789baa27a81b9def7a"
+    },
+    {
+      "path": "runtime/libqnnhtpv81.cat",
+      "bytes": 12216,
+      "sha256": "8a676539af68eaf902f371829c5c5704c7d6de1fd3be7485a4bc32a41d0b605c"
+    },
+    {
+      "path": "runtime/libQnnHtpV81Skel.so",
+      "bytes": 11271968,
+      "sha256": "a3e62af7044227804bc229437107cb54425e05f43d57cc26a876dd94d54a0cfc"
+    },
+    {
+      "path": "runtime/module-smoke-probe.exe",
+      "bytes": 321024,
+      "sha256": "7090bda3512c71ddf552c629c402dda1889c6f011414bbadc5e8dbf41350aa1a"
+    },
+    {
+      "path": "runtime/onnxruntime_providers_qnn.dll",
+      "bytes": 5099592,
+      "sha256": "43029629bb3b35fe98d92fa32e8fcd9960510f3a64ff11e706101b57590734f0"
+    },
+    {
+      "path": "runtime/onnxruntime_providers_shared.dll",
+      "bytes": 41504,
+      "sha256": "e6609e50306d9395dfae4f0c3e616bb8152da7211b0048dde4dd7f188690d358"
+    },
+    {
+      "path": "runtime/onnxruntime.dll",
+      "bytes": 31656984,
+      "sha256": "b9cd2d115383d964e9842f4e2ba54fa15acee01aa9b2cac5d384523b81328a58"
+    },
+    {
+      "path": "runtime/QnnHtp.dll",
+      "bytes": 4564672,
+      "sha256": "ba47c8b3830991099f4977a9bc0acb45df82a218306b9240ea5d4060f7d9262d"
+    },
+    {
+      "path": "runtime/QnnHtpPrepare.dll",
+      "bytes": 176059072,
+      "sha256": "54e4d0a48538c1701e458a4320fa4423634ad8fdd695f522d4f52f29061283bc"
+    },
+    {
+      "path": "runtime/QnnHtpV73Stub.dll",
+      "bytes": 1021120,
+      "sha256": "778828b7331a4eb7b120dbdff263a5bf03fc7691d9b6e9afd7efbfa3935cdb98"
+    },
+    {
+      "path": "runtime/QnnHtpV81Stub.dll",
+      "bytes": 1021120,
+      "sha256": "ab9994db8317cac4d0063d655b0220366fcb156e8facc7fc21a0a0b5da86812c"
+    },
+    {
+      "path": "runtime/QnnSystem.dll",
+      "bytes": 4522176,
+      "sha256": "6b5fab5dd874e6ec16978894161c4d40a32bdc9b876f6743d6ac09b098474976"
+    },
+    {
+      "path": "runtime/rpc-path.txt",
+      "bytes": 104,
+      "sha256": "8d4b51375f43b5a9bc53fcbbfefbb449c7147aed5a3feb908cffae5ab09d952b"
+    },
+    {
+      "path": "runtime/resources/ar/‏‏cemu.mo",
+      "bytes": 81849,
+      "sha256": "ab764de7e6ee508a7ba1b5741cda1d020d80c7a206b32d2d614a3f1266be2ae6"
+    },
+    {
+      "path": "runtime/resources/ca/cemu.mo",
+      "bytes": 56852,
+      "sha256": "faf52ad24a921f2a1463b957484f73319a735f63c58a65356fdf907acfed1a90"
+    },
+    {
+      "path": "runtime/resources/de/cemu.mo",
+      "bytes": 69412,
+      "sha256": "6e0a9e9e255b0c304f37d98bed5ff838b3bdce18ec7cdb29799bdcf8f03ee304"
+    },
+    {
+      "path": "runtime/resources/es/cemu.mo",
+      "bytes": 68744,
+      "sha256": "8c88fc62786ff8176f71b581c1d7bfff0c5c05af8361ae1137ac5c70cad5a14d"
+    },
+    {
+      "path": "runtime/resources/fr/cemu.mo",
+      "bytes": 73978,
+      "sha256": "47b81c8cc305c345395198907440915585b484252583be9d75c11f4cecca1458"
+    },
+    {
+      "path": "runtime/resources/he/cemu.mo",
+      "bytes": 23202,
+      "sha256": "a20a20902cc198f4b43a4024b0741072b6e3226170304375058432bf47f0e2ba"
+    },
+    {
+      "path": "runtime/resources/hu/cemu.mo",
+      "bytes": 72404,
+      "sha256": "82a5ddccb0fed0bd583068ca8ec50ed417fc9ece433ef2f02421e09393065c6e"
+    },
+    {
+      "path": "runtime/resources/it/cemu.mo",
+      "bytes": 71398,
+      "sha256": "a46522bfebdcf59f41e1e813a4f9b2a2c0b5ab73ae814a910fb3f4bdacd2f2d0"
+    },
+    {
+      "path": "runtime/resources/ja/cemu.mo",
+      "bytes": 68243,
+      "sha256": "cabfdcbd0c9e70c7dc60f62c41e4b59e725d7ed31149c5bf6f172d97a5e43c97"
+    },
+    {
+      "path": "runtime/resources/ko/cemu.mo",
+      "bytes": 71668,
+      "sha256": "0306123a00c0fd672bcfeb29f9e4a0582d933a4694ce78fdc3792e553065e792"
+    },
+    {
+      "path": "runtime/resources/nb/cemu.mo",
+      "bytes": 41128,
+      "sha256": "5231c0da3ae57ad7b833e5aab180a63790edddb9da12d39208ede895ee929b70"
+    },
+    {
+      "path": "runtime/resources/nl/cemu.mo",
+      "bytes": 54744,
+      "sha256": "e9d12c4e84d8b08f1dbd8335364a4c99937be66ca70b8f24b0fb9b120b1e2d6e"
+    },
+    {
+      "path": "runtime/resources/pl/cemu.mo",
+      "bytes": 17105,
+      "sha256": "69c2f8e4ac7fe019e55e9249b87f9f6d66e3e67cc558036fe42c841b1f614dc6"
+    },
+    {
+      "path": "runtime/resources/pt/cemu.mo",
+      "bytes": 61652,
+      "sha256": "121726bf3a061df6bba1c59e48c86125a71be8603fa27a861c21ee1072babec9"
+    },
+    {
+      "path": "runtime/resources/ru/cemu.mo",
+      "bytes": 91888,
+      "sha256": "eafd3467afebd0da25655bb8d35dabde5f41b98e90664abff9f2e6fc096cfdc7"
+    },
+    {
+      "path": "runtime/resources/sharedFonts/CafeCn.ttf",
+      "bytes": 9664448,
+      "sha256": "6afd751a9bb76bc788efb50a138c6f3765624ee84d8d8203be04d871ade40a6a"
+    },
+    {
+      "path": "runtime/resources/sharedFonts/CafeKr.ttf",
+      "bytes": 5626464,
+      "sha256": "c3c326f6ce1899e391dc4996b10a0c30558c5b8f36dfbaa418976862b3e2dffb"
+    },
+    {
+      "path": "runtime/resources/sharedFonts/CafeStd.ttf",
+      "bytes": 5363768,
+      "sha256": "59e2494727b8e7a7bbf48c8749f2dbc07d438c9fabeaa9847a08ec690f9888a1"
+    },
+    {
+      "path": "runtime/resources/sharedFonts/CafeTw.ttf",
+      "bytes": 6593548,
+      "sha256": "c8f9e16345dbc3b6e165fe12435486a748e730ebe6002b5d713efe73d171d51c"
+    },
+    {
+      "path": "runtime/resources/sv/cemu.mo",
+      "bytes": 67980,
+      "sha256": "44da08ec554463dcaeb809e991f759e4e6780a83ce1555c921697e990a061b18"
+    },
+    {
+      "path": "runtime/resources/tr/cemu.mo",
+      "bytes": 28711,
+      "sha256": "a4c710ecce610082a842d500d657bc035cdbfb31931f5b6ac4a3587ac562c073"
+    },
+    {
+      "path": "runtime/resources/uk/cemu.mo",
+      "bytes": 58231,
+      "sha256": "d0e8077d2ae33b4aa0199f0fc1d31d075031d2329abd98fb0b0d2a8568023f78"
+    },
+    {
+      "path": "runtime/resources/zh/cemu.mo",
+      "bytes": 60704,
+      "sha256": "9cd96960af03262c898642b661700578c7f02704d06fb663224dc4a93989218d"
+    },
+    {
+      "path": "runtime/shaders/motion1080-compose.spv",
+      "bytes": 5912,
+      "sha256": "118272fdfd2aa6c7fb19e99dbefe0fd0420696e68c5db0fc000b2fc4e5ec0d1a"
+    },
+    {
+      "path": "runtime/shaders/motion1080-downsample.spv",
+      "bytes": 2832,
+      "sha256": "ede06889d191e1fc74462d4f012a538fbd91fe30c4cdac5a783cf480b180084d"
+    },
+    {
+      "path": "runtime/shaders/motion1080-flow.spv",
+      "bytes": 6324,
+      "sha256": "5f7d4b2d35ad24428cd000be3ad23558581d0be621f563b9f6caf2e6f96c0d68"
+    },
+    {
+      "path": "runtime/shaders/motion1080-generate.spv",
+      "bytes": 3664,
+      "sha256": "234f4ed023d48d79fc07104042142ce06b4ec10088367afb5af3a183ac8200f9"
+    },
+    {
+      "path": "runtime/shaders/motion1080-pack.spv",
+      "bytes": 8576,
+      "sha256": "691782ae630be5fc0b77bec84c42643afd7207d314826856726e644f88af7b57"
+    },
+    {
+      "path": "README.md",
+      "sha256": "49d04f3eb048c57c837e5ca6d995ab263510e5886868f4b2e35f794014175700"
+    },
+    {
+      "path": "verify-build.ps1",
+      "sha256": "9bde4f28554b124218d6d5b8aef1733c9c538f1bca82e56d7ac8fcef891d043f"
+    },
+    {
+      "path": "run-module-smoke.ps1",
+      "sha256": "52777c10377545bcca85ea27d41364e4b39ea24d05153774179326178f56734a"
+    }
+  ],
+  "source_files": [
+    {
+      "path": "LSFG-Release/source/CMakeLists.txt",
+      "sha256": "c4cd14e7e33dee73aeae6a4690385f1e7652efa8a2a1e73c24ae2c4d5b96ff9d"
+    },
+    {
+      "path": "LSFG-Release/source/src/Cafe/CMakeLists.txt",
+      "sha256": "143d5a2aba80c745b3c06ad2a8a6558c50907345d347330204070534090f598f"
+    },
+    {
+      "path": "LSFG-Release/source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+      "sha256": "df346bfe756d529a39d091ccabc616ef50f43887411e361d2c29b3e3b6f24bf0"
+    },
+    {
+      "path": "LSFG-Release/source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+      "sha256": "6fd9d08d0c71effcf61aecf78f9486aaa53b096953f773cc789765ed0e57da4c"
+    },
+    {
+      "path": "LSFG-Release/source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanLSFG.cpp",
+      "sha256": "906883e8b3db570507329c029c0b5ff35fb5f9b7a15ce8b6e799282a8e954cf6"
+    },
+    {
+      "path": "LSFG-Release/source/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp",
+      "sha256": "baa37587e69699b727d4c41b1bf603f638f3af824f5936f33f5d5cffa844778c"
+    },
+    {
+      "path": "LSFG-Release/source/src/config/CemuConfig.h",
+      "sha256": "acb5b1703634f7cf592e868d3973f9f7f2e5deb2cde61ccb634ce5591cbba8bf"
+    },
+    {
+      "path": "LSFG-Release/source/src/gui/wxgui/GeneralSettings2.cpp",
+      "sha256": "ff50e6262f51a05510894a82cdcf7dacf8a670d64421a10b83c6725ec7c329f8"
+    },
+    {
+      "path": "LSFG-Release/source/src/gui/wxgui/MainWindow.cpp",
+      "sha256": "ceaebd42f2190e24b617bcfa9e54be58e54b043397fd2f67693f57acfa34da33"
+    },
+    {
+      "path": "LSFG-Release/source/src/gui/wxgui/wxWindowSystem.cpp",
+      "sha256": "a0a99763cc543a039165b9b0d48c528df9e077339620370ba0b1f886215fda0d"
+    },
+    {
+      "path": "LSFG-Release/source/src/Cafe/HW/Latte/Core/LatteOverlay.cpp",
+      "sha256": "43d2e16d2c2536e114e987bdab1b047ed83875abff074bb8e3cf39a29ef95ee2"
+    },
+    {
+      "path": "LSFG-Release/source/dependencies/npu-cemu/npu_cemu.h",
+      "sha256": "a5619f83b5372ea42db410b226b1210b6f20858e260c88d1d286cf1f8f99c28c"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/anvil_async_worker.h",
+      "sha256": "cea41fdaf22d959735c7020bfa72573ee094f7f3cce4fe6fce3459310638e951"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/borrowed_support.h",
+      "sha256": "539d93462cc80a79ed620ba64f285e4868197f262e468d5feac2a98b0c3aeb05"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/buffered_timeline.h",
+      "sha256": "2af9a420c74f5ae02768fd91522e8cc1ab313ca8806dfc30a580d122badac473"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/build-cemu.cmd",
+      "sha256": "8334daf87c2e20b58cca038de86410b3c43a212e1f25d704fc746c7c19372839"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/build-cemu.ps1",
+      "sha256": "2445c4b226d8ed8453bf7ba3d5a0bc97f2a26446b39b7624770a99bc39d5db89"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/build-module.cmd",
+      "sha256": "8391d1bfb373085c3dd610c91580d17e427952d85d785b45f49d779500572612"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/build-probe.cmd",
+      "sha256": "5a39455f78b4e8074aea5ec57b889c1224e17b828d0068b7ab20e18a43a61230"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/freeze-build.ps1",
+      "sha256": "50328fb0f4f57508ffdcd1b84706c6441a994540c7dc88d27d6241d314a7156f"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/gpu_resources.h",
+      "sha256": "45fdaf127151f265d30d47adc0b1a95b815eafa7a8d30a59c846f4b1eea1c82c"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/module-smoke-probe.cpp",
+      "sha256": "eb61a39a08715430b41ec941b8eb61e50506f060470d6b43cfc110e4290f1972"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/npu_cemu.cpp",
+      "sha256": "179b40b2b88940a85fe3fa795bfe68407c810427dcb33355345d2527ef9bdd7c"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/npu_cemu.h",
+      "sha256": "a5619f83b5372ea42db410b226b1210b6f20858e260c88d1d286cf1f8f99c28c"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/ort_paths.h",
+      "sha256": "7ef1dd5af482c38ca3a73bb584a1d3d04b9e555a77141c24777c23e618585d56"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/package-cemu.ps1",
+      "sha256": "af351ab47c0dbd417d7e94803b4280b9029a3570abe5b40100d7831de952a43e"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/test_buffered_timeline.cpp",
+      "sha256": "290b21c67b61170b6fbce338f3ba2e2db8791000073de6facd07ed53c73f6176"
+    },
+    {
+      "path": "NPU-Experiment/integration-v2/test_ort_paths.cpp",
+      "sha256": "26b919705a347019cd08e80ae3415a965149450d6dc99bedd618b19a6d33111e"
+    }
+  ],
+  "cpu_timeline_tests": {
+    "status": "BUFFERED_TIMELINE_TESTS_PASSED",
+    "checks": 17,
+    "gpu_npu_executed": false
+  },
+  "cemu_executed": false,
+  "borrowed_module_device_tested": false,
+  "real_game_quality_validated": false,
+  "scanout_cadence_validated": false,
+  "source_dimensions": [
+    1920,
+    1080
+  ],
+  "buffered_source_frames": 1,
+  "shared_slots": 3,
+  "worker_queue_submission": false,
+  "render_thread_npu_wait": false,
+  "shared_mlc_path": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\LSFG-Release\\runtime-experiment\\portable\\mlc01",
+  "notes": "Build and offline checks only. Standalone predecessor verified separately. Three-slot borrowed-device integration and Cemu game rendering still require runtime verification.",
+  "processing_dimensions": [
+    1920,
+    1080
+  ],
+  "supported_output_dimensions": [
+    [
+      1920,
+      1080
+    ],
+    [
+      2560,
+      1440
+    ]
+  ],
+  "scaled_real_and_generated_frames": true,
+  "cpu_unicode_regression_checks": 7,
+  "fixed_backend_path": "App-local ASCII basename after verifying the loaded ORT DLL directory; wide model path retained"
+}

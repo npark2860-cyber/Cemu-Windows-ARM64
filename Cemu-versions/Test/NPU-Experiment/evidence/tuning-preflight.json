@@ -1,0 +1,84 @@
+{
+  "created_at": "2026-09-29T08:03:55.5952509+09:00",
+  "status": "PREFLIGHT_ONLY",
+  "device_executed": false,
+  "variants": [
+    {
+      "status": "FILES_VERIFIED_NOT_EXECUTED",
+      "variant": "Baseline",
+      "settings": {
+        "variant": "Baseline",
+        "qnn_profile": "detailed",
+        "performance": "balanced",
+        "shared": false,
+        "reuse": false
+      },
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "driver": "30.0.224.10000",
+      "device_loaded": false,
+      "next": "Requires a new user-approved NPU time slot."
+    },
+    {
+      "status": "FILES_VERIFIED_NOT_EXECUTED",
+      "variant": "NoQnnProfile",
+      "settings": {
+        "variant": "NoQnnProfile",
+        "qnn_profile": "off",
+        "performance": "balanced",
+        "shared": false,
+        "reuse": false
+      },
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "driver": "30.0.224.10000",
+      "device_loaded": false,
+      "next": "Requires a new user-approved NPU time slot."
+    },
+    {
+      "status": "FILES_VERIFIED_NOT_EXECUTED",
+      "variant": "ReuseHost",
+      "settings": {
+        "variant": "ReuseHost",
+        "qnn_profile": "off",
+        "performance": "balanced",
+        "shared": false,
+        "reuse": true
+      },
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "driver": "30.0.224.10000",
+      "device_loaded": false,
+      "next": "Requires a new user-approved NPU time slot."
+    },
+    {
+      "status": "FILES_VERIFIED_NOT_EXECUTED",
+      "variant": "SharedBalanced",
+      "settings": {
+        "variant": "SharedBalanced",
+        "qnn_profile": "off",
+        "performance": "balanced",
+        "shared": true,
+        "reuse": true,
+        "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll"
+      },
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "driver": "30.0.224.10000",
+      "device_loaded": false,
+      "next": "Requires a new user-approved NPU time slot."
+    },
+    {
+      "status": "FILES_VERIFIED_NOT_EXECUTED",
+      "variant": "SharedSustained",
+      "settings": {
+        "variant": "SharedSustained",
+        "qnn_profile": "off",
+        "performance": "sustained_high_performance",
+        "shared": true,
+        "reuse": true,
+        "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll"
+      },
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "driver": "30.0.224.10000",
+      "device_loaded": false,
+      "next": "Requires a new user-approved NPU time slot."
+    }
+  ]
+}

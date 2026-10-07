@@ -1,0 +1,108 @@
+{
+  "status": "IO_VARIANTS_PREPARED_NOT_NPU_TESTED",
+  "source_model": "evidence/int8-prep-20260929-071500-022764/anvil-1080p-synthetic-u8u8.onnx",
+  "source_sha256": "ec1abb0d5921a5117ff247bc7803287b44be38423af8e84393d8553cee84d95f",
+  "models": [
+    {
+      "variant": "U8NCHW",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nchw.onnx",
+      "sha256": "55b8bae4441de0341d92470091b6174a3cd57b077ed178d14f3a690f658f7699",
+      "input_shape": [
+        1,
+        6,
+        1080,
+        1920
+      ],
+      "output_shape": [
+        1,
+        3,
+        1080,
+        1920
+      ],
+      "host_dtype": "uint8",
+      "input_bytes": 12441600,
+      "output_bytes": 6220800,
+      "node_count": 248,
+      "operators": {
+        "Constant": 8,
+        "DequantizeLinear": 128,
+        "Pad": 1,
+        "QuantizeLinear": 56,
+        "Conv": 32,
+        "Add": 17,
+        "ConvTranspose": 4,
+        "Slice": 2
+      },
+      "weights_and_scales_unchanged": true,
+      "input_scale": 0.003921568859368563,
+      "input_zero_point": 0,
+      "output_scale": 0.00330072408542037,
+      "output_zero_point": 128
+    },
+    {
+      "variant": "U8NHWC",
+      "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+      "sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+      "input_shape": [
+        1,
+        1080,
+        1920,
+        6
+      ],
+      "output_shape": [
+        1,
+        1080,
+        1920,
+        3
+      ],
+      "host_dtype": "uint8",
+      "input_bytes": 12441600,
+      "output_bytes": 6220800,
+      "node_count": 250,
+      "operators": {
+        "Constant": 8,
+        "DequantizeLinear": 128,
+        "Transpose": 2,
+        "Pad": 1,
+        "QuantizeLinear": 56,
+        "Conv": 32,
+        "Add": 17,
+        "ConvTranspose": 4,
+        "Slice": 2
+      },
+      "weights_and_scales_unchanged": true,
+      "input_scale": 0.003921568859368563,
+      "input_zero_point": 0,
+      "output_scale": 0.00330072408542037,
+      "output_zero_point": 128
+    }
+  ],
+  "cpu_proxy_shape": [
+    1,
+    6,
+    136,
+    240
+  ],
+  "cpu_threads": 1,
+  "equivalence_checks": [
+    {
+      "pattern": 0,
+      "u8_nchw_nhwc_bitwise_equal": true,
+      "max_abs_error_vs_existing_qdq": 0.0
+    },
+    {
+      "pattern": 1,
+      "u8_nchw_nhwc_bitwise_equal": true,
+      "max_abs_error_vs_existing_qdq": 0.0
+    },
+    {
+      "pattern": 2,
+      "u8_nchw_nhwc_bitwise_equal": true,
+      "max_abs_error_vs_existing_qdq": 0.0
+    }
+  ],
+  "npu_executed": false,
+  "full_resolution_inference_executed": false,
+  "game_quality_validated": false,
+  "note": "Original synthetic calibration/weights/scales retained. External quantization, packing, output dequantization and layout conversion are outside probe Run timing. NHWC speed benefit depends on QNN/ORT optimization and is not yet verified."
+}

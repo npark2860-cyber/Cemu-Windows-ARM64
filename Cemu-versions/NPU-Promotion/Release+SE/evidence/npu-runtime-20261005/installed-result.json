@@ -1,0 +1,15 @@
+{
+  "status": "NPU_RUNTIME_INSTALLED_AND_HASH_VERIFIED",
+  "target": "C:\\Emulators\\Cemu_arm64",
+  "files": 50,
+  "bytes": 306075150.0,
+  "identical_files_preserved": 17,
+  "files_written": 33,
+  "module_abi": 3,
+  "existing_release_executable_preserved": true,
+  "user_data_modified": false,
+  "cemu_gpu_npu_executed": false,
+  "game_test_pending": true,
+  "backup": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release+SE\\evidence\\npu-runtime-20261005\\installed-before",
+  "finished_at": "2026-10-05T08:54:49.0071767+09:00"
+}

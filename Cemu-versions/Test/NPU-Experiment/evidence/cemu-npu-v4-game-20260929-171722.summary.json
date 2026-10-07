@@ -1,0 +1,139 @@
+{
+  "source_log": "cemu-npu-v4-game-20260929-171722.log",
+  "source_sha256": "4a87aebc46150c035c2ebc18985555db51217aba92509354390a93790f309103",
+  "selection": "ON eligible intervals of 1.8..2.2 seconds; >=4 seconds after each Capture 1/history reset or resize; all such intervals included",
+  "total_perf_rows": 259,
+  "steady": {
+    "intervals": 230,
+    "sampled_seconds": 463.72000000000116,
+    "first": "17:08:15.632",
+    "last": "17:16:31.387",
+    "real_fps": {
+      "mean": 33.03078668161807,
+      "minimum": 25.09,
+      "maximum": 60.71
+    },
+    "generated_fps": {
+      "mean": 29.11896937807319,
+      "minimum": 0.48,
+      "maximum": 35.48
+    },
+    "accepted_present_fps": {
+      "mean": 62.14984154231007,
+      "minimum": 43.9,
+      "maximum": 70.97
+    },
+    "generated_per_real_approx": 0.8815705680506289,
+    "stale": 1812,
+    "no_slot": 0,
+    "submitted": 15316,
+    "runs": 14908,
+    "npu_run_weighted_ms": 19.477277636168502,
+    "gpu_motion_weighted_ms": 3.788974665360757,
+    "gpu_downsample_weighted_ms": 0.3194902383284362,
+    "gpu_warp_pack_weighted_ms": 0.6278653607574274,
+    "worker_input_fence_wait_ms_per_pre_sample_approx": 7.276036434867777,
+    "worker_queue_start_delay_ms_per_run": 0.9701090018781863
+  },
+  "by_output": {
+    "1429x992": {
+      "intervals": 1,
+      "sampled_seconds": 2.0230000000010477,
+      "first": "17:16:31.387",
+      "last": "17:16:31.387",
+      "real_fps": {
+        "mean": 29.17,
+        "minimum": 29.17,
+        "maximum": 29.17
+      },
+      "generated_fps": {
+        "mean": 29.17,
+        "minimum": 29.17,
+        "maximum": 29.17
+      },
+      "accepted_present_fps": {
+        "mean": 58.33,
+        "minimum": 58.33,
+        "maximum": 58.33
+      },
+      "generated_per_real_approx": 1.0,
+      "stale": 0,
+      "no_slot": 0,
+      "submitted": 59,
+      "runs": 59,
+      "npu_run_weighted_ms": 19.612,
+      "gpu_motion_weighted_ms": 4.485,
+      "gpu_downsample_weighted_ms": 0.36,
+      "gpu_warp_pack_weighted_ms": 0.753,
+      "worker_input_fence_wait_ms_per_pre_sample_approx": 6.918728813559322,
+      "worker_queue_start_delay_ms_per_run": 0.024661016949152542
+    },
+    "2560x1415": {
+      "intervals": 2,
+      "sampled_seconds": 4.048999999999069,
+      "first": "17:14:46.133",
+      "last": "17:14:48.159",
+      "real_fps": {
+        "mean": 36.30517411706577,
+        "minimum": 36.07,
+        "maximum": 36.54
+      },
+      "generated_fps": {
+        "mean": 17.785359347986795,
+        "minimum": 17.3,
+        "maximum": 18.27
+      },
+      "accepted_present_fps": {
+        "mean": 54.090533465052566,
+        "minimum": 53.37,
+        "maximum": 54.81
+      },
+      "generated_per_real_approx": 0.4898849759166017,
+      "stale": 73,
+      "no_slot": 0,
+      "submitted": 146,
+      "runs": 145,
+      "npu_run_weighted_ms": 19.36694482758621,
+      "gpu_motion_weighted_ms": 4.097655172413794,
+      "gpu_downsample_weighted_ms": 0.3386137931034483,
+      "gpu_warp_pack_weighted_ms": 0.7243448275862069,
+      "worker_input_fence_wait_ms_per_pre_sample_approx": 7.6104206896551725,
+      "worker_queue_start_delay_ms_per_run": 0.6127172413793103
+    },
+    "2560x1440": {
+      "intervals": 227,
+      "sampled_seconds": 457.64800000000105,
+      "first": "17:08:15.632",
+      "last": "17:16:22.360",
+      "real_fps": {
+        "mean": 33.01888315910905,
+        "minimum": 25.09,
+        "maximum": 60.71
+      },
+      "generated_fps": {
+        "mean": 29.21901690819164,
+        "minimum": 0.48,
+        "maximum": 35.48
+      },
+      "accepted_present_fps": {
+        "mean": 62.238030888368414,
+        "minimum": 43.9,
+        "maximum": 70.97
+      },
+      "generated_per_real_approx": 0.8849183894983097,
+      "stale": 1739,
+      "no_slot": 0,
+      "submitted": 15111,
+      "runs": 14704,
+      "npu_run_weighted_ms": 19.477825081610447,
+      "gpu_motion_weighted_ms": 3.7832950830520815,
+      "gpu_downsample_weighted_ms": 0.319148567268877,
+      "gpu_warp_pack_weighted_ms": 0.6264509959632055,
+      "worker_input_fence_wait_ms_per_pre_sample_approx": 7.274222883991794,
+      "worker_queue_start_delay_ms_per_run": 0.9774269586507073
+    }
+  },
+  "npu_errors": [],
+  "agent_device_execution": false,
+  "limitations": "Not a controlled same-scene v3/v4 comparison. Accepted presents are not measured scanout. GPU span is not utilization. Worker fence waits include queued GPU work and overlap render-thread work; do not add blindly to GPU times. Stale has several reasons, not only late completed outputs."
+}

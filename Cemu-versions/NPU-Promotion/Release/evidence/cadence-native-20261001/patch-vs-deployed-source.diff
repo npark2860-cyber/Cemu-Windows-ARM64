@@ -1,0 +1,517 @@
+--- before/dependencies/npu-cemu/buffered_timeline.h
++++ after/dependencies/npu-cemu/buffered_timeline.h
+@@ -1,13 +1,18 @@
+ #pragma once
+ #include "anvil_async_worker.h"
++#include "frame_contract.h"
+ 
+ namespace cemu::npu {
+ struct BufferedFrame {
+     uint64_t captured{},real{};
+     size_t captureIndex{},displayIndex{};
++    uint32_t bufferedFrames{};
++    bool repeated{};
+ };
+-// One source frame of buffering. Completion must belong to the real frame being
+-// released now, never to a real frame already released on an earlier tick.
++// Start one frame behind. If the next pair is still producing GPU input or
++// inference, hold the last real frame to grow the delay, at most three frames.
++// Never wait on the render thread, move backwards, or release a late midpoint.
++// Keep the learned delay until reset, avoiding oscillation and skipped originals.
+ class BufferedTimeline {
+ public:
+     static size_t captureIndex(uint64_t id) {
+@@ -15,19 +20,30 @@
+         return size_t((id-1)%2);
+     }
+     void reset(uint64_t epoch,uint32_t width,uint32_t height) {
+-        lastInput_=0;gate_.reset(epoch,width,height);
++        lastInput_=lastReal_=0;delay_=1;gate_.reset(epoch,width,height);
+     }
+-    BufferedFrame begin(uint64_t id) {
++    uint64_t nextReal(uint64_t id) const {
+         if(!id || lastInput_==UINT64_MAX || id!=lastInput_+1) throw std::invalid_argument("Non-consecutive capture ID; reset required");
++        return id>delay_?id-delay_:1;
++    }
++    BufferedFrame begin(uint64_t id,bool nextPairPending=false) {
++        auto real=nextReal(id);
++        if(nextPairPending && real>lastReal_ && lastReal_ && delay_<MaxBufferedFrames) {
++            ++delay_;real=lastReal_;
++        }
+         const auto current=captureIndex(id);lastInput_=id;
+-        return {id,id==1?1:id-1,current,id==1?current:current^1};
++        return {id,real,current,nativeHistoryIndex(real),uint32_t(id-real),real==lastReal_};
+     }
+     bool generated(const BufferedFrame& frame,const Completion& completion,Clock::time_point now) {
+         return completion.pair.current==frame.real && gate_.generated(completion,now);
+     }
+-    bool real(const BufferedFrame& frame) {return gate_.real(frame.real);}
++    bool real(const BufferedFrame& frame) {
++        if(!gate_.real(frame.real)) return false;
++        lastReal_=frame.real;return true;
++    }
+ private:
+-    uint64_t lastInput_{};
++    uint64_t lastInput_{},lastReal_{};
++    uint32_t delay_{1};
+     PresentationGate gate_;
+ };
+ }
+--- before/dependencies/npu-cemu/npu_cemu.cpp
++++ after/dependencies/npu-cemu/npu_cemu.cpp
+@@ -21,6 +21,7 @@
+     VkFence inputFence{},composeFence{};
+     SlotState state{SlotState::Free};
+     cemu::npu::Completion completion{};
++    uint64_t jobFrame{},jobEpoch{};
+     Slot(Vulkan& v,const ProcessingProfile& p):vk(v),profile(p),input(v),output(v),forward(v),backward(v),composed(v),quarterA(v),quarterB(v),warpedA(v),warpedB(v),compute(v,p){}
+     void create(Ort::Allocator& allocator,GpuImage& a,GpuImage& b,const fs::path& shaders) {
+         input.create(profile.inputBytes,&allocator); output.create(profile.outputBytes,&allocator);
+@@ -57,7 +58,7 @@
+     std::unique_ptr<Ort::Session> session;
+     std::unique_ptr<Ort::Allocator> allocator;
+     std::array<std::unique_ptr<GpuImage>,2> history;
+-    std::array<std::unique_ptr<Slot>,3> slots;
++    std::array<std::unique_ptr<Slot>,cemu::npu::JobSlotCount> slots;
+     std::string inputName,outputName;
+     std::unique_ptr<cemu::npu::AsyncWorker> worker;
+     cemu::npu::BufferedTimeline timeline;
+@@ -144,10 +145,20 @@
+         }
+     }
+     void process(uint64_t frameId,CemuNpuFrame& frame) {
+-        const auto plan=timeline.begin(frameId);
++        // Poll before selecting the real frame. GPU input availability, not just
++        // host capture count, determines whether the bounded delay must grow.
++        poll();
++        const auto next=timeline.nextReal(frameId);
++        bool pending=false,ready=false;
++        for(const auto& slot:slots) {
++            if(slot->jobEpoch!=worker->epoch() || slot->jobFrame!=next) continue;
++            pending|=slot->state==SlotState::Working;
++            ready|=slot->state==SlotState::Ready;
++        }
++        const auto plan=timeline.begin(frameId,pending && !ready);
+         const auto current=plan.captureIndex,previous=current^1;
+-        frame={history[plan.displayIndex]->image,VK_NULL_HANDLE,plan.real,-1};
+-        poll();
++        frame={VK_NULL_HANDLE,plan.real,-1,plan.bufferedFrames,uint32_t(plan.repeated)};
++        if(plan.repeated) ++counters.heldRealFrames;
+         for(size_t i=0;i<slots.size();++i) {
+             auto& slot=*slots[i];if(slot.state!=SlotState::Ready) continue;
+             if(slot.completion.pair.epoch!=worker->epoch() || slot.completion.pair.current<frame.realId) {slot.state=SlotState::Free;++counters.stale;continue;}
+@@ -161,7 +172,8 @@
+             submit(slot.composeFence);slot.state=SlotState::Consuming;
+             frame.generatedImage=slot.composed.image;frame.generatedSlot=int32_t(i);++counters.generated;
+         }
+-        // First two captures repeat real1 once to establish the one-frame delay.
++        // Only the chosen display ID retires pairs. A held original keeps its
++        // following midpoint eligible while the GPU/NPU producer is in flight.
+         timeline.real(plan);latestReal.store(frame.realId,std::memory_order_release);
+         if(frameId<2) return;
+         size_t index=slots.size();for(size_t i=0;i<slots.size();++i) if(slots[i]->state==SlotState::Free) {index=i;break;}
+@@ -179,6 +191,7 @@
+         submit(slot.inputFence);slot.state=SlotState::Orphan;
+         const auto queued=Clock::now();const auto epoch=worker->epoch();
+         cemu::npu::FramePair pair{epoch,frameId-1,frameId,index,profile.width,profile.height,queued+std::chrono::milliseconds(250)};
++        slot.jobFrame=frameId;slot.jobEpoch=epoch;
+         if(worker->submit(pair,[this,index,frameId,queued](const auto& currentEpoch) {
+             auto& target=*slots[index];workerStartUs.fetch_add(micros(queued),std::memory_order_relaxed);
+             const auto waitStart=Clock::now();
+--- before/dependencies/npu-cemu/npu_cemu.h
++++ after/dependencies/npu-cemu/npu_cemu.h
+@@ -1,10 +1,11 @@
+ #pragma once
+ #include <stdint.h>
+ #include <vulkan/vulkan.h>
++#include "frame_contract.h"
+ 
+ // Versioned NPU frame-generation ABI. All calls except the private QNN worker run on Cemu's render
+ // thread. Borrowed device/queue are never destroyed. No worker queue submission.
+-#define CEMU_NPU_ABI 2u
++#define CEMU_NPU_ABI 3u
+ struct CemuNpu;
+ struct CemuNpuCreateInfo {
+     uint32_t size, abi;
+@@ -19,15 +20,20 @@
+     uint32_t processingHeight; // Exactly 1080 or 720; immutable for this context.
+ };
+ struct CemuNpuFrame {
+-    VkImage realImage, generatedImage;
++    // The host retains output-resolution originals in a NativeHistorySize ring.
++    // Return the exact original ID to display, independently of processing size.
++    VkImage generatedImage;
+     uint64_t realId;
+     int32_t generatedSlot;
++    uint32_t bufferedFrames;
++    uint32_t repeatedReal;
+ };
+ struct CemuNpuStats {
+     uint64_t submitted, completed, stale, noSlot, generated;
+     uint64_t npuRuns, inputWaitUs, npuRunUs, workerStartUs;
+     double submitMs, downsampleMs, motionMs, packMs, composeMs;
+     uint64_t preGpuSamples, postGpuSamples;
++    uint64_t heldRealFrames;
+ };
+ struct CemuNpuApi {
+     uint32_t size, abi;
+--- before/dependencies/npu-cemu/test_buffered_timeline.cpp
++++ after/dependencies/npu-cemu/test_buffered_timeline.cpp
+@@ -1,11 +1,53 @@
+ #include "buffered_timeline.h"
+ #include <iostream>
++#include <array>
++#include <vector>
+ using namespace cemu::npu;
+ using namespace std::chrono_literals;
+ int checks{};
+ void require(bool value,const char* message) {++checks;if(!value)throw std::runtime_error(message);}
+ Completion done(uint64_t epoch,uint64_t current) {
+     Completion result;result.executed=true;result.pair={epoch,current-1,current,0,1920,1080,Clock::now()+1s};return result;
++}
++// Replay host captures with a GPU input fence two source ticks behind, followed
++// by one tick of inference. This reproduces the observed pre-inference expiry.
++// The legacy one-frame selection expires every pair; adaptive selection must
++// keep the same pairs alive without ever inserting a midpoint behind its real.
++unsigned replay(unsigned gpuTicks,unsigned npuTicks,bool adaptive) {
++    struct Job {uint64_t id;unsigned submitted,started{};bool executed{},cancelled{};};
++    BufferedTimeline timeline;timeline.reset(12,1920,1080);
++    std::vector<Job> jobs;
++    std::array<uint64_t,NativeHistorySize> originals{};
++    uint64_t displayed{};
++    unsigned generated{},holds{};
++    for(unsigned tick=1;tick<=240;++tick) {
++        originals[nativeHistoryIndex(tick)]=tick;
++        for(auto& job:jobs) {
++            if(job.cancelled || job.executed || job.started || tick<job.submitted+gpuTicks) continue;
++            if(job.id<=displayed) job.cancelled=true;
++            else job.started=tick;
++        }
++        for(auto& job:jobs)
++            if(job.started && tick>=job.started+npuTicks) job.executed=true;
++        const auto next=timeline.nextReal(tick);
++        bool pending=false;
++        for(const auto& job:jobs) if(job.id==next && !job.cancelled && !job.executed) pending=true;
++        auto plan=timeline.begin(tick,adaptive && pending);
++        require(plan.real>=displayed && plan.real<=displayed+1,"originals neither reverse nor skip");
++        require(tick-plan.real<=MaxBufferedFrames,"bounded latency during GPU delays");
++        require(originals[plan.displayIndex]==plan.real,"native output still belongs to the selected real frame");
++        holds+=plan.repeated;
++        for(auto& job:jobs) {
++            if(!job.executed || job.cancelled || job.id!=plan.real) continue;
++            const bool accepted=timeline.generated(plan,done(12,job.id),Clock::now());
++            if(accepted) {require(job.id>displayed,"generated frame precedes its new real");++generated;}
++            job.cancelled=true;
++        }
++        timeline.real(plan);displayed=plan.real;
++        if(tick>=2) jobs.push_back({tick,tick});
++    }
++    require(holds<=MaxBufferedFrames,"delay grows at most twice after warmup");
++    return generated;
+ }
+ int main() {
+     try {
+@@ -35,6 +77,29 @@
+         require(gap,"missing capture IDs require reset");
+         bool zero=false;try{BufferedTimeline::captureIndex(0);}catch(const std::invalid_argument&){zero=true;}
+         require(zero,"zero ID rejected");
++        require(replay(2,1,false)==0,"legacy GPU-lag replay reproduces zero generated frames");
++        require(replay(2,1,true)>230,"adaptive buffering admits delayed GPU input before NPU inference");
++        require(replay(1,1,true)>230,"two-tick producer recovers without three-frame delay");
++        require(replay(4,1,true)==0,"excess latency falls back without presenting old midpoints");
++        // A missing job must never hold the real stream indefinitely.
++        timeline.reset(14,1280,720);
++        for(uint64_t id=1;id<=1000;++id) {
++            const auto plan=timeline.begin(id,false);
++            require(plan.real==(id==1?1:id-1),"no job preserves the low-delay real stream");
++            timeline.real(plan);
++        }
++        timeline.reset(15,1280,720);
++        timeline.real(timeline.begin(1));timeline.real(timeline.begin(2));
++        auto hold=timeline.begin(3,true);require(hold.real==1 && hold.bufferedFrames==2,"GPU-pending job holds the last original");timeline.real(hold);
++        hold=timeline.begin(4,true);require(hold.real==1 && hold.bufferedFrames==3,"second hold stays within native ring");timeline.real(hold);
++        auto capped=timeline.begin(5,true);require(capped.real==2 && capped.bufferedFrames==3,"unready producer cannot grow latency beyond cap");timeline.real(capped);
++        require(!timeline.generated(capped,done(15,2),Clock::now()),"completion arriving after fallback is rejected");
++        timeline.reset(16,1280,720);
++        auto restarted=timeline.begin(1);require(restarted.real==1 && restarted.bufferedFrames==0,"toggle/resize resets adaptive delay");timeline.real(restarted);
++        auto old=done(15,2);old.pair.width=1280;old.pair.height=720;
++        timeline.real(timeline.begin(2));auto next=timeline.begin(3);
++        require(!timeline.generated(next,old,Clock::now()),"old epoch cannot enter new native history");
++        auto wrongSize=done(16,2);require(!timeline.generated(next,wrongSize,Clock::now()),"old processing size cannot enter new epoch");
+         std::cout<<"{\"status\":\"BUFFERED_TIMELINE_TESTS_PASSED\",\"checks\":"<<checks<<",\"gpu_npu_executed\":false}\n";
+         return 0;
+     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
+--- before/i18n/npu/ko.po
++++ after/i18n/npu/ko.po
+@@ -5,8 +5,8 @@
+ msgid "NPU frame generation"
+ msgstr "NPU 프레임 생성"
+ 
+-msgid "Starts off each session. Requires Vulkan and SDR output. When enabled, both original and generated frames use the selected processing resolution and are scaled to the window. Adds one frame of latency. Late generated frames are skipped."
+-msgstr "앱을 시작하면 꺼진 상태입니다. Vulkan과 SDR 출력이 필요합니다. 켜면 원본과 생성 프레임을 선택한 해상도로 처리한 뒤 창 크기에 맞춰 표시합니다. 한 프레임의 입력 지연이 추가되며, 늦게 도착한 생성 프레임은 건너뜁니다."
++msgid "Starts off each session. Requires Vulkan and SDR output. Original frames retain their output resolution. Generated frames use the selected processing resolution. Buffers one to three source frames as needed; late generated frames are skipped."
++msgstr "앱을 시작하면 꺼진 상태입니다. Vulkan과 SDR 출력이 필요합니다. 원본 프레임은 출력 해상도를 유지하며, 생성 프레임에 선택한 처리 해상도를 사용합니다. 필요에 따라 원본 1~3프레임만큼 지연시켜 표시하며, 늦게 도착한 생성 프레임은 건너뜁니다."
+ 
+ msgid "NPU processing"
+ msgstr "NPU 처리 해상도"
+@@ -17,8 +17,8 @@
+ msgid "720p / Performance"
+ msgstr "720p / 성능"
+ 
+-msgid "Applied on the next game start. 720p reduces GPU and NPU processing, with less image detail. Output follows the current window or fullscreen size."
+-msgstr "다음 게임 실행부터 적용됩니다. 720p는 GPU와 NPU 연산량을 줄이는 대신 화면의 세부 표현이 낮아질 수 있습니다. 출력 크기는 현재 창 또는 전체화면 크기를 따릅니다."
++msgid "Applied on the next game start. 720p reduces GPU and NPU processing, with less detail in generated frames. Original frames retain their output resolution. Output follows the current window or fullscreen size."
++msgstr "다음 게임 실행부터 적용됩니다. 720p는 GPU와 NPU 연산량을 줄이는 대신 생성 프레임의 세부 표현이 낮아질 수 있습니다. 원본 프레임은 출력 해상도를 유지합니다. 출력 크기는 현재 창 또는 전체화면 크기를 따릅니다."
+ 
+ msgid "Processing resolution changes apply on the next game start."
+ msgstr "처리 해상도 변경은 다음 게임 실행부터 적용됩니다."
+--- before/i18n/npu/npu.pot
++++ after/i18n/npu/npu.pot
+@@ -5,7 +5,7 @@
+ msgid "NPU frame generation"
+ msgstr ""
+ 
+-msgid "Starts off each session. Requires Vulkan and SDR output. When enabled, both original and generated frames use the selected processing resolution and are scaled to the window. Adds one frame of latency. Late generated frames are skipped."
++msgid "Starts off each session. Requires Vulkan and SDR output. Original frames retain their output resolution. Generated frames use the selected processing resolution. Buffers one to three source frames as needed; late generated frames are skipped."
+ msgstr ""
+ 
+ msgid "NPU processing"
+@@ -17,7 +17,7 @@
+ msgid "720p / Performance"
+ msgstr ""
+ 
+-msgid "Applied on the next game start. 720p reduces GPU and NPU processing, with less image detail. Output follows the current window or fullscreen size."
++msgid "Applied on the next game start. 720p reduces GPU and NPU processing, with less detail in generated frames. Original frames retain their output resolution. Output follows the current window or fullscreen size."
+ msgstr ""
+ 
+ msgid "Processing resolution changes apply on the next game start."
+--- before/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp
++++ after/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp
+@@ -11,6 +11,45 @@
+     double sum{},maximum{};uint64_t count{};
+     void add(double ms) {sum+=ms;maximum=std::max(maximum,ms);++count;}
+     double average() const {return count?sum/double(count):0.0;}
++};
++// Output-resolution originals are independent of the inference images. All
++// copies and reads use Cemu's graphics queue. Retire only after its GPU drain.
++struct NpuNativeImage {
++    VkDevice device{};
++    VkImage image{};
++    VkDeviceMemory memory{};
++    uint64_t frameId{};
++    bool initialized{};
++    NpuNativeImage()=default;
++    NpuNativeImage(const NpuNativeImage&)=delete;
++    void create(VkDevice owner,VkPhysicalDevice physical,VkExtent2D extent,VkFormat format) {
++        device=owner;
++        const auto check=[](VkResult result,const char* what) {
++            if(result!=VK_SUCCESS) throw std::runtime_error(fmt::format("{}: VkResult {}",what,int(result)));
++        };
++        VkImageCreateInfo info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
++        info.imageType=VK_IMAGE_TYPE_2D;info.format=format;info.extent={extent.width,extent.height,1};
++        info.mipLevels=info.arrayLayers=1;info.samples=VK_SAMPLE_COUNT_1_BIT;
++        info.tiling=VK_IMAGE_TILING_OPTIMAL;info.sharingMode=VK_SHARING_MODE_EXCLUSIVE;
++        info.usage=VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT;
++        info.initialLayout=VK_IMAGE_LAYOUT_UNDEFINED;
++        check(vkCreateImage(device,&info,nullptr,&image),"NPU native history image");
++        VkMemoryRequirements requirements{};vkGetImageMemoryRequirements(device,image,&requirements);
++        VkPhysicalDeviceMemoryProperties properties{};vkGetPhysicalDeviceMemoryProperties(physical,&properties);
++        uint32_t type=UINT32_MAX;
++        for(uint32_t i=0;i<properties.memoryTypeCount;++i)
++            if((requirements.memoryTypeBits&(1u<<i)) && (properties.memoryTypes[i].propertyFlags&VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)) {type=i;break;}
++        if(type==UINT32_MAX) throw std::runtime_error("NPU native history memory type unavailable");
++        VkMemoryDedicatedAllocateInfo dedicated{VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO};dedicated.image=image;
++        VkMemoryAllocateInfo allocation{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
++        allocation.pNext=&dedicated;allocation.allocationSize=requirements.size;allocation.memoryTypeIndex=type;
++        check(vkAllocateMemory(device,&allocation,nullptr,&memory),"NPU native history allocation");
++        check(vkBindImageMemory(device,image,memory,0),"NPU native history binding");
++    }
++    ~NpuNativeImage() {
++        if(image) vkDestroyImage(device,image,nullptr);
++        if(memory) vkFreeMemory(device,memory,nullptr);
++    }
+ };
+ struct VulkanNPUState {
+     HMODULE library{};
+@@ -21,6 +60,10 @@
+     std::string failureReason;
+     uint64_t frameId{},presents{},generatedPresents{},rejected{};
+     VkImage realImage{};
++    VkExtent2D realExtent{},nativeExtent{};
++    VkFormat realFormat{},nativeFormat{};
++    std::array<std::unique_ptr<NpuNativeImage>,cemu::npu::NativeHistorySize> nativeHistory;
++    uint32_t bufferedFrames{};
+     std::optional<double> displayFps;
+     std::chrono::steady_clock::time_point lastCapture{},intervalStart{};
+     CemuNpuStats previous{};
+@@ -50,6 +93,23 @@
+     NpuBarrier(command,source,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,beforeSource);
+     NpuBarrier(command,destination,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,beforeDestination==VK_IMAGE_LAYOUT_UNDEFINED?VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:beforeDestination);
+ }
++void NpuCopyNative(VkCommandBuffer command,VkImage source,VkImageLayout beforeSource,
++    VkImage destination,VkImageLayout beforeDestination,VkImageLayout afterDestination,VkExtent2D extent) {
++    NpuBarrier(command,source,beforeSource,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
++    NpuBarrier(command,destination,beforeDestination,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
++    VkImageCopy copy{};copy.srcSubresource=copy.dstSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
++    copy.extent={extent.width,extent.height,1};
++    vkCmdCopyImage(command,source,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,destination,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,1,&copy);
++    NpuBarrier(command,source,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,beforeSource);
++    NpuBarrier(command,destination,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,afterDestination);
++}
++void NpuRestoreNative(VkCommandBuffer command,const VulkanNPUState& state,VkImage destination,
++    VkImageLayout beforeDestination,VkExtent2D extent,VkFormat format) {
++    if(extent.width==state.realExtent.width && extent.height==state.realExtent.height && format==state.realFormat)
++        NpuCopyNative(command,state.realImage,VK_IMAGE_LAYOUT_GENERAL,destination,beforeDestination,VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,extent);
++    else // A resize during the generated present may still release the old pair.
++        NpuBlit(command,state.realImage,VK_IMAGE_LAYOUT_GENERAL,state.realExtent,destination,beforeDestination,extent);
++}
+ void NpuReport(VulkanNPUState& state,bool force=false) {
+     const auto now=NpuClock::now();
+     if(!state.intervalStart.time_since_epoch().count()) {state.intervalStart=now;return;}
+@@ -61,9 +121,9 @@
+     const double runs=double(std::max<uint64_t>(1,stats.npuRuns-prior.npuRuns));
+     const double pre=double(std::max<uint64_t>(1,stats.preGpuSamples-prior.preGpuSamples));
+     const double post=double(std::max<uint64_t>(1,stats.postGpuSamples-prior.postGpuSamples));
+-    cemuLog_log(LogType::Force,"[NPU-PERF] {} eligible={} accepted_present_fps={:.2f} real_present_fps={:.2f} generated_present_fps={:.2f} rejected={} submitted={} completed={} stale={} no_slot={}; one-frame delay; scanout cadence unverified",
++    cemuLog_log(LogType::Force,"[NPU-PERF] {} eligible={} accepted_present_fps={:.2f} real_present_fps={:.2f} generated_present_fps={:.2f} rejected={} submitted={} completed={} stale={} no_slot={} buffered_frames={} held_real={}; native originals preserved; scanout cadence unverified",
+         state.enabled?"ON":"OFF",state.eligible,state.presents/seconds,(state.presents-state.generatedPresents)/seconds,state.generatedPresents/seconds,state.rejected,
+-        stats.submitted-prior.submitted,stats.completed-prior.completed,stats.stale-prior.stale,stats.noSlot-prior.noSlot);
++        stats.submitted-prior.submitted,stats.completed-prior.completed,stats.stale-prior.stale,stats.noSlot-prior.noSlot,state.bufferedFrames,stats.heldRealFrames-prior.heldRealFrames);
+     cemuLog_log(LogType::Force,"[NPU-PROFILE] worker NPU_Run_avg_ms={:.3f} input_fence_wait_sum_ms={:.3f} queue_start_delay_sum_ms={:.3f} runs={}; GPU_downsample_avg_ms={:.3f} motion_avg_ms={:.3f} warp_pack_avg_ms={:.3f} compose_avg_ms={:.3f} pre_samples={} post_samples={} queue_submit_sum_ms={:.3f}; render_thread_NPU_wait=0 queue_owner=render_thread",
+         double(stats.npuRunUs-prior.npuRunUs)/1000/runs,double(stats.inputWaitUs-prior.inputWaitUs)/1000,double(stats.workerStartUs-prior.workerStartUs)/1000,stats.npuRuns-prior.npuRuns,
+         (stats.downsampleMs-prior.downsampleMs)/pre,(stats.motionMs-prior.motionMs)/pre,(stats.packMs-prior.packMs)/pre,(stats.composeMs-prior.composeMs)/post,
+@@ -109,7 +169,7 @@
+         char error[1024]{};
+         if(state.api.create(&info,&state.context,error,sizeof(error))) throw std::runtime_error(error);
+         state.intervalStart=NpuClock::now();
+-        cemuLog_log(LogType::Force,"[NPU] READY/OFF: ANVIL U8 NHWC processing={}x{}, window-sized SDR output, 3 shared slots; QNN worker and borrowed Vulkan queue. No inference at startup. One-frame buffering, cached block motion and immutable overlay replay.",state.processingExtent.width,state.processingExtent.height);
++        cemuLog_log(LogType::Force,"[NPU] READY/OFF: ANVIL U8 NHWC processing={}x{}, native-resolution originals, {} shared slots; QNN worker and borrowed Vulkan queue. No inference at startup. Adaptive 1-3 frame buffering, cached block motion and immutable overlay replay.",state.processingExtent.width,state.processingExtent.height,cemu::npu::JobSlotCount);
+     } catch(const std::exception& error) {
+         state.failed=true;state.failureReason=error.what();GetConfig().npu_enabled=false;
+         cemuLog_log(LogType::Force,"[NPU] Startup unavailable: {}. Original frames remain available.",error.what());
+@@ -122,6 +182,8 @@
+     auto& state=*m_npu;NpuReport(state,true);
+     if(state.context) state.api.reset(state.context);
+     state.frameId=0;state.pending=false;state.displayFps.reset();state.lastCapture={};state.eligible=false;
++    state.bufferedFrames=0;
++    for(auto& image:state.nativeHistory) if(image) image->frameId=0;
+     // Keep realImage and all module resources alive for an in-progress generated
+     // present restoring its buffered real frame across swapchain recreation.
+ }
+@@ -138,7 +200,7 @@
+     const bool requested=GetConfig().npu_enabled.GetValue();
+     if(requested!=state.enabled) {
+         npuInvalidate();state.enabled=requested;state.unsupportedLogged=false;
+-        cemuLog_log(LogType::Force,"[NPU] {}: history reset; no per-frame inference wait",requested?"ON (one-frame buffered)":"OFF/passthrough");
++        cemuLog_log(LogType::Force,"[NPU] {}: history reset; no per-frame inference wait",requested?"ON (native originals, adaptive buffering)":"OFF/passthrough");
+     }
+     if(!requested) return; // No frame copies, dispatches, NPU Run, or waits while OFF.
+     try {
+@@ -156,13 +218,32 @@
+         }
+         state.unsupportedLogged=false;state.eligible=true;
+         if(chain.swapchainImageIndex==uint32_t(-1) || !chain.hasDefinedSwapchainImage) return;
++        draw_endRenderPass();
++        if(!state.nativeHistory[0] || state.nativeExtent.width!=extent.width || state.nativeExtent.height!=extent.height || state.nativeFormat!=chain.m_surfaceFormat.format) {
++            // RecreateSwapchain drains before rebuilding. A generated-present
++            // resize can then submit a final read of the old original, so drain
++            // that read here before retiring the old ring. Never per frame.
++            if(state.nativeHistory[0]) {SubmitCommandBuffer();WaitDeviceIdle();}
++            decltype(state.nativeHistory) replacement;
++            for(auto& image:replacement) {
++                image=std::make_unique<NpuNativeImage>();
++                image->create(m_logicalDevice,m_physicalDevice,extent,chain.m_surfaceFormat.format);
++            }
++            state.nativeHistory.swap(replacement);state.nativeExtent=extent;state.nativeFormat=chain.m_surfaceFormat.format;
++            npuInvalidate();state.realImage=VK_NULL_HANDLE;state.eligible=true;
++            cemuLog_log(LogType::Force,"[NPU] Native history {}x{} format={} images={}; exact original copies, inference={}x{}",
++                extent.width,extent.height,uint32_t(state.nativeFormat),state.nativeHistory.size(),state.processingExtent.width,state.processingExtent.height);
++        }
+         const auto now=NpuClock::now();
+         if(state.lastCapture.time_since_epoch().count() && now-state.lastCapture>std::chrono::milliseconds(250)) {npuInvalidate();state.eligible=true;}
+         state.lastCapture=now;const auto id=++state.frameId;
+-        draw_endRenderPass();
++        auto& original=*state.nativeHistory[cemu::npu::nativeHistoryIndex(id)];
++        NpuCopyNative(m_state.currentCommandBuffer,chain.m_swapchainImages[chain.swapchainImageIndex],VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
++            original.image,original.initialized?VK_IMAGE_LAYOUT_GENERAL:VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_GENERAL,extent);
++        original.initialized=true;original.frameId=id;
+         const auto capture=state.api.captureImage(state.context,id);
+         if(!capture) throw std::runtime_error("NPU capture image unavailable");
+-        NpuBlit(m_state.currentCommandBuffer,chain.m_swapchainImages[chain.swapchainImageIndex],VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,extent,capture,VK_IMAGE_LAYOUT_GENERAL,state.processingExtent);
++        NpuBlit(m_state.currentCommandBuffer,original.image,VK_IMAGE_LAYOUT_GENERAL,extent,capture,VK_IMAGE_LAYOUT_GENERAL,state.processingExtent);
+         const auto captureSubmitStart=NpuClock::now();
+         SubmitCommandBuffer(); // Same queue; no host wait for capture or preprocessing.
+         state.captureSubmit.add(std::chrono::duration<double,std::milli>(NpuClock::now()-captureSubmitStart).count());
+@@ -170,10 +251,18 @@
+         const auto processStart=NpuClock::now();
+         if(state.api.process(state.context,id,&frame,error,sizeof(error))) throw std::runtime_error(error);
+         state.moduleProcess.add(std::chrono::duration<double,std::milli>(NpuClock::now()-processStart).count());
+-        state.realImage=frame.realImage;state.pending=frame.generatedImage!=VK_NULL_HANDLE;
+-        const auto display=state.pending?frame.generatedImage:frame.realImage;
+-        NpuBlit(m_state.currentCommandBuffer,display,VK_IMAGE_LAYOUT_GENERAL,state.processingExtent,chain.m_swapchainImages[chain.swapchainImageIndex],VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,extent);
+-        if(id<=3) cemuLog_log(LogType::Force,"[NPU] Capture {} -> real {} generated={} processing={}x{} output={}x{} (capture 2 repeats real 1 once to establish buffering)",id,frame.realId,state.pending,state.processingExtent.width,state.processingExtent.height,extent.width,extent.height);
++        if(!frame.realId || frame.realId>id || id-frame.realId>cemu::npu::MaxBufferedFrames) throw std::runtime_error("NPU returned an invalid original frame ID");
++        const auto& displayed=*state.nativeHistory[cemu::npu::nativeHistoryIndex(frame.realId)];
++        if(displayed.frameId!=frame.realId) throw std::runtime_error("NPU original history mismatch");
++        state.realImage=displayed.image;state.realExtent=extent;state.realFormat=state.nativeFormat;
++        state.pending=frame.generatedImage!=VK_NULL_HANDLE;
++        if(state.pending)
++            NpuBlit(m_state.currentCommandBuffer,frame.generatedImage,VK_IMAGE_LAYOUT_GENERAL,state.processingExtent,chain.m_swapchainImages[chain.swapchainImageIndex],VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,extent);
++        else
++            NpuRestoreNative(m_state.currentCommandBuffer,state,chain.m_swapchainImages[chain.swapchainImageIndex],VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,extent,state.nativeFormat);
++        if(id<=6 || frame.bufferedFrames!=state.bufferedFrames) cemuLog_log(LogType::Force,"[NPU] Capture {} -> native real {} generated={} delay={} repeated={} processing={}x{} output={}x{}",
++            id,frame.realId,state.pending,frame.bufferedFrames,frame.repeatedReal,state.processingExtent.width,state.processingExtent.height,extent.width,extent.height);
++        state.bufferedFrames=frame.bufferedFrames;
+     } catch(const std::exception& error) {
+         state.failed=true;state.enabled=false;state.pending=false;state.displayFps.reset();GetConfig().npu_enabled=false;
+         state.failureReason=error.what();
+@@ -199,8 +288,8 @@
+     state.generatedAcquire.add(std::chrono::duration<double,std::milli>(NpuClock::now()-acquireStart).count());
+     if(!acquired) {npuInvalidate();return false;}
+     auto& chain=GetChainInfo(true);
+-    NpuBlit(m_state.currentCommandBuffer,state.realImage,VK_IMAGE_LAYOUT_GENERAL,state.processingExtent,
+-        chain.m_swapchainImages[chain.swapchainImageIndex],VK_IMAGE_LAYOUT_UNDEFINED,chain.getExtent());
++    NpuRestoreNative(m_state.currentCommandBuffer,state,chain.m_swapchainImages[chain.swapchainImageIndex],
++        VK_IMAGE_LAYOUT_UNDEFINED,chain.getExtent(),chain.m_surfaceFormat.format);
+     chain.hasDefinedSwapchainImage=true;m_state.currentPipeline=VK_NULL_HANDLE;
+     if(generation!=m_npuSwapchainGeneration) {cemuLog_log(LogType::Force,"[NPU] Resize during generated present: buffered real restored; old overlay replay skipped");return false;}
+     return true;
+--- before/src/gui/wxgui/GeneralSettings2.cpp
++++ after/src/gui/wxgui/GeneralSettings2.cpp
+@@ -510,7 +510,7 @@
+ #ifdef CEMU_ENABLE_NPU
+         auto* npuCheck = new wxCheckBox(graphics_panel, wxID_ANY, _("NPU frame generation"));
+         npuCheck->SetValue(GetConfig().npu_enabled.GetValue());
+-        npuCheck->SetToolTip(_("Starts off each session. Requires Vulkan and SDR output. When enabled, both original and generated frames use the selected processing resolution and are scaled to the window. Adds one frame of latency. Late generated frames are skipped."));
++        npuCheck->SetToolTip(_("Starts off each session. Requires Vulkan and SDR output. Original frames retain their output resolution. Generated frames use the selected processing resolution. Buffers one to three source frames as needed; late generated frames are skipped."));
+         npuCheck->Bind(wxEVT_CHECKBOX, [](wxCommandEvent& event) { GetConfig().npu_enabled = event.IsChecked(); });
+         npuCheck->Bind(wxEVT_UPDATE_UI, [](wxUpdateUIEvent& event) { event.Check(GetConfig().npu_enabled.GetValue()); });
+         graphics_panel_sizer->Add(npuCheck, 0, wxALL, 5);
+@@ -519,7 +519,7 @@
+         wxString npuModes[] = {_("1080p / Standard"), _("720p / Performance")};
+         auto* npuMode = new wxChoice(graphics_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, std::size(npuModes), npuModes);
+         npuMode->SetSelection(GetConfig().npu_processing_height.GetValue() == 720 ? 1 : 0);
+-        npuMode->SetToolTip(_("Applied on the next game start. 720p reduces GPU and NPU processing, with less image detail. Output follows the current window or fullscreen size."));
++        npuMode->SetToolTip(_("Applied on the next game start. 720p reduces GPU and NPU processing, with less detail in generated frames. Original frames retain their output resolution. Output follows the current window or fullscreen size."));
+         npuMode->Bind(wxEVT_CHOICE, [](wxCommandEvent& event) { GetConfig().npu_processing_height = event.GetSelection() == 1 ? 720 : 1080; });
+         npuRow->Add(npuMode, 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+         graphics_panel_sizer->Add(npuRow, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5);
+--- /dev/null
++++ after/dependencies/npu-cemu/frame_contract.h
+@@ -0,0 +1,16 @@
++#pragma once
++#include <cstdint>
++#include <cstddef>
++#include <stdexcept>
++
++namespace cemu::npu {
++// Bound source-frame latency and memory. The extra job slots cover composition
++// still in flight on the borrowed queue while delayed pairs await presentation.
++inline constexpr uint32_t MaxBufferedFrames = 3;
++inline constexpr size_t NativeHistorySize = MaxBufferedFrames + 1;
++inline constexpr size_t JobSlotCount = MaxBufferedFrames + 2;
++inline size_t nativeHistoryIndex(uint64_t id) {
++    if (!id) throw std::invalid_argument("Native frame ID zero");
++    return size_t((id - 1) % NativeHistorySize);
++}
++}

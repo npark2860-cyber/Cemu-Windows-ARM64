@@ -1,0 +1,80 @@
+{
+  "recorded_at": "2026-09-29T07:51:30.1223443+09:00",
+  "scope": "Read-only installed-driver inspection; no Cemu/GPU/NPU benchmark or driver changes.",
+  "active_npu_registry": {
+    "DriverDesc": "Snapdragon(R) X Elite - X1E80100 - Qualcomm(R) Hexagon(TM) NPU",
+    "ProviderName": "Qualcomm Technologies, Inc.",
+    "DriverVersion": "30.0.224.10000",
+    "DriverDate": "7-25-2026",
+    "InfPath": "oem73.inf",
+    "InfSection": "NSPMCDM_Device.NT",
+    "MatchingDeviceId": "ACPI\\VEN_QCOM&DEV_0D0A&REV_0088"
+  },
+  "pnputil_connected_device_confirmation": {
+    "command": "pnputil.exe /enum-devices /connected /class '{F01A9D53-3FF6-48D2-9F97-C8A7004BE10C}' /drivers",
+    "device_status": "Started",
+    "installed_inf": "oem73.inf",
+    "installed_version": "30.0.224.10000",
+    "installed_extension_inf": "oem92.inf",
+    "extension_version": "30.0.224.10000",
+    "old_package_inf": "oem99.inf",
+    "old_package_version": "30.0.220.3000",
+    "old_package_status": "Outranked"
+  },
+  "driver_store_candidates": [
+    {
+      "path": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_553f7b0d71497f2c\\qcnspmcdm8380.inf",
+      "driver_ver_line": "DriverVer = 01/08/2026,30.0.0220.3000",
+      "sha256": "ba5fa82d37225a0467a57800384174ff4cb89d52e8d06b7df62b08b950b6d714"
+    },
+    {
+      "path": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\qcnspmcdm8380.inf",
+      "driver_ver_line": "DriverVer = 07/25/2026,30.0.0224.10000",
+      "sha256": "45e22589026388e6ef25fd99c09d85917b2b5492e7e26ad8ce40ccb1769626ee"
+    }
+  ],
+  "bundled_qnn_runtime": {
+    "file": "runtime/QnnHtp.dll",
+    "file_version": "2.42.0.0",
+    "product_version": "2.42.0.251225135753_193295",
+    "note": "App-local userspace runtime, distinct from the Windows NPU driver."
+  },
+  "user_report": {
+    "driver": "NPU 30.0.224.10000",
+    "applies_from": "Second U8NHWC measurement, 38.4 ms",
+    "raw_timing_reply": "두번째 38.4 부터"
+  },
+  "runs": [
+    {
+      "run": "htp-io-u8nhwc-20260929-073313-189",
+      "mean_ms": 34.3743,
+      "accelerator_excluding_wait_ms": 15.6697,
+      "driver_epoch": "Before user-reported update",
+      "driver_version": null,
+      "version_evidence": "Not captured at measurement time. Older stored package is not proof of historical active version."
+    },
+    {
+      "run": "htp-io-u8nhwc-20260929-073818-415",
+      "mean_ms": 38.38438,
+      "accelerator_excluding_wait_ms": 18.1193,
+      "driver_epoch": "After user-reported update",
+      "driver_version": "30.0.224.10000",
+      "version_evidence": "Retrospective user report; present active version independently confirmed."
+    },
+    {
+      "run": "htp-io-u8nhwc-20260929-074227-880",
+      "mean_ms": 36.01213,
+      "accelerator_excluding_wait_ms": 18.1479,
+      "driver_epoch": "After user-reported update",
+      "driver_version": "30.0.224.10000",
+      "version_evidence": "Retrospective user report; present active version independently confirmed."
+    }
+  ],
+  "interpretation": [
+    "The first and later U8NHWC runs did not share the same system driver environment.",
+    "Differences cannot be attributed solely to boot activity or solely to the driver update; clocks, thermal state and background load were not controlled.",
+    "Within the updated-driver epoch the observed means are 38.38438 and 36.01213 ms.",
+    "Cross-epoch speedup percentages against the earlier FLOAT32 baseline are descriptive, not a controlled driver-matched comparison.",
+    "Earlier raw evidence remains unchanged; this record adds the subsequently reported driver context."
+  ]
+}

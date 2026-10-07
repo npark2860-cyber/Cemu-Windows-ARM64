@@ -1,0 +1,20 @@
+{
+  "status": "inference_completed_profile_verification_pending",
+  "ort_version": "1.24.4",
+  "backend": "QnnHtp.dll", "cpu_fallback_disabled": true,
+  "synthetic_input": true, "frame_interpolation_quality_validated": false,
+  "model": "../evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+  "input_layout": "NHWC",
+  "input_shape": [1,1080,1920,6], "output_shape": [1,1080,1920,3],
+  "input_dtype": "uint8",
+  "output_dtype": "uint8",
+  "profile": "../evidence/htp-io-u8nhwc-20260929-073313-189\\ort-profile_2026-09-29_07-33-13.json",
+  "session_create_ms": 3059.8448, "input_prepare_ms": 12.4341,
+  "first_run_ms": 55.8721, "warmup_runs": 3, "measured_runs": 10,
+  "run_mean_ms": 34.3743, "run_p50_ms": 33.2843, "run_p95_ms": 39.9219,
+  "run_min_ms": 32.6181, "run_max_ms": 39.9219,
+  "input_bytes": 12441600, "output_bytes": 6220800,
+  "output_validation_ms": 37.5393, "checksum": 785346557,
+  "average_oracle_checked": false, "maximum_oracle_error": 0,
+  "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes external quantization, packing, output dequantization, Vulkan transfers, motion estimation and present"
+}

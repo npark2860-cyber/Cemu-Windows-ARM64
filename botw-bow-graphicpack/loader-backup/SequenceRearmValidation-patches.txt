@@ -1,0 +1,250 @@
+# VALIDATION ONLY; see ../VALIDATION.md. No bow detection is claimed.
+# Exact RPX SHA256: ba58da5b95ce929e005d058ceb08b9b2788d1ab2bbc8a6c189bbadca0bb34d30
+# All five overwritten words verified against the supplied original RPX.
+[BotwBowSequenceProbeV208]
+moduleMatches = 0x6267BFD0
+.origin = codecave
+
+# u32 offsets: 00 command,04 callbackCount,08 sequence,0C publishCount,
+# 10 countdown,14 pouchLoading,18 halted,1C rebuildCount,
+# 20 bowValueWriteCount,24 lastPouchItem,28 lastOldValue,2C lastNewValue,
+# 30 loadCount,34 lastManager,38 lastPouchType,3C reserved.
+BowProbeState:
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+.uint 0
+
+BowProbeEntry:
+lis r3, BowProbeState@ha
+addi r3, r3, BowProbeState@l
+li r4, 0
+stw r4, 0x00(r3)
+stw r4, 0x04(r3)
+stw r4, 0x08(r3)
+stw r4, 0x0C(r3)
+stw r4, 0x10(r3)
+stw r4, 0x14(r3)
+stw r4, 0x18(r3)
+stw r4, 0x1C(r3)
+stw r4, 0x20(r3)
+stw r4, 0x24(r3)
+stw r4, 0x28(r3)
+stw r4, 0x2C(r3)
+stw r4, 0x30(r3)
+stw r4, 0x34(r3)
+stw r4, 0x38(r3)
+stw r4, 0x3C(r3)
+li r4, 1
+stw r4, 0x14(r3)
+blr
+
+BowProbePlayerHook:
+stwu r1, -0x30(r1)
+stw r0, 0x08(r1)
+stw r3, 0x0C(r1)
+stw r4, 0x10(r1)
+stw r5, 0x14(r1)
+stw r6, 0x18(r1)
+stw r7, 0x1C(r1)
+mfcr r0
+stw r0, 0x20(r1)
+lis r3, BowProbeState@ha
+addi r3, r3, BowProbeState@l
+lwz r4, 0x14(r3)
+cmpwi r4, 0
+bne BowProbePlayerDone
+lwz r4, 0x18(r3)
+cmpwi r4, 0
+bne BowProbePlayerDone
+lwz r4, 0x04(r3)
+addi r4, r4, 1
+stw r4, 0x04(r3)
+cmpwi r4, 1201
+bge BowProbeStop
+lwz r4, 0x10(r3)
+addi r4, r4, -1
+stw r4, 0x10(r3)
+cmpwi r4, 0
+bgt BowProbePlayerDone
+lwz r4, 0x08(r3)
+addi r4, r4, 1
+andi. r4, r4, 0xFFFF
+stw r4, 0x08(r3)
+slwi r5, r4, 16
+ori r5, r5, 0x3F04
+stw r5, 0x00(r3)
+lwz r4, 0x0C(r3)
+addi r4, r4, 1
+stw r4, 0x0C(r3)
+li r4, 120
+stw r4, 0x10(r3)
+b BowProbePlayerDone
+BowProbeStop:
+li r4, 0
+stw r4, 0x00(r3)
+li r4, 1
+stw r4, 0x18(r3)
+BowProbePlayerDone:
+lwz r0, 0x20(r1)
+mtcrf 255, r0
+lwz r3, 0x0C(r1)
+lwz r4, 0x10(r1)
+lwz r5, 0x14(r1)
+lwz r6, 0x18(r1)
+lwz r7, 0x1C(r1)
+lwz r0, 0x08(r1)
+addi r1, r1, 0x30
+lwz r0, 0x14(r1)
+b 0x02D67D2C
+
+BowProbeLoadBeginHook:
+stwu r1, -0x30(r1)
+stw r0, 0x08(r1)
+stw r3, 0x0C(r1)
+stw r4, 0x10(r1)
+stw r5, 0x14(r1)
+stw r6, 0x18(r1)
+stw r7, 0x1C(r1)
+mfcr r0
+stw r0, 0x20(r1)
+lis r3, BowProbeState@ha
+addi r3, r3, BowProbeState@l
+li r4, 0
+stw r4, 0x00(r3)
+stw r4, 0x04(r3)
+stw r4, 0x10(r3)
+stw r4, 0x18(r3)
+li r4, 1
+stw r4, 0x14(r3)
+lwz r4, 0x30(r3)
+addi r4, r4, 1
+stw r4, 0x30(r3)
+lwz r4, 0x0C(r1)
+stw r4, 0x34(r3)
+lwz r0, 0x20(r1)
+mtcrf 255, r0
+lwz r3, 0x0C(r1)
+lwz r4, 0x10(r1)
+lwz r5, 0x14(r1)
+lwz r6, 0x18(r1)
+lwz r7, 0x1C(r1)
+lwz r0, 0x08(r1)
+addi r1, r1, 0x30
+mflr r0
+b 0x02EB451C
+
+BowProbeLoadEndHook:
+stwu r1, -0x30(r1)
+stw r0, 0x08(r1)
+stw r3, 0x0C(r1)
+stw r4, 0x10(r1)
+stw r5, 0x14(r1)
+stw r6, 0x18(r1)
+stw r7, 0x1C(r1)
+mfcr r0
+stw r0, 0x20(r1)
+lis r3, BowProbeState@ha
+addi r3, r3, BowProbeState@l
+li r4, 0
+stw r4, 0x14(r3)
+lwz r0, 0x20(r1)
+mtcrf 255, r0
+lwz r3, 0x0C(r1)
+lwz r4, 0x10(r1)
+lwz r5, 0x14(r1)
+lwz r6, 0x18(r1)
+lwz r7, 0x1C(r1)
+lwz r0, 0x08(r1)
+addi r1, r1, 0x30
+blr
+
+BowProbeRebuildHook:
+stwu r1, -0x30(r1)
+stw r0, 0x08(r1)
+stw r3, 0x0C(r1)
+stw r4, 0x10(r1)
+stw r5, 0x14(r1)
+stw r6, 0x18(r1)
+stw r7, 0x1C(r1)
+mfcr r0
+stw r0, 0x20(r1)
+lis r3, BowProbeState@ha
+addi r3, r3, BowProbeState@l
+lwz r4, 0x1C(r3)
+addi r4, r4, 1
+stw r4, 0x1C(r3)
+lwz r0, 0x20(r1)
+mtcrf 255, r0
+lwz r3, 0x0C(r1)
+lwz r4, 0x10(r1)
+lwz r5, 0x14(r1)
+lwz r6, 0x18(r1)
+lwz r7, 0x1C(r1)
+lwz r0, 0x08(r1)
+addi r1, r1, 0x30
+lwz r0, 0x14(r1)
+b 0x02EBF744
+
+BowProbeValueHook:
+stwu r1, -0x30(r1)
+stw r0, 0x08(r1)
+stw r3, 0x0C(r1)
+stw r4, 0x10(r1)
+stw r5, 0x14(r1)
+stw r6, 0x18(r1)
+stw r7, 0x1C(r1)
+mfcr r0
+stw r0, 0x20(r1)
+lis r3, BowProbeState@ha
+addi r3, r3, BowProbeState@l
+stw r30, 0x38(r3)
+cmpwi r30, 1
+bne BowProbeValueDone
+lwz r4, 0x20(r3)
+addi r4, r4, 1
+stw r4, 0x20(r3)
+stw r9, 0x24(r3)
+lwz r4, 0x10(r9)
+stw r4, 0x28(r3)
+stw r29, 0x2C(r3)
+stw r28, 0x34(r3)
+BowProbeValueDone:
+lwz r0, 0x20(r1)
+mtcrf 255, r0
+lwz r3, 0x0C(r1)
+lwz r4, 0x10(r1)
+lwz r5, 0x14(r1)
+lwz r6, 0x18(r1)
+lwz r7, 0x1C(r1)
+lwz r0, 0x08(r1)
+addi r1, r1, 0x30
+stw r29, 0x10(r9)
+b 0x02EB6878
+
+.callback entry BowProbeEntry
+.adaptiveTriggerRaw right BowProbeState
+
+# Post Player callback; original 80010014 = lwz r0,0x14(r1).
+0x02D67D28 = b BowProbePlayerHook
+# Pouch load entry/return. These are NOT a whole-world load-complete signal.
+# Original 7C0802A6 = mflr r0; original 4E800020 = blr.
+0x02EB4518 = b BowProbeLoadBeginHook
+0x02EB4E80 = b BowProbeLoadEndHook
+# Rebuild after unlock; original 80010014 = lwz r0,0x14(r1).
+0x02EBF740 = b BowProbeRebuildHook
+# Under existing pouch lock, original 93A90010 = stw r29,0x10(r9).
+# Only record evidence; never treat a value write as a shot.
+0x02EB6874 = b BowProbeValueHook

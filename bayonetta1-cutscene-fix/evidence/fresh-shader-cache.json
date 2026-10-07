@@ -1,0 +1,34 @@
+{
+  "stage": "FreshShaderCache",
+  "status": "NOT_FIXED",
+  "cpu": "original automatic multicore restored",
+  "resolution": "original 1920x1080",
+  "game": "Bayonetta 1 JPN",
+  "title_id": "000500001014db00",
+  "backed_up_caches": [
+    {
+      "path": "transferable\\000500001014db00_shaders.bin",
+      "sha256": "ed335dbcbe433191570ddb6db7e672b2f3f690f540c7d17d5fbbea043fbe1136",
+      "size": 348455
+    },
+    {
+      "path": "transferable\\000500001014db00_vkpipeline.bin",
+      "sha256": "ac6280e129bfde02e3194329e9da0a890a0e7ae2b239e66d43be6ddc07997a24",
+      "size": 214561
+    },
+    {
+      "path": "precompiled\\000500001014db00_spirv.bin",
+      "sha256": "ab8864076e92f73f7118c943c331e35afc8fc41649c9955fa62ef42f3e14ba00",
+      "size": 3494243
+    },
+    {
+      "path": "driver\\vk\\000500001014db00.bin",
+      "sha256": "419c5a919ccbba60252007f5220fe21f18c188183dcdef1f451c5c6dd3f4c885",
+      "size": 7733672
+    }
+  ],
+  "cache_backup": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\bayonetta1-cutscene-fix\\evidence\\shader-cache-before",
+  "agent_launched_cemu": false,
+  "other_games_modified": false,
+  "user_result": "User reported that geometry still jumps after fresh shader cache regeneration."
+}

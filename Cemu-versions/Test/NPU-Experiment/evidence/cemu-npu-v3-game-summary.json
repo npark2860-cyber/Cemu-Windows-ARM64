@@ -1,0 +1,51 @@
+{
+  "status": "USER_REPORTED_IMPROVEMENT_AND_V3_GAME_LOG_OBSERVED",
+  "source_log": "cemu-npu-v3-game-20260929-112152.log",
+  "fullscreen_1440p": {
+    "selection": [
+      "11:20:00.000",
+      "11:20:54.999"
+    ],
+    "intervals": 27,
+    "real_fps": {
+      "min": 30.79,
+      "max": 39.6,
+      "mean_of_intervals": 33.89407407407408
+    },
+    "present_fps": {
+      "min": 40.59,
+      "max": 66.84,
+      "mean_of_intervals": 59.30481481481482
+    },
+    "npu_runs": 1843,
+    "npu_run_ms": 19.354946283233858,
+    "stale": 459,
+    "no_slot": 0
+  },
+  "window_1429x992": {
+    "selection": [
+      "11:20:58.000",
+      "11:21:10.999"
+    ],
+    "intervals": 7,
+    "real_fps": {
+      "min": 33.14,
+      "max": 36.29,
+      "mean_of_intervals": 34.90714285714286
+    },
+    "present_fps": {
+      "min": 61.29,
+      "max": 71.59,
+      "mean_of_intervals": 68.03857142857143
+    },
+    "npu_runs": 490,
+    "npu_run_ms": 19.27421020408163,
+    "stale": 24,
+    "no_slot": 0
+  },
+  "window_resume_confirmed": true,
+  "window_transition": "11:20:56.882; generated=true by capture 3 at 11:20:56.948",
+  "runtime_errors": [],
+  "agent_device_execution": false,
+  "limitations": "Observed gameplay segments selected from the log; not controlled same-scene A/B. Accepted presents are not verified display scanout. One window-mode interval dropped 21 late jobs; no claim of stable exact 2X or complete absence of bottlenecks."
+}

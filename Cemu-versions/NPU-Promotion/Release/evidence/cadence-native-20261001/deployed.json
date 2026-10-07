@@ -1,0 +1,9 @@
+{
+  "status": "RELEASE_PATCHED_IN_PLACE_GAME_TEST_PENDING",
+  "executable": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release\\runtime\\Cemu-Release-NPU.exe",
+  "cemu_sha256": "77ba0e01d922c0ffd73565844413efdf6d7579c5b117abf2b7da3b48cd4862b6",
+  "module_sha256": "d377a5d2ae33166d4c73e540c400c3eac22a40ae31bb20ab630e25e732beb839",
+  "cpu_checks": 4491,
+  "unchanged_other_runtime_files": 47,
+  "cemu_gpu_npu_executed": false
+}

@@ -1,0 +1,86 @@
+{
+  "created_at": "2026-09-29T09:58:47.834198+00:00",
+  "status": "FOUR_LOCAL_PACKAGES_BUILT_RELEASE_SE_REGRESSION_FIX1_GAME_TEST_PENDING",
+  "user_accepted_RC1": true,
+  "four_new_binaries_game_tested": false,
+  "agent_executed_gpu_npu_cemu": false,
+  "installed_emulator_replaced": false,
+  "remote_pushed": false,
+  "variants": [
+    {
+      "role": "Release",
+      "base_commit": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+      "manifest": "Release/NPU-BUILD.json",
+      "manifest_sha256": "cdbb6761e7463e546a9c31289496af5f3beb990548aafada2630c1878ace47fe",
+      "source": "Release/source",
+      "executable": "Release/runtime/Cemu-Release-NPU.exe",
+      "cemu_sha256": "77ba0e01d922c0ffd73565844413efdf6d7579c5b117abf2b7da3b48cd4862b6",
+      "game_tested": false,
+      "in_place_bugfix": {
+        "name": "native-originals-and-bounded-GPU-lag-buffering",
+        "evidence": "evidence/cadence-native-20261001",
+        "before_manifest_sha256": "a3eeab05089801ff93f0a25d717efc138c7e9f511472018e570dfe1aa95ff84d",
+        "before_executable_sha256": "e91853858eccc2623a0a3a24f08863f1a317239075308ea11787250f34b0ef33",
+        "before_module_sha256": "b4b5de1a1c8e09cfd4671b2db9c4c3bd66b3a39a8631a5249394c544da40267d",
+        "original_resolution_preserved": true,
+        "buffered_source_frames": [
+          1,
+          3
+        ],
+        "buffer_reduction": "resets on toggle, resize, or capture gap; no mid-session frame skipping",
+        "native_history_images": 4,
+        "job_slots": 5,
+        "cpu_checks": 4491,
+        "cpu_native_copy_check_uses_mocked_Vulkan": true,
+        "game_test_pending": true,
+        "same_executable_path": true,
+        "portable_settings_and_saves_modified": false
+      }
+    },
+    {
+      "role": "Release+SE",
+      "base_commit": "9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+      "manifest": "Release+SE/NPU-BUILD.json",
+      "manifest_sha256": "be60f231b121ce14ccf73894d1bd3ec5976aecac52539f8dbbcfa782c8e6515e",
+      "source": "Release+SE/source",
+      "executable": "Release+SE/runtime/Cemu-Release-SE-NPU.exe",
+      "cemu_sha256": "64f3d9048e0e957d76023338af42852fb30803538022e753504c8d37a0a6da70",
+      "game_tested": true,
+      "game_test_result": "User reported freezing then exit after Continue in BOTW.",
+      "user_reported_regression": "CPU-only reproduction confirms implicit Windows ACP conversion throws for all 12 UTF-8 haptic asset paths under the Korean workspace directory. Full game causality remains to be retested.",
+      "fix_candidate": {
+        "manifest": "Release+SE-Fix1/NPU-BUILD.json",
+        "manifest_sha256": "0fdc49692b50a55be77edad061900b988be821aa8d6a31a17eafbd64c3931841",
+        "executable": "Release+SE-Fix1/runtime/Cemu-Release-SE-NPU-Fix1.exe",
+        "cemu_sha256": "f34fadbbb6b6ce113e22cde1d20e9aa3a53192f493f3c8787092c9fe5ae7e935",
+        "game_tested": false,
+        "cpu_regression_passed": true
+      }
+    },
+    {
+      "role": "Diagnostics",
+      "base_commit": "6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+      "manifest": "Diagnostics/NPU-BUILD.json",
+      "manifest_sha256": "d942230fcbf4b35eb6736d6983a959b3ee6168028c2d1d122f9a9ae709d71e3b",
+      "source": "Diagnostics/source",
+      "executable": "Diagnostics/runtime/Cemu-Diagnostics-NPU.exe",
+      "cemu_sha256": "9f963967f022d34c4770654511275e124825f9b232e53957ef973bc69ccc5e55",
+      "game_tested": false
+    },
+    {
+      "role": "Diagnostics+SE",
+      "base_commit": "b18d8faae5a4b2316974ef4907e0739a9e3a5c2b",
+      "manifest": "Diagnostics+SE/NPU-BUILD.json",
+      "manifest_sha256": "041fe417f5f54828e05b23072ee4176989ab12fe9de6cbf1fbe7453072ecd603",
+      "source": "Diagnostics+SE/source",
+      "executable": "Diagnostics+SE/runtime/Cemu-Diagnostics-SE-NPU.exe",
+      "cemu_sha256": "2797554220b136c606dc4cb442706c5990b6d42011caf30218b910f0d5eb988e",
+      "game_tested": false,
+      "se_baseline_note": "Older CueCaptureV2 baseline, not latest SE_Test/PR5. No PlayBnvib route call. User clarified they have not tested Continue in this variant."
+    }
+  ],
+  "provenance": "Initial packages: user-accepted NPU RC1 with ABI2 module, models, shaders and QNN runtime; role-specific Cemu rebuilds and Korean UI additions. Release was updated in place on 2026-10-01 to ABI3 for native originals and bounded GPU-lag buffering; models, shaders and QNN runtime remain unchanged. Other variants retain ABI2.",
+  "shared_module_source_inventory_sha256": "2ebabdc760d56cb920bb17439395709b0803fe67c1e69d42cd22f7f9e749f72b",
+  "localization_evidence_sha256": "33ef33425a03b76d81c89b90051cef0ba9f2c3cea43fe4e8032d253f3641f762",
+  "release_in_place_bugfix_game_test_pending": true
+}

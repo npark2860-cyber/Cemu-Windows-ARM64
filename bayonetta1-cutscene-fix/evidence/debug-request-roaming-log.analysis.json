@@ -1,0 +1,42 @@
+{
+  "path": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\bayonetta1-cutscene-fix\\evidence\\debug-request-roaming-log.txt",
+  "bytes": 74618271,
+  "lines": 971308,
+  "time_range": [
+    "05:41:23.184",
+    "05:43:16.420"
+  ],
+  "metadata": [
+    "[05:41:23.184] ------- Init Cemu 4a7d4a6 -------",
+    "[05:42:23.818] TitleId: 00050000-1014db00",
+    "[05:42:23.818] CPU-Mode: Multi-core recompiler",
+    "[05:42:23.818] Full sync at GX2DrawDone: true",
+    "[05:42:23.818] Strict shader mul: true",
+    "[05:42:23.982] Activate graphic pack: Bayonetta/Graphics/Resolution [Presets: 1920x1080]"
+  ],
+  "tags": {
+    "PIPE_CACHE": 959325,
+    "RT_ALIAS": 8794,
+    "LOAD_STORE": 728,
+    "ATTACHMENT_USE": 495,
+    "FBO_CHANGE": 364,
+    "SHADER_INTERFACE": 308,
+    "SHADER_DUMP_ALL": 299,
+    "SHADER_CREATE": 299,
+    "PIPE_CREATE": 200,
+    "SHADER_VS": 100,
+    "SHADER_PS": 100,
+    "SHADER_AUX": 100,
+    "CEMU_DIAG": 29,
+    "RT_PASS": 16,
+    "RT_BARRIER": 16,
+    "RT_RAW": 16,
+    "RT_WAW": 16,
+    "RT_SELF_DEP": 16,
+    "RT_PASS_SPLIT": 16
+  },
+  "shader_module_results": {
+    "0": 299
+  },
+  "critical_samples": []
+}

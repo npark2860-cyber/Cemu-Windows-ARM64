@@ -1,0 +1,15 @@
+{
+  "recorded_at": "2026-09-29T06:30:21.9874740+09:00",
+  "os": "Microsoft Windows 10.0.26220",
+  "architecture": "Arm64",
+  "cpu": "Snapdragon(R) X 12-core X1E80100 @ 3.40 GHz",
+  "npu_driver_files": [
+    "C:/Windows/System32/DriverStore/FileRepository\\qcadsprpc8380.inf_arm64_c177c9ef6a2f6580\\libcdsprpc.dll",
+    "C:/Windows/System32/DriverStore/FileRepository\\qcnspmcdm8380.inf_arm64_553f7b0d71497f2c\\libcdsprpc.dll",
+    "C:/Windows/System32/DriverStore/FileRepository\\qcnspmcdm8380.inf_arm64_553f7b0d71497f2c\\HTP\\QnnSystemInfo.dll",
+    "C:/Windows/System32/DriverStore/FileRepository\\qcnspmcdm8380.inf_arm64_553f7b0d71497f2c\\HTP\\QnnHtpV73StubDrv.dll",
+    "C:/Windows/System32/DriverStore/FileRepository\\qcnspmcdm8380.inf_arm64_553f7b0d71497f2c\\HTP\\QnnHtpPrepareDrv.dll"
+  ],
+  "device_executed": false,
+  "baseline_sha256": "ced1fa7b1291dd29fec78188165651634e6e8a9a07025afc2904e35b63737504"
+}

@@ -1,0 +1,183 @@
+[17:33:54.605] ------- Init Cemu c5205cc -------
+[17:33:54.606] Init Wii U memory space (base: 0x000001ecc5000000)
+[17:33:54.606] mlc01 path: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01
+[17:33:54.606] RAM: 15979MB
+[17:33:54.606] Platform: Windows 11 Home 25H2 (Build 26220)
+[17:33:54.606] Used CPU extensions: 
+[17:33:54.612] IOSU_CRYPTO: No otp.bin found. Online mode cannot be used
+[17:33:54.612] IOSU_CRYPTO: No Seeprom.bin found. Online mode cannot be used
+[17:34:35.786] Mounting title 000500001014db00
+[17:34:35.786] Base: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/title/00050000/1014db00 [Folder]
+[17:34:35.786] Update: C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/title/0005000e/1014db00 [Folder]
+[17:34:35.786] DLC: Not present
+[17:34:35.805] COS: System fonts found. Generated shareddata (26609KB)
+[17:34:35.812] Recompiler initialized
+[17:34:35.826] ------- Init Vulkan graphics backend -------
+[17:34:35.836] Vulkan instance version: 1.4
+[17:34:35.869] Using GPU: Qualcomm(R) Adreno(TM) X1-85 GPU
+[17:34:35.870] Driver version: Driver Build: 0eb8636cd3, Id6ce193842, 1782814497
+Date: 06/30/2026
+Compiler Version: E031.52.01.00
+Driver Branch: BVT_187
+
+[17:34:35.870] Vulkan: present_wait extension: unsupported
+[17:34:35.870] VK_EXT_attachment_feedback_loop_layout(_dynamic_state) not supported
+[17:34:35.870] VulkanLimits: UBAlignment 64 nonCoherentAtomSize 1
+[17:34:35.877] Vulkan device memory info:
+[17:34:35.877] Heap 0 - Size 7989MB Flags 0x00000001
+[17:34:35.877] Heap 1 - Size 4095MB Flags 0x00000001
+[17:34:35.877] Memory 0 - HeapIndex 0 Flags 0x00000001
+[17:34:35.877] Memory 1 - HeapIndex 0 Flags 0x00000001
+[17:34:35.877] Memory 2 - HeapIndex 0 Flags 0x00000001
+[17:34:35.877] Memory 3 - HeapIndex 0 Flags 0x0000000b
+[17:34:35.877] Memory 4 - HeapIndex 0 Flags 0x00000007
+[17:34:35.877] Memory 5 - HeapIndex 0 Flags 0x00000007
+[17:34:35.877] Memory 6 - HeapIndex 0 Flags 0x0000000f
+[17:34:35.877] Memory 7 - HeapIndex 1 Flags 0x00000021
+[17:34:35.877] Memory 8 - HeapIndex 0 Flags 0x00000011
+[17:34:35.877] VK_FORMAT_R4G4_UNORM_PACK8 not supported
+[17:34:36.000] ------- Loaded title -------
+[17:34:36.000] TitleId: 00050000-1014db00
+[17:34:36.000] TitleVersion: v32
+[17:34:36.000] TitleRegion: JP
+[17:34:36.000] Save path:   C:/Users/angel/Documents/ChatGPT/Cemu 최적화/Cemu-versions/Test/LSFG-Release/runtime-experiment/portable/mlc01/usr/save/00050000/1014DB00/user/ (not present)
+[17:34:36.000] Shader cache file: shaderCache/transferable/000500001014db00.bin
+[17:34:36.000] gameprofile path:  (not present)
+[17:34:36.000] RPX hash (updated): 52f48c53
+[17:34:36.000] RPX hash (base): 52f48c53
+[17:34:36.000] Loaded module 'bayonetloader' with checksum 0xa5d97255
+[17:34:36.000] RPL link time: 0ms
+[17:34:36.000] HLE scan time: 0ms
+[17:34:36.000] ------- Active settings -------
+[17:34:36.000] CPU-Mode: Multi-core recompiler
+[17:34:36.000] Load shared libraries: true
+[17:34:36.000] Use precompiled shaders: auto
+[17:34:36.000] Full sync at GX2DrawDone: true
+[17:34:36.000] Strict shader mul: true
+[17:34:36.000] Async compile: true
+[17:34:36.000] Console language: 7
+[17:34:38.626] [LSFG] Context prepared 1280x720 preset=Quality100 flow_percent=100 internal_motion=1280x720; no input frames processed
+[17:34:38.626] [LSFG] Startup READY/OFF: shaders=51 pipelines=51 generated=0 borrowed_device=1
+[17:34:38.626] [LSFG-PERF] Target: source >=30 FPS, output 60 FPS with even cadence. Same-queue batched GPU work; render-thread pacing sleep removed.
+[17:34:38.626] [LSFG-PROFILE] timestamp_bits=48 period_ns=52.08333206176758; query reads add no completion wait. Real spans include GPU timeline gaps; not busy utilization. OFF records diagnostic timestamps only.
+[17:34:43.813] [NPU] READY/OFF: v3, ANVIL U8 NHWC processing=1920x1080, output=window-sized SDR with linear scaling, 3 shared slots; QNN worker, borrowed Vulkan queue. No inference at startup. Immutable overlay replay and source-frame throttle. Experimental block motion +/-16px, 4px precision; not production game-quality validation.
+[17:34:43.935] [LSFG-SURFACE] Recreate begin: generation=0 skip_create=false
+[17:34:43.936] [LSFG-PERF] OFF 1280x720 5.31s: source_present_fps=0.00 generated_present_fps=0.00 accepted_present_fps=0.00 rejected=0 preset=Quality100 flow_percent=100
+[17:34:43.936] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=0.000 overlay_wait_sum=0.000 intentional_sleep=0
+[17:34:43.936] [LSFG-PERF] Present return gaps ms: mean=0.000 max=0.000 under4ms=0 over33ms=0 (not display scanout timing)
+[17:34:43.936] [LSFG-PROFILE] GPU span ms avg/max/n: real=N/A input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:34:43.936] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.352/0.942/3 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.054 calls=2 LSFG_tail_fence_wait_sum=0.000
+[17:34:43.936] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:34:43.936] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0; one-frame delay; scanout cadence unverified
+[17:34:43.936] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:34:43.936] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:34:43.937] ------- Activate graphic packs -------
+[17:34:43.964] [LSFG-SURFACE] Recreate complete: generation=1 extent=1429x992
+[17:34:43.965] Activate graphic pack: Bayonetta/Graphics/Resolution [Presets: 1920x1080]
+[17:34:43.965] ------- Init Audio backend -------
+[17:34:43.965] DirectSound: available
+[17:34:43.965] XAudio 2.8: available
+[17:34:43.965] Cubeb: available
+[17:34:43.965] ------- Init Audio input backend -------
+[17:34:43.965] Cubeb: available
+[17:34:43.965] ------- Run title -------
+[17:34:43.965] Graphic pack "Resolution" prevents rendertarget size optimization. This warning can be ignored and is intended for graphic pack developers
+[17:34:43.988] Shader cache loaded with 0 shaders. Commited mem 15MB. Took 22ms
+[17:34:44.386] Loaded module 'bayonetwu' with checksum 0x62350931
+[17:34:44.655] IOSU_ACT: using account default in first slot
+[17:34:45.135] [NPU-PERF] OFF eligible=false accepted_present_fps=0.00 real_present_fps=0.00 generated_present_fps=0.00 rejected=0 submitted=0 completed=0 stale=0 no_slot=0; one-frame delay; scanout cadence unverified
+[17:34:45.135] [NPU-PROFILE] worker NPU_Run_avg_ms=0.000 input_fence_wait_sum_ms=0.000 queue_start_delay_sum_ms=0.000 runs=0; GPU_downsample_avg_ms=0.000 motion_avg_ms=0.000 warp_pack_avg_ms=0.000 compose_avg_ms=0.000 pre_samples=0 post_samples=0 queue_submit_sum_ms=0.000; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:34:45.135] [NPU-HOST] ms avg/max/n: capture_submit=0.000/0.000/0 module_process=0.000/0.000/0 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/0 image_available_fence=0.000/0.000/0 queue_limit=0.000/0.000/0 vkQueuePresentKHR=0.000/0.000/0; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:34:45.135] [NPU] ON (one-frame buffered): history reset; no per-frame inference wait
+[17:34:45.136] [NPU] Capture 1 -> real 1 generated=false processing=1920x1080 output=1429x992 (capture 2 repeats real 1 once to establish buffering)
+[17:34:45.147] [NPU] Capture 2 -> real 1 generated=false processing=1920x1080 output=1429x992 (capture 2 repeats real 1 once to establish buffering)
+[17:34:45.179] [NPU] Capture 3 -> real 2 generated=false processing=1920x1080 output=1429x992 (capture 2 repeats real 1 once to establish buffering)
+[17:34:45.937] [LSFG-PERF] OFF 1280x720 2.00s: source_present_fps=24.48 generated_present_fps=0.00 accepted_present_fps=24.48 rejected=0 preset=Quality100 flow_percent=100
+[17:34:45.937] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=61.404 overlay_wait_sum=0.000 intentional_sleep=0
+[17:34:45.937] [LSFG-PERF] Present return gaps ms: mean=41.078 max=1137.145 under4ms=3 over33ms=5 (not display scanout timing)
+[17:34:45.937] [LSFG-PROFILE] GPU span ms avg/max/n: real=29.492/1200.698/44 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:34:45.937] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.052/0.190/193 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=49.270 calls=8 LSFG_tail_fence_wait_sum=0.000
+[17:34:45.937] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:34:47.159] [NPU-PERF] ON eligible=true accepted_present_fps=59.31 real_present_fps=58.82 generated_present_fps=0.49 rejected=0 submitted=118 completed=115 stale=114 no_slot=0; one-frame delay; scanout cadence unverified
+[17:34:47.159] [NPU-PROFILE] worker NPU_Run_avg_ms=19.129 input_fence_wait_sum_ms=247.018 queue_start_delay_sum_ms=1380.974 runs=92; GPU_downsample_avg_ms=0.419 motion_avg_ms=6.173 warp_pack_avg_ms=0.894 compose_avg_ms=1.001 pre_samples=115 post_samples=1 queue_submit_sum_ms=1.903; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:34:47.159] [NPU-HOST] ms avg/max/n: capture_submit=0.110/0.525/119 module_process=0.076/0.886/119 generated_acquire=0.189/0.189/1 source_throttle=0.335/16.491/119 image_available_fence=0.001/0.007/120 queue_limit=0.000/0.000/120 vkQueuePresentKHR=0.236/0.471/120; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:34:48.028] [LSFG-PERF] OFF 1280x720 2.09s: source_present_fps=57.86 generated_present_fps=0.00 accepted_present_fps=57.86 rejected=0 preset=Quality100 flow_percent=100
+[17:34:48.028] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=49.935 overlay_wait_sum=0.000 intentional_sleep=0
+[17:34:48.028] [LSFG-PERF] Present return gaps ms: mean=17.283 max=93.517 under4ms=1 over33ms=2 (not display scanout timing)
+[17:34:48.028] [LSFG-PROFILE] GPU span ms avg/max/n: real=1.792/2.454/120 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:34:48.028] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.031/0.470/481 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=17.873 calls=6 LSFG_tail_fence_wait_sum=0.000
+[17:34:48.028] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:34:49.165] [NPU-PERF] ON eligible=true accepted_present_fps=58.80 real_present_fps=57.80 generated_present_fps=1.00 rejected=0 submitted=116 completed=117 stale=115 no_slot=0; one-frame delay; scanout cadence unverified
+[17:34:49.165] [NPU-PROFILE] worker NPU_Run_avg_ms=18.867 input_fence_wait_sum_ms=172.929 queue_start_delay_sum_ms=1275.005 runs=93; GPU_downsample_avg_ms=0.338 motion_avg_ms=4.249 warp_pack_avg_ms=0.713 compose_avg_ms=0.573 pre_samples=117 post_samples=2 queue_submit_sum_ms=1.086; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:34:49.166] [NPU-HOST] ms avg/max/n: capture_submit=0.037/0.188/116 module_process=0.051/1.581/116 generated_acquire=0.042/0.046/2 source_throttle=0.157/11.693/116 image_available_fence=0.001/0.002/118 queue_limit=0.000/0.000/118 vkQueuePresentKHR=0.211/0.629/118; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:34:50.030] [LSFG-PERF] OFF 1280x720 2.00s: source_present_fps=60.96 generated_present_fps=0.00 accepted_present_fps=60.96 rejected=0 preset=Quality100 flow_percent=100
+[17:34:50.030] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=32.713 overlay_wait_sum=0.000 intentional_sleep=0
+[17:34:50.030] [LSFG-PERF] Present return gaps ms: mean=16.404 max=26.372 under4ms=2 over33ms=0 (not display scanout timing)
+[17:34:50.030] [LSFG-PROFILE] GPU span ms avg/max/n: real=2.839/3.763/121 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:34:50.030] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.027/0.099/487 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[17:34:50.030] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:34:51.178] [NPU-PERF] ON eligible=true accepted_present_fps=60.13 real_present_fps=60.13 generated_present_fps=0.00 rejected=0 submitted=121 completed=121 stale=121 no_slot=0; one-frame delay; scanout cadence unverified
+[17:34:51.178] [NPU-PROFILE] worker NPU_Run_avg_ms=18.835 input_fence_wait_sum_ms=134.821 queue_start_delay_sum_ms=1408.895 runs=100; GPU_downsample_avg_ms=0.316 motion_avg_ms=4.119 warp_pack_avg_ms=0.665 compose_avg_ms=0.000 pre_samples=121 post_samples=0 queue_submit_sum_ms=0.914; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:34:51.178] [NPU-HOST] ms avg/max/n: capture_submit=0.035/0.118/121 module_process=0.032/0.068/121 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/121 image_available_fence=0.000/0.001/121 queue_limit=0.000/0.000/121 vkQueuePresentKHR=0.172/0.466/121; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:34:52.043] [LSFG-PERF] OFF 1280x720 2.01s: source_present_fps=60.11 generated_present_fps=0.00 accepted_present_fps=60.11 rejected=0 preset=Quality100 flow_percent=100
+[17:34:52.043] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=25.662 overlay_wait_sum=0.000 intentional_sleep=0
+[17:34:52.043] [LSFG-PERF] Present return gaps ms: mean=16.637 max=17.400 under4ms=0 over33ms=0 (not display scanout timing)
+[17:34:52.043] [LSFG-PROFILE] GPU span ms avg/max/n: real=2.794/3.382/121 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:34:52.043] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.026/0.286/484 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[17:34:52.043] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:34:53.190] [NPU-PERF] ON eligible=true accepted_present_fps=60.13 real_present_fps=60.13 generated_present_fps=0.00 rejected=0 submitted=121 completed=120 stale=120 no_slot=0; one-frame delay; scanout cadence unverified
+[17:34:53.190] [NPU-PROFILE] worker NPU_Run_avg_ms=18.852 input_fence_wait_sum_ms=148.309 queue_start_delay_sum_ms=1399.116 runs=98; GPU_downsample_avg_ms=0.332 motion_avg_ms=4.328 warp_pack_avg_ms=0.693 compose_avg_ms=0.000 pre_samples=120 post_samples=0 queue_submit_sum_ms=1.162; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:34:53.190] [NPU-HOST] ms avg/max/n: capture_submit=0.049/0.383/121 module_process=0.039/0.335/121 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/121 image_available_fence=0.000/0.002/121 queue_limit=0.000/0.001/121 vkQueuePresentKHR=0.181/0.447/121; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:34:54.055] [LSFG-PERF] OFF 1280x720 2.01s: source_present_fps=60.13 generated_present_fps=0.00 accepted_present_fps=60.13 rejected=0 preset=Quality100 flow_percent=100
+[17:34:54.055] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=27.614 overlay_wait_sum=0.000 intentional_sleep=0
+[17:34:54.055] [LSFG-PERF] Present return gaps ms: mean=16.631 max=17.806 under4ms=0 over33ms=0 (not display scanout timing)
+[17:34:54.055] [LSFG-PROFILE] GPU span ms avg/max/n: real=3.185/5.060/121 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:34:54.055] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.031/0.350/484 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[17:34:54.055] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:34:55.202] [NPU-PERF] ON eligible=true accepted_present_fps=60.13 real_present_fps=60.13 generated_present_fps=0.00 rejected=0 submitted=121 completed=122 stale=122 no_slot=0; one-frame delay; scanout cadence unverified
+[17:34:55.203] [NPU-PROFILE] worker NPU_Run_avg_ms=18.830 input_fence_wait_sum_ms=179.577 queue_start_delay_sum_ms=1425.484 runs=98; GPU_downsample_avg_ms=0.355 motion_avg_ms=4.675 warp_pack_avg_ms=0.704 compose_avg_ms=0.000 pre_samples=122 post_samples=0 queue_submit_sum_ms=0.914; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:34:55.203] [NPU-HOST] ms avg/max/n: capture_submit=0.034/0.059/121 module_process=0.031/0.098/121 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.001/121 image_available_fence=0.000/0.001/121 queue_limit=0.000/0.000/121 vkQueuePresentKHR=0.145/0.263/121; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:34:56.068] [LSFG-PERF] OFF 1280x720 2.01s: source_present_fps=60.12 generated_present_fps=0.00 accepted_present_fps=60.12 rejected=0 preset=Quality100 flow_percent=100
+[17:34:56.068] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=23.851 overlay_wait_sum=0.000 intentional_sleep=0
+[17:34:56.068] [LSFG-PERF] Present return gaps ms: mean=16.634 max=17.281 under4ms=0 over33ms=0 (not display scanout timing)
+[17:34:56.068] [LSFG-PROFILE] GPU span ms avg/max/n: real=2.746/3.362/121 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:34:56.068] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.024/0.086/484 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[17:34:56.068] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:34:57.216] [NPU-PERF] ON eligible=true accepted_present_fps=60.10 real_present_fps=60.10 generated_present_fps=0.00 rejected=0 submitted=121 completed=120 stale=120 no_slot=0; one-frame delay; scanout cadence unverified
+[17:34:57.216] [NPU-PROFILE] worker NPU_Run_avg_ms=18.836 input_fence_wait_sum_ms=153.623 queue_start_delay_sum_ms=1419.617 runs=98; GPU_downsample_avg_ms=0.331 motion_avg_ms=4.639 warp_pack_avg_ms=0.768 compose_avg_ms=0.000 pre_samples=120 post_samples=0 queue_submit_sum_ms=1.243; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:34:57.216] [NPU-HOST] ms avg/max/n: capture_submit=0.036/0.269/121 module_process=0.036/0.260/121 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.000/121 image_available_fence=0.000/0.002/121 queue_limit=0.000/0.001/121 vkQueuePresentKHR=0.162/0.353/121; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:34:58.080] [LSFG-PERF] OFF 1280x720 2.01s: source_present_fps=60.64 generated_present_fps=0.00 accepted_present_fps=60.64 rejected=0 preset=Quality100 flow_percent=100
+[17:34:58.080] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=45.755 overlay_wait_sum=0.000 intentional_sleep=0
+[17:34:58.080] [LSFG-PERF] Present return gaps ms: mean=16.492 max=34.874 under4ms=1 over33ms=1 (not display scanout timing)
+[17:34:58.080] [LSFG-PROFILE] GPU span ms avg/max/n: real=3.929/6.993/121 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:34:58.080] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.032/0.244/486 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=10.346 calls=9 LSFG_tail_fence_wait_sum=0.000
+[17:34:58.080] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:34:59.227] [NPU-PERF] ON eligible=true accepted_present_fps=60.66 real_present_fps=60.16 generated_present_fps=0.50 rejected=0 submitted=121 completed=122 stale=121 no_slot=0; one-frame delay; scanout cadence unverified
+[17:34:59.227] [NPU-PROFILE] worker NPU_Run_avg_ms=19.132 input_fence_wait_sum_ms=219.741 queue_start_delay_sum_ms=1423.064 runs=94; GPU_downsample_avg_ms=0.270 motion_avg_ms=3.082 warp_pack_avg_ms=0.579 compose_avg_ms=0.374 pre_samples=122 post_samples=1 queue_submit_sum_ms=1.262; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:34:59.227] [NPU-HOST] ms avg/max/n: capture_submit=0.065/0.278/121 module_process=0.049/0.118/121 generated_acquire=0.078/0.078/1 source_throttle=0.086/6.530/121 image_available_fence=0.001/0.003/122 queue_limit=0.000/0.001/122 vkQueuePresentKHR=0.297/0.697/122; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:35:00.092] [LSFG-PERF] OFF 1280x720 2.01s: source_present_fps=60.13 generated_present_fps=0.00 accepted_present_fps=60.13 rejected=0 preset=Quality100 flow_percent=100
+[17:35:00.092] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=41.680 overlay_wait_sum=0.000 intentional_sleep=0
+[17:35:00.092] [LSFG-PERF] Present return gaps ms: mean=16.630 max=17.114 under4ms=0 over33ms=0 (not display scanout timing)
+[17:35:00.092] [LSFG-PROFILE] GPU span ms avg/max/n: real=5.477/7.209/121 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:35:00.092] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.029/0.160/484 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[17:35:00.092] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:35:01.240] [NPU-PERF] ON eligible=true accepted_present_fps=60.12 real_present_fps=60.12 generated_present_fps=0.00 rejected=0 submitted=121 completed=121 stale=121 no_slot=0; one-frame delay; scanout cadence unverified
+[17:35:01.240] [NPU-PROFILE] worker NPU_Run_avg_ms=19.055 input_fence_wait_sum_ms=205.570 queue_start_delay_sum_ms=1427.307 runs=95; GPU_downsample_avg_ms=0.286 motion_avg_ms=3.202 warp_pack_avg_ms=0.597 compose_avg_ms=0.000 pre_samples=121 post_samples=0 queue_submit_sum_ms=1.213; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:35:01.240] [NPU-HOST] ms avg/max/n: capture_submit=0.044/0.330/121 module_process=0.041/0.271/121 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.001/121 image_available_fence=0.001/0.002/121 queue_limit=0.000/0.001/121 vkQueuePresentKHR=0.282/0.674/121; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:35:02.105] [LSFG-PERF] OFF 1280x720 2.01s: source_present_fps=60.10 generated_present_fps=0.00 accepted_present_fps=60.10 rejected=0 preset=Quality100 flow_percent=100
+[17:35:02.105] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=41.011 overlay_wait_sum=0.000 intentional_sleep=0
+[17:35:02.105] [LSFG-PERF] Present return gaps ms: mean=16.638 max=18.236 under4ms=0 over33ms=0 (not display scanout timing)
+[17:35:02.105] [LSFG-PROFILE] GPU span ms avg/max/n: real=9.442/12.837/121 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:35:02.105] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.038/0.304/550 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[17:35:02.105] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:35:03.202] [NPU-PERF] ON eligible=true accepted_present_fps=59.62 real_present_fps=59.62 generated_present_fps=0.00 rejected=0 submitted=117 completed=116 stale=116 no_slot=0; one-frame delay; scanout cadence unverified
+[17:35:03.202] [NPU-PROFILE] worker NPU_Run_avg_ms=19.085 input_fence_wait_sum_ms=85.271 queue_start_delay_sum_ms=1269.617 runs=98; GPU_downsample_avg_ms=0.305 motion_avg_ms=3.360 warp_pack_avg_ms=0.606 compose_avg_ms=0.000 pre_samples=116 post_samples=0 queue_submit_sum_ms=1.254; render_thread_NPU_wait=0 queue_owner=render_thread
+[17:35:03.202] [NPU-HOST] ms avg/max/n: capture_submit=0.075/0.322/117 module_process=0.052/0.272/117 generated_acquire=0.000/0.000/0 source_throttle=0.000/0.001/117 image_available_fence=0.001/0.002/117 queue_limit=0.000/0.001/117 vkQueuePresentKHR=0.249/0.688/117; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize
+[17:35:03.310] [LSFG-PERF] OFF 1280x720 1.21s: source_present_fps=53.93 generated_present_fps=0.00 accepted_present_fps=53.93 rejected=0 preset=Quality100 flow_percent=100
+[17:35:03.310] [LSFG-PERF] CPU wall ms: module_batch_avg=0.000 capture_submit_sum=0.000 present_host_sum=20.355 overlay_wait_sum=0.000 intentional_sleep=0
+[17:35:03.310] [LSFG-PERF] Present return gaps ms: mean=16.625 max=17.157 under4ms=0 over33ms=0 (not display scanout timing)
+[17:35:03.310] [LSFG-PROFILE] GPU span ms avg/max/n: real=11.850/13.938/67 input_copy=N/A prepass=N/A generated=N/A output_copy=N/A warmup_excluded=0 query_dropped=0
+[17:35:03.310] [LSFG-PROFILE] CPU ms: Cemu_vkQueueSubmit_avg/max/n=0.041/0.560/327 LSFG_vkQueueSubmit_sum=0.000 calls=0 Cemu_fence_wait_sum=0.000 calls=0 LSFG_tail_fence_wait_sum=0.000
+[17:35:03.310] [LSFG-PROFILE] Boundary ms avg/max/n: host_capture_submit_end_to_LSFG_submit=N/A GPU_real_end_to_prepass_begin=N/A queue_mutex_hold=N/A(single_render_thread); boundary spans include copies/dependencies, not proven GPU idle
+[17:35:03.310] [LSFG] Shutdown: captured=0 generated=0 dispatches=0 resets=0
+[17:35:03.311] [LSFG] Resources: context_builds=1 history_clears=0

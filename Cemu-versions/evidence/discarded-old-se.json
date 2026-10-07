@@ -1,0 +1,20 @@
+[
+  {
+    "path": "C:\\Emulators\\Cemu_arm64\\Cemu_se.exe",
+    "sha256": "17231aa75f907d3804b27ee40762e9940c70443f33ca807157b80790fcb4d496",
+    "action": "sent to Recycle Bin at user request",
+    "discarded_at": "2026-09-29T02:17:28.8919445+09:00"
+  },
+  {
+    "path": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Release+SE\\binaries\\run-35399518440\\Cemu.exe",
+    "sha256": "17231aa75f907d3804b27ee40762e9940c70443f33ca807157b80790fcb4d496",
+    "action": "sent to Recycle Bin at user request",
+    "discarded_at": "2026-09-29T02:17:28.9731060+09:00"
+  },
+  {
+    "path": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Release+SE\\archives\\cemu-arm64-release-run-35399518440.zip",
+    "sha256": "e55436daec5f25adcc4967f48cec6fb7c65745a4d1b8be34257cf4e949bb4477",
+    "action": "sent to Recycle Bin at user request",
+    "discarded_at": "2026-09-29T02:17:29.0698405+09:00"
+  }
+]

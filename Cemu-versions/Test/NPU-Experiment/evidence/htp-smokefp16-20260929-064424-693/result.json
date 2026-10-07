@@ -1,0 +1,16 @@
+{
+  "status": "inference_completed_profile_verification_pending",
+  "ort_version": "1.24.4",
+  "backend": "QnnHtp.dll", "cpu_fallback_disabled": true,
+  "synthetic_input": true, "frame_interpolation_quality_validated": false,
+  "model": "../models/smoke-average-fp32.onnx",
+  "profile": "../evidence/htp-smokefp16-20260929-064424-693\\ort-profile_2026-09-29_06-44-24.json",
+  "session_create_ms": 366.9761, "input_prepare_ms": 0.0172,
+  "first_run_ms": 8.492, "warmup_runs": 3, "measured_runs": 20,
+  "run_mean_ms": 10.450575, "run_p50_ms": 10.5276, "run_p95_ms": 11.6457,
+  "run_min_ms": 9.1548, "run_max_ms": 11.7832,
+  "input_bytes": 24576, "output_bytes": 12288,
+  "output_validation_ms": 0.0212, "checksum": 1504.16211863,
+  "average_oracle_checked": true, "maximum_oracle_error": 0.000413551926613,
+  "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes Vulkan transfers, motion estimation and present"
+}

@@ -1,0 +1,60 @@
+#version 450
+layout(local_size_x=8,local_size_y=8) in;
+layout(set=0,binding=5,std430) writeonly buffer Forward { ivec4 f[]; } forwardFlow;
+layout(set=0,binding=6,std430) writeonly buffer Backward { ivec4 f[]; } backwardFlow;
+layout(set=0,binding=7,rgba8) uniform readonly image2D quarterA;
+layout(set=0,binding=8,rgba8) uniform readonly image2D quarterB;
+
+// Preserve the imageLoad float values; avoid UNORM pack/unpack roundtrips.
+// A source block needs no halo. Scalar arrays avoid vec3 alignment padding.
+// 32*32*3*4 + 40*40*3*4 = 31,488 bytes, below this GPU's 32 KiB limit.
+shared float sourceTile[3072];
+shared float targetTile[4800];
+
+void main() {
+    bool reverse=gl_GlobalInvocationID.z!=0u;
+    ivec2 sourceOrigin=ivec2(gl_WorkGroupID.xy)*32;
+    ivec2 targetOrigin=sourceOrigin-ivec2(4);
+    for(uint i=gl_LocalInvocationIndex;i<1024u;i+=64u) {
+        ivec2 p=sourceOrigin+ivec2(i%32u,i/32u);
+        vec3 value=vec3(0.0);
+        if(p.x<320 && p.y<180)
+            value=reverse?imageLoad(quarterB,p).rgb:imageLoad(quarterA,p).rgb;
+        sourceTile[i]=value.r;
+        sourceTile[1024u+i]=value.g;
+        sourceTile[2048u+i]=value.b;
+    }
+    for(uint i=gl_LocalInvocationIndex;i<1600u;i+=64u) {
+        ivec2 p=targetOrigin+ivec2(i%40u,i/40u);
+        vec3 value=vec3(0.0);
+        if(all(greaterThanEqual(p,ivec2(0))) && p.x<320 && p.y<180)
+            value=reverse?imageLoad(quarterA,p).rgb:imageLoad(quarterB,p).rgb;
+        targetTile[i]=value.r;
+        targetTile[1600u+i]=value.g;
+        targetTile[3200u+i]=value.b;
+    }
+    // Even inactive edge lanes must finish their cooperative loads first.
+    barrier();
+    ivec2 block=ivec2(gl_GlobalInvocationID.xy);
+    if(block.x>=80 || block.y>=45) return;
+    ivec2 base=block*4,best=ivec2(0),localBase=ivec2(gl_LocalInvocationID.xy)*4;
+    float minimum=1000.0;
+    if(base.y+3<180) {
+        for(int dy=-4;dy<=4;++dy) for(int dx=-4;dx<=4;++dx) {
+            ivec2 d=ivec2(dx,dy),target=base+d;
+            if(any(lessThan(target,ivec2(0))) || target.x+3>=320 || target.y+3>=180) continue;
+            float cost=0.0;
+            for(int y=0;y<4;++y) for(int x=0;x<4;++x) {
+                ivec2 p=localBase+ivec2(x,y),q=p+d+ivec2(4);
+                int pi=p.y*32+p.x,qi=q.y*40+q.x;
+                vec3 a=vec3(sourceTile[pi],sourceTile[1024+pi],sourceTile[2048+pi]);
+                vec3 b=vec3(targetTile[qi],targetTile[1600+qi],targetTile[3200+qi]);
+                cost+=dot(abs(a-b),vec3(1.0/48.0));
+            }
+            if(cost<minimum || (cost==minimum && dot(vec2(d),vec2(d))<dot(vec2(best),vec2(best)))) {minimum=cost;best=d;}
+        }
+    }
+    ivec4 value=ivec4(best*4,minimum<0.03?1:0,int(round(minimum*1000000.0)));
+    uint index=uint(block.y*80+block.x);
+    if(reverse) backwardFlow.f[index]=value; else forwardFlow.f[index]=value;
+}

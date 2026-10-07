@@ -1,0 +1,140 @@
+{
+  "status": "OFFLINE_CHECKS_PASSED_NOT_DEVICE_TESTED",
+  "source_sha256": "65e871aed25b331e3a3747cf9019942121a94af71997476f5804a24b768cd0d8",
+  "onnx_version": "1.20.1",
+  "models": [
+    {
+      "resolution": "1080p",
+      "path": "models/anvil-small-1080p-fp32.onnx",
+      "sha256": "65e871aed25b331e3a3747cf9019942121a94af71997476f5804a24b768cd0d8",
+      "changed_nodes": [],
+      "weights_unchanged": true,
+      "initializer_count": 72,
+      "network_ops_shape_checked": 84,
+      "pads": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        8,
+        0
+      ],
+      "padded_spatial_shape": [
+        1088,
+        1920
+      ],
+      "input_shape": [
+        1,
+        6,
+        1080,
+        1920
+      ],
+      "output_shape": [
+        1,
+        3,
+        1080,
+        1920
+      ],
+      "input_bytes": 49766400,
+      "output_bytes": 24883200,
+      "reflection_and_crop_reference_checked": true,
+      "onnx_checker": "PASS"
+    },
+    {
+      "resolution": "720p",
+      "path": "models/anvil-small-720p-fp32.onnx",
+      "sha256": "019968d9710ef555a16816ed61caa3e8fc8bac4c6384e1451487e8d174b889ea",
+      "changed_nodes": [
+        "/Constant",
+        "/Constant_4",
+        "/Constant_22",
+        "/Constant_26"
+      ],
+      "weights_unchanged": true,
+      "initializer_count": 72,
+      "network_ops_shape_checked": 84,
+      "pads": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "padded_spatial_shape": [
+        720,
+        1280
+      ],
+      "input_shape": [
+        1,
+        6,
+        720,
+        1280
+      ],
+      "output_shape": [
+        1,
+        3,
+        720,
+        1280
+      ],
+      "input_bytes": 22118400,
+      "output_bytes": 11059200,
+      "reflection_and_crop_reference_checked": true,
+      "onnx_checker": "PASS"
+    },
+    {
+      "resolution": "540p",
+      "path": "models/anvil-small-540p-fp32.onnx",
+      "sha256": "9cc9a19826cb26b5e8a5583424c0e7fabe8f405c1d5720c8a6e86355432b690a",
+      "changed_nodes": [
+        "/Constant",
+        "/Constant_4",
+        "/Constant_22",
+        "/Constant_26"
+      ],
+      "weights_unchanged": true,
+      "initializer_count": 72,
+      "network_ops_shape_checked": 84,
+      "pads": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        0
+      ],
+      "padded_spatial_shape": [
+        544,
+        960
+      ],
+      "input_shape": [
+        1,
+        6,
+        540,
+        960
+      ],
+      "output_shape": [
+        1,
+        3,
+        540,
+        960
+      ],
+      "input_bytes": 12441600,
+      "output_bytes": 6220800,
+      "reflection_and_crop_reference_checked": true,
+      "onnx_checker": "PASS"
+    }
+  ],
+  "shape_only_edit_rejected": true,
+  "full_cnn_numerical_equivalence_tested": false,
+  "quality_validated": false,
+  "device_executed": false,
+  "precision": "FP32 ONNX weights and host I/O; existing probe requests HTP FP16",
+  "limitations": "Static tensor shapes, unchanged weights/operators, and padding/cropping verified. No full CNN inference, quantization, NPU execution, frame alignment or image-quality validation."
+}

@@ -1,0 +1,1 @@
+Offline review rejected 720p shaders: decimal-fragment int conversion stripped leading zeros. No device execution or packaging occurred. Preserve evidence; use corrected preparation outputs in the parent folder.

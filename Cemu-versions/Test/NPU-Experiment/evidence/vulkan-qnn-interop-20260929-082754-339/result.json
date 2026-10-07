@@ -1,0 +1,15 @@
+{
+  "status": "UNSUPPORTED",
+  "stage": "vulkan_capabilities",
+  "model": "../models/smoke-average-qdq-u8.onnx",
+  "rpc_library": "C:\\Windows\\System32\\DriverStore\\FileRepository\\qcnspmcdm8380.inf_arm64_6a2c30a0aec80e34\\libcdsprpc.dll",
+  "qnn_initialized": false,
+  "application_copy_free_gpu_npu_handoff": false,
+  "cemu_executed": false,
+  "full_framegen_validated": false,
+  "completed_rounds": 0,
+  "loader_api_version": 4211038,
+  "vulkan_devices": [{"index":0,"name":"Qualcomm(R) Adreno(TM) X1-85 GPU","vendor_id":20803,"device_id":909329200,"driver_version_raw":2151112704,"api_version":4210983},{"index":1,"name":"Microsoft Direct3D12 (Qualcomm(R) Adreno(TM) X1-85 GPU)","vendor_id":1297040209,"device_id":909329200,"driver_version_raw":109060195,"api_version":4202855},{"index":2,"name":"Microsoft Direct3D12 (Microsoft Basic Render Driver)","vendor_id":5140,"device_id":140,"driver_version_raw":109060195,"api_version":4202855}],
+  "matching_adreno_devices": 2,
+  "reason": "Expected exactly one Adreno device"
+}

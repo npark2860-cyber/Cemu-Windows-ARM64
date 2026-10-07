@@ -1,0 +1,219 @@
+
+File: ./integration-v1/build/cemu_npu.dll
+Format: COFF-ARM64
+Arch: aarch64
+AddressSize: 64bit
+ImageFileHeader {
+  Machine: IMAGE_FILE_MACHINE_ARM64 (0xAA64)
+  SectionCount: 6
+  TimeDateStamp: 2026-09-29 01:08:38 (0x6ABB0F96)
+  PointerToSymbolTable: 0x0
+  SymbolCount: 0
+  StringTableSize: 0
+  OptionalHeaderSize: 240
+  Characteristics [ (0x2022)
+    IMAGE_FILE_DLL (0x2000)
+    IMAGE_FILE_EXECUTABLE_IMAGE (0x2)
+    IMAGE_FILE_LARGE_ADDRESS_AWARE (0x20)
+  ]
+}
+ImageOptionalHeader {
+  Magic: 0x20B
+  MajorLinkerVersion: 14
+  MinorLinkerVersion: 51
+  SizeOfCode: 206848
+  SizeOfInitializedData: 112640
+  SizeOfUninitializedData: 0
+  AddressOfEntryPoint: 0x16BA8
+  BaseOfCode: 0x1000
+  ImageBase: 0x180000000
+  SectionAlignment: 4096
+  FileAlignment: 512
+  MajorOperatingSystemVersion: 6
+  MinorOperatingSystemVersion: 2
+  MajorImageVersion: 0
+  MinorImageVersion: 0
+  MajorSubsystemVersion: 6
+  MinorSubsystemVersion: 2
+  SizeOfImage: 335872
+  SizeOfHeaders: 1024
+  CheckSum: 0x0
+  Subsystem: IMAGE_SUBSYSTEM_WINDOWS_GUI (0x2)
+  Characteristics [ (0x160)
+    IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE (0x40)
+    IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA (0x20)
+    IMAGE_DLL_CHARACTERISTICS_NX_COMPAT (0x100)
+  ]
+  SizeOfStackReserve: 1048576
+  SizeOfStackCommit: 4096
+  SizeOfHeapReserve: 1048576
+  SizeOfHeapCommit: 4096
+  NumberOfRvaAndSize: 16
+  DataDirectory {
+    ExportTableRVA: 0x48C60
+    ExportTableSize: 0x50
+    ImportTableRVA: 0x48CB0
+    ImportTableSize: 0x3C
+    ResourceTableRVA: 0x0
+    ResourceTableSize: 0x0
+    ExceptionTableRVA: 0x4D000
+    ExceptionTableSize: 0x23F0
+    CertificateTableRVA: 0x0
+    CertificateTableSize: 0x0
+    BaseRelocationTableRVA: 0x51000
+    BaseRelocationTableSize: 0xA08
+    DebugRVA: 0x41450
+    DebugSize: 0x54
+    ArchitectureRVA: 0x0
+    ArchitectureSize: 0x0
+    GlobalPtrRVA: 0x0
+    GlobalPtrSize: 0x0
+    TLSTableRVA: 0x41500
+    TLSTableSize: 0x28
+    LoadConfigTableRVA: 0x41310
+    LoadConfigTableSize: 0x140
+    BoundImportRVA: 0x0
+    BoundImportSize: 0x0
+    IATRVA: 0x34000
+    IATSize: 0x328
+    DelayImportDescriptorRVA: 0x0
+    DelayImportDescriptorSize: 0x0
+    CLRRuntimeHeaderRVA: 0x0
+    CLRRuntimeHeaderSize: 0x0
+    ReservedRVA: 0x0
+    ReservedSize: 0x0
+  }
+}
+DOSHeader {
+  Magic: MZ
+  UsedBytesInTheLastPage: 144
+  FileSizeInPages: 3
+  NumberOfRelocationItems: 0
+  HeaderSizeInParagraphs: 4
+  MinimumExtraParagraphs: 0
+  MaximumExtraParagraphs: 65535
+  InitialRelativeSS: 0
+  InitialSP: 184
+  Checksum: 0
+  InitialIP: 0
+  InitialRelativeCS: 0
+  AddressOfRelocationTable: 64
+  OverlayNumber: 0
+  OEMid: 0
+  OEMinfo: 0
+  AddressOfNewExeHeader: 264
+}
+Import {
+  Name: onnxruntime.dll
+  ImportLookupTableRVA: 0x49008
+  ImportAddressTableRVA: 0x34318
+  Symbol:  (1)
+}
+Import {
+  Name: KERNEL32.dll
+  ImportLookupTableRVA: 0x48CF0
+  ImportAddressTableRVA: 0x34000
+  Symbol: GetCurrentProcessId (578)
+  Symbol: GetLastError (653)
+  Symbol: FreeLibrary (468)
+  Symbol: GetModuleFileNameW (673)
+  Symbol: LoadLibraryExW (1014)
+  Symbol: WideCharToMultiByte (1610)
+  Symbol: RtlPcToFileHeader (1298)
+  Symbol: RaiseException (1176)
+  Symbol: QueryPerformanceCounter (1153)
+  Symbol: QueryPerformanceFrequency (1154)
+  Symbol: GetSystemTimePreciseAsFileTime (795)
+  Symbol: CloseHandle (157)
+  Symbol: WaitForSingleObjectEx (1572)
+  Symbol: GetCurrentThreadId (582)
+  Symbol: GetExitCodeThread (616)
+  Symbol: ReleaseSRWLockExclusive (1258)
+  Symbol: AcquireSRWLockExclusive (0)
+  Symbol: TryAcquireSRWLockExclusive (1520)
+  Symbol: WakeConditionVariable (1580)
+  Symbol: WakeAllConditionVariable (1579)
+  Symbol: SleepConditionVariableSRW (1480)
+  Symbol: LocalFree (1026)
+  Symbol: FormatMessageA (463)
+  Symbol: GetLocaleInfoEx (656)
+  Symbol: FindClose (413)
+  Symbol: FindFirstFileW (424)
+  Symbol: FindFirstFileExW (419)
+  Symbol: FindNextFileW (436)
+  Symbol: GetFileAttributesExW (621)
+  Symbol: GetFileInformationByHandle (626)
+  Symbol: CreateFile2 (220)
+  Symbol: AreFileApisANSI (37)
+  Symbol: GetModuleHandleW (677)
+  Symbol: GetProcAddress (733)
+  Symbol: GetFileInformationByHandleEx (627)
+  Symbol: MultiByteToWideChar (1059)
+  Symbol: EnterCriticalSection (343)
+  Symbol: LeaveCriticalSection (1008)
+  Symbol: InitializeCriticalSectionEx (919)
+  Symbol: DeleteCriticalSection (303)
+  Symbol: EncodePointer (339)
+  Symbol: DecodePointer (296)
+  Symbol: LCMapStringEx (995)
+  Symbol: GetStringTypeW (776)
+  Symbol: GetCPInfo (490)
+  Symbol: RtlUnwind (1300)
+  Symbol: GetSystemTimeAsFileTime (794)
+  Symbol: InitializeSListHead (922)
+  Symbol: GetStartupInfoW (769)
+  Symbol: RtlLookupFunctionEntry (1296)
+  Symbol: RtlUnwindEx (1301)
+  Symbol: VerSetConditionMask (1549)
+  Symbol: VerifyVersionInfoW (1553)
+  Symbol: InterlockedFlushSList (926)
+  Symbol: SetLastError (1398)
+  Symbol: FlsAlloc (450)
+  Symbol: FlsGetValue (452)
+  Symbol: FlsSetValue (454)
+  Symbol: FlsFree (451)
+  Symbol: CreateThread (271)
+  Symbol: ExitThread (391)
+  Symbol: FreeLibraryAndExitThread (469)
+  Symbol: GetModuleHandleExW (676)
+  Symbol: GetCurrentProcess (577)
+  Symbol: ExitProcess (390)
+  Symbol: TerminateProcess (1494)
+  Symbol: HeapAlloc (892)
+  Symbol: HeapFree (896)
+  Symbol: VirtualProtect (1560)
+  Symbol: LCMapStringW (996)
+  Symbol: GetLocaleInfoW (657)
+  Symbol: IsValidLocale (960)
+  Symbol: GetUserDefaultLCID (841)
+  Symbol: EnumSystemLocalesW (379)
+  Symbol: GetStdHandle (771)
+  Symbol: GetFileType (634)
+  Symbol: FlushFileBuffers (456)
+  Symbol: WriteFile (1630)
+  Symbol: GetConsoleOutputCP (553)
+  Symbol: GetConsoleMode (549)
+  Symbol: ReadFile (1193)
+  Symbol: GetFileSizeEx (632)
+  Symbol: SetFilePointerEx (1383)
+  Symbol: ReadConsoleW (1190)
+  Symbol: IsValidCodePage (958)
+  Symbol: GetACP (475)
+  Symbol: GetOEMCP (710)
+  Symbol: HeapReAlloc (899)
+  Symbol: GetCommandLineA (511)
+  Symbol: GetCommandLineW (512)
+  Symbol: GetEnvironmentStringsW (610)
+  Symbol: FreeEnvironmentStringsW (467)
+  Symbol: GetProcessHeap (740)
+  Symbol: SetStdHandle (1425)
+  Symbol: CreateFileW (230)
+  Symbol: HeapSize (901)
+  Symbol: WriteConsoleW (1629)
+  Symbol: SetEndOfFile (1364)
+}
+Export {
+  Ordinal: 1
+  Name: cemu_npu_get_api
+  RVA: 0x12FB0
+}

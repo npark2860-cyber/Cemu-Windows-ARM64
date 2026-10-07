@@ -1,0 +1,59 @@
+{
+  "parent_manifest_sha256": "be60f231b121ce14ccf73894d1bd3ec5976aecac52539f8dbbcfa782c8e6515e",
+  "release_reference_manifest_sha256": "cdbb6761e7463e546a9c31289496af5f3beb990548aafada2630c1878ace47fe",
+  "module_abi": 3,
+  "changes": [
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp",
+      "before_sha256": "055cd9624e02d45491db5be2740f86d8c864b85618b4a262bba528349bfff9f3",
+      "after_sha256": "8a16e8a7b0ea3ccaf16fa2a4a9c58eeccd3f07d78b30823c2ec91c492870ca3e"
+    },
+    {
+      "path": "src/gui/wxgui/GeneralSettings2.cpp",
+      "before_sha256": "1ce280fa173ee918d25ec3aee789c29e72124ac322722eb3904bf2d9acd4e5c0",
+      "after_sha256": "347c8c0758cf3c5cc97a357fbccad5155c79303cafcb8df5203c81a7ffdd5fb9"
+    },
+    {
+      "path": "src/Cafe/OS/libs/snd_core/ax_voice.cpp",
+      "before_sha256": "d01a9045f7e0f701549eb7f9c4fb90d322051203090ae5e6a5597b4210ef2e00",
+      "after_sha256": "ccbcd07e86fde3e185c683aebfdb90f08e854382481f2cfcd9c5a70af98e0a3a"
+    },
+    {
+      "path": "dependencies/npu-cemu/buffered_timeline.h",
+      "before_sha256": "2af9a420c74f5ae02768fd91522e8cc1ab313ca8806dfc30a580d122badac473",
+      "after_sha256": "b292a0fd354c84dc0f367c21c18bfd3f85447ee66463fdaf1dfc834d9ead915d"
+    },
+    {
+      "path": "dependencies/npu-cemu/frame_contract.h",
+      "before_sha256": null,
+      "after_sha256": "ab8d6ca1e0ecea11281c4e41655e55ca58266694c41b319037bb4780b472d420"
+    },
+    {
+      "path": "dependencies/npu-cemu/npu_cemu.cpp",
+      "before_sha256": "c02a5ea01b36605cb52a89c7fa2ba659159e813caa1aada80e0970055f44ade2",
+      "after_sha256": "2283c29fdf5ce87b7572d8a821f7d908a38224bfc155c2abee781fe073a507a2"
+    },
+    {
+      "path": "dependencies/npu-cemu/npu_cemu.h",
+      "before_sha256": "cb03c35ff5fe86bc4abd64b7e2f2d1869c35ba9aa679db4ecd4cade2ad608e21",
+      "after_sha256": "fda9f9a1f56c78a755b2a48a8025a2b4f2f121fe974c406d12889ebd6de2666d"
+    },
+    {
+      "path": "dependencies/npu-cemu/test_buffered_timeline.cpp",
+      "before_sha256": "290b21c67b61170b6fbce338f3ba2e2db8791000073de6facd07ed53c73f6176",
+      "after_sha256": "2cb4bfa2201b2b867d5c4f430732ee6524b3c19324e406008ad675a1ff4cd5c6"
+    },
+    {
+      "path": "i18n/npu/npu.pot",
+      "before_sha256": "4e222e34e780e110b3de3b872d7ba5185faab92ec98a8b0cfaac219f5b2fe49c",
+      "after_sha256": "2be0e010753ddaa372eb892e46d1554a118d685a0953c9649670f20770b885cb"
+    },
+    {
+      "path": "i18n/npu/ko.po",
+      "before_sha256": "50c1cae09a76ea7b0748bdd9da8d7cdb22bcfcdb21031010273208f0ff64ecee",
+      "after_sha256": "e2aed3dfe12886f7f13e6b58b5d07fe01a03e3fe411b5274d7f08b75dcd46505"
+    }
+  ],
+  "same_package": true,
+  "game_executed": false
+}

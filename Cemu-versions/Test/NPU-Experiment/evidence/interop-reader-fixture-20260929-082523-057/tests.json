@@ -1,0 +1,41 @@
+{
+  "status": "OFFLINE_INTEROP_READER_TESTS_PASSED",
+  "device_executed": false,
+  "fixture": "interop-reader-fixture-20260929-082523-057",
+  "cases": [
+    {
+      "name": "accept_explicit_unsupported_without_qnn",
+      "passed": true
+    },
+    {
+      "name": "reject_unsupported_with_wrong_exit_code",
+      "passed": true,
+      "reason": "Probe did not complete: Synthetic extension-unavailable fixture"
+    },
+    {
+      "name": "accept_five_changing_oracle_fixtures",
+      "passed": true
+    },
+    {
+      "name": "reject_wrong_gpu_input",
+      "passed": true,
+      "reason": "GPU input audit failed"
+    },
+    {
+      "name": "reject_poison_or_stale_output",
+      "passed": true,
+      "reason": "GPU-read output arithmetic oracle failed"
+    },
+    {
+      "name": "reject_noncoherent_import",
+      "passed": true,
+      "reason": "Unexpected non-coherent or non-host-visible memory"
+    },
+    {
+      "name": "reject_cpu_fallback",
+      "passed": true,
+      "reason": "QNN-only execution not verified"
+    }
+  ],
+  "limitation": "All data and profile metadata are synthetic; this validates rejection/oracle logic and does not establish driver support or GPU/NPU interoperability."
+}

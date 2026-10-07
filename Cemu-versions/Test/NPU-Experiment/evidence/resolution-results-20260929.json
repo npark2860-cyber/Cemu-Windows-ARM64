@@ -1,0 +1,59 @@
+{
+  "recorded_at": "2026-09-29T07:07:37.4088858+09:00",
+  "time_slot_start": "2026-09-29T07:04:56.6043251+09:00",
+  "time_slot_end": "2026-09-29T07:06:46.641795+09:00",
+  "time_slot_closed": true,
+  "approval": "User explicitly answered 지금 측정해 for two-resolution NPU measurement, about 1-2 minutes",
+  "settings": "Original ARM64 probe; HTP FP16; balanced; detailed profiling; 1 first run + 3 warmups + 10 measured runs",
+  "probe_sha256": "59517848f33dfbe26a9fe0f5208c41a227471949d2f7981c0f867bcb992602d9",
+  "measurements": [
+    {
+      "resolution": "1080p",
+      "run": "htp-anvil-20260929-064439-619",
+      "model_sha256": "65e871aed25b331e3a3747cf9019942121a94af71997476f5804a24b768cd0d8",
+      "mean_ms": 128.93722,
+      "p95_ms": 131.046,
+      "accelerator_excluding_wait_ms": 97.0807,
+      "prior_time_slot": true
+    },
+    {
+      "resolution": "720p",
+      "run": "htp-resolution-720p-20260929-070643-579",
+      "model_sha256": "3151da962cb40410d8e73be27cf67c4b6db1dfb4ff1a59cc05f7b4e95cad9339",
+      "mean_ms": 49.07922,
+      "p95_ms": 49.6708,
+      "accelerator_excluding_wait_ms": 35.5028,
+      "relative_speed_to_1080p": 2.627124473453327,
+      "time_reduction_needed_for_30_inferences_per_sec": 0.32082593542983495,
+      "prior_time_slot": false
+    },
+    {
+      "resolution": "540p",
+      "run": "htp-resolution-540p-20260929-070530-368",
+      "model_sha256": "9cc9a19826cb26b5e8a5583424c0e7fabe8f405c1d5720c8a6e86355432b690a",
+      "mean_ms": 39.25469,
+      "p95_ms": 39.6266,
+      "accelerator_excluding_wait_ms": 25.998,
+      "relative_speed_to_1080p": 3.284632231206004,
+      "time_reduction_needed_for_30_inferences_per_sec": 0.15084456574912863,
+      "prior_time_slot": false
+    }
+  ],
+  "failed_attempt": {
+    "run": "htp-resolution-720p-20260929-070456-603",
+    "exit_code": 1,
+    "reason": "Zero-width reflect Pad unsupported by QNN. CPU fallback prohibition stopped session initialization before inference.",
+    "repair": "Removed exact identity Pad and its constant-only precursor; original weights and CNN/crop nodes retained. New model has 94 nodes.",
+    "repair_evidence": "evidence/720p-zero-pad-repair.json"
+  },
+  "cpu_fallback": false,
+  "runtime_io_shapes_verified": true,
+  "synthetic_input": true,
+  "game_image_quality_tested": false,
+  "vulkan_transfer_tested": false,
+  "cemu_launched": false,
+  "ui_control": false,
+  "forced_termination": false,
+  "int8_anvil_tested": false,
+  "interpretation": "Reduced resolution substantially lowers FP16 inference cost; even 540p Run wall time exceeds the 33.3ms budget. Device-only 26ms cannot stand in for full pipeline latency. More reduction needed with transfers/flow/composition still unmeasured."
+}

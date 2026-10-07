@@ -1,0 +1,6 @@
+{
+  "status": "NPU_V4_PACKAGE_PREPARED_NOT_EXECUTED",
+  "runtime": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Release-v4\\runtime",
+  "cemu_executed": false,
+  "gpu_npu_executed": false
+}

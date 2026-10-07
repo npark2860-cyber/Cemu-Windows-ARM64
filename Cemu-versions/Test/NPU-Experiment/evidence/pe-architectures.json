@@ -1,0 +1,38 @@
+[
+  {
+    "name": "npu-probe.exe",
+    "machine": "ARM64 (0xAA64)"
+  },
+  {
+    "name": "onnxruntime_providers_qnn.dll",
+    "machine": "ARM64 (0xAA64)"
+  },
+  {
+    "name": "onnxruntime_providers_shared.dll",
+    "machine": "ARM64 (0xAA64)"
+  },
+  {
+    "name": "onnxruntime.dll",
+    "machine": "ARM64 (0xAA64)"
+  },
+  {
+    "name": "QnnHtp.dll",
+    "machine": "ARM64 (0xAA64)"
+  },
+  {
+    "name": "QnnHtpPrepare.dll",
+    "machine": "ARM64 (0xAA64)"
+  },
+  {
+    "name": "QnnHtpV73Stub.dll",
+    "machine": "ARM64 (0xAA64)"
+  },
+  {
+    "name": "QnnHtpV81Stub.dll",
+    "machine": "ARM64 (0xAA64)"
+  },
+  {
+    "name": "QnnSystem.dll",
+    "machine": "ARM64 (0xAA64)"
+  }
+]

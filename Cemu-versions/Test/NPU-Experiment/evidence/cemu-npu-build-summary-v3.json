@@ -1,0 +1,20 @@
+{
+  "status": "V3_BUILD_AND_CPU_CHECKS_COMPLETE_USER_RUNTIME_TEST_PENDING",
+  "variant": "Release (NPU EXP v3)",
+  "cemu_sha256": "6ebfced481419d205bd51e948d4619d1e8845d33113b70adc4f0a53a048aab97",
+  "module_sha256": "6eb9cb8acc8d722ebc7c21bc7b0a972618d7f8c4c256abe7ac6064f31be6600a",
+  "module_unchanged_from_v2_game": true,
+  "build_exit_code": 0,
+  "overlay_cpu_contract": {
+    "status": "OVERLAY_CPU_CONTRACT_PASSED",
+    "checks": 485,
+    "gpu_npu_executed": false
+  },
+  "path_cpu_checks": 7,
+  "timeline_cpu_checks": 17,
+  "agent_started_cemu": false,
+  "agent_started_gpu_npu": false,
+  "user_will_test": true,
+  "preserved_gpu_baseline_sha256": "ced1fa7b1291dd29fec78188165651634e6e8a9a07025afc2904e35b63737504",
+  "package_files": 48
+}

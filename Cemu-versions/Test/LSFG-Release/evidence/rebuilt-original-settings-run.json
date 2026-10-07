@@ -1,0 +1,12 @@
+{
+  "scenario": "rebuilt-original-settings",
+  "exe": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\LSFG-Release\\runtime-experiment\\Cemu-rebuilt-stock.exe",
+  "sha256": "dde2a914eab3bca24c57fa73e447bf0cfb72c259819e4312fe717166dc9556cb",
+  "process_id": 27280,
+  "started_at": "2026-09-29T02:54:12.5880961+09:00",
+  "status": "EXITED",
+  "watchdog_kill": false,
+  "exit_code": 0,
+  "ended_at": "2026-09-29T02:58:04.8809462+09:00",
+  "duration_seconds": 232.29
+}

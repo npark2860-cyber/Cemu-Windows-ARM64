@@ -1,0 +1,7 @@
+[Definition]
+titleIds = 00050000101C9300,00050000101C9400,00050000101C9500
+name = BOTW Bow Adaptive Trigger v208 - event driven RC1
+path = "The Legend of Zelda: Breath of the Wild/Mods/Controller/Bow Adaptive Trigger"
+description = "Bow-ID tension cache and release-event re-arm. Wii U v208 only. Disable all other raw R2 packs. RC1: gameplay event coverage still requires hardware validation."
+version = 8
+default = false

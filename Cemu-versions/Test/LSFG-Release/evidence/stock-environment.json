@@ -1,0 +1,346 @@
+{
+  "prepared_at": "2026-09-29T02:28:26.1449039+09:00",
+  "baseline_role": "Release (not SE)",
+  "stock_exe_sha256": "d2d77ee6961d9f834740ae450653a9f9235da27f43f3b82ed35ca7b2acc56abb",
+  "runtime": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\LSFG-Release\\runtime-stock",
+  "game": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\LSFG-Release\\runtime-stock\\portable\\mlc01\\usr\\title\\00050000\\101c9300",
+  "mutable_data_is_copied": true,
+  "original_title_content_junction": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\LSFG-Release\\runtime-stock\\portable\\mlc01\\usr\\title",
+  "protected_files": [
+    {
+      "path": "C:\\Emulators\\Cemu_arm64\\Cemu.exe",
+      "sha256": "d2d77ee6961d9f834740ae450653a9f9235da27f43f3b82ed35ca7b2acc56abb"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\settings.xml",
+      "sha256": "47beecdb16d60269bfc261f97776227b72266f0577674638ef9029e840a2513d"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user.zip",
+      "sha256": "3c7a35026148af8e7ef55490a6bd63dda1adaf96567dcaab6a14548a09882966"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\meta\\iconTex.tga",
+      "sha256": "594f278a5d9170f0a28d8eaeeab096e0d7c69d31a69c595563da44339349209b"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\meta\\meta.xml",
+      "sha256": "3dfe6dcdb7102eb9e9969481a3f1d77585b5dedf64691551b93151ee220b3d94"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\meta\\saveinfo.xml",
+      "sha256": "5c3715f77a20de919c6e04e0a405db33b052f0b18a1d0de557ba6d34f99df5d8"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\option.sav",
+      "sha256": "76b26d15372db2ad8f3a8d679691b125564d83054d94c16a0e9779b944df3e5b"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\0\\caption.jpg",
+      "sha256": "8e74ed11e382ad5cd74b2dbfc1ec71eacdc01d1ac2856b3bfdcb8fd99425d446"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\0\\caption.sav",
+      "sha256": "4fef47c348ce83ac3149626c1da520c36aacc95509a38c69d666598bd49b6ff5"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\0\\game_data.sav",
+      "sha256": "dff6363f8fb341ecfed8d9f99e8e87c4b0f66a369032fbf55d14fb0bf7f9a6a2"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\1\\caption.jpg",
+      "sha256": "3898e77f388c232ebbc7428b6fee08578992e9286ec4c45a31d2873bda2e9b64"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\1\\caption.sav",
+      "sha256": "e9043cd07b2b05bf60b4c306f774891cbd42949c9e382ed2fb3890e4dbe05805"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\1\\game_data.sav",
+      "sha256": "b100d05a7838c77201fcc9fcd86cadb1874e79a6fd88ad9054ef121a45915faf"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\2\\caption.jpg",
+      "sha256": "f64a5bad9a9fc4c0895f947e868eca32a36a17839e7bd1fac091837e227693ae"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\2\\caption.sav",
+      "sha256": "2a314a3830e142da0b6a62e57b4b507b566b5761eb22a3d62ada2f54e3af1406"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\2\\game_data.sav",
+      "sha256": "c444a69ec8c8300a3fe9995bfd36c58b03c5f0f22543dd8b585471bc81448876"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\3\\caption.jpg",
+      "sha256": "785eb84245332920ceb81b5ef1761cbeb72aaeb87ba27f4df8ec556550ab53f0"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\3\\caption.sav",
+      "sha256": "05a03b0a7f14238f62c40a99bcba8710b96dc81255ee2e0c7105f266b2caedbb"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\3\\game_data.sav",
+      "sha256": "aa56fd7f1e667858d5cb20dd97da9edac656444b08da46750d167bf0a6222a14"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\4\\caption.jpg",
+      "sha256": "a56cbf0251294f261c2b95761a51751809cfc59b3576f52ebdbc888f475efb65"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\4\\caption.sav",
+      "sha256": "3b8c2f41e8cee9ee48353bb811c4888aee14b37453e06ab83d14daeffbdbd5d1"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\4\\game_data.sav",
+      "sha256": "2c31984109cff16191172a75c3afe73f077abc24a85f08bea88a81f7a3058144"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\5\\caption.jpg",
+      "sha256": "6324a8a052f59bcd969adb02bdac917d3596efc30dc9e93e6fc1d1937f416b9d"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\5\\caption.sav",
+      "sha256": "36453cbcea374bfba4e3284b2aa23058f562bf0776dac3f6a8a0547a10edd1d0"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\5\\game_data.bak",
+      "sha256": "4e34ed2e8e001c6c68ae8d6a79c02dff9a2cce409eddb31bb1f9a05d00c21edb"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\5\\game_data.sav",
+      "sha256": "b954b40995950d3a5dfd26a5657c5734a3214d794c434e6fdabe73c8259c3e6e"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_000.jpg",
+      "sha256": "cbe4c395b92cc6531d2aa743ea7431cafaad207f1ac94fc413c94d50e9b02451"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_001.jpg",
+      "sha256": "8563341bea5b4033aa35268ab32b73bf0aea30db232e250ccc7ecf5f6199cbda"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_002.jpg",
+      "sha256": "3c49e1c19a33216fc0e1775fc2e4d4c01d5f8bd7c88dbea22ac73bbc2b51f80c"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_003.jpg",
+      "sha256": "242056104500607d36057f0ddcd45b702579070ce9ecf1b1507b5212d559cd61"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_004.jpg",
+      "sha256": "ce35d4d12c778c80b29d861948e62b4f3474cc6f6b1e5abb477f726c9d380a52"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_005.jpg",
+      "sha256": "e00985e29ac692780afd205b62bf735b2010f7758fe235fe0ec551705bcea659"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_006.jpg",
+      "sha256": "745b7d880db277c74bc831fabfa3b02942b6d891898cef827574d6299083c9a8"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_007.jpg",
+      "sha256": "60a219ba134d2db6b322617ac2fdfb022ef14563dc256c5a3497b93853d6c8e2"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_008.jpg",
+      "sha256": "0a42db8868df14a6aa68cd8cfecdfd342d91f9c19b4fc624798f896930e88381"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_009.jpg",
+      "sha256": "2b792ff6d34bbf87c31193f8bfa041fff1043028622d49a2202c735e8f794731"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_010.jpg",
+      "sha256": "991ef2445866b7f82f7f1b519df72f11c9c4af0a79b644c7dc1e8dc96e14c996"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_011.jpg",
+      "sha256": "15274b9d1d9b92a64cf2b72b9d46987d96b65bc4fad1dd79418dd5d48b041197"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_012.jpg",
+      "sha256": "7657ef2f543b4346f6a35db79eaaafc52b425fc749f5a14d68cbc451b1aceaea"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_013.jpg",
+      "sha256": "36d8ba80246aeef9f4262272c713d7ab2ca72f3448dc6c1da20562222f9d79db"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_014.jpg",
+      "sha256": "2f45b897d86a98e03649c1a89ba67ab718a1fc8f3955273a3ce2d3b8a648ca02"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_015.jpg",
+      "sha256": "a0e9d038bc861fdc0fa5beca3d0ce0e2f3abea0ed24a85a513699dc79c4c0413"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_016.jpg",
+      "sha256": "5e2a45ce09bedf9ebabc89d8470eb3a3b3976cf817c1a97b60da8ad688e66bfd"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_017.jpg",
+      "sha256": "5f1f7e7e638d5d794625649de88fc2b93e13aa5f402227e8e4280b80dd3aad4e"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_018.jpg",
+      "sha256": "4a765cdcdc439818ea9338eca37cdd7c191979e6deab5b448a348899424f91c2"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_019.jpg",
+      "sha256": "8262590217ca15610135707faa0d077ce366b43c9a628c8426137a7ffd10d3bd"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_020.jpg",
+      "sha256": "3d994fa18c7dce73c5bfc84585ae07234ac70495763fbf775b395b897a406b68"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_021.jpg",
+      "sha256": "50afc9bc047d4804fea908d0ba9b9ec76b233d91314ccbcd7fd682552a4f5e5e"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_022.jpg",
+      "sha256": "cc2bd306b1094451cd328e8a802f4c9a9bad41cabc2e03c925c76264c655756f"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_023.jpg",
+      "sha256": "9fee2ed8b834a31bb9ef175775c4b9039f9a794c22be5610671db09060329598"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_024.jpg",
+      "sha256": "08963039d094ab2febe3902040289712646df7ff1fd311a01eba6c23539b68e0"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_025.jpg",
+      "sha256": "85c93771b760c9afd9a5c75a67aa29aa533c885f719c8292c6a8336bf742f1cf"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_026.jpg",
+      "sha256": "96fcf5ee120996b9fe33eed1afccb610afdf3513559ab7befb73b2fbe5928bcd"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_027.jpg",
+      "sha256": "5bcdbcc51a4fa972dd06f048be57391323de2edd6db39f3eddb1a4c389ebe32a"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_028.jpg",
+      "sha256": "8486ac68b5646012bc85c16fba35b6d8a576ad23ad7fe232901b2e1c6abd669b"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_029.jpg",
+      "sha256": "c7e9e3039f10f1c80580b5169dce083d44f45456cef9df65bb23c07572392518"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_030.jpg",
+      "sha256": "5deb95d44dbff44d33368f59ba6f26f64f6aa62f4fb766a10ce4a5fa35dfeae6"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_031.jpg",
+      "sha256": "ab3b821be1e43c1d1f99457d9f766c00a5d39bf0e1c34f40c9266ed3d7a88611"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_032.jpg",
+      "sha256": "ab55b742aad7dfa19d4829a90d9d63e9c639e675f1910fa96fd930cf40ea8b46"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_033.jpg",
+      "sha256": "325e7cfb88a0abef8266fc37285b25e6ce22a7a7f0cddb6f923096a0786af4ff"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_034.jpg",
+      "sha256": "6eb3fcde44274628d3fdc878c4cb2bb601fd10ff44f32f21dcd86b19cde09bc9"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_035.jpg",
+      "sha256": "6dc3c11fa0fa3125dfda46f5796835e01fc4fe46e6ec61159ab92e70629fbc47"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_036.jpg",
+      "sha256": "fcef9f18ecb60768802bf55b07c2a15b515b19f880cc4a4175a7d4b8e42d86aa"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_037.jpg",
+      "sha256": "61a4e463a5ea69e1c63784932126a31cfb5d64d88086c80ef1eb68cd9582860e"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_038.jpg",
+      "sha256": "8ebbc029d9a3bac5f3744196911a5e7f9ba4012816043a7867a3ddb688a71e25"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\album\\pict_039.jpg",
+      "sha256": "9ef1c5e86adee5ddb23e67985a02f90a594df8a598f73cb7ced8f42cfd2d9532"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\pict_book\\Enemy_Lynel_Middle.jpg",
+      "sha256": "874a0853ac0a004315b69220a4564ee5686c6832ccbf7485261c6d616f421a97"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\pict_book\\Item_Mushroom_C.jpg",
+      "sha256": "167d39a56a67b3866b7e642aece3b11254c52bf44c69511cd4fa5353191f4d78"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock00.sav",
+      "sha256": "f5c78ba0c129fb0259b667180c79ec9362ff7b8b1e2ebb27a936b470fc203f49"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock01.sav",
+      "sha256": "8b2dd1bcbda5512bf5bea7a3052a7d7c9d0af613fe0b1e8a05298944bb99e69d"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock02.sav",
+      "sha256": "5d2a8deb93e328041b8348b452904652f8a93e31589bde2948ed772198f4a244"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock03.sav",
+      "sha256": "6f2c8004d79e0de3a51eafa19653cf7153834268655dec2e4e608075bc296aac"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock04.sav",
+      "sha256": "ad132b2583706942f6630216d3bfa3da2c4c2d91199cf9e8951818c8f1812e0a"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock05.sav",
+      "sha256": "77b1f759202ae8b5912dfd34b38ce06e279e33cdc84998353383d94c32da2216"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock06.sav",
+      "sha256": "471bddc9d2bbd493603cccdac9e83770e61d90550ead4d0c229703a0600e0d4d"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock07.sav",
+      "sha256": "502bb56c5d3064714ee3958d3028205580922fbc0ba9951940952c29c7b4ee9f"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock08.sav",
+      "sha256": "9d080bb06a01fe30aba8dc78e268900d662714bc6de4fe93da11463865137f1c"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock09.sav",
+      "sha256": "49196d00379bc8ad1fb10361db8188d23a5b5be2865f0c08cb5fc6111496fc34"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock10.sav",
+      "sha256": "2fe8a8814eb627950942a3aaec4737b6f77ef400b20a769210a311093b9a2db2"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock11.sav",
+      "sha256": "09b0a007ecc6185a79b9805b7a73d63279af8e4a1accf4e09b56496802f90689"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock12.sav",
+      "sha256": "bef516e88a1ff7ad1a03e2fd9b0e5f08550d616618600b9dc6af279f41839add"
+    },
+    {
+      "path": "C:\\Users\\angel\\AppData\\Roaming\\Cemu\\mlc01\\usr\\save\\00050000\\101c9300\\user\\80000001\\tracker\\trackblock13.sav",
+      "sha256": "21e69fcaaf4a23dadff8450d297820f2bf56c9a0c0e0cdeb0d9f20287be7bfa1"
+    }
+  ],
+  "config_changes": [
+    "private mlc_path",
+    "windowed",
+    "update check off",
+    "Discord presence off"
+  ],
+  "graphics_settings_and_packs": "preserved from copied user settings"
+}

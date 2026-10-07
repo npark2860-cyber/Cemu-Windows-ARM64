@@ -1,0 +1,22 @@
+{
+  "status": "READY_NOT_DEVICE_EXECUTED",
+  "runner_parser": "PASS",
+  "int8_preflight": {
+    "status": "FILES_VERIFIED_NOT_EXECUTED",
+    "resolution": "1080p",
+    "model": "evidence/int8-prep-20260929-071500-022764/anvil-1080p-synthetic-u8u8.onnx",
+    "model_sha256": "ec1abb0d5921a5117ff247bc7803287b44be38423af8e84393d8553cee84d95f",
+    "device_loaded": false,
+    "precision": "Synthetic U8 weights + U8 activations; FLOAT32 host I/O",
+    "quality_validated": false
+  },
+  "fp16_control_preflight": {
+    "status": "FILES_VERIFIED_NOT_EXECUTED",
+    "resolution": "1080p",
+    "model": "models/anvil-small-1080p-fp32.onnx",
+    "model_sha256": "65e871aed25b331e3a3747cf9019942121a94af71997476f5804a24b768cd0d8",
+    "device_loaded": false,
+    "settings": "HTP FP16, balanced, detailed profiling, 3 warmups",
+    "next": "Add -Run only after the user agrees to a new NPU time slot."
+  }
+}

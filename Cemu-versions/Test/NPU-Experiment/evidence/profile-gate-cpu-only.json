@@ -1,0 +1,9 @@
+[
+  {
+    "args": {
+      "provider": "CPUExecutionProvider"
+    },
+    "name": "kernel_time",
+    "cat": "Node"
+  }
+]

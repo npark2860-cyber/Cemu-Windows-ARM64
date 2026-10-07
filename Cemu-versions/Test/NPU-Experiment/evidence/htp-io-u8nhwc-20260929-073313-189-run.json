@@ -1,0 +1,77 @@
+{
+  "status": "HTP_IO_VARIANT_VERIFIED",
+  "variant": "U8NHWC",
+  "started_at": "2026-09-29T07:33:13.1912977+09:00",
+  "ended_at": "2026-09-29T07:33:17.2465446+09:00",
+  "exit_code": 0,
+  "model": "evidence/io-prep-20260929-072654-165595/anvil-1080p-u8nhwc.onnx",
+  "model_sha256": "8bf0fbfd3be38cf571da5b79a47a83259a9ade9441688fc5defb06bbda0ecd3c",
+  "probe_sha256": "9045a2127994d531de9f93057bc63bdfe18aa70ddb86eb07c8c931d3e35eb9b3",
+  "settings": "balanced, detailed profiling, same logical synthetic image",
+  "console_log": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\Test\\NPU-Experiment\\evidence\\htp-io-u8nhwc-20260929-073313-189-console.log",
+  "result": {
+    "status": "HTP_IO_VARIANT_VERIFIED",
+    "variant": "U8NHWC",
+    "run_mean_ms": 34.3743,
+    "run_p50_ms": 33.2843,
+    "run_p95_ms": 39.9219,
+    "input_shape": [
+      1,
+      1080,
+      1920,
+      6
+    ],
+    "output_shape": [
+      1,
+      1080,
+      1920,
+      3
+    ],
+    "host_dtype": "uint8",
+    "layout": "NHWC",
+    "profile_evidence": {
+      "verified_qnn_only": true,
+      "node_events": 14,
+      "kernel_events": 14,
+      "kernels_without_provider": 0,
+      "providers": [
+        "QNNExecutionProvider"
+      ],
+      "note": "Provider evidence must be combined with explicit QnnHtp backend selection and disabled CPU fallback."
+    },
+    "accelerator_metrics": [
+      {
+        "name": "Accelerator (execute excluding wait) time",
+        "mean_ms": 15.6697,
+        "samples": 10
+      },
+      {
+        "name": "Accelerator (execute) time",
+        "mean_ms": 16.139799999999997,
+        "samples": 10
+      },
+      {
+        "name": "QNN accelerator (execute) time",
+        "mean_ms": 26.6421,
+        "samples": 10
+      },
+      {
+        "name": "RPC (execute) time",
+        "mean_ms": 27.2375,
+        "samples": 10
+      },
+      {
+        "name": "QNN (execute) time",
+        "mean_ms": 28.286199999999997,
+        "samples": 10
+      }
+    ],
+    "metrics_overlap_do_not_add": true,
+    "timing_scope": "ORT Run wall time including output allocation, host transfers/RPC and detailed profiling; excludes external quantization, packing, output dequantization, Vulkan transfers, motion estimation and present",
+    "external_conversion_costs_measured": false,
+    "game_quality_validated": false
+  },
+  "error": null,
+  "quality_validated": false,
+  "external_conversion_costs_measured": false
+}

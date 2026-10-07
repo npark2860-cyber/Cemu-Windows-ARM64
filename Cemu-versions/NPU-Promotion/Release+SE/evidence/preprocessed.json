@@ -1,0 +1,78 @@
+{
+  "role": "Release+SE",
+  "base_commit": "9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+  "steps": [
+    "Apply known-good pre-e834 runtime behavior",
+    "Apply permanent PS DEFAULT_VAL linkage compatibility fix",
+    "Apply AMD FidelityFX FSR1",
+    "Apply Cemu ARM64 window branding",
+    "Verify release source is diagnostics-free"
+  ],
+  "workflow_sha256": "c649f57ca99a2e08d05600f7128dd302011e10af30a8426fe74a070fd01cb390",
+  "changed": [
+    {
+      "path": "src/Cafe/HW/Latte/Core/LatteRenderTarget.cpp",
+      "sha256": "ef7df6c0ce0b04ca18c2ef897981370ffb8ed7738e35ae0378e0315b4ff95bf8"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Core/LatteShader.cpp",
+      "sha256": "121401dabea12843bc59dee0d7a41b50f330fb838daa16e379a57c852fe6e15f"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Core/LatteShader.h",
+      "sha256": "6d3c5c0c563b2436049343094b38d08fe668b0c76befcb9baef371bba5cdcbda"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSL.cpp",
+      "sha256": "4e2870d9ffd3a70ed4bb1653876491f734ea278c96be4413c9c8c383a510942a"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerEmitGLSLHeader.hpp",
+      "sha256": "4b6b16f7d9f7f705d4e9a86f315428fc751b5c95fe5a593c9af051744e61cf14"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/RendererOuputShader.cpp",
+      "sha256": "1a077fbd4dbf57887e1ed1ee525981e6924012dd637b0af5a5cdc0411ad6a53b"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/RendererOuputShader.h",
+      "sha256": "ed1f73c5ca6d346854cfa731ee90bb21e21e0545b6b41534ce8f610b1daaead4"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp",
+      "sha256": "ec3f385f57b1e56fe67a5a00b303119dda9b398fc0fac9c5c557558d12563771"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp",
+      "sha256": "6c44390edc85dea14e731ffd7532cc4b6e60994100996b2712d89b7f16feb9da"
+    },
+    {
+      "path": "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h",
+      "sha256": "67f0e8b4e16cac21d59026ac551e23a64043ba4977d2087c0fa4625bfff4a860"
+    },
+    {
+      "path": "src/config/CemuConfig.cpp",
+      "sha256": "0a263d61334ae695d82c30a0e948682503ea1fec9d527fe2c14ebabe17f5e750"
+    },
+    {
+      "path": "src/config/CemuConfig.h",
+      "sha256": "883f912dc6218eee20db5aed38913fdb9ce8a429c2bcca26862587e1d567ecfa"
+    },
+    {
+      "path": "src/gui/wxgui/GeneralSettings2.cpp",
+      "sha256": "67011505aff4c565ef18379c0659f63c4fde05854c16cab174a364485a52a8e8"
+    },
+    {
+      "path": "src/gui/wxgui/GeneralSettings2.h",
+      "sha256": "d9b5f932f192b08e3104b4b7c0b2b453249dd18556ac212b3e882172ae6362a7"
+    },
+    {
+      "path": "src/gui/wxgui/MainWindow.cpp",
+      "sha256": "6fdc325efc3415347c46cc5aaf927449eb225588d1f987171e29d9f8125cdf91"
+    },
+    {
+      "path": "src/gui/wxgui/wxWindowSystem.cpp",
+      "sha256": "cc0eee491d7b783f6b31bd7b9c6494dd2f986676fc40523f3a834501b28ef580"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "role": "Test",
+  "branch": "codex/generic-voice-haptics",
+  "source_commit": "9c0b899eb31792353909ac7ff81ed42b2dd7f8fa",
+  "source_path": "Test/PR5/source",
+  "role_kind": "temporary-experiment",
+  "selected_by_user": "Latest SE work is PR #5, not a local executable",
+  "pull_request": {
+    "number": 5,
+    "url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/pull/5",
+    "state": "open",
+    "draft": true,
+    "base_branch": "test_SE"
+  },
+  "build": {
+    "run_id": 35507685980,
+    "url": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64/actions/runs/35507685980",
+    "branch": "build/test-se-once",
+    "commit": "e851c8377c2c0fbcdc9042cf3971f60f0395d78b",
+    "workflow": ".github/workflows/final-adreno-compat-arm64.yml",
+    "workflow_name": "[Test_SE] Cemu Windows ARM64",
+    "created_at": "2026-09-20T11:23:11Z",
+    "artifact_id": 10603854428,
+    "artifact_name": "cemu-arm64-test-se-astra",
+    "artifact_digest": "sha256:2ff370b000729a95b5355f40f545e32a8ef90b6240928bc964e7f1224715c50a",
+    "archive_download_url": "https://api.github.com/repos/npark2860-cyber/Cemu-Windows-ARM64/actions/artifacts/10603854428/zip",
+    "artifact_size": 12009182,
+    "expires_at": "2026-12-19T11:23:11Z"
+  },
+  "source_binary_relation": "Build commit is a direct child of PR head; only .github/workflows/final-adreno-compat-arm64.yml differs",
+  "download_status": "pending",
+  "verification": "pending",
+  "runtime_tested": false
+}

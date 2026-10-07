@@ -1,0 +1,871 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -305,4 +305,12 @@
+ 	add_subdirectory("dependencies/ZArchive" EXCLUDE_FROM_ALL)
+ endif()
+ 
++option(CEMU_ENABLE_NPU "Build Windows ARM64 NPU frame generation" OFF)
++if(CEMU_ENABLE_NPU)
++    if(NOT WIN32 OR NOT CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64" OR NOT ENABLE_VULKAN)
++        message(FATAL_ERROR "NPU frame generation requires Windows ARM64 and Vulkan")
++    endif()
++    add_compile_definitions(CEMU_ENABLE_NPU)
++    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
++endif()
+ add_subdirectory(src)
+--- /dev/null
++++ b/dependencies/npu-cemu/npu_cemu.h
+@@ -0,0 +1,44 @@
++#pragma once
++#include <stdint.h>
++#include <vulkan/vulkan.h>
++
++// Versioned NPU frame-generation ABI. All calls except the private QNN worker run on Cemu's render
++// thread. Borrowed device/queue are never destroyed. No worker queue submission.
++#define CEMU_NPU_ABI 2u
++struct CemuNpu;
++struct CemuNpuCreateInfo {
++    uint32_t size, abi;
++    VkInstance instance;
++    VkPhysicalDevice physical;
++    VkDevice device;
++    VkQueue queue;
++    uint32_t family;
++    PFN_vkGetInstanceProcAddr getInstanceProc;
++    const wchar_t* directory;
++    const wchar_t* rpcLibrary;
++    uint32_t processingHeight; // Exactly 1080 or 720; immutable for this context.
++};
++struct CemuNpuFrame {
++    VkImage realImage, generatedImage;
++    uint64_t realId;
++    int32_t generatedSlot;
++};
++struct CemuNpuStats {
++    uint64_t submitted, completed, stale, noSlot, generated;
++    uint64_t npuRuns, inputWaitUs, npuRunUs, workerStartUs;
++    double submitMs, downsampleMs, motionMs, packMs, composeMs;
++    uint64_t preGpuSamples, postGpuSamples;
++};
++struct CemuNpuApi {
++    uint32_t size, abi;
++    int (*create)(const CemuNpuCreateInfo*, CemuNpu**, char*, uint32_t);
++    void (*destroy)(CemuNpu*); // Shutdown only, after Cemu has drained its GPU uses.
++    void (*reset)(CemuNpu*); // Invalidate epoch without joining or freeing resources.
++    VkImage (*captureImage)(CemuNpu*, uint64_t frameId);
++    // The capture copy must already have been submitted to the borrowed queue.
++    // Returned GPU work is queued on that same queue; Cemu must submit its image
++    // consumption before calling process again. No inference/fence waits here.
++    int (*process)(CemuNpu*, uint64_t frameId, CemuNpuFrame*, char*, uint32_t);
++    void (*stats)(CemuNpu*, CemuNpuStats*);
++};
++using CemuNpuGetApi = int (*)(uint32_t, CemuNpuApi*);
+--- a/src/Cafe/CMakeLists.txt
++++ b/src/Cafe/CMakeLists.txt
+@@ -628,6 +628,10 @@
+ 
+ set_property(TARGET CemuCafe PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+ 
++if(CEMU_ENABLE_NPU)
++    target_sources(CemuCafe PRIVATE HW/Latte/Renderer/Vulkan/VulkanNPU.cpp)
++    target_include_directories(CemuCafe PRIVATE "${CMAKE_SOURCE_DIR}/dependencies/npu-cemu")
++endif()
+ cemu_use_precompiled_header(CemuCafe)
+ 
+ if (ENABLE_LIBUSB)
+--- a/src/Cafe/HW/Latte/Core/LatteOverlay.cpp
++++ b/src/Cafe/HW/Latte/Core/LatteOverlay.cpp
+@@ -85,7 +85,18 @@
+ 		if (ImGui::Begin("Stats overlay", nullptr, kPopupFlags))
+ 		{
+ 			if (config.overlay.fps)
+-				ImGui::Text("FPS: %.2lf", g_state.fps);
++            {
++#ifdef CEMU_ENABLE_NPU
++                const auto outputFps = !pad ? g_renderer->GetFrameGenerationFps() : std::nullopt;
++                if (outputFps)
++                {
++                    ImGui::Text("FPS: %.2lf (NPU FG)", *outputFps);
++                    ImGui::Text("Native: %.2lf FPS", g_state.fps);
++                }
++                else
++#endif
++                    ImGui::Text("FPS: %.2lf", g_state.fps);
++            }
+ 
+ 			if (config.overlay.drawcalls)
+ 				ImGui::Text("Draws/f: %d (fast: %d)", g_state.draw_calls_per_frame, g_state.fast_draw_calls_per_frame);
+--- a/src/Cafe/HW/Latte/Renderer/Renderer.h
++++ b/src/Cafe/HW/Latte/Renderer/Renderer.h
+@@ -1,4 +1,6 @@
+ #pragma once
++
++#include <optional>
+ 
+ #include "Cafe/HW/Latte/Core/Latte.h"
+ #include "Cafe/HW/Latte/Core/LatteCachedFBO.h"
+@@ -92,6 +94,11 @@
+ 	GfxVendor GetVendor() const { return m_vendor; }
+ 	virtual bool UseTFViaSSBO() const { return false; }
+ 	virtual void AppendOverlayDebugInfo() = 0;
++#ifdef CEMU_ENABLE_NPU
++    // Render-thread telemetry: accepted main-window presents, including generated
++    // frames. No value until the first measurement window or when FG is off.
++    virtual std::optional<double> GetFrameGenerationFps() const { return std::nullopt; }
++#endif
+ 
+ 	// rendertarget
+ 	virtual void renderTarget_setViewport(float x, float y, float width, float height, float nearZ, float farZ, bool halfZ = false) = 0;
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.cpp
+@@ -42,6 +42,10 @@
+ 	VkSwapchainCreateInfoKHR create_info = CreateSwapchainCreateInfo(m_surface, details, m_surfaceFormat, image_count, m_actualExtent);
+ 	create_info.oldSwapchain = nullptr;
+ 	create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
++#ifdef CEMU_ENABLE_NPU
++    m_npuTransferSource = mainWindow && (details.capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
++    if (m_npuTransferSource) create_info.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
++#endif
+ 
+ 	VkResult result = vkCreateSwapchainKHR(m_logicalDevice, &create_info, nullptr, &m_swapchain);
+ 	if (result != VK_SUCCESS)
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/SwapchainInfoVk.h
+@@ -60,6 +60,7 @@
+ 
+ 	bool m_shouldRecreate = false;
+ 	VSync m_vsyncState = VSync::Immediate;
++	bool m_npuTransferSource{};
+ 	bool hasDefinedSwapchainImage{}; // indicates if the swapchain image is in a defined state
+ 
+ 	VkInstance m_instance{};
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h
+@@ -199,6 +199,7 @@
+ VKFUNC_DEVICE(vkCreateQueryPool);
+ VKFUNC_DEVICE(vkDestroyQueryPool);
+ VKFUNC_DEVICE(vkCmdResetQueryPool);
++VKFUNC_DEVICE(vkCmdWriteTimestamp);
+ VKFUNC_DEVICE(vkCmdBeginQuery);
+ VKFUNC_DEVICE(vkCmdEndQuery);
+ VKFUNC_DEVICE(vkCmdCopyQueryPoolResults);
+--- /dev/null
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanNPU.cpp
+@@ -0,0 +1,236 @@
++#include "Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h"
++#ifdef CEMU_ENABLE_NPU
++#include "config/CemuConfig.h"
++#include "config/ActiveSettings.h"
++#include "Cafe/HW/Latte/Core/LatteOverlay.h"
++#include "npu_cemu.h"
++#include <fstream>
++#include <chrono>
++
++struct NpuHostTiming {
++    double sum{},maximum{};uint64_t count{};
++    void add(double ms) {sum+=ms;maximum=std::max(maximum,ms);++count;}
++    double average() const {return count?sum/double(count):0.0;}
++};
++struct VulkanNPUState {
++    HMODULE library{};
++    CemuNpuApi api{sizeof(CemuNpuApi)};
++    CemuNpu* context{};
++    VkExtent2D processingExtent{1920,1080};
++    bool failed{},enabled{},eligible{},pending{},presenting{},unsupportedLogged{};
++    std::string failureReason;
++    uint64_t frameId{},presents{},generatedPresents{},rejected{};
++    VkImage realImage{};
++    std::optional<double> displayFps;
++    std::chrono::steady_clock::time_point lastCapture{},intervalStart{};
++    CemuNpuStats previous{};
++    NpuHostTiming captureSubmit,moduleProcess,generatedAcquire,sourceThrottle,imageFence,queueLimit,queuePresent;
++};
++
++namespace {
++using NpuClock=std::chrono::steady_clock;
++void NpuBarrier(VkCommandBuffer command,VkImage image,VkImageLayout before,VkImageLayout after) {
++    VkImageMemoryBarrier barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
++    barrier.srcAccessMask=before==VK_IMAGE_LAYOUT_UNDEFINED?0:VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT;
++    barrier.dstAccessMask=VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT;
++    barrier.oldLayout=before;barrier.newLayout=after;barrier.image=image;
++    barrier.srcQueueFamilyIndex=barrier.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;
++    barrier.subresourceRange={VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
++    vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,0,0,nullptr,0,nullptr,1,&barrier);
++}
++void NpuBlit(VkCommandBuffer command,VkImage source,VkImageLayout beforeSource,VkExtent2D sourceSize,
++    VkImage destination,VkImageLayout beforeDestination,VkExtent2D destinationSize) {
++    NpuBarrier(command,source,beforeSource,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
++    NpuBarrier(command,destination,beforeDestination,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
++    VkImageBlit blit{};blit.srcSubresource=blit.dstSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
++    blit.srcOffsets[1]={int32_t(sourceSize.width),int32_t(sourceSize.height),1};
++    blit.dstOffsets[1]={int32_t(destinationSize.width),int32_t(destinationSize.height),1};
++    const bool scaled=sourceSize.width!=destinationSize.width || sourceSize.height!=destinationSize.height;
++    vkCmdBlitImage(command,source,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,destination,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,1,&blit,scaled?VK_FILTER_LINEAR:VK_FILTER_NEAREST);
++    NpuBarrier(command,source,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,beforeSource);
++    NpuBarrier(command,destination,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,beforeDestination==VK_IMAGE_LAYOUT_UNDEFINED?VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:beforeDestination);
++}
++void NpuReport(VulkanNPUState& state,bool force=false) {
++    const auto now=NpuClock::now();
++    if(!state.intervalStart.time_since_epoch().count()) {state.intervalStart=now;return;}
++    const double seconds=std::chrono::duration<double>(now-state.intervalStart).count();
++    if(seconds<=0 || (!force && seconds<2)) return;
++    if(!force && state.enabled && state.eligible) state.displayFps=double(state.presents)/seconds;
++    CemuNpuStats stats{};if(state.context) state.api.stats(state.context,&stats);
++    const auto& prior=state.previous;
++    const double runs=double(std::max<uint64_t>(1,stats.npuRuns-prior.npuRuns));
++    const double pre=double(std::max<uint64_t>(1,stats.preGpuSamples-prior.preGpuSamples));
++    const double post=double(std::max<uint64_t>(1,stats.postGpuSamples-prior.postGpuSamples));
++    cemuLog_log(LogType::Force,"[NPU-PERF] {} eligible={} accepted_present_fps={:.2f} real_present_fps={:.2f} generated_present_fps={:.2f} rejected={} submitted={} completed={} stale={} no_slot={}; one-frame delay; scanout cadence unverified",
++        state.enabled?"ON":"OFF",state.eligible,state.presents/seconds,(state.presents-state.generatedPresents)/seconds,state.generatedPresents/seconds,state.rejected,
++        stats.submitted-prior.submitted,stats.completed-prior.completed,stats.stale-prior.stale,stats.noSlot-prior.noSlot);
++    cemuLog_log(LogType::Force,"[NPU-PROFILE] worker NPU_Run_avg_ms={:.3f} input_fence_wait_sum_ms={:.3f} queue_start_delay_sum_ms={:.3f} runs={}; GPU_downsample_avg_ms={:.3f} motion_avg_ms={:.3f} warp_pack_avg_ms={:.3f} compose_avg_ms={:.3f} pre_samples={} post_samples={} queue_submit_sum_ms={:.3f}; render_thread_NPU_wait=0 queue_owner=render_thread",
++        double(stats.npuRunUs-prior.npuRunUs)/1000/runs,double(stats.inputWaitUs-prior.inputWaitUs)/1000,double(stats.workerStartUs-prior.workerStartUs)/1000,stats.npuRuns-prior.npuRuns,
++        (stats.downsampleMs-prior.downsampleMs)/pre,(stats.motionMs-prior.motionMs)/pre,(stats.packMs-prior.packMs)/pre,(stats.composeMs-prior.composeMs)/post,
++        stats.preGpuSamples-prior.preGpuSamples,stats.postGpuSamples-prior.postGpuSamples,stats.submitMs-prior.submitMs);
++    cemuLog_log(LogType::Force,"[NPU-HOST] ms avg/max/n: capture_submit={:.3f}/{:.3f}/{} module_process={:.3f}/{:.3f}/{} generated_acquire={:.3f}/{:.3f}/{} source_throttle={:.3f}/{:.3f}/{} image_available_fence={:.3f}/{:.3f}/{} queue_limit={:.3f}/{:.3f}/{} vkQueuePresentKHR={:.3f}/{:.3f}/{}; overlay_reupload=0 explicit_generated_fence_wait=0; maxima can include resize",
++        state.captureSubmit.average(),state.captureSubmit.maximum,state.captureSubmit.count,
++        state.moduleProcess.average(),state.moduleProcess.maximum,state.moduleProcess.count,
++        state.generatedAcquire.average(),state.generatedAcquire.maximum,state.generatedAcquire.count,
++        state.sourceThrottle.average(),state.sourceThrottle.maximum,state.sourceThrottle.count,
++        state.imageFence.average(),state.imageFence.maximum,state.imageFence.count,
++        state.queueLimit.average(),state.queueLimit.maximum,state.queueLimit.count,
++        state.queuePresent.average(),state.queuePresent.maximum,state.queuePresent.count);
++    state.captureSubmit={};state.moduleProcess={};state.generatedAcquire={};state.sourceThrottle={};state.imageFence={};state.queueLimit={};state.queuePresent={};
++    state.previous=stats;state.intervalStart=now;state.presents=state.generatedPresents=state.rejected=0;
++}
++}
++
++void VulkanRenderer::npuInitialize() {
++    m_npu=new VulkanNPUState;
++    auto& state=*m_npu;
++    try {
++        if(!m_npuSupported) throw std::runtime_error("Vulkan compute queue and extended storage image formats are required");
++        const bool performance=GetConfig().npu_processing_height.GetValue()==720;
++        state.processingExtent=performance?VkExtent2D{1280,720}:VkExtent2D{1920,1080};
++        for(const auto format:{VK_FORMAT_R8G8B8A8_UNORM,VK_FORMAT_B8G8R8A8_UNORM}) {
++            VkFormatProperties properties{};vkGetPhysicalDeviceFormatProperties(m_physicalDevice,format,&properties);
++            constexpr auto required=VK_FORMAT_FEATURE_BLIT_SRC_BIT|VK_FORMAT_FEATURE_BLIT_DST_BIT|VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT;
++            if((properties.optimalTilingFeatures&required)!=required) throw std::runtime_error("NPU capture/display blit format unavailable");
++        }
++        // Keep the app-local QNN dependencies beside Cemu's
++        // executable, matching the tested Windows loader/skel deployment layout.
++        const auto directory=ActiveSettings::GetExecutablePath().parent_path();
++        std::ifstream file(directory/L"rpc-path.txt");std::string rpcLine;std::getline(file,rpcLine);
++        if(!rpcLine.empty() && rpcLine.back()=='\r') rpcLine.pop_back();
++        if(rpcLine.empty()) throw std::runtime_error("Missing rpc-path.txt beside the NPU runtime");
++        const auto rpc=fs::u8path(rpcLine).wstring();
++        state.library=LoadLibraryExW((directory/L"cemu_npu.dll").c_str(),nullptr,LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
++        if(!state.library) throw std::runtime_error(fmt::format("NPU module load failed, Win32 {}",GetLastError()));
++        auto getApi=reinterpret_cast<CemuNpuGetApi>(GetProcAddress(state.library,"cemu_npu_get_api"));
++        if(!getApi || getApi(CEMU_NPU_ABI,&state.api) || state.api.abi!=CEMU_NPU_ABI) throw std::runtime_error("NPU module ABI mismatch");
++        const auto path=directory.wstring();
++        CemuNpuCreateInfo info{sizeof(info),CEMU_NPU_ABI,m_instance,m_physicalDevice,m_logicalDevice,m_graphicsQueue,uint32_t(m_indices.graphicsFamily),vkGetInstanceProcAddr,path.c_str(),rpc.c_str(),state.processingExtent.height};
++        char error[1024]{};
++        if(state.api.create(&info,&state.context,error,sizeof(error))) throw std::runtime_error(error);
++        state.intervalStart=NpuClock::now();
++        cemuLog_log(LogType::Force,"[NPU] READY/OFF: ANVIL U8 NHWC processing={}x{}, window-sized SDR output, 3 shared slots; QNN worker and borrowed Vulkan queue. No inference at startup. One-frame buffering, cached block motion and immutable overlay replay.",state.processingExtent.width,state.processingExtent.height);
++    } catch(const std::exception& error) {
++        state.failed=true;state.failureReason=error.what();GetConfig().npu_enabled=false;
++        cemuLog_log(LogType::Force,"[NPU] Startup unavailable: {}. Original frames remain available.",error.what());
++        LatteOverlay_pushNotification("NPU FG initialization failed. Showing original frames; see log.txt.",8000);
++    }
++}
++
++void VulkanRenderer::npuInvalidate() {
++    if(!m_npu) return;
++    auto& state=*m_npu;NpuReport(state,true);
++    if(state.context) state.api.reset(state.context);
++    state.frameId=0;state.pending=false;state.displayFps.reset();state.lastCapture={};state.eligible=false;
++    // Keep realImage and all module resources alive for an in-progress generated
++    // present restoring its buffered real frame across swapchain recreation.
++}
++
++void VulkanRenderer::npuCapture() {
++    if(!m_npu || m_npu->failed) {
++        if(m_npu && GetConfig().npu_enabled.GetValue()) {
++            cemuLog_log(LogType::Force,"[NPU] Enable rejected: {}",m_npu->failureReason);
++            LatteOverlay_pushNotification("NPU FG unavailable: initialization failed. See log.txt. Showing original frames.",8000);
++        }
++        GetConfig().npu_enabled=false;return;
++    }
++    auto& state=*m_npu;
++    const bool requested=GetConfig().npu_enabled.GetValue();
++    if(requested!=state.enabled) {
++        npuInvalidate();state.enabled=requested;state.unsupportedLogged=false;
++        cemuLog_log(LogType::Force,"[NPU] {}: history reset; no per-frame inference wait",requested?"ON (one-frame buffered)":"OFF/passthrough");
++    }
++    if(!requested) return; // No frame copies, dispatches, NPU Run, or waits while OFF.
++    try {
++        auto& chain=GetChainInfo(true);const auto extent=chain.getExtent();
++        const bool supportedSize=extent.width>0 && extent.height>0;
++        const bool supported=supportedSize && chain.m_npuTransferSource && chain.m_surfaceFormat.colorSpace==VK_COLOR_SPACE_SRGB_NONLINEAR_KHR &&
++            (chain.m_surfaceFormat.format==VK_FORMAT_R8G8B8A8_UNORM || chain.m_surfaceFormat.format==VK_FORMAT_B8G8R8A8_UNORM);
++        if(!supported) {
++            if(state.eligible) npuInvalidate();
++            if(!state.unsupportedLogged) {
++                cemuLog_log(LogType::Force,"[NPU] Passthrough at {}x{} format={}; a nonzero SDR UNORM output with transfer-source support is required",extent.width,extent.height,uint32_t(chain.m_surfaceFormat.format));
++                LatteOverlay_pushNotification("NPU FG: current output format is unsupported. Showing original frames.",5000);
++            }
++            state.unsupportedLogged=true;state.eligible=false;state.displayFps.reset();return;
++        }
++        state.unsupportedLogged=false;state.eligible=true;
++        if(chain.swapchainImageIndex==uint32_t(-1) || !chain.hasDefinedSwapchainImage) return;
++        const auto now=NpuClock::now();
++        if(state.lastCapture.time_since_epoch().count() && now-state.lastCapture>std::chrono::milliseconds(250)) {npuInvalidate();state.eligible=true;}
++        state.lastCapture=now;const auto id=++state.frameId;
++        draw_endRenderPass();
++        const auto capture=state.api.captureImage(state.context,id);
++        if(!capture) throw std::runtime_error("NPU capture image unavailable");
++        NpuBlit(m_state.currentCommandBuffer,chain.m_swapchainImages[chain.swapchainImageIndex],VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,extent,capture,VK_IMAGE_LAYOUT_GENERAL,state.processingExtent);
++        const auto captureSubmitStart=NpuClock::now();
++        SubmitCommandBuffer(); // Same queue; no host wait for capture or preprocessing.
++        state.captureSubmit.add(std::chrono::duration<double,std::milli>(NpuClock::now()-captureSubmitStart).count());
++        CemuNpuFrame frame{};char error[1024]{};
++        const auto processStart=NpuClock::now();
++        if(state.api.process(state.context,id,&frame,error,sizeof(error))) throw std::runtime_error(error);
++        state.moduleProcess.add(std::chrono::duration<double,std::milli>(NpuClock::now()-processStart).count());
++        state.realImage=frame.realImage;state.pending=frame.generatedImage!=VK_NULL_HANDLE;
++        const auto display=state.pending?frame.generatedImage:frame.realImage;
++        NpuBlit(m_state.currentCommandBuffer,display,VK_IMAGE_LAYOUT_GENERAL,state.processingExtent,chain.m_swapchainImages[chain.swapchainImageIndex],VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,extent);
++        if(id<=3) cemuLog_log(LogType::Force,"[NPU] Capture {} -> real {} generated={} processing={}x{} output={}x{} (capture 2 repeats real 1 once to establish buffering)",id,frame.realId,state.pending,state.processingExtent.width,state.processingExtent.height,extent.width,extent.height);
++    } catch(const std::exception& error) {
++        state.failed=true;state.enabled=false;state.pending=false;state.displayFps.reset();GetConfig().npu_enabled=false;
++        state.failureReason=error.what();
++        state.api.reset(state.context);
++        cemuLog_log(LogType::Force,"[NPU] Frame path failed: {}. Disabled; resources retained until normal shutdown.",error.what());
++        LatteOverlay_pushNotification("NPU FG stopped after an error. Showing original frames; see log.txt.",8000);
++    }
++}
++
++bool VulkanRenderer::npuPresentGenerated() {
++    if(!m_npu || !m_npu->pending || !m_npuImguiMainWindow) return false;
++    auto& state=*m_npu;state.pending=false;
++    const auto generation=m_npuSwapchainGeneration;
++    state.presenting=true;
++    try {SwapBuffer(true);} catch(...) {state.presenting=false;throw;}
++    state.presenting=false;
++    // The second overlay draw reads the same immutable vertex/index upload.
++    // No host overwrite occurs here, so no generated-frame fence wait is needed.
++    // Normal source-frame throttling and the existing ImGui ring protect reuse
++    // on future frames. Swapchain recreation still drains the GPU and skips replay.
++    const auto acquireStart=NpuClock::now();
++    const bool acquired=AcquireNextSwapchainImage(true);
++    state.generatedAcquire.add(std::chrono::duration<double,std::milli>(NpuClock::now()-acquireStart).count());
++    if(!acquired) {npuInvalidate();return false;}
++    auto& chain=GetChainInfo(true);
++    NpuBlit(m_state.currentCommandBuffer,state.realImage,VK_IMAGE_LAYOUT_GENERAL,state.processingExtent,
++        chain.m_swapchainImages[chain.swapchainImageIndex],VK_IMAGE_LAYOUT_UNDEFINED,chain.getExtent());
++    chain.hasDefinedSwapchainImage=true;m_state.currentPipeline=VK_NULL_HANDLE;
++    if(generation!=m_npuSwapchainGeneration) {cemuLog_log(LogType::Force,"[NPU] Resize during generated present: buffered real restored; old overlay replay skipped");return false;}
++    return true;
++}
++
++bool VulkanRenderer::npuIsGeneratedPresent() const {
++    return m_npu && m_npu->presenting;
++}
++void VulkanRenderer::npuRecordPresentTiming(double throttleMs,double fenceMs,double limitMs,double presentMs) {
++    if(!m_npu || !m_npu->enabled || !m_npu->eligible || m_npu->failed) return;
++    auto& state=*m_npu;
++    if(!state.presenting) state.sourceThrottle.add(throttleMs);
++    state.imageFence.add(fenceMs);state.queueLimit.add(limitMs);state.queuePresent.add(presentMs);
++}
++void VulkanRenderer::npuRecordPresent(VkResult result) {
++    if(!m_npu || !m_npu->enabled || !m_npu->eligible || m_npu->failed) return;
++    if(result==VK_SUCCESS || result==VK_SUBOPTIMAL_KHR) {++m_npu->presents;if(m_npu->presenting) ++m_npu->generatedPresents;}
++    else ++m_npu->rejected;
++    NpuReport(*m_npu);
++}
++std::optional<double> VulkanRenderer::GetFrameGenerationFps() const { return npuGetFps(); }
++std::optional<double> VulkanRenderer::npuGetFps() const {
++    if(!m_npu || m_npu->failed || !m_npu->eligible || !m_npu->enabled || !GetConfig().npu_enabled.GetValue()) return std::nullopt;
++    return m_npu->displayFps;
++}
++void VulkanRenderer::npuShutdown() {
++    if(!m_npu) return;
++    NpuReport(*m_npu,true);
++    if(m_npu->context) m_npu->api.destroy(m_npu->context);
++    if(m_npu->library) FreeLibrary(m_npu->library);
++    delete m_npu;m_npu=nullptr;
++}
++#endif
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+@@ -29,6 +29,7 @@
+ #include "Cafe/HW/Latte/Core/LatteTiming.h" // vsync control
+ 
+ #include <cstdint>
++#include <chrono>
+ #include <glslang/Public/ShaderLang.h>
+ 
+ #ifndef VK_API_VERSION_MAJOR
+@@ -677,6 +678,16 @@
+ 		cemuLog_log(LogType::Force, "vertexPipelineStoresAndAtomics not supported by the driver. Games which use the streamout feature will not render correctly");
+ 
+ 	void* deviceExtensionFeatures = nullptr;
++#ifdef CEMU_ENABLE_NPU
++    uint32_t npuQueueCount{};
++    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &npuQueueCount, nullptr);
++    std::vector<VkQueueFamilyProperties> npuQueues(npuQueueCount);
++    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &npuQueueCount, npuQueues.data());
++    m_npuSupported = deviceFeatures2.features.shaderStorageImageExtendedFormats &&
++        m_indices.graphicsFamily < npuQueueCount &&
++        (npuQueues[m_indices.graphicsFamily].queueFlags & VK_QUEUE_COMPUTE_BIT);
++    if (m_npuSupported) deviceFeatures.shaderStorageImageExtendedFormats = VK_TRUE;
++#endif
+ 
+ 	// enable VK_EXT_pipeline_creation_cache_control
+ 	VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT cacheControlFeature{};
+@@ -852,6 +863,11 @@
+ 	SubmitCommandBuffer();
+ 	WaitDeviceIdle();
+ 	WaitCommandBufferFinished(GetCurrentCommandBufferId());
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    npuShutdown();
++#endif
++#endif
+ 	// shut down pipeline save thread
+ 	m_destructionRequested = true;
+ 	m_pipeline_cache_semaphore.notify();
+@@ -1842,6 +1858,15 @@
+ 	info.DescriptorPool = m_descriptorPool;
+ 	info.MinImageCount = m_mainSwapchainInfo->m_swapchainImages.size();
+ 	info.ImageCount = info.MinImageCount;
++#ifdef CEMU_ENABLE_NPU
++    info.UploadUser = this;
++    info.UploadCommandId = [](void* user) {return static_cast<VulkanRenderer*>(user)->GetCurrentCommandBufferId();};
++    info.WaitUploadCommand = [](void* user,uint64_t commandId) {
++        auto* renderer=static_cast<VulkanRenderer*>(user);
++        if(!renderer->HasCommandBufferFinished(commandId))
++            renderer->WaitCommandBufferFinished(commandId);
++    };
++#endif
+ 
+ 	ImGui_ImplVulkan_Init(&info, m_imguiRenderPass);
+ 
+@@ -1856,12 +1881,22 @@
+ 	CreatePipelineCache();
+ 	ImguiInit();
+ 	CreateNullObjects();
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    npuInitialize();
++#endif
++#endif
+ }
+ 
+ void VulkanRenderer::Shutdown()
+ {
+ 	SubmitCommandBuffer();
+ 	WaitDeviceIdle();
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    npuShutdown();
++#endif
++#endif
+ 	fsrDestroyResources();
+ 	// stop compilation threads
+ 	RendererShaderVk::Shutdown();
+@@ -2041,6 +2076,9 @@
+ 
+ bool VulkanRenderer::ImguiBegin(bool mainWindow)
+ {
++#ifdef CEMU_ENABLE_NPU
++    m_npuImguiMainWindow = mainWindow;
++#endif
+ 	if (!Renderer::ImguiBegin(mainWindow))
+ 		return false;
+ 
+@@ -2064,6 +2102,15 @@
+ 	ImGui::Render();
+ 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_state.currentCommandBuffer);
+ 	vkCmdEndRenderPass(m_state.currentCommandBuffer);
++#ifdef CEMU_ENABLE_NPU
++    if (npuPresentGenerated())
++    {
++        auto& chain = GetChainInfo(true);
++        ImGui_ImplVulkan_NewFrame(m_state.currentCommandBuffer, chain.m_swapchainFramebuffers[chain.swapchainImageIndex], chain.getExtent());
++        ImGui_ImplVulkan_ReplayDrawData(ImGui::GetDrawData(), m_state.currentCommandBuffer);
++        vkCmdEndRenderPass(m_state.currentCommandBuffer);
++    }
++#endif
+ }
+ 
+ ImTextureID VulkanRenderer::GenerateTexture(const std::vector<uint8>& data, const Vector2i& size)
+@@ -2921,6 +2968,11 @@
+ 
+ void VulkanRenderer::RecreateSwapchain(bool mainWindow, bool skipCreate)
+ {
++#ifdef CEMU_ENABLE_NPU
++    if (mainWindow)
++        cemuLog_log(LogType::Force, "[NPU-SURFACE] Recreate begin: generation={} skip_create={}",
++            m_npuSwapchainGeneration, skipCreate);
++#endif
+ 	SubmitCommandBuffer();
+ 	WaitDeviceIdle();
+ 	auto& chainInfo = GetChainInfo(mainWindow);
+@@ -2928,6 +2980,14 @@
+ 	Vector2i size;
+ 	if (mainWindow)
+ 	{
++#ifdef CEMU_ENABLE_NPU
++        // A driver can reuse a destroyed swapchain's numeric handle. Track
++        // resource lifetime explicitly before retiring ImGui font resources.
++        ++m_npuSwapchainGeneration;
++#ifdef CEMU_ENABLE_NPU
++        npuInvalidate();
++#endif
++#endif
+ 		ImGui_ImplVulkan_Shutdown();
+ 		WindowSystem::GetWindowPhysSize(size.x, size.y);
+ 	}
+@@ -2945,7 +3005,14 @@
+ 	}
+ 
+ 	if (mainWindow)
++    {
+ 		ImguiInit();
++#ifdef CEMU_ENABLE_NPU
++        const auto extent = chainInfo.getExtent();
++        cemuLog_log(LogType::Force, "[NPU-SURFACE] Recreate complete: generation={} extent={}x{}",
++            m_npuSwapchainGeneration, extent.width, extent.height);
++#endif
++    }
+ }
+ 
+ bool VulkanRenderer::UpdateSwapchainProperties(bool mainWindow)
+@@ -3005,11 +3072,25 @@
+ 
+ 	cemu_assert_debug(m_numSubmittedCmdBuffers > 0);
+ 
+-	// wait for the previous frame to finish rendering
+-	WaitCommandBufferFinished(m_commandBufferIDOfPrevFrame);
+-	m_commandBufferIDOfPrevFrame = currentFrameCmdBufferID;
++    // A generated present belongs to the current source frame. Advancing the
++    // source-frame throttle here would make the subsequent real present wait
++    // for its own generated sibling, serializing every source frame.
++#ifdef CEMU_ENABLE_NPU
++    const auto npuThrottleStart = std::chrono::steady_clock::now();
++    if (!(mainWindow && npuIsGeneratedPresent()))
++#endif
++    {
++        WaitCommandBufferFinished(m_commandBufferIDOfPrevFrame);
++        m_commandBufferIDOfPrevFrame = currentFrameCmdBufferID;
++    }
++#ifdef CEMU_ENABLE_NPU
++    const auto npuThrottleEnd = std::chrono::steady_clock::now();
++#endif
+ 
+ 	chainInfo.WaitAvailableFence();
++#ifdef CEMU_ENABLE_NPU
++    const auto npuAvailableEnd = std::chrono::steady_clock::now();
++#endif
+ 
+ 	VkPresentIdKHR presentId = {};
+ 
+@@ -3040,7 +3121,20 @@
+ 		}
+ 	}
+ 
++#ifdef CEMU_ENABLE_NPU
++    const auto npuQueuePresentStart = std::chrono::steady_clock::now();
++#endif
+ 	VkResult result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
++#ifdef CEMU_ENABLE_NPU
++    if(mainWindow) {
++        const auto end = std::chrono::steady_clock::now();
++        npuRecordPresentTiming(std::chrono::duration<double,std::milli>(npuThrottleEnd-npuThrottleStart).count(),
++            std::chrono::duration<double,std::milli>(npuAvailableEnd-npuThrottleEnd).count(),
++            std::chrono::duration<double,std::milli>(npuQueuePresentStart-npuAvailableEnd).count(),
++            std::chrono::duration<double,std::milli>(end-npuQueuePresentStart).count());
++        npuRecordPresent(result);
++    }
++#endif
+ 	if (result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR)
+ 	{
+ 		throw std::runtime_error(fmt::format("Failed to present image: {}", result));
+@@ -3539,6 +3633,11 @@
+ 	if (shader == RendererOutputShader::s_fsr_easu_shader || shader == RendererOutputShader::s_fsr_easu_shader_ud)
+ 	{
+ 		DrawBackbufferQuadFSR(texView, shader, imageX, imageY, imageWidth, imageHeight, padView);
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++        if (!padView) npuCapture();
++#endif
++#endif
+ 		return;
+ 	}
+ 
+@@ -3597,6 +3696,11 @@
+ 
+ 	// mark current swapchain image as well defined
+ 	chainInfo.hasDefinedSwapchainImage = true;
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    if (!padView) npuCapture();
++#endif
++#endif
+ }
+ 
+ void VulkanRenderer::CreateDescriptorPool()
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h
+@@ -13,6 +13,8 @@
+ #include "util/containers/flat_hash_map.hpp"
+ #include "util/containers/robin_hood.h"
+ 
++struct VulkanNPUState;
++
+ struct VkSupportedFormatInfo_t
+ {
+ 	bool fmt_d24_unorm_s8_uint{};
+@@ -222,6 +224,9 @@
+ 	static VkSurfaceKHR CreateFramebufferSurface(VkInstance instance, struct WindowSystem::WindowHandleInfo& windowInfo);
+ 
+ 	void AppendOverlayDebugInfo() override;
++#ifdef CEMU_ENABLE_NPU
++    std::optional<double> GetFrameGenerationFps() const override;
++#endif
+ 
+ 	void ImguiInit();
+ 	VkInstance GetVkInstance() const { return m_instance; }
+@@ -509,6 +514,22 @@
+ 		uint32 width{ 0 };
+ 		uint32 height{ 0 };
+ 	};
++#ifdef CEMU_ENABLE_NPU
++#ifdef CEMU_ENABLE_NPU
++    VulkanNPUState* m_npu{};
++    void npuInitialize();
++    void npuShutdown();
++    void npuCapture();
++    void npuInvalidate();
++    bool npuPresentGenerated();
++    bool npuIsGeneratedPresent() const;
++    void npuRecordPresentTiming(double sourceThrottleMs,double availableFenceMs,double queueLimitMs,double queuePresentMs);
++    void npuRecordPresent(VkResult result);
++    std::optional<double> npuGetFps() const;
++#endif
++    bool m_npuSupported{}, m_npuImguiMainWindow{};
++    uint64_t m_npuSwapchainGeneration{};
++#endif
+ 	std::array<FSRIntermediate, 2> m_fsrIntermediate{};
+ 	VkRenderPass m_fsrRenderPass{ VK_NULL_HANDLE };
+ 	VkSampler m_fsrSampler{ VK_NULL_HANDLE };
+--- a/src/config/CemuConfig.cpp
++++ b/src/config/CemuConfig.cpp
+@@ -147,6 +147,9 @@
+ 	else if (fsrSharpnessValue > 200)
+ 		fsrSharpnessValue = 200;
+ 	fsr_sharpness = fsrSharpnessValue;
++#ifdef CEMU_ENABLE_NPU
++    npu_processing_height = graphic.get("NPUProcessingHeight", 1080) == 720 ? 720 : 1080;
++#endif
+ 	fullscreen_scaling = graphic.get("FullscreenScaling", kKeepAspectRatio);
+ 	async_compile = graphic.get("AsyncCompile", async_compile);
+ 	vk_accurate_barriers = graphic.get("vkAccurateBarriers", true); // this used to be "VulkanAccurateBarriers" but because we changed the default to true in 1.27.1 the option name had to be changed
+@@ -381,6 +384,9 @@
+ 	graphic.set("UpscaleFilter", upscale_filter);
+ 	graphic.set("DownscaleFilter", downscale_filter);
+ 	graphic.set("FSRSharpness", fsr_sharpness);
++#ifdef CEMU_ENABLE_NPU
++    graphic.set("NPUProcessingHeight", npu_processing_height);
++#endif
+ 	graphic.set("FullscreenScaling", fullscreen_scaling);
+ 	graphic.set("AsyncCompile", async_compile.GetValue());
+ 	graphic.set("vkAccurateBarriers", vk_accurate_barriers);
+--- a/src/config/CemuConfig.h
++++ b/src/config/CemuConfig.h
+@@ -485,6 +485,10 @@
+ 
+ 	ConfigValue<sint32> upscale_filter{kBicubicFilter};
+ 	ConfigValue<sint32> downscale_filter{kLinearFilter};
++#ifdef CEMU_ENABLE_NPU
++    ConfigValue<bool> npu_enabled{false}; // Session-only: start with original frames.
++    ConfigValue<int> npu_processing_height{1080}; // Applied on the next game start.
++#endif
+ 	ConfigValue<sint32> fsr_sharpness{25}; // FSR1 RCAS stops * 100, matching Eden/Yuzu semantics
+ 	ConfigValue<sint32> fullscreen_scaling{kKeepAspectRatio};
+ 
+--- a/src/gui/wxgui/GeneralSettings2.cpp
++++ b/src/gui/wxgui/GeneralSettings2.cpp
+@@ -507,6 +507,24 @@
+ 			m_fsr_sharpness_value->SetLabel(wxString::Format("%d", value));
+ 		});
+ 		graphics_panel_sizer->Add(fsr_sharpness_row, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5);
++#ifdef CEMU_ENABLE_NPU
++        auto* npuCheck = new wxCheckBox(graphics_panel, wxID_ANY, _("NPU frame generation"));
++        npuCheck->SetValue(GetConfig().npu_enabled.GetValue());
++        npuCheck->SetToolTip(_("Starts off each session. Requires Vulkan and SDR output. When enabled, both original and generated frames use the selected processing resolution and are scaled to the window. Adds one frame of latency. Late generated frames are skipped."));
++        npuCheck->Bind(wxEVT_CHECKBOX, [](wxCommandEvent& event) { GetConfig().npu_enabled = event.IsChecked(); });
++        npuCheck->Bind(wxEVT_UPDATE_UI, [](wxUpdateUIEvent& event) { event.Check(GetConfig().npu_enabled.GetValue()); });
++        graphics_panel_sizer->Add(npuCheck, 0, wxALL, 5);
++        auto* npuRow = new wxBoxSizer(wxHORIZONTAL);
++        npuRow->Add(new wxStaticText(graphics_panel, wxID_ANY, _("NPU processing")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
++        wxString npuModes[] = {_("1080p / Standard"), _("720p / Performance")};
++        auto* npuMode = new wxChoice(graphics_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, std::size(npuModes), npuModes);
++        npuMode->SetSelection(GetConfig().npu_processing_height.GetValue() == 720 ? 1 : 0);
++        npuMode->SetToolTip(_("Applied on the next game start. 720p reduces GPU and NPU processing, with less image detail. Output follows the current window or fullscreen size."));
++        npuMode->Bind(wxEVT_CHOICE, [](wxCommandEvent& event) { GetConfig().npu_processing_height = event.GetSelection() == 1 ? 720 : 1080; });
++        npuRow->Add(npuMode, 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
++        graphics_panel_sizer->Add(npuRow, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5);
++        graphics_panel_sizer->Add(new wxStaticText(graphics_panel, wxID_ANY, _("Processing resolution changes apply on the next game start.")), 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
++#endif
+ 
+ 		wxString downscale_choices[] = { _("Bilinear"), _("Bicubic"), _("Hermite"), _("Nearest Neighbor") };
+ 		m_downscale_filter = new wxRadioBox(graphics_panel, wxID_ANY, _("Downscale filter"), wxDefaultPosition, wxDefaultSize, std::size(downscale_choices), downscale_choices, 5, wxRA_SPECIFY_COLS);
+--- a/src/gui/wxgui/wxWindowSystem.cpp
++++ b/src/gui/wxgui/wxWindowSystem.cpp
+@@ -120,7 +120,18 @@
+ 		graphicMode = "[Apple GPU]";
+ 
+ 	const uint64 titleId = CafeSystem::GetForegroundTitleId();
+-	windowText.append(fmt::format(" - FPS: {:.2f} {} {} [TitleId: {:08x}-{:08x}]", (double)fps, renderer, graphicMode, (uint32)(titleId >> 32), (uint32)(titleId & 0xFFFFFFFF)));
++    std::string fpsText = fmt::format("{:.2f}", fps);
++#ifdef CEMU_ENABLE_NPU
++    if (g_renderer)
++    {
++        if (const auto outputFps = g_renderer->GetFrameGenerationFps())
++        {
++            const char* mode="NPU FG";
++            fpsText = fmt::format("{:.2f} (Native: {:.2f}, {})", *outputFps, fps, mode);
++        }
++    }
++#endif
++	windowText.append(fmt::format(" - FPS: {} {} {} [TitleId: {:08x}-{:08x}]", fpsText, renderer, graphicMode, (uint32)(titleId >> 32), (uint32)(titleId & 0xFFFFFFFF)));
+ 
+ 	if (ActiveSettings::IsOnlineEnabled())
+ 	{
+--- a/src/imgui/imgui_impl_vulkan.cpp
++++ b/src/imgui/imgui_impl_vulkan.cpp
+@@ -58,6 +58,8 @@
+     VkDeviceSize        IndexBufferSize;
+     VkBuffer            VertexBuffer;
+     VkBuffer            IndexBuffer;
++    uint64_t            LastReadCommand;
++    bool                HasReadCommand;
+ };
+ 
+ // Each viewport will hold 1 ImGui_ImplVulkanH_WindowRenderBuffers
+@@ -89,6 +91,8 @@
+ 
+ // Render buffers
+ static ImGui_ImplVulkanH_WindowRenderBuffers    g_MainWindowRenderBuffers;
++static const ImDrawData* g_LastUploadedDrawData = nullptr;
++static int g_LastUploadedVertices = 0, g_LastUploadedIndices = 0;
+ 
+ // Forward Declarations
+ bool ImGui_ImplVulkan_CreateDeviceObjects();
+@@ -321,7 +325,7 @@
+ 
+ // Render function
+ // (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
+-void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
++static void ImGui_ImplVulkan_RenderDrawDataInternal(ImDrawData* draw_data, VkCommandBuffer command_buffer, bool replay)
+ {
+     // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
+     int fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
+@@ -333,6 +337,12 @@
+ 
+     // Allocate array to store enough vertex/index buffers
+     ImGui_ImplVulkanH_WindowRenderBuffers* wrb = &g_MainWindowRenderBuffers;
++    if (replay && (!wrb->FrameRenderBuffers || g_LastUploadedDrawData != draw_data ||
++        g_LastUploadedVertices != draw_data->TotalVtxCount || g_LastUploadedIndices != draw_data->TotalIdxCount))
++    {
++        cemu_assert_debug(false); // Never overwrite possibly in-flight data on a bad replay.
++        return;
++    }
+     if (wrb->FrameRenderBuffers == NULL)
+     {
+         wrb->Index = 0;
+@@ -341,9 +351,13 @@
+         memset(wrb->FrameRenderBuffers, 0, sizeof(ImGui_ImplVulkanH_FrameRenderBuffers) * wrb->Count);
+     }
+     IM_ASSERT(wrb->Count == v->ImageCount);
+-    wrb->Index = (wrb->Index + 1) % wrb->Count;
++    if (!replay) wrb->Index = (wrb->Index + 1) % wrb->Count;
+     ImGui_ImplVulkanH_FrameRenderBuffers* rb = &wrb->FrameRenderBuffers[wrb->Index];
+ 
++    if (!replay)
++    {
++    if (rb->HasReadCommand && v->WaitUploadCommand)
++        v->WaitUploadCommand(v->UploadUser, rb->LastReadCommand);
+     VkResult err;
+ 
+     // Create or resize the vertex/index buffers
+@@ -389,6 +403,10 @@
+         check_vk_result(err);
+         vkUnmapMemory(v->Device, rb->VertexBufferMemory);
+         vkUnmapMemory(v->Device, rb->IndexBufferMemory);
++    }
++    g_LastUploadedDrawData = draw_data;
++    g_LastUploadedVertices = draw_data->TotalVtxCount;
++    g_LastUploadedIndices = draw_data->TotalIdxCount;
+     }
+ 
+     // Setup desired Vulkan state
+@@ -456,6 +474,21 @@
+        // global_idx_offset += cmd_list->IdxBuffer.Size;
+        // global_vtx_offset += cmd_list->VtxBuffer.Size;
+     }
++    if (v->UploadCommandId)
++    {
++        rb->LastReadCommand = v->UploadCommandId(v->UploadUser);
++        rb->HasReadCommand = true;
++    }
++}
++
++void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
++{
++    ImGui_ImplVulkan_RenderDrawDataInternal(draw_data, command_buffer, false);
++}
++
++void ImGui_ImplVulkan_ReplayDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
++{
++    ImGui_ImplVulkan_RenderDrawDataInternal(draw_data, command_buffer, true);
+ }
+ 
+ void ImGui_ImplVulkan_DestroyFontsTexture()
+@@ -913,6 +946,8 @@
+ 
+ void ImGui_ImplVulkan_Shutdown()
+ {
++    g_LastUploadedDrawData = nullptr;
++    g_LastUploadedVertices = g_LastUploadedIndices = 0;
+     ImGui_ImplVulkan_DestroyDeviceObjects();
+ }
+ 
+@@ -1306,6 +1341,8 @@
+ 
+ void ImGui_ImplVulkanH_DestroyWindowRenderBuffers(VkDevice device, ImGui_ImplVulkanH_WindowRenderBuffers* buffers, const VkAllocationCallbacks* allocator)
+ {
++    g_LastUploadedDrawData = nullptr;
++    g_LastUploadedVertices = g_LastUploadedIndices = 0;
+     for (uint32_t n = 0; n < buffers->Count; n++)
+         ImGui_ImplVulkanH_DestroyFrameRenderBuffers(device, &buffers->FrameRenderBuffers[n], allocator);
+     IM_FREE(buffers->FrameRenderBuffers);
+--- a/src/imgui/imgui_impl_vulkan.h
++++ b/src/imgui/imgui_impl_vulkan.h
+@@ -41,6 +41,11 @@
+     uint32_t            ImageCount;             // >= MinImageCount
+     const VkAllocationCallbacks* Allocator;
+     void                (*CheckVkResultFn)(VkResult err);
++    // Optional upload lifetime tracking. Wait only when reusing a ring buffer;
++    // replay extends the last-reader command ID without any host-side write.
++    void*               UploadUser;
++    uint64_t            (*UploadCommandId)(void* user);
++    void                (*WaitUploadCommand)(void* user, uint64_t commandId);
+ };
+ 
+ // Called by user code
+@@ -48,6 +53,10 @@
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_Shutdown();
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_NewFrame(VkCommandBuffer command_buffer, VkFramebuffer framebuffer, VkExtent2D extent);
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer);
++// Replay the immediately preceding upload without advancing/replacing its buffers.
++// Caller must keep the same draw data and textures alive, and skip replay after
++// swapchain/backend recreation. Both draws must precede the next normal upload.
++IMGUI_IMPL_API void     ImGui_ImplVulkan_ReplayDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer);
+ IMGUI_IMPL_API bool     ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_DestroyFontsTexture();
+ IMGUI_IMPL_API void     ImGui_ImplVulkan_DestroyFontUploadObjects();

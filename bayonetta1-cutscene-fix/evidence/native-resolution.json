@@ -1,0 +1,32 @@
+{
+  "date_kst": "2026-10-05T05:30:03.6614141+09:00",
+  "stage": "NativeResolution",
+  "game": "Bayonetta 1 JPN",
+  "title_id": "000500001014db00",
+  "runtime": "C:\\Users\\angel\\Documents\\ChatGPT\\Cemu 최적화\\Cemu-versions\\NPU-Promotion\\Release\\runtime",
+  "executable_sha256": "77ba0e01d922c0ffd73565844413efdf6d7579c5b117abf2b7da3b48cd4862b6",
+  "settings_before_sha256": "2eb2e54c879ec44d7cf1c24f04e31ce735c756c32e5750789f3b598c008dcbf2",
+  "settings_after_sha256": "cb28c85a81de0db5c3631cc143050c4b1567085c82a1c5a8493d2dceacce3b66",
+  "removed_entry": "graphicPacks/downloadedGraphicPacks/Bayonetta_Resolution/rules.txt",
+  "removed_preset": "1920x1080",
+  "cpu_changed": false,
+  "other_games_changed": false,
+  "npu_code_changed": false,
+  "gpu_executed": false,
+  "user_confirmed": "Geometry corruption persists with NPU frame generation OFF",
+  "known_issue": "https://bugs.cemu.info/issues/416",
+  "status": "NOT_FIXED_INTERMITTENT_GEOMETRY_CORRUPTION_REPORTED",
+  "user_result": "Initially the photographed face-crossing geometry disappeared, then user reported severe geometry corruption elsewhere that jumps intermittently. Resolution-pack removal is not an accepted fix.",
+  "verification_scope": "User visual confirmation for the reported cutscene; agent did not launch Cemu or perform GPU/NPU tests.",
+  "native_rendering": "1280x720 game default; existing output scaling remains configured.",
+  "restore_script": "../restore-resolution.ps1",
+  "branch_head_check": {
+    "release": "c5205ccbc8ffe41129fbe921b5420a79ff283216",
+    "diagnostics": "6aa13388289ed41c2f7c802c5b096b142dc1b4c8",
+    "method": "git ls-remote; local Release base and workflow inspected",
+    "repository": "https://github.com/npark2860-cyber/Cemu-Windows-ARM64.git",
+    "source_modified": false
+  },
+  "user_run_log_sha256": "ab1f618530da15d5c07de207eabe22441f2713b89958e7bbf0cb1b67157529c8",
+  "followup": "Restore original 1080p pack and compare Bayonetta 1 single-core recompiler after normal Cemu exit. No dependent setting changes while the app is running."
+}

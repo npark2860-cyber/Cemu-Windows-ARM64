@@ -1,0 +1,41 @@
+{
+  "status": "ANVIL1080_PIPELINE_VERIFIED",
+  "mode": "Verify",
+  "profile": {
+    "qnn_only": true,
+    "kernel_events": 6
+  },
+  "checks": [
+    {
+      "phase": 0,
+      "input_sha256": "7b29bc2ae351172742a37fe823814250491c2ec8fe142462680b139c8d6d0c46",
+      "output_sha256": "0432f24c82156b07286f45a6c8957673ea3e4d4aee55338dc11bf241bfc03eed",
+      "composed_sha256": "d3f4b45d1d9a8f8791aba84396037231fc29e88aaed5e1772721e0344ba3f48f",
+      "max_compose_error": 0,
+      "diagnostic_sha256": "eb3175bc2b710fb7a8d65c2154ea7506b7a59fdd8dfcdefb7fe9f204bfa31462"
+    },
+    {
+      "phase": 1,
+      "input_sha256": "bf31c1c1814c067a7b7731f5997510007fb536ea69fe73c327937f17051d2969",
+      "output_sha256": "675b1030b9b6afcecb9496514db9362e9e9b3e876ef57ccc5f23b11040727144",
+      "composed_sha256": "e9232fcfbf36d4d0bc49e9cda8cbce0d6474b8d370c5bbb23a6cc2d86e75672a",
+      "max_compose_error": 0,
+      "diagnostic_sha256": "a3af5566e3e5c531527dab816a162bf4d325d39799a59c1eb2c38f1711de699b"
+    },
+    {
+      "phase": 2,
+      "input_sha256": "cee62de448ef84228da096718a2bf8d91a65f4ab3c97475e34b31f9aa05743cb",
+      "output_sha256": "660d425d20d63758233b2508fe6349e1b2cdff330a3c80c00f362d2706279c6b",
+      "composed_sha256": "33f46a26404bb4a29400e7ceced029496eeaea6bb6ac98863300ab6e96c867cb",
+      "max_compose_error": 0,
+      "diagnostic_sha256": "bdbdf17d387f352606463cdc783ad98a81cdec92d7784ba4b51b3f7921088374"
+    }
+  ],
+  "timing": null,
+  "timing_scope": "Serialized GPU synthetic-image generation, RGBA8-to-NHWC pack, direct shared-tensor NPU Run and GPU residual compose; includes two host fence waits and output poison. Excludes initialization, disk I/O, diagnostic readback, CPU oracle, ordinary-memory references, motion estimation/warp, Cemu rendering and present. GPU timestamps are nested within wall times; do not add them to wall totals.",
+  "physical_zero_copy_proven": false,
+  "full_framegen_validated": false,
+  "real_game_quality_validated": false,
+  "application_copy_free_gpu_npu_handoff": true,
+  "performance_validation_scope": "Three synthetic patterns. All three audited in Verify; final phase zero audited after 34 Measure rounds. No per-round readback in the measured loop."
+}

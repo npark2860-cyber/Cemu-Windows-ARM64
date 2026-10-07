@@ -1,0 +1,7 @@
+[Definition]
+titleIds = 00050000101C9300,00050000101C9400,00050000101C9500
+name = Master Cycle Haptics - ActionsOnly - PREVIEW
+path = "The Legend of Zelda: Breath of the Wild/Mods/Controller/Master Cycle Haptics/ActionsOnly"
+description = "Validation preview. Enable only ONE Master Cycle profile. No automatic low/mid/high speed detection. Single-player haptic interruption applies; see README. Requires existing Enhanced Sound Experience."
+version = 8
+default = false
