@@ -41,6 +41,11 @@ struct ImGui_ImplVulkan_InitInfo
     uint32_t            ImageCount;             // >= MinImageCount
     const VkAllocationCallbacks* Allocator;
     void                (*CheckVkResultFn)(VkResult err);
+    // Optional upload lifetime tracking. Wait only when reusing a ring buffer;
+    // replay extends the last-reader command ID without any host-side write.
+    void*               UploadUser;
+    uint64_t            (*UploadCommandId)(void* user);
+    void                (*WaitUploadCommand)(void* user, uint64_t commandId);
 };
 
 // Called by user code
@@ -48,6 +53,10 @@ IMGUI_IMPL_API bool     ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, V
 IMGUI_IMPL_API void     ImGui_ImplVulkan_Shutdown();
 IMGUI_IMPL_API void     ImGui_ImplVulkan_NewFrame(VkCommandBuffer command_buffer, VkFramebuffer framebuffer, VkExtent2D extent);
 IMGUI_IMPL_API void     ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer);
+// Replay the immediately preceding upload without advancing/replacing its buffers.
+// Caller must keep the same draw data and textures alive, and skip replay after
+// swapchain/backend recreation. Both draws must precede the next normal upload.
+IMGUI_IMPL_API void     ImGui_ImplVulkan_ReplayDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer);
 IMGUI_IMPL_API bool     ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
 IMGUI_IMPL_API void     ImGui_ImplVulkan_DestroyFontsTexture();
 IMGUI_IMPL_API void     ImGui_ImplVulkan_DestroyFontUploadObjects();

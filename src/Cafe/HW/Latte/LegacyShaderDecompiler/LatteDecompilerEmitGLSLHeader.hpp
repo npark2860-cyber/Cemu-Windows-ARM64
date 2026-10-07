@@ -407,6 +407,26 @@ namespace LatteDecompiler
 			src->add("out");
 			src->addFmt(" vec4 passParameterSem{};" _CRLF, psInputTable->import[psInputIndex].semanticId);
 		}
+
+		// Latte supplies SPI_PS_INPUT_CNTL.DEFAULT_VAL when a PS semantic has no
+		// active producer export. Vulkan still requires a matching stage interface.
+		src->add("#ifdef VULKAN" _CRLF);
+		for (sint32 i = 0; i < psInputTable->count; i++)
+		{
+			if (psInputTable->import[i].semanticId > LATTE_ANALYZER_IMPORT_INDEX_PARAM_MAX)
+				continue;
+			if (_isPSInputWrittenByVS(shaderContext, i))
+				continue;
+
+			src->addFmt("layout(location = {}) ", i);
+			if (psInputTable->import[i].isFlat)
+				src->add("flat ");
+			if (psInputTable->import[i].isNoPerspective)
+				src->add("noperspective ");
+			src->add("out");
+			src->addFmt(" vec4 passParameterSem{};" _CRLF, psInputTable->import[i].semanticId);
+		}
+		src->add("#endif" _CRLF);
 	}
 
 	void _emitPSImports(LatteDecompilerShaderContext* shaderContext)

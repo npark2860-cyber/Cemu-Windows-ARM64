@@ -336,6 +336,14 @@ if (NOT ZArchive_FOUND)
 	add_subdirectory("dependencies/ZArchive" EXCLUDE_FROM_ALL)
 endif()
 
+option(CEMU_ENABLE_NPU "Build Windows ARM64 NPU frame generation" OFF)
+if(CEMU_ENABLE_NPU)
+    if(NOT WIN32 OR NOT CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64" OR NOT ENABLE_VULKAN)
+        message(FATAL_ERROR "NPU frame generation requires Windows ARM64 and Vulkan")
+    endif()
+    add_compile_definitions(CEMU_ENABLE_NPU)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 add_subdirectory(src)
 
 

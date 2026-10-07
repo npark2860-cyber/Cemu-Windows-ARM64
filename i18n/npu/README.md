@@ -1,0 +1,1 @@
+NPU messages use the existing Cemu `_()` / `_tr()` translation functions. Merge `ko.po` into the existing `cemu` catalog; preserve all existing messages. `npu.pot` is the template for other locales. Untranslated messages fall back to English. The local promotion packages include the merged Korean `resources/ko/cemu.mo`.

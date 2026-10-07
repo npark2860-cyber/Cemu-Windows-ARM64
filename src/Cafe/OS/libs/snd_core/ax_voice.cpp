@@ -831,7 +831,7 @@ namespace snd_core
 				uint64_t playbackId = 0;
 				std::string error;
 				const bool played = EnhancedSoundDualSenseService::PlayBnvib(
-					route->hapticPath, route->hapticGain, route->hapticLoop, &playbackId, &error, route->hapticLoop || route->hapticFollowTv);
+					_utf8ToPath(route->hapticPath), route->hapticGain, route->hapticLoop, &playbackId, &error, route->hapticLoop || route->hapticFollowTv);
 				hapticState.sampleBase = sampleBase;
 				hapticState.hapticPath = route->hapticPath;
 				hapticState.gain = route->hapticGain;

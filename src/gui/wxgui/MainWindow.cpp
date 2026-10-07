@@ -429,7 +429,11 @@ void MainWindow::DestroyGameListAndStatusBar()
 
 wxString MainWindow::GetInitialWindowTitle()
 {
-	return BUILD_VERSION_WITH_NAME_STRING;
+#ifdef CEMU_ENABLE_NPU
+	return wxASCII_STR("Cemu ARM64 [Release+SE | NPU]");
+#else
+	return wxASCII_STR("Cemu ARM64");
+#endif
 }
 
 void MainWindow::OnClose(wxCloseEvent& event)

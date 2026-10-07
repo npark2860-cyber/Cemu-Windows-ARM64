@@ -60,6 +60,7 @@ struct SwapchainInfoVk
 
 	bool m_shouldRecreate = false;
 	VSync m_vsyncState = VSync::Immediate;
+	bool m_npuTransferSource{};
 	bool hasDefinedSwapchainImage{}; // indicates if the swapchain image is in a defined state
 
 	VkInstance m_instance{};
