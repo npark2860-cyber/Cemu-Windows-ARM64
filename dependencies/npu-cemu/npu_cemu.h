@@ -24,6 +24,8 @@ struct CemuNpuFrame {
     int32_t generatedSlot;
 };
 struct CemuNpuStats {
+    // noSlot counts pairs skipped before GPU preprocessing: no free slot, or the
+    // NPU could not finish the pair before its real frame is shown.
     uint64_t submitted, completed, stale, noSlot, generated;
     uint64_t npuRuns, inputWaitUs, npuRunUs, workerStartUs;
     double submitMs, downsampleMs, motionMs, packMs, composeMs;
