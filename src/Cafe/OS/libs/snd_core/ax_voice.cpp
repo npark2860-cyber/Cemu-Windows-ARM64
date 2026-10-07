@@ -6,6 +6,7 @@
 #include "Cafe/OS/common/EnhancedSoundRouter.h"
 #include "Cafe/OS/common/EnhancedSoundSourceTracker.h"
 #include "Cafe/OS/common/EnhancedSoundDualSenseService.h"
+#include "Cafe/OS/common/EnhancedSoundCueDiagnostic.h"
 #include "config/CemuConfig.h"
 #include "Cafe/OS/libs/coreinit/coreinit_Thread.h"
 #include "util/helpers/fspinlock.h"
@@ -724,10 +725,25 @@ namespace snd_core
 		{
 			EnhancedSoundDualSenseService::EnsureRunning();
 			const auto sources = EnhancedSoundSourceTracker::ResolveSourceCandidates(sampleBase);
-			bool unanimousRoute = !sources.empty();
-			for (const auto& source : sources)
+			if (sources.empty())
 			{
+				EnhancedSoundCueDiagnostic::Record(
+					static_cast<uint32>(vpb->index),
+					vpb->playbackState == (uint32be)1 ? 1u : 0u,
+					sampleBase, 0u, 0u, false, {}, {}, false, 0u, 0u);
+			}
+			bool unanimousRoute = !sources.empty();
+			for (size_t sourceIndex = 0; sourceIndex < sources.size(); ++sourceIndex)
+			{
+				const auto& source = sources[sourceIndex];
 				const auto resolved = EnhancedSoundRouter::Resolve(source.path, source.trackName);
+				EnhancedSoundCueDiagnostic::Record(
+					static_cast<uint32>(vpb->index),
+					vpb->playbackState == (uint32be)1 ? 1u : 0u,
+					sampleBase, static_cast<uint32>(sourceIndex), static_cast<uint32>(sources.size()),
+					true, source.path, source.trackName, resolved.has_value(),
+					resolved ? static_cast<uint32>(resolved->mode) : 0u,
+					resolved ? resolved->gain : 0u);
 				if (!resolved || (resolved->mode != EnhancedSoundRouter::Mode::AddDRC &&
 					resolved->mode != EnhancedSoundRouter::Mode::SpatialDRC))
 				{

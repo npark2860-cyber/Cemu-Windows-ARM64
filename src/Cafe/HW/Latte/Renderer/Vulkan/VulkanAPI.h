@@ -199,6 +199,7 @@ VKFUNC_DEVICE(vkWaitForPresentKHR);
 VKFUNC_DEVICE(vkCreateQueryPool);
 VKFUNC_DEVICE(vkDestroyQueryPool);
 VKFUNC_DEVICE(vkCmdResetQueryPool);
+VKFUNC_DEVICE(vkCmdWriteTimestamp);
 VKFUNC_DEVICE(vkCmdBeginQuery);
 VKFUNC_DEVICE(vkCmdEndQuery);
 VKFUNC_DEVICE(vkCmdCopyQueryPoolResults);

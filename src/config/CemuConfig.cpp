@@ -141,6 +141,15 @@ XMLConfigParser CemuConfig::Load(XMLConfigParser& parser)
 	gx2drawdone_sync = graphic.get("GX2DrawdoneSync", true);
 	upscale_filter = graphic.get("UpscaleFilter", kBicubicHermiteFilter);
 	downscale_filter = graphic.get("DownscaleFilter", kLinearFilter);
+	sint32 fsrSharpnessValue = graphic.get("FSRSharpness", 25);
+	if (fsrSharpnessValue < 0)
+		fsrSharpnessValue = 0;
+	else if (fsrSharpnessValue > 200)
+		fsrSharpnessValue = 200;
+	fsr_sharpness = fsrSharpnessValue;
+#ifdef CEMU_ENABLE_NPU
+    npu_processing_height = graphic.get("NPUProcessingHeight", 1080) == 720 ? 720 : 1080;
+#endif
 	fullscreen_scaling = graphic.get("FullscreenScaling", kKeepAspectRatio);
 	async_compile = graphic.get("AsyncCompile", async_compile);
 	vk_accurate_barriers = graphic.get("vkAccurateBarriers", true); // this used to be "VulkanAccurateBarriers" but because we changed the default to true in 1.27.1 the option name had to be changed
@@ -375,6 +384,10 @@ XMLConfigParser CemuConfig::Save(XMLConfigParser& parser)
 	//graphic.set("PrecompiledShaders", precompiled_shaders.GetValue());
 	graphic.set("UpscaleFilter", upscale_filter);
 	graphic.set("DownscaleFilter", downscale_filter);
+	graphic.set("FSRSharpness", fsr_sharpness);
+#ifdef CEMU_ENABLE_NPU
+    graphic.set("NPUProcessingHeight", npu_processing_height);
+#endif
 	graphic.set("FullscreenScaling", fullscreen_scaling);
 	graphic.set("AsyncCompile", async_compile.GetValue());
 	graphic.set("vkAccurateBarriers", vk_accurate_barriers);

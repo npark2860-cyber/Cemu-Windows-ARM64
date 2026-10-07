@@ -58,6 +58,8 @@ struct ImGui_ImplVulkanH_FrameRenderBuffers
     VkDeviceSize        IndexBufferSize;
     VkBuffer            VertexBuffer;
     VkBuffer            IndexBuffer;
+    uint64_t            LastReadCommand;
+    bool                HasReadCommand;
 };
 
 // Each viewport will hold 1 ImGui_ImplVulkanH_WindowRenderBuffers
@@ -89,6 +91,8 @@ static VkBuffer                 g_UploadBuffer = VK_NULL_HANDLE;
 
 // Render buffers
 static ImGui_ImplVulkanH_WindowRenderBuffers    g_MainWindowRenderBuffers;
+static const ImDrawData* g_LastUploadedDrawData = nullptr;
+static int g_LastUploadedVertices = 0, g_LastUploadedIndices = 0;
 
 // Forward Declarations
 bool ImGui_ImplVulkan_CreateDeviceObjects();
@@ -321,7 +325,7 @@ static void ImGui_ImplVulkan_SetupRenderState(ImDrawData* draw_data, VkCommandBu
 
 // Render function
 // (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
-void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
+static void ImGui_ImplVulkan_RenderDrawDataInternal(ImDrawData* draw_data, VkCommandBuffer command_buffer, bool replay)
 {
     // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
     int fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
@@ -333,6 +337,12 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
 
     // Allocate array to store enough vertex/index buffers
     ImGui_ImplVulkanH_WindowRenderBuffers* wrb = &g_MainWindowRenderBuffers;
+    if (replay && (!wrb->FrameRenderBuffers || g_LastUploadedDrawData != draw_data ||
+        g_LastUploadedVertices != draw_data->TotalVtxCount || g_LastUploadedIndices != draw_data->TotalIdxCount))
+    {
+        cemu_assert_debug(false); // Never overwrite possibly in-flight data on a bad replay.
+        return;
+    }
     if (wrb->FrameRenderBuffers == NULL)
     {
         wrb->Index = 0;
@@ -341,9 +351,13 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         memset(wrb->FrameRenderBuffers, 0, sizeof(ImGui_ImplVulkanH_FrameRenderBuffers) * wrb->Count);
     }
     IM_ASSERT(wrb->Count == v->ImageCount);
-    wrb->Index = (wrb->Index + 1) % wrb->Count;
+    if (!replay) wrb->Index = (wrb->Index + 1) % wrb->Count;
     ImGui_ImplVulkanH_FrameRenderBuffers* rb = &wrb->FrameRenderBuffers[wrb->Index];
 
+    if (!replay)
+    {
+    if (rb->HasReadCommand && v->WaitUploadCommand)
+        v->WaitUploadCommand(v->UploadUser, rb->LastReadCommand);
     VkResult err;
 
     // Create or resize the vertex/index buffers
@@ -389,6 +403,10 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         check_vk_result(err);
         vkUnmapMemory(v->Device, rb->VertexBufferMemory);
         vkUnmapMemory(v->Device, rb->IndexBufferMemory);
+    }
+    g_LastUploadedDrawData = draw_data;
+    g_LastUploadedVertices = draw_data->TotalVtxCount;
+    g_LastUploadedIndices = draw_data->TotalIdxCount;
     }
 
     // Setup desired Vulkan state
@@ -456,6 +474,21 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
        // global_idx_offset += cmd_list->IdxBuffer.Size;
        // global_vtx_offset += cmd_list->VtxBuffer.Size;
     }
+    if (v->UploadCommandId)
+    {
+        rb->LastReadCommand = v->UploadCommandId(v->UploadUser);
+        rb->HasReadCommand = true;
+    }
+}
+
+void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
+{
+    ImGui_ImplVulkan_RenderDrawDataInternal(draw_data, command_buffer, false);
+}
+
+void ImGui_ImplVulkan_ReplayDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
+{
+    ImGui_ImplVulkan_RenderDrawDataInternal(draw_data, command_buffer, true);
 }
 
 void ImGui_ImplVulkan_DestroyFontsTexture()
@@ -913,6 +946,8 @@ ImTextureID ImGui_ImplVulkan_AddTexture(VkSampler sampler, VkImageView image_vie
 
 void ImGui_ImplVulkan_Shutdown()
 {
+    g_LastUploadedDrawData = nullptr;
+    g_LastUploadedVertices = g_LastUploadedIndices = 0;
     ImGui_ImplVulkan_DestroyDeviceObjects();
 }
 
@@ -1306,6 +1341,8 @@ void ImGui_ImplVulkanH_DestroyFrameRenderBuffers(VkDevice device, ImGui_ImplVulk
 
 void ImGui_ImplVulkanH_DestroyWindowRenderBuffers(VkDevice device, ImGui_ImplVulkanH_WindowRenderBuffers* buffers, const VkAllocationCallbacks* allocator)
 {
+    g_LastUploadedDrawData = nullptr;
+    g_LastUploadedVertices = g_LastUploadedIndices = 0;
     for (uint32_t n = 0; n < buffers->Count; n++)
         ImGui_ImplVulkanH_DestroyFrameRenderBuffers(device, &buffers->FrameRenderBuffers[n], allocator);
     IM_FREE(buffers->FrameRenderBuffers);

@@ -94,6 +94,7 @@ enum UpscalingFilter
 	kBicubicFilter,
 	kBicubicHermiteFilter,
 	kNearestNeighborFilter,
+	kFidelityFXFSRFilter,
 };
 
 enum FullscreenScaling
@@ -484,6 +485,11 @@ struct CemuConfig
 
 	ConfigValue<sint32> upscale_filter{kBicubicFilter};
 	ConfigValue<sint32> downscale_filter{kLinearFilter};
+#ifdef CEMU_ENABLE_NPU
+    ConfigValue<bool> npu_enabled{false}; // Session-only: start with original frames.
+    ConfigValue<int> npu_processing_height{1080}; // Applied on the next game start.
+#endif
+	ConfigValue<sint32> fsr_sharpness{25}; // FSR1 RCAS stops * 100, matching Eden/Yuzu semantics
 	ConfigValue<sint32> fullscreen_scaling{kKeepAspectRatio};
 
 	// audio

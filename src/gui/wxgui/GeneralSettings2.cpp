@@ -483,15 +483,51 @@ wxPanel* GeneralSettings2::AddGraphicsPage(wxNotebook* notebook)
 	}
 
 	{
-		wxString choices[] = { _("Bilinear"), _("Bicubic"), _("Hermite"), _("Nearest Neighbor") };
-		m_upscale_filter = new wxRadioBox(graphics_panel, wxID_ANY, _("Upscale filter"), wxDefaultPosition, wxDefaultSize, std::size(choices), choices, 5, wxRA_SPECIFY_COLS);
+		wxString upscale_choices[] = { _("Bilinear"), _("Bicubic"), _("Hermite"), _("Nearest Neighbor"), _("AMD FidelityFX FSR") };
+		m_upscale_filter = new wxRadioBox(graphics_panel, wxID_ANY, _("Upscale filter"), wxDefaultPosition, wxDefaultSize, std::size(upscale_choices), upscale_choices, 5, wxRA_SPECIFY_COLS);
 		m_upscale_filter->SetToolTip(_("Upscaling filters are used when the game resolution is smaller than the window size"));
-		m_upscale_filter->Bind(wxEVT_RADIOBOX, [](wxCommandEvent& event) {
+		m_upscale_filter->Bind(wxEVT_RADIOBOX, [this](wxCommandEvent& event) {
 			GetConfig().upscale_filter = event.GetSelection();
+			const bool fsrSelected = event.GetSelection() == kFidelityFXFSRFilter;
+			m_fsr_sharpness->Enable(fsrSelected);
+			m_fsr_sharpness_value->Enable(fsrSelected);
 		});
 		graphics_panel_sizer->Add(m_upscale_filter, 0, wxALL | wxEXPAND, 5);
 
-		m_downscale_filter = new wxRadioBox(graphics_panel, wxID_ANY, _("Downscale filter"), wxDefaultPosition, wxDefaultSize, std::size(choices), choices, 5, wxRA_SPECIFY_COLS);
+		auto* fsr_sharpness_row = new wxBoxSizer(wxHORIZONTAL);
+		fsr_sharpness_row->Add(new wxStaticText(graphics_panel, wxID_ANY, _("FSR RCAS sharpness")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+		m_fsr_sharpness = new wxSlider(graphics_panel, wxID_ANY, 25, 0, 200, wxDefaultPosition, wxSize(250, -1));
+		m_fsr_sharpness->SetToolTip(_("AMD FSR1 RCAS sharpness stops x100. Matches Eden/Yuzu semantics: 0 is strongest sharpening, 200 is weakest."));
+		fsr_sharpness_row->Add(m_fsr_sharpness, 1, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+		m_fsr_sharpness_value = new wxStaticText(graphics_panel, wxID_ANY, "25");
+		fsr_sharpness_row->Add(m_fsr_sharpness_value, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+		m_fsr_sharpness->Bind(wxEVT_SLIDER, [this](wxCommandEvent& event) {
+			const sint32 value = event.GetInt();
+			GetConfig().fsr_sharpness = value;
+			m_fsr_sharpness_value->SetLabel(wxString::Format("%d", value));
+		});
+		graphics_panel_sizer->Add(fsr_sharpness_row, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5);
+#ifdef CEMU_ENABLE_NPU
+        auto* npuCheck = new wxCheckBox(graphics_panel, wxID_ANY, _("NPU frame generation"));
+        npuCheck->SetValue(GetConfig().npu_enabled.GetValue());
+        npuCheck->SetToolTip(_("Starts off each session. Requires Vulkan and SDR output. When enabled, both original and generated frames use the selected processing resolution and are scaled to the window. Adds one frame of latency. Late generated frames are skipped."));
+        npuCheck->Bind(wxEVT_CHECKBOX, [](wxCommandEvent& event) { GetConfig().npu_enabled = event.IsChecked(); });
+        npuCheck->Bind(wxEVT_UPDATE_UI, [](wxUpdateUIEvent& event) { event.Check(GetConfig().npu_enabled.GetValue()); });
+        graphics_panel_sizer->Add(npuCheck, 0, wxALL, 5);
+        auto* npuRow = new wxBoxSizer(wxHORIZONTAL);
+        npuRow->Add(new wxStaticText(graphics_panel, wxID_ANY, _("NPU processing")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+        wxString npuModes[] = {_("1080p / Standard"), _("720p / Performance")};
+        auto* npuMode = new wxChoice(graphics_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, std::size(npuModes), npuModes);
+        npuMode->SetSelection(GetConfig().npu_processing_height.GetValue() == 720 ? 1 : 0);
+        npuMode->SetToolTip(_("Applied on the next game start. 720p reduces GPU and NPU processing, with less image detail. Output follows the current window or fullscreen size."));
+        npuMode->Bind(wxEVT_CHOICE, [](wxCommandEvent& event) { GetConfig().npu_processing_height = event.GetSelection() == 1 ? 720 : 1080; });
+        npuRow->Add(npuMode, 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+        graphics_panel_sizer->Add(npuRow, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 5);
+        graphics_panel_sizer->Add(new wxStaticText(graphics_panel, wxID_ANY, _("Processing resolution changes apply on the next game start.")), 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+#endif
+
+		wxString downscale_choices[] = { _("Bilinear"), _("Bicubic"), _("Hermite"), _("Nearest Neighbor") };
+		m_downscale_filter = new wxRadioBox(graphics_panel, wxID_ANY, _("Downscale filter"), wxDefaultPosition, wxDefaultSize, std::size(downscale_choices), downscale_choices, 5, wxRA_SPECIFY_COLS);
 		m_downscale_filter->SetToolTip(_("Downscaling filters are used when the game resolution is bigger than the window size"));
 		m_downscale_filter->Bind(wxEVT_RADIOBOX, [](wxCommandEvent& event) {
 			GetConfig().downscale_filter = event.GetSelection();
@@ -1932,6 +1968,11 @@ void GeneralSettings2::ApplyConfig()
 	m_force_mesh_shaders->SetValue(config.force_mesh_shaders);
 #endif
 	m_upscale_filter->SetSelection(config.upscale_filter);
+	m_fsr_sharpness->SetValue(config.fsr_sharpness.GetValue());
+	m_fsr_sharpness_value->SetLabel(wxString::Format("%d", config.fsr_sharpness.GetValue()));
+	const bool fsrSelected = config.upscale_filter.GetValue() == kFidelityFXFSRFilter;
+	m_fsr_sharpness->Enable(fsrSelected);
+	m_fsr_sharpness_value->Enable(fsrSelected);
 	m_downscale_filter->SetSelection(config.downscale_filter);
 	m_fullscreen_scaling->SetSelection(config.fullscreen_scaling);
 

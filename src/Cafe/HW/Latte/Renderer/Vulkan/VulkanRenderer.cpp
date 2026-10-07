@@ -29,6 +29,7 @@
 #include "Cafe/HW/Latte/Core/LatteTiming.h" // vsync control
 
 #include <cstdint>
+#include <chrono>
 #include <glslang/Public/ShaderLang.h>
 
 #ifndef VK_API_VERSION_MAJOR
@@ -677,6 +678,16 @@ VulkanRenderer::VulkanRenderer() : Renderer(RendererAPI::Vulkan)
 		cemuLog_log(LogType::Force, "vertexPipelineStoresAndAtomics not supported by the driver. Games which use the streamout feature will not render correctly");
 
 	void* deviceExtensionFeatures = nullptr;
+#ifdef CEMU_ENABLE_NPU
+    uint32_t npuQueueCount{};
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &npuQueueCount, nullptr);
+    std::vector<VkQueueFamilyProperties> npuQueues(npuQueueCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &npuQueueCount, npuQueues.data());
+    m_npuSupported = deviceFeatures2.features.shaderStorageImageExtendedFormats &&
+        m_indices.graphicsFamily < npuQueueCount &&
+        (npuQueues[m_indices.graphicsFamily].queueFlags & VK_QUEUE_COMPUTE_BIT);
+    if (m_npuSupported) deviceFeatures.shaderStorageImageExtendedFormats = VK_TRUE;
+#endif
 
 	// enable VK_EXT_pipeline_creation_cache_control
 	VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT cacheControlFeature{};
@@ -852,6 +863,11 @@ VulkanRenderer::~VulkanRenderer()
 	SubmitCommandBuffer();
 	WaitDeviceIdle();
 	WaitCommandBufferFinished(GetCurrentCommandBufferId());
+#ifdef CEMU_ENABLE_NPU
+#ifdef CEMU_ENABLE_NPU
+    npuShutdown();
+#endif
+#endif
 	// shut down pipeline save thread
 	m_destructionRequested = true;
 	m_pipeline_cache_semaphore.notify();
@@ -1842,6 +1858,15 @@ void VulkanRenderer::ImguiInit()
 	info.DescriptorPool = m_descriptorPool;
 	info.MinImageCount = m_mainSwapchainInfo->m_swapchainImages.size();
 	info.ImageCount = info.MinImageCount;
+#ifdef CEMU_ENABLE_NPU
+    info.UploadUser = this;
+    info.UploadCommandId = [](void* user) {return static_cast<VulkanRenderer*>(user)->GetCurrentCommandBufferId();};
+    info.WaitUploadCommand = [](void* user,uint64_t commandId) {
+        auto* renderer=static_cast<VulkanRenderer*>(user);
+        if(!renderer->HasCommandBufferFinished(commandId))
+            renderer->WaitCommandBufferFinished(commandId);
+    };
+#endif
 
 	ImGui_ImplVulkan_Init(&info, m_imguiRenderPass);
 
@@ -1856,12 +1881,23 @@ void VulkanRenderer::Initialize()
 	CreatePipelineCache();
 	ImguiInit();
 	CreateNullObjects();
+#ifdef CEMU_ENABLE_NPU
+#ifdef CEMU_ENABLE_NPU
+    npuInitialize();
+#endif
+#endif
 }
 
 void VulkanRenderer::Shutdown()
 {
 	SubmitCommandBuffer();
 	WaitDeviceIdle();
+#ifdef CEMU_ENABLE_NPU
+#ifdef CEMU_ENABLE_NPU
+    npuShutdown();
+#endif
+#endif
+	fsrDestroyResources();
 	// stop compilation threads
 	RendererShaderVk::Shutdown();
 	PipelineCompiler::CompileThreadPool_Stop();
@@ -2040,6 +2076,9 @@ void VulkanRenderer::QueryAvailableFormats()
 
 bool VulkanRenderer::ImguiBegin(bool mainWindow)
 {
+#ifdef CEMU_ENABLE_NPU
+    m_npuImguiMainWindow = mainWindow;
+#endif
 	if (!Renderer::ImguiBegin(mainWindow))
 		return false;
 
@@ -2063,6 +2102,15 @@ void VulkanRenderer::ImguiEnd()
 	ImGui::Render();
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_state.currentCommandBuffer);
 	vkCmdEndRenderPass(m_state.currentCommandBuffer);
+#ifdef CEMU_ENABLE_NPU
+    if (npuPresentGenerated())
+    {
+        auto& chain = GetChainInfo(true);
+        ImGui_ImplVulkan_NewFrame(m_state.currentCommandBuffer, chain.m_swapchainFramebuffers[chain.swapchainImageIndex], chain.getExtent());
+        ImGui_ImplVulkan_ReplayDrawData(ImGui::GetDrawData(), m_state.currentCommandBuffer);
+        vkCmdEndRenderPass(m_state.currentCommandBuffer);
+    }
+#endif
 }
 
 ImTextureID VulkanRenderer::GenerateTexture(const std::vector<uint8>& data, const Vector2i& size)
@@ -2133,7 +2181,7 @@ void VulkanRenderer::InitFirstCommandBuffer()
 	vkResetFences(m_logicalDevice, 1, &m_cmdBufferFences[m_commandBufferIndex]);
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 	vkBeginCommandBuffer(m_state.currentCommandBuffer, &beginInfo);
 
 	vkCmdSetViewport(m_state.currentCommandBuffer, 0, 1, &m_state.currentViewport);
@@ -2254,7 +2302,7 @@ void VulkanRenderer::SubmitCommandBuffer(VkSemaphore signalSemaphore, VkSemaphor
 
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 	vkBeginCommandBuffer(m_state.currentCommandBuffer, &beginInfo);
 
 	// make sure some states are set for this command buffer
@@ -2768,9 +2816,10 @@ VkPipelineShaderStageCreateInfo VulkanRenderer::CreatePipelineShaderStageCreateI
 	return shaderStageInfo;
 }
 
-VkPipeline VulkanRenderer::backbufferBlit_createGraphicsPipeline(VkDescriptorSetLayout descriptorLayout, bool padView, RendererOutputShader* shader)
+VkPipeline VulkanRenderer::backbufferBlit_createGraphicsPipeline(VkDescriptorSetLayout descriptorLayout, bool padView, RendererOutputShader* shader, VkRenderPass overrideRenderPass)
 {
 	auto& chainInfo = GetChainInfo(!padView);
+	const VkRenderPass targetRenderPass = overrideRenderPass != VK_NULL_HANDLE ? overrideRenderPass : chainInfo.m_swapchainRenderPass;
 
 	RendererShaderVk* vertexRendererShader = static_cast<RendererShaderVk*>(shader->GetVertexShader());
 	RendererShaderVk* fragmentRendererShader = static_cast<RendererShaderVk*>(shader->GetFragmentShader());
@@ -2779,6 +2828,7 @@ VkPipeline VulkanRenderer::backbufferBlit_createGraphicsPipeline(VkDescriptorSet
 	hash += (uint64)vertexRendererShader;
 	hash += (uint64)fragmentRendererShader;
 	hash += ((uint64)padView) << 1;
+	hash ^= ((uint64)targetRenderPass * 0x9E3779B185EBCA87ull);
 
 	const auto it = m_backbufferBlitPipelineCache.find(hash);
 	if (it != m_backbufferBlitPipelineCache.cend())
@@ -2868,7 +2918,7 @@ VkPipeline VulkanRenderer::backbufferBlit_createGraphicsPipeline(VkDescriptorSet
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.layout = m_pipelineLayout;
-	pipelineInfo.renderPass = chainInfo.m_swapchainRenderPass;
+	pipelineInfo.renderPass = targetRenderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
@@ -2918,6 +2968,11 @@ bool VulkanRenderer::AcquireNextSwapchainImage(bool mainWindow)
 
 void VulkanRenderer::RecreateSwapchain(bool mainWindow, bool skipCreate)
 {
+#ifdef CEMU_ENABLE_NPU
+    if (mainWindow)
+        cemuLog_log(LogType::Force, "[NPU-SURFACE] Recreate begin: generation={} skip_create={}",
+            m_npuSwapchainGeneration, skipCreate);
+#endif
 	SubmitCommandBuffer();
 	WaitDeviceIdle();
 	auto& chainInfo = GetChainInfo(mainWindow);
@@ -2925,6 +2980,14 @@ void VulkanRenderer::RecreateSwapchain(bool mainWindow, bool skipCreate)
 	Vector2i size;
 	if (mainWindow)
 	{
+#ifdef CEMU_ENABLE_NPU
+        // A driver can reuse a destroyed swapchain's numeric handle. Track
+        // resource lifetime explicitly before retiring ImGui font resources.
+        ++m_npuSwapchainGeneration;
+#ifdef CEMU_ENABLE_NPU
+        npuInvalidate();
+#endif
+#endif
 		ImGui_ImplVulkan_Shutdown();
 		WindowSystem::GetWindowPhysSize(size.x, size.y);
 	}
@@ -2942,7 +3005,14 @@ void VulkanRenderer::RecreateSwapchain(bool mainWindow, bool skipCreate)
 	}
 
 	if (mainWindow)
+    {
 		ImguiInit();
+#ifdef CEMU_ENABLE_NPU
+        const auto extent = chainInfo.getExtent();
+        cemuLog_log(LogType::Force, "[NPU-SURFACE] Recreate complete: generation={} extent={}x{}",
+            m_npuSwapchainGeneration, extent.width, extent.height);
+#endif
+    }
 }
 
 bool VulkanRenderer::UpdateSwapchainProperties(bool mainWindow)
@@ -3002,11 +3072,25 @@ void VulkanRenderer::SwapBuffer(bool mainWindow)
 
 	cemu_assert_debug(m_numSubmittedCmdBuffers > 0);
 
-	// wait for the previous frame to finish rendering
-	WaitCommandBufferFinished(m_commandBufferIDOfPrevFrame);
-	m_commandBufferIDOfPrevFrame = currentFrameCmdBufferID;
+    // A generated present belongs to the current source frame. Advancing the
+    // source-frame throttle here would make the subsequent real present wait
+    // for its own generated sibling, serializing every source frame.
+#ifdef CEMU_ENABLE_NPU
+    const auto npuThrottleStart = std::chrono::steady_clock::now();
+    if (!(mainWindow && npuIsGeneratedPresent()))
+#endif
+    {
+        WaitCommandBufferFinished(m_commandBufferIDOfPrevFrame);
+        m_commandBufferIDOfPrevFrame = currentFrameCmdBufferID;
+    }
+#ifdef CEMU_ENABLE_NPU
+    const auto npuThrottleEnd = std::chrono::steady_clock::now();
+#endif
 
 	chainInfo.WaitAvailableFence();
+#ifdef CEMU_ENABLE_NPU
+    const auto npuAvailableEnd = std::chrono::steady_clock::now();
+#endif
 
 	VkPresentIdKHR presentId = {};
 
@@ -3037,7 +3121,20 @@ void VulkanRenderer::SwapBuffer(bool mainWindow)
 		}
 	}
 
+#ifdef CEMU_ENABLE_NPU
+    const auto npuQueuePresentStart = std::chrono::steady_clock::now();
+#endif
 	VkResult result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
+#ifdef CEMU_ENABLE_NPU
+    if(mainWindow) {
+        const auto end = std::chrono::steady_clock::now();
+        npuRecordPresentTiming(std::chrono::duration<double,std::milli>(npuThrottleEnd-npuThrottleStart).count(),
+            std::chrono::duration<double,std::milli>(npuAvailableEnd-npuThrottleEnd).count(),
+            std::chrono::duration<double,std::milli>(npuQueuePresentStart-npuAvailableEnd).count(),
+            std::chrono::duration<double,std::milli>(end-npuQueuePresentStart).count());
+        npuRecordPresent(result);
+    }
+#endif
 	if (result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		throw std::runtime_error(fmt::format("Failed to present image: {}", result));
@@ -3164,6 +3261,363 @@ void VulkanRenderer::ClearColorImage(LatteTextureVk* vkTexture, uint32 sliceInde
 	vkTexture->SetImageLayout(subresourceRange, outputLayout);
 }
 
+void VulkanRenderer::fsrDestroyIntermediate(size_t index)
+{
+    auto& resource = m_fsrIntermediate[index];
+
+    if (resource.framebuffer != VK_NULL_HANDLE)
+    {
+        vkDestroyFramebuffer(m_logicalDevice, resource.framebuffer, nullptr);
+        resource.framebuffer = VK_NULL_HANDLE;
+    }
+    if (resource.view != VK_NULL_HANDLE)
+    {
+        vkDestroyImageView(m_logicalDevice, resource.view, nullptr);
+        resource.view = VK_NULL_HANDLE;
+    }
+    if (resource.image != VK_NULL_HANDLE)
+    {
+        vkDestroyImage(m_logicalDevice, resource.image, nullptr);
+        resource.image = VK_NULL_HANDLE;
+    }
+    if (resource.allocation)
+    {
+        memoryManager->imageMemoryFree(resource.allocation);
+        resource.allocation = nullptr;
+    }
+
+    resource.width = 0;
+    resource.height = 0;
+}
+
+void VulkanRenderer::fsrDestroyResources()
+{
+    for (size_t i = 0; i < m_fsrIntermediate.size(); ++i)
+        fsrDestroyIntermediate(i);
+
+    for (auto& resource : m_fsrIntermediate)
+    {
+        if (resource.descriptorSet != VK_NULL_HANDLE && m_descriptorPool != VK_NULL_HANDLE)
+        {
+            vkFreeDescriptorSets(m_logicalDevice, m_descriptorPool, 1, &resource.descriptorSet);
+            resource.descriptorSet = VK_NULL_HANDLE;
+        }
+    }
+
+    if (m_fsrSampler != VK_NULL_HANDLE)
+    {
+        vkDestroySampler(m_logicalDevice, m_fsrSampler, nullptr);
+        m_fsrSampler = VK_NULL_HANDLE;
+    }
+    if (m_fsrRenderPass != VK_NULL_HANDLE)
+    {
+        vkDestroyRenderPass(m_logicalDevice, m_fsrRenderPass, nullptr);
+        m_fsrRenderPass = VK_NULL_HANDLE;
+    }
+}
+
+void VulkanRenderer::fsrEnsureIntermediate(bool padView, uint32 width, uint32 height)
+{
+    if (width == 0 || height == 0)
+        return;
+
+    const size_t resourceIndex = padView ? 1 : 0;
+    auto& resource = m_fsrIntermediate[resourceIndex];
+
+    if (resource.image != VK_NULL_HANDLE && resource.width == width && resource.height == height)
+        return;
+
+    if (resource.image != VK_NULL_HANDLE)
+    {
+        // Resize is rare and old frames may still sample this image.
+        WaitDeviceIdle();
+        fsrDestroyIntermediate(resourceIndex);
+    }
+
+    constexpr VkFormat kFSRIntermediateFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+
+    if (m_fsrRenderPass == VK_NULL_HANDLE)
+    {
+        VkAttachmentDescription colorAttachment{};
+        colorAttachment.format = kFSRIntermediateFormat;
+        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        VkAttachmentReference colorReference{};
+        colorReference.attachment = 0;
+        colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        VkSubpassDescription subpass{};
+        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass.colorAttachmentCount = 1;
+        subpass.pColorAttachments = &colorReference;
+
+        VkSubpassDependency dependencies[2]{};
+        dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+        dependencies[0].dstSubpass = 0;
+        dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+        dependencies[1].srcSubpass = 0;
+        dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+        VkRenderPassCreateInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        renderPassInfo.attachmentCount = 1;
+        renderPassInfo.pAttachments = &colorAttachment;
+        renderPassInfo.subpassCount = 1;
+        renderPassInfo.pSubpasses = &subpass;
+        renderPassInfo.dependencyCount = std::size(dependencies);
+        renderPassInfo.pDependencies = dependencies;
+
+        if (vkCreateRenderPass(m_logicalDevice, &renderPassInfo, nullptr, &m_fsrRenderPass) != VK_SUCCESS)
+            UnrecoverableError("Failed to create FSR intermediate render pass");
+    }
+
+    if (m_fsrSampler == VK_NULL_HANDLE)
+    {
+        VkSamplerCreateInfo samplerInfo{};
+        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        samplerInfo.magFilter = VK_FILTER_LINEAR;
+        samplerInfo.minFilter = VK_FILTER_LINEAR;
+        samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        samplerInfo.minLod = 0.0f;
+        samplerInfo.maxLod = 0.0f;
+        samplerInfo.maxAnisotropy = 1.0f;
+        samplerInfo.anisotropyEnable = VK_FALSE;
+        samplerInfo.compareEnable = VK_FALSE;
+        samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+
+        if (vkCreateSampler(m_logicalDevice, &samplerInfo, nullptr, &m_fsrSampler) != VK_SUCCESS)
+            UnrecoverableError("Failed to create FSR intermediate sampler");
+    }
+
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.format = kFSRIntermediateFormat;
+    imageInfo.extent = { width, height, 1 };
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    if (vkCreateImage(m_logicalDevice, &imageInfo, nullptr, &resource.image) != VK_SUCCESS)
+        UnrecoverableError("Failed to create FSR intermediate image");
+    resource.allocation = memoryManager->imageMemoryAllocate(resource.image);
+
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = resource.image;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = kFSRIntermediateFormat;
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = 1;
+
+    if (vkCreateImageView(m_logicalDevice, &viewInfo, nullptr, &resource.view) != VK_SUCCESS)
+        UnrecoverableError("Failed to create FSR intermediate image view");
+
+    VkFramebufferCreateInfo framebufferInfo{};
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.renderPass = m_fsrRenderPass;
+    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.pAttachments = &resource.view;
+    framebufferInfo.width = width;
+    framebufferInfo.height = height;
+    framebufferInfo.layers = 1;
+
+    if (vkCreateFramebuffer(m_logicalDevice, &framebufferInfo, nullptr, &resource.framebuffer) != VK_SUCCESS)
+        UnrecoverableError("Failed to create FSR intermediate framebuffer");
+
+    if (resource.descriptorSet == VK_NULL_HANDLE)
+    {
+        VkDescriptorSetAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = m_descriptorPool;
+        allocInfo.descriptorSetCount = 1;
+        allocInfo.pSetLayouts = &m_swapchainDescriptorSetLayout;
+
+        if (vkAllocateDescriptorSets(m_logicalDevice, &allocInfo, &resource.descriptorSet) != VK_SUCCESS)
+            UnrecoverableError("Failed to allocate FSR intermediate descriptor set");
+        performanceMonitor.vk.numDescriptorSets.increment();
+    }
+
+    VkDescriptorImageInfo imageDescriptor{};
+    imageDescriptor.sampler = m_fsrSampler;
+    imageDescriptor.imageView = resource.view;
+    imageDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkDescriptorBufferInfo uniformDescriptor{};
+    uniformDescriptor.buffer = m_uniformVarBuffer;
+    uniformDescriptor.offset = 0;
+    uniformDescriptor.range = sizeof(RendererOutputShader::OutputUniformVariables);
+
+    VkWriteDescriptorSet descriptorWrites[2]{};
+    descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[0].dstSet = resource.descriptorSet;
+    descriptorWrites[0].dstBinding = 0;
+    descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrites[0].descriptorCount = 1;
+    descriptorWrites[0].pImageInfo = &imageDescriptor;
+
+    descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[1].dstSet = resource.descriptorSet;
+    descriptorWrites[1].dstBinding = 1;
+    descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    descriptorWrites[1].descriptorCount = 1;
+    descriptorWrites[1].pBufferInfo = &uniformDescriptor;
+
+    vkUpdateDescriptorSets(m_logicalDevice, std::size(descriptorWrites), descriptorWrites, 0, nullptr);
+    performanceMonitor.vk.numDescriptorSamplerTextures.increment();
+
+    resource.width = width;
+    resource.height = height;
+}
+
+void VulkanRenderer::DrawBackbufferQuadFSR(LatteTextureView* texView, RendererOutputShader* easuShader, sint32 imageX, sint32 imageY, sint32 imageWidth, sint32 imageHeight, bool padView)
+{
+    if (imageWidth <= 0 || imageHeight <= 0)
+        return;
+
+    auto& chainInfo = GetChainInfo(!padView);
+    auto* texViewVk = static_cast<LatteTextureViewVk*>(texView);
+    const size_t resourceIndex = padView ? 1 : 0;
+
+    fsrEnsureIntermediate(padView, (uint32)imageWidth, (uint32)imageHeight);
+    auto& resource = m_fsrIntermediate[resourceIndex];
+
+    // Make the emulated TV/DRC texture visible to the EASU fragment shader.
+    VkMemoryBarrier inputBarrier{};
+    inputBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    inputBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+    inputBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT;
+    const VkPipelineStageFlags inputSrcStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT;
+    const VkPipelineStageFlags inputDstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    vkCmdPipelineBarrier(m_state.currentCommandBuffer, inputSrcStages, inputDstStages, 0, 1, &inputBarrier, 0, nullptr, 0, nullptr);
+
+    const auto easuPipeline = backbufferBlit_createGraphicsPipeline(m_swapchainDescriptorSetLayout, padView, easuShader, m_fsrRenderPass);
+    const auto sourceDescriptor = backbufferBlit_createDescriptorSet(m_swapchainDescriptorSetLayout, texViewVk, true);
+
+    VkRenderPassBeginInfo easuPassInfo{};
+    easuPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    easuPassInfo.renderPass = m_fsrRenderPass;
+    easuPassInfo.framebuffer = resource.framebuffer;
+    easuPassInfo.renderArea.offset = { 0, 0 };
+    easuPassInfo.renderArea.extent = { (uint32)imageWidth, (uint32)imageHeight };
+
+    VkViewport easuViewport{};
+    easuViewport.x = 0.0f;
+    easuViewport.y = 0.0f;
+    easuViewport.width = (float)imageWidth;
+    easuViewport.height = (float)imageHeight;
+    easuViewport.minDepth = 0.0f;
+    easuViewport.maxDepth = 1.0f;
+
+    VkRect2D easuScissor{};
+    easuScissor.offset = { 0, 0 };
+    easuScissor.extent = { (uint32)imageWidth, (uint32)imageHeight };
+
+    vkCmdSetViewport(m_state.currentCommandBuffer, 0, 1, &easuViewport);
+    vkCmdSetScissor(m_state.currentCommandBuffer, 0, 1, &easuScissor);
+    vkCmdBeginRenderPass(m_state.currentCommandBuffer, &easuPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, easuPipeline);
+    m_state.currentPipeline = easuPipeline;
+
+    auto easuUniforms = easuShader->FillUniformBlockBuffer(*texView, { imageWidth, imageHeight }, padView);
+    // The intermediate must remain in the game's linear output space. Gamma and
+    // sRGB conversion are applied once, after RCAS, on the final swapchain pass.
+    easuUniforms.applySRGBEncoding = 0;
+    easuUniforms.targetGamma = 1.0f;
+    easuUniforms.displayGamma = 1.0f;
+
+    auto easuUniformOffset = uniformData_uploadUniformDataBufferGetOffset({ (uint8*)&easuUniforms, sizeof(easuUniforms) });
+    vkCmdBindDescriptorSets(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &sourceDescriptor, 1, &easuUniformOffset);
+    vkCmdDraw(m_state.currentCommandBuffer, 6, 1, 0, 0);
+    vkCmdEndRenderPass(m_state.currentCommandBuffer);
+
+    // The render pass transitions the FP16 image to SHADER_READ_ONLY_OPTIMAL;
+    // make the color writes explicitly visible before RCAS samples them.
+    VkMemoryBarrier rcasBarrier{};
+    rcasBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    rcasBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    rcasBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    vkCmdPipelineBarrier(
+        m_state.currentCommandBuffer,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        1, &rcasBarrier, 0, nullptr, 0, nullptr);
+
+    const auto rcasPipeline = backbufferBlit_createGraphicsPipeline(
+        m_swapchainDescriptorSetLayout, padView, RendererOutputShader::s_fsr_rcas_shader);
+
+    VkRenderPassBeginInfo finalPassInfo{};
+    finalPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    finalPassInfo.renderPass = chainInfo.m_swapchainRenderPass;
+    finalPassInfo.framebuffer = chainInfo.m_swapchainFramebuffers[chainInfo.swapchainImageIndex];
+    finalPassInfo.renderArea.offset = { 0, 0 };
+    finalPassInfo.renderArea.extent = chainInfo.getExtent();
+
+    VkViewport finalViewport{};
+    finalViewport.x = (float)imageX;
+    finalViewport.y = (float)imageY;
+    finalViewport.width = (float)imageWidth;
+    finalViewport.height = (float)imageHeight;
+    finalViewport.minDepth = 0.0f;
+    finalViewport.maxDepth = 1.0f;
+
+    VkRect2D finalScissor{};
+    finalScissor.extent = chainInfo.getExtent();
+
+    vkCmdSetViewport(m_state.currentCommandBuffer, 0, 1, &finalViewport);
+    vkCmdSetScissor(m_state.currentCommandBuffer, 0, 1, &finalScissor);
+    vkCmdBeginRenderPass(m_state.currentCommandBuffer, &finalPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, rcasPipeline);
+    m_state.currentPipeline = rcasPipeline;
+
+    auto rcasUniforms = easuShader->FillUniformBlockBuffer(*texView, { imageWidth, imageHeight }, padView);
+    rcasUniforms.textureSrcResolution = { (float)imageWidth, (float)imageHeight };
+    rcasUniforms.nativeResolution = { (float)imageWidth, (float)imageHeight };
+    rcasUniforms.outputResolution = { (float)imageWidth, (float)imageHeight };
+
+    auto rcasUniformOffset = uniformData_uploadUniformDataBufferGetOffset({ (uint8*)&rcasUniforms, sizeof(rcasUniforms) });
+    vkCmdBindDescriptorSets(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &resource.descriptorSet, 1, &rcasUniformOffset);
+    vkCmdDraw(m_state.currentCommandBuffer, 6, 1, 0, 0);
+    vkCmdEndRenderPass(m_state.currentCommandBuffer);
+
+    vkCmdSetViewport(m_state.currentCommandBuffer, 0, 1, &m_state.currentViewport);
+    chainInfo.hasDefinedSwapchainImage = true;
+
+    static bool s_fsrPathLogged = false;
+    if (!s_fsrPathLogged)
+    {
+        cemuLog_log(LogType::Force, "[FSR1] Vulkan EASU + RCAS active · RCAS setting {}", GetConfig().fsr_sharpness.GetValue());
+        s_fsrPathLogged = true;
+    }
+}
+
 void VulkanRenderer::DrawBackbufferQuad(LatteTextureView* texView, RendererOutputShader* shader, bool useLinearTexFilter, sint32 imageX, sint32 imageY, sint32 imageWidth, sint32 imageHeight, bool padView, bool clearBackground)
 {
 	if(!AcquireNextSwapchainImage(!padView))
@@ -3172,6 +3626,20 @@ void VulkanRenderer::DrawBackbufferQuad(LatteTextureView* texView, RendererOutpu
 	auto& chainInfo = GetChainInfo(!padView);
 	LatteTextureViewVk* texViewVk = (LatteTextureViewVk*)texView;
 	draw_endRenderPass();
+
+	if (clearBackground)
+		ClearColorbuffer(padView);
+
+	if (shader == RendererOutputShader::s_fsr_easu_shader || shader == RendererOutputShader::s_fsr_easu_shader_ud)
+	{
+		DrawBackbufferQuadFSR(texView, shader, imageX, imageY, imageWidth, imageHeight, padView);
+#ifdef CEMU_ENABLE_NPU
+#ifdef CEMU_ENABLE_NPU
+        if (!padView) npuCapture();
+#endif
+#endif
+		return;
+	}
 
 	// barrier for input texture
 	VkMemoryBarrier memoryBarrier{};
@@ -3209,16 +3677,6 @@ void VulkanRenderer::DrawBackbufferQuad(LatteTextureView* texView, RendererOutpu
 
 	vkCmdBeginRenderPass(m_state.currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	if (clearBackground)
-	{
-		VkClearAttachment clearAttachment{};
-		clearAttachment.clearValue = {0,0,0,0};
-		clearAttachment.colorAttachment = 0;
-		clearAttachment.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		VkClearRect clearExtent = {{{0,0},chainInfo.m_actualExtent}, 0, 1};
-		vkCmdClearAttachments(m_state.currentCommandBuffer, 1, &clearAttachment, 1, &clearExtent);
-	}
-
 	vkCmdBindPipeline(m_state.currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	m_state.currentPipeline = pipeline;
 
@@ -3238,6 +3696,11 @@ void VulkanRenderer::DrawBackbufferQuad(LatteTextureView* texView, RendererOutpu
 
 	// mark current swapchain image as well defined
 	chainInfo.hasDefinedSwapchainImage = true;
+#ifdef CEMU_ENABLE_NPU
+#ifdef CEMU_ENABLE_NPU
+    if (!padView) npuCapture();
+#endif
+#endif
 }
 
 void VulkanRenderer::CreateDescriptorPool()

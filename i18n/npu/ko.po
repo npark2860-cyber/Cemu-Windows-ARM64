@@ -1,0 +1,37 @@
+# NPU frame generation UI. Original Cemu catalog is preserved when packaging.
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nLanguage: ko\nPlural-Forms: nplurals=1; plural=0;\n"
+
+msgid "NPU frame generation"
+msgstr "NPU 프레임 생성"
+
+msgid "Starts off each session. Requires Vulkan and SDR output. When enabled, both original and generated frames use the selected processing resolution and are scaled to the window. Adds one frame of latency. Late generated frames are skipped."
+msgstr "앱을 시작하면 꺼진 상태입니다. Vulkan과 SDR 출력이 필요합니다. 켜면 원본과 생성 프레임을 선택한 해상도로 처리한 뒤 창 크기에 맞춰 표시합니다. 한 프레임의 입력 지연이 추가되며, 늦게 도착한 생성 프레임은 건너뜁니다."
+
+msgid "NPU processing"
+msgstr "NPU 처리 해상도"
+
+msgid "1080p / Standard"
+msgstr "1080p / 기본"
+
+msgid "720p / Performance"
+msgstr "720p / 성능"
+
+msgid "Applied on the next game start. 720p reduces GPU and NPU processing, with less image detail. Output follows the current window or fullscreen size."
+msgstr "다음 게임 실행부터 적용됩니다. 720p는 GPU와 NPU 연산량을 줄이는 대신 화면의 세부 표현이 낮아질 수 있습니다. 출력 크기는 현재 창 또는 전체화면 크기를 따릅니다."
+
+msgid "Processing resolution changes apply on the next game start."
+msgstr "처리 해상도 변경은 다음 게임 실행부터 적용됩니다."
+
+msgid "NPU FG initialization failed. Showing original frames; see log.txt."
+msgstr "NPU 프레임 생성 초기화에 실패했습니다. 원본 프레임을 표시합니다. log.txt를 확인하세요."
+
+msgid "NPU FG unavailable: initialization failed. See log.txt. Showing original frames."
+msgstr "초기화에 실패하여 NPU 프레임 생성을 사용할 수 없습니다. 원본 프레임을 표시합니다. log.txt를 확인하세요."
+
+msgid "NPU FG: current output format is unsupported. Showing original frames."
+msgstr "NPU 프레임 생성이 현재 출력 형식을 지원하지 않습니다. 원본 프레임을 표시합니다."
+
+msgid "NPU FG stopped after an error. Showing original frames; see log.txt."
+msgstr "오류로 NPU 프레임 생성이 중지되었습니다. 원본 프레임을 표시합니다. log.txt를 확인하세요."
+

@@ -1,0 +1,37 @@
+# NPU frame generation UI. Original Cemu catalog is preserved when packaging.
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "NPU frame generation"
+msgstr ""
+
+msgid "Starts off each session. Requires Vulkan and SDR output. When enabled, both original and generated frames use the selected processing resolution and are scaled to the window. Adds one frame of latency. Late generated frames are skipped."
+msgstr ""
+
+msgid "NPU processing"
+msgstr ""
+
+msgid "1080p / Standard"
+msgstr ""
+
+msgid "720p / Performance"
+msgstr ""
+
+msgid "Applied on the next game start. 720p reduces GPU and NPU processing, with less image detail. Output follows the current window or fullscreen size."
+msgstr ""
+
+msgid "Processing resolution changes apply on the next game start."
+msgstr ""
+
+msgid "NPU FG initialization failed. Showing original frames; see log.txt."
+msgstr ""
+
+msgid "NPU FG unavailable: initialization failed. See log.txt. Showing original frames."
+msgstr ""
+
+msgid "NPU FG: current output format is unsupported. Showing original frames."
+msgstr ""
+
+msgid "NPU FG stopped after an error. Showing original frames; see log.txt."
+msgstr ""
+
