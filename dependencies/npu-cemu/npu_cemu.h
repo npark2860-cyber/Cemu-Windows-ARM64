@@ -24,6 +24,8 @@ struct CemuNpuFrame {
     int32_t generatedSlot;
 };
 struct CemuNpuStats {
+    // noSlot counts pairs skipped before GPU preprocessing: no free slot, or the
+    // NPU could not finish the pair before its real frame is shown.
     uint64_t submitted, completed, stale, noSlot, generated;
     uint64_t npuRuns, inputWaitUs, npuRunUs, workerStartUs;
     double submitMs, downsampleMs, motionMs, packMs, composeMs;
@@ -31,6 +33,8 @@ struct CemuNpuStats {
 };
 struct CemuNpuApi {
     uint32_t size, abi;
+    // The text buffer receives the error on failure, and on success a startup
+    // note for the log (what the QNN context cache did).
     int (*create)(const CemuNpuCreateInfo*, CemuNpu**, char*, uint32_t);
     void (*destroy)(CemuNpu*); // Shutdown only, after Cemu has drained its GPU uses.
     void (*reset)(CemuNpu*); // Invalidate epoch without joining or freeing resources.

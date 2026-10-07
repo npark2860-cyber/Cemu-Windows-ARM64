@@ -35,3 +35,12 @@ msgstr ""
 msgid "NPU FG stopped after an error. Showing original frames; see log.txt."
 msgstr ""
 
+msgid "NPU frame generation on"
+msgstr ""
+
+msgid "NPU frame generation off"
+msgstr ""
+
+msgid "Toggle NPU frame generation"
+msgstr ""
+

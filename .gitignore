@@ -52,5 +52,14 @@ bin/gameProfiles/*
 
 bin/graphicPacks/*
 
+# NPU runtime files placed in bin/ by the build or on first start
+bin/*.cat
+bin/rpc-path.txt
+bin/npu/*/cache/
+bin/cemu_npu.pdb
+bin/cemu_npu.ilk
+# Standalone NPU module build from the README
+build-npu/
+
 # Ignore Finder view option files created by OS X
 .DS_Store

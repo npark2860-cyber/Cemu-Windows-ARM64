@@ -6,6 +6,7 @@
 #include "npu_cemu.h"
 #include <fstream>
 #include <chrono>
+#include <setupapi.h>
 
 struct NpuHostTiming {
     double sum{},maximum{};uint64_t count{};
@@ -29,6 +30,31 @@ struct VulkanNPUState {
 
 namespace {
 using NpuClock=std::chrono::steady_clock;
+// rpc-path.txt pins libcdsprpc.dll. Without it, use the copy in the driver
+// package of the running Hexagon NPU, found through its INF, so a driver update
+// or another PC needs no manual path. Only present devices count: a device
+// instance left from an earlier install keeps its old driver's INF.
+std::wstring NpuDriverRpcLibrary() {
+    // GUID_DEVCLASS_COMPUTEACCELERATOR and DEVPKEY_Device_DriverInfPath, spelled
+    // out so that no header has to define them in this file.
+    constexpr GUID computeAccelerators{0xf01a9d53,0x3ff6,0x48d2,{0x9f,0x97,0xc8,0xa7,0x00,0x4b,0xe1,0x0c}};
+    constexpr DEVPROPKEY driverInfPath{{0xa8b865dd,0x2e3d,0x4094,{0xad,0x97,0xe5,0x93,0xa7,0x0c,0x75,0xd6}},5};
+    const HDEVINFO devices=SetupDiGetClassDevsW(&computeAccelerators,nullptr,nullptr,DIGCF_PRESENT);
+    if(devices==INVALID_HANDLE_VALUE) return {};
+    std::wstring found;
+    SP_DEVINFO_DATA device{sizeof(device)};
+    for(DWORD index=0;found.empty() && SetupDiEnumDeviceInfo(devices,index,&device);++index) {
+        DEVPROPTYPE type{};wchar_t inf[MAX_PATH]{};
+        if(!SetupDiGetDevicePropertyW(devices,&device,&driverInfPath,&type,reinterpret_cast<PBYTE>(inf),sizeof(inf),nullptr,0) || type!=DEVPROP_TYPE_STRING) continue;
+        wchar_t store[MAX_PATH]{};
+        if(!SetupGetInfDriverStoreLocationW(inf,nullptr,nullptr,store,DWORD(std::size(store)),nullptr)) continue;
+        std::error_code error;
+        const auto rpc=fs::path(store).parent_path()/L"libcdsprpc.dll";
+        if(fs::is_regular_file(rpc,error)) found=rpc.wstring();
+    }
+    SetupDiDestroyDeviceInfoList(devices);
+    return found;
+}
 void NpuBarrier(VkCommandBuffer command,VkImage image,VkImageLayout before,VkImageLayout after) {
     VkImageMemoryBarrier barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
     barrier.srcAccessMask=before==VK_IMAGE_LAYOUT_UNDEFINED?0:VK_ACCESS_MEMORY_READ_BIT|VK_ACCESS_MEMORY_WRITE_BIT;
@@ -98,8 +124,8 @@ void VulkanRenderer::npuInitialize() {
         const auto directory=ActiveSettings::GetExecutablePath().parent_path();
         std::ifstream file(directory/L"rpc-path.txt");std::string rpcLine;std::getline(file,rpcLine);
         if(!rpcLine.empty() && rpcLine.back()=='\r') rpcLine.pop_back();
-        if(rpcLine.empty()) throw std::runtime_error("Missing rpc-path.txt beside the NPU runtime");
-        const auto rpc=fs::u8path(rpcLine).wstring();
+        const auto rpc=rpcLine.empty()?NpuDriverRpcLibrary():fs::u8path(rpcLine).wstring();
+        if(rpc.empty()) throw std::runtime_error("Hexagon NPU driver not found; put the libcdsprpc.dll path in rpc-path.txt beside Cemu");
         state.library=LoadLibraryExW((directory/L"cemu_npu.dll").c_str(),nullptr,LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
         if(!state.library) throw std::runtime_error(fmt::format("NPU module load failed, Win32 {}",GetLastError()));
         auto getApi=reinterpret_cast<CemuNpuGetApi>(GetProcAddress(state.library,"cemu_npu_get_api"));
@@ -107,7 +133,10 @@ void VulkanRenderer::npuInitialize() {
         const auto path=directory.wstring();
         CemuNpuCreateInfo info{sizeof(info),CEMU_NPU_ABI,m_instance,m_physicalDevice,m_logicalDevice,m_graphicsQueue,uint32_t(m_indices.graphicsFamily),vkGetInstanceProcAddr,path.c_str(),rpc.c_str(),state.processingExtent.height};
         char error[1024]{};
+        const auto startup=NpuClock::now();
         if(state.api.create(&info,&state.context,error,sizeof(error))) throw std::runtime_error(error);
+        cemuLog_log(LogType::Force,"[NPU] Module startup {:.0f} ms; RPC library {} (from {}); {}",
+            std::chrono::duration<double,std::milli>(NpuClock::now()-startup).count(),_pathToUtf8(rpc),rpcLine.empty()?"the installed driver":"rpc-path.txt",error);
         state.intervalStart=NpuClock::now();
         cemuLog_log(LogType::Force,"[NPU] READY/OFF: ANVIL U8 NHWC processing={}x{}, window-sized SDR output, 3 shared slots; QNN worker and borrowed Vulkan queue. No inference at startup. One-frame buffering, cached block motion and immutable overlay replay.",state.processingExtent.width,state.processingExtent.height);
     } catch(const std::exception& error) {
@@ -139,6 +168,7 @@ void VulkanRenderer::npuCapture() {
     if(requested!=state.enabled) {
         npuInvalidate();state.enabled=requested;state.unsupportedLogged=false;
         cemuLog_log(LogType::Force,"[NPU] {}: history reset; no per-frame inference wait",requested?"ON (one-frame buffered)":"OFF/passthrough");
+        LatteOverlay_pushNotification(requested?_tr("NPU frame generation on"):_tr("NPU frame generation off"),2000);
     }
     if(!requested) return; // No frame copies, dispatches, NPU Run, or waits while OFF.
     try {
