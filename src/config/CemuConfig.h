@@ -456,6 +456,7 @@ struct CemuConfig
 	ConfigValue<float> userDisplayGamma { 2.2f }; // 0 = sRGB, >0 gamma
 
 	ConfigValue<bool> vk_accurate_barriers{ true };
+	ConfigValue<int> vk_driver{ 0 }; // 0 = system, 1 = Turnip from <exe dir>/turnip (Windows)
 
 	struct
 	{

@@ -94,6 +94,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsCallback(VkDebugUtilsMessageSeverityFla
 
 std::vector<VulkanRenderer::DeviceInfo> VulkanRenderer::GetDevices()
 {
+#if BOOST_OS_WINDOWS
+	VulkanSelectDriver();
+#endif
     if(!vkEnumerateInstanceVersion)
     {
         cemuLog_log(LogType::Force, "Vulkan cant list devices because Vulkan loader failed");
@@ -497,6 +500,9 @@ VulkanRenderer::VulkanRenderer() : Renderer(RendererAPI::Vulkan)
 	glslang::InitializeProcess();
 
 	cemuLog_log(LogType::Force, "------- Init Vulkan graphics backend -------");
+#if BOOST_OS_WINDOWS
+	VulkanSelectDriver();
+#endif
 
 	const bool useValidationLayer = cemuLog_isLoggingEnabled(LogType::VulkanValidation);
 	if (useValidationLayer)

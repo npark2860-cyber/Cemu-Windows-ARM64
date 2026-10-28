@@ -388,6 +388,16 @@ wxPanel* GeneralSettings2::AddGraphicsPage(wxNotebook* notebook)
 		row->Add(m_graphic_api, 0, wxALL, 5);
 		m_graphic_api->Bind(wxEVT_CHOICE, &GeneralSettings2::OnGraphicAPISelected, this);
 
+#if BOOST_OS_WINDOWS && defined(ENABLE_VULKAN)
+		row->Add(new wxStaticText(box, wxID_ANY, _("Vulkan driver")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+		m_vk_driver = new wxChoice(box, wxID_ANY, wxDefaultPosition, { 230, -1 });
+		m_vk_driver->AppendString(_("System"));
+		m_vk_driver->AppendString(_("Turnip"));
+		m_vk_driver->SetSelection(0);
+		m_vk_driver->Bind(wxEVT_CHOICE, &GeneralSettings2::OnVulkanDriverSelected, this);
+		row->Add(m_vk_driver, 0, wxALL, 5);
+#endif
+
 		row->Add(new wxStaticText(box, wxID_ANY, _("Graphics Device")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 		m_graphic_device = new wxChoice(box, wxID_ANY, wxDefaultPosition, { 230, -1 }, api_size, choices);
 		m_graphic_device->SetSelection(0);
@@ -1754,6 +1764,8 @@ void GeneralSettings2::HandleGraphicsApiSelection()
 
 		m_graphic_device->Clear();
 		m_graphic_device->Disable();
+		if (m_vk_driver)
+			m_vk_driver->Disable();
 
 		m_gx2drawdone_sync->Enable();
 		m_async_compile->Disable();
@@ -1781,6 +1793,22 @@ void GeneralSettings2::HandleGraphicsApiSelection()
 #endif
 
 		m_vsync->Select(selection);
+
+#if BOOST_OS_WINDOWS
+		if (m_vk_driver)
+		{
+			std::error_code ec;
+			const bool hasTurnip = fs::is_regular_file(VulkanTurnipManifestPath(), ec);
+			m_vk_driver->SetSelection(hasTurnip && GetConfig().vk_driver.GetValue() == 1 ? 1 : 0);
+			m_vk_driver->Enable(hasTurnip && !CafeSystem::IsTitleRunning());
+			if (!hasTurnip)
+				m_vk_driver->SetToolTip(_("Turnip needs turnip\\turnip_icd.json next to Cemu.exe"));
+			else if (CafeSystem::IsTitleRunning())
+				m_vk_driver->SetToolTip(_("Vulkan driver cannot be changed while a title is running"));
+			else
+				m_vk_driver->SetToolTip(_("Vulkan driver used for the next title. Turnip loads turnip\\turnip_icd.json next to Cemu.exe"));
+		}
+#endif
 
 		m_graphic_device->Enable();
 		auto devices = VulkanRenderer::GetDevices();
@@ -2277,6 +2305,12 @@ void GeneralSettings2::OnAudioChannelsSelected(wxCommandEvent& event)
 void GeneralSettings2::OnGraphicAPISelected(wxCommandEvent& event)
 {
 	HandleGraphicsApiSelection();
+}
+
+void GeneralSettings2::OnVulkanDriverSelected(wxCommandEvent& event)
+{
+	GetConfig().vk_driver = event.GetSelection();
+	HandleGraphicsApiSelection(); // the device list depends on the driver
 }
 
 void GeneralSettings2::OnUserDisplaySRGBSelected(wxCommandEvent& event)

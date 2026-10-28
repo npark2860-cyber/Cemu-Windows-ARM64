@@ -67,6 +67,7 @@ private:
 	// Graphics
 	wxChoice* m_graphic_api, * m_graphic_device;
 	wxChoice* m_vsync;
+	wxChoice* m_vk_driver = nullptr;
 	wxCheckBox* m_overrideGamma;
 	wxSpinCtrlDouble* m_overrideGammaValue;
 	wxSpinCtrlDouble* m_userDisplayGamma;
@@ -118,6 +119,7 @@ private:
 	void OnAudioDeviceSelected(wxCommandEvent& event);
 	void OnAudioChannelsSelected(wxCommandEvent& event);
 	void OnGraphicAPISelected(wxCommandEvent& event);
+	void OnVulkanDriverSelected(wxCommandEvent& event);
 	void OnUserDisplaySRGBSelected(wxCommandEvent& event);
 	void OnAddPathClicked(wxCommandEvent& event);
 	void OnRemovePathClicked(wxCommandEvent& event);

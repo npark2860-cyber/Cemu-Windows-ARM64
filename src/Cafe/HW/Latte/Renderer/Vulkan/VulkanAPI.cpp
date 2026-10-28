@@ -2,6 +2,8 @@
 #define VKFUNC_DEFINE
 #include "Cafe/HW/Latte/Renderer/Vulkan/VulkanAPI.h"
 #include <numeric> // for std::iota
+#include "config/ActiveSettings.h"
+#include "config/CemuConfig.h"
 
 #if BOOST_OS_LINUX || BOOST_OS_MACOS || BOOST_OS_BSD
 #include <dlfcn.h>
@@ -86,8 +88,48 @@ void VulkanBenchmarkPrintResults()
 
 #if BOOST_OS_WINDOWS
 
+static std::optional<std::wstring> ReadEnvironmentVariable(const wchar_t* name)
+{
+	const DWORD size = GetEnvironmentVariableW(name, nullptr, 0);
+	if (size == 0)
+		return std::nullopt;
+	std::wstring value(size, L'\0');
+	value.resize(GetEnvironmentVariableW(name, value.data(), size));
+	return value;
+}
+
+fs::path VulkanTurnipManifestPath()
+{
+	return ActiveSettings::GetExecutablePath().parent_path() / "turnip" / "turnip_icd.json";
+}
+
+// the loader reads these variables whenever it scans for drivers (instance creation), so a change applies to the next title
+void VulkanSelectDriver()
+{
+	static const std::optional<std::wstring> s_startDriverFiles = ReadEnvironmentVariable(L"VK_DRIVER_FILES");
+	static const std::optional<std::wstring> s_startIcdFilenames = ReadEnvironmentVariable(L"VK_ICD_FILENAMES");
+	std::optional<std::wstring> driverFiles = s_startDriverFiles;
+	std::optional<std::wstring> icdFilenames = s_startIcdFilenames;
+	if (GetConfig().vk_driver.GetValue() == 1)
+	{
+		const fs::path manifest = VulkanTurnipManifestPath();
+		std::error_code ec;
+		if (fs::is_regular_file(manifest, ec))
+		{
+			driverFiles = icdFilenames = manifest.wstring();
+			cemuLog_log(LogType::Force, "Vulkan driver: Turnip ({})", _pathToUtf8(manifest));
+		}
+		else
+			cemuLog_log(LogType::Force, "Vulkan driver: Turnip selected but {} is missing, using the system driver", _pathToUtf8(manifest));
+	}
+	SetEnvironmentVariableW(L"VK_DRIVER_FILES", driverFiles ? driverFiles->c_str() : nullptr);
+	SetEnvironmentVariableW(L"VK_ICD_FILENAMES", icdFilenames ? icdFilenames->c_str() : nullptr);
+}
+
 bool InitializeGlobalVulkan()
 {
+	if (!g_vulkan_available)
+		VulkanSelectDriver();
 	const auto hmodule = LoadLibraryA("vulkan-1.dll");
 
 	if(g_vulkan_available)

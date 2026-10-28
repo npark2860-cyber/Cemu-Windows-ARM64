@@ -12,6 +12,11 @@ bool InitializeInstanceVulkan(VkInstance instance);
 bool InitializeDeviceVulkan(VkDevice device);
 extern bool g_vulkan_available;
 
+#if BOOST_OS_WINDOWS
+fs::path VulkanTurnipManifestPath();
+void VulkanSelectDriver();
+#endif
+
 #endif
 
 #ifdef VKFUNC_DEFINE_CUSTOM
